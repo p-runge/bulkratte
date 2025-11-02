@@ -115,6 +115,7 @@ export const setsTable = pgTable("sets", {
     .defaultNow(),
   name: varchar("name", { length: 128 }).notNull(),
   logo: text("logo"),
+  abbreviation: varchar("abbreviation", { length: 5 }),
   symbol: varchar("symbol", { length: 128 }),
   releaseDate: date("release_date").notNull(),
   total: integer("total").notNull(),
