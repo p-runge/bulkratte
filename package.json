@@ -41,6 +41,7 @@
     "clsx": "^2.1.1",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.6",
+    "fuse.js": "^7.1.0",
     "lucide-react": "^0.517.0",
     "next": "15.3.4",
     "next-auth": "5.0.0-beta.29",

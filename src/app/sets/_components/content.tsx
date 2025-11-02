@@ -8,10 +8,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Set as PokemonSet } from "@/lib/db";
+import Fuse from "fuse.js";
 import { Calendar } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useIntl } from "react-intl";
 
 type Props = {
@@ -21,20 +22,30 @@ export default function Content({ sets }: Props) {
   const [search, setSearch] = useState("");
   const intl = useIntl();
 
-  const filteredSets = sets.filter((set) =>
-    set.name.toLowerCase().includes(search.toLowerCase())
-  ).sort((a, b) => {
-    return b.releaseDate.localeCompare(a.releaseDate);
-  });
+  const fuse = useMemo(() => {
+    return new Fuse(sets, {
+      keys: ["name", "abbreviation", "id", "series"],
+      threshold: 0.3,
+      ignoreLocation: false,
+    });
+  }, [sets]);
+
+  const filteredSets = useMemo(() => {
+    const results =
+      search.trim().length > 0 ? fuse.search(search).map((r) => r.item) : sets;
+    return results.slice().sort((a, b) => {
+      return b.releaseDate.localeCompare(a.releaseDate);
+    });
+  }, [search, fuse, sets]);
 
   // Group sets by series (using map + filter)
   const seriesList = Array.from(new Set(filteredSets.map((s) => s.series)));
-  const setsBySeries: Record<string, typeof sets> = Object.fromEntries(
+  const setsBySeries: Record<string, PokemonSet[]> = Object.fromEntries(
     seriesList.map((series) => [
       series,
       filteredSets.filter((s) => s.series === series),
     ])
-  ) as Record<string, typeof sets>;
+  ) as Record<string, PokemonSet[]>;
   console.log("setsBySeries", setsBySeries);
 
   return (
