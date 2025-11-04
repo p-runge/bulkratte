@@ -49,34 +49,37 @@ export default function Content({ sets }: Props) {
   console.log("setsBySeries", setsBySeries);
 
   return (
-    <main className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">
-          {intl.formatMessage({
-            id: "browseSets.title",
-            defaultMessage: "Browse Sets",
-          })}
-        </h1>
-        <p className="text-muted-foreground">
-          {intl.formatMessage({
-            id: "browseSets.description",
-            defaultMessage:
-              "Browse all available Pokémon card sets. Click on a set to view its cards or mark sets you're actively collecting.",
-          })}
-        </p>
-
-        {/* --- Search Bar --- */}
-        <input
-          type="text"
-          autoFocus
-          placeholder={intl.formatMessage({
-            id: "search.placeholder",
-            defaultMessage: "Search set names...",
-          })}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="mt-4 w-full max-w-md px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring"
-        />
+    <>
+      <div className="sticky top-0 -mt-4">
+        <div className="breakout bg-background border-b border-border">
+          <div className="container mx-auto p-4">
+            <h1 className="text-3xl font-bold mb-2">
+              {intl.formatMessage({
+                id: "browseSets.title",
+                defaultMessage: "Browse Sets",
+              })}
+            </h1>
+            <p className="text-muted-foreground">
+              {intl.formatMessage({
+                id: "browseSets.description",
+                defaultMessage:
+                  "Browse all available Pokémon card sets. Click on a set to view its cards or mark sets you're actively collecting.",
+              })}
+            </p>
+            {/* --- Search Bar --- */}
+            <input
+              type="text"
+              autoFocus
+              placeholder={intl.formatMessage({
+                id: "search.placeholder",
+                defaultMessage: "Search set names...",
+              })}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="mt-4 w-full max-w-md px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring"
+            />
+          </div>
+        </div>
       </div>
 
       {Object.entries(setsBySeries)
@@ -200,6 +203,6 @@ export default function Content({ sets }: Props) {
             </div>
           </div>
         ))}
-    </main>
+    </>
   );
 }

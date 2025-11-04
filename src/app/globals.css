@@ -166,3 +166,11 @@
     @apply bg-background text-foreground;
   }
 }
+/* -----------------------------
+   ⚙️ Utilities
+------------------------------ */
+@layer utilities {
+  .breakout {
+    @apply w-screen relative left-1/2 right-1/2 -translate-x-1/2;
+  }
+}
