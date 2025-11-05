@@ -48,6 +48,12 @@ export default function CardImage({
         <DialogContent
           className="w-screen h-screen flex items-center justify-center bg-black/50 p-0 sm:max-w-none border-none"
           style={{ borderRadius: 0 }}
+          onClick={(e) => {
+            // Close when clicking outside the image
+            if (e.target === e.currentTarget) {
+              setShowOverlay(false);
+            }
+          }}
         >
           <DialogTitle className="sr-only">Big image</DialogTitle>
           <Image
@@ -55,7 +61,7 @@ export default function CardImage({
             alt={alt}
             width={600}
             height={825}
-            className="w-full h-full object-contain"
+            className="w-auto h-auto object-contain"
             draggable={false}
             priority
             unoptimized
