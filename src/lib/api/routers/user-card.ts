@@ -31,7 +31,6 @@ export const userCardRouter = createTRPCRouter({
           variant: input.variant,
           condition: input.condition,
           notes: input.notes,
-          photos: input.photos || [],
         })
         .returning({
           id: userCardsTable.id,
@@ -43,7 +42,14 @@ export const userCardRouter = createTRPCRouter({
 
   getList: protectedProcedure.query(async ({ ctx }) => {
     const userCards = await ctx.db
-      .select()
+      .select({
+        id: userCardsTable.id,
+        cardId: userCardsTable.card_id,
+        language: userCardsTable.language,
+        variant: userCardsTable.variant,
+        condition: userCardsTable.condition,
+        notes: userCardsTable.notes,
+      })
       .from(userCardsTable)
       .where(eq(userCardsTable.user_id, ctx.session.user.id))
       .orderBy(userCardsTable.created_at);
@@ -90,8 +96,10 @@ export const userCardRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string().uuid(),
+        language: z.enum(languageEnum.enumValues).optional(),
+        variant: z.enum(variantEnum.enumValues).optional(),
+        condition: z.enum(conditionEnum.enumValues).optional(),
         notes: z.string().optional(),
-        photos: z.array(z.string()).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -118,8 +126,10 @@ export const userCardRouter = createTRPCRouter({
       await ctx.db
         .update(userCardsTable)
         .set({
+          language: input.language,
+          variant: input.variant,
+          condition: input.condition,
           notes: input.notes,
-          photos: input.photos,
         })
         .where(
           and(
