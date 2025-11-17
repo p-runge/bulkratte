@@ -1,19 +1,25 @@
-import { signIn } from "@/lib/auth";
-import { SignInForm } from "./_components/signin-form";
+"use client";
 
-interface SignInPageProps {
-  searchParams: Promise<{ callbackUrl?: string }>;
-}
+import Loader from "@/components/loader";
+import { handleSignIn } from "@/lib/auth/actions";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useRef } from "react";
 
-export default async function SignInPage({ searchParams }: SignInPageProps) {
-  const { callbackUrl } = await searchParams;
+export default function SignInPage() {
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
 
-  async function handleSignIn() {
-    "use server";
-    await signIn("discord", { 
-      redirectTo: callbackUrl ?? "/"
-    });
-  }
+  const formRef = useRef<HTMLFormElement>(null);
 
-  return <SignInForm action={handleSignIn} />;
+  useEffect(() => {
+    formRef.current?.requestSubmit();
+  }, []);
+
+  return (
+    <form ref={formRef} action={() => handleSignIn(callbackUrl)}>
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader>Redirecting to Discord...</Loader>
+      </div>
+    </form>
+  );
 }

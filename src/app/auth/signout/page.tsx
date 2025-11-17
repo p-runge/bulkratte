@@ -1,19 +1,25 @@
-import { signOut } from "@/lib/auth";
-import { SignOutForm } from "./_components/signout-form";
+"use client"
 
-interface SignOutPageProps {
-  searchParams: Promise<{ callbackUrl?: string }>;
-}
+import Loader from "@/components/loader";
+import { handleSignOut } from "@/lib/auth/actions";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useRef } from "react";
 
-export default async function SignOutPage({ searchParams }: SignOutPageProps) {
-  const { callbackUrl } = await searchParams;
+export default function SignOutPage() {
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
 
-  async function handleSignOut() {
-    "use server";
-    await signOut({ 
-      redirectTo: callbackUrl ?? "/" 
-    });
-  }
+  const formRef = useRef<HTMLFormElement>(null);
 
-  return <SignOutForm action={handleSignOut} />;
+  useEffect(() => {
+    formRef.current?.requestSubmit();
+  }, []);
+
+  return (
+    <form ref={formRef} action={() => handleSignOut(callbackUrl)}>
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader>Signing out...</Loader>
+      </div>
+    </form>
+  );
 }
