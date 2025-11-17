@@ -61,11 +61,11 @@ export default function HeaderContent({ session }: {
             </Link>
           )}
           {session ? (
-            <Link href="/api/auth/signout">
+            <Link href="/auth/signout">
               <Button variant="default">{intl.formatMessage({ id: "navigation.signOut", defaultMessage: "Sign Out" })}</Button>
             </Link>
           ) : (
-            <Link href="/api/auth/signin">
+            <Link href="/auth/signin">
               <Button variant="default">{intl.formatMessage({ id: "navigation.signIn", defaultMessage: "Sign In" })}</Button>
             </Link>
           )}
@@ -96,11 +96,11 @@ export default function HeaderContent({ session }: {
             </Link>
           )}
           {session ? (
-            <Link href="/api/auth/signout" onClick={() => setIsOpen(false)}>
+            <Link href="/auth/signout" onClick={() => setIsOpen(false)}>
               <Button variant="default" className="w-full text-left">{intl.formatMessage({ id: "navigation.signOut", defaultMessage: "Sign Out" })}</Button>
             </Link>
           ) : (
-            <Link href="/api/auth/signin" onClick={() => setIsOpen(false)}>
+            <Link href="/auth/signin" onClick={() => setIsOpen(false)}>
               <Button variant="default" className="w-full text-left">{intl.formatMessage({ id: "navigation.signIn", defaultMessage: "Sign In" })}</Button>
             </Link>
           )}

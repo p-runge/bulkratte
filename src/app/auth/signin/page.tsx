@@ -1,23 +1,19 @@
-"use client";
+import { signIn } from "@/lib/auth";
+import { SignInForm } from "./_components/signin-form";
 
-import { useEffect } from "react";
-import { signIn, useSession } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+interface SignInPageProps {
+  searchParams: Promise<{ callbackUrl?: string }>;
+}
 
-export default function SignInPage() {
-  const { status } = useSession();
-  const router = useRouter();
-  const params = useSearchParams();
-  const callbackUrl = params.get("callbackUrl") ?? "/";
+export default async function SignInPage({ searchParams }: SignInPageProps) {
+  const { callbackUrl } = await searchParams;
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      // only one provider, so directly sign in
-      void signIn("discord", { callbackUrl });
-    } else if (status === "authenticated") {
-      router.replace(callbackUrl);
-    }
-  }, [status, callbackUrl, router]);
+  async function handleSignIn() {
+    "use server";
+    await signIn("discord", { 
+      redirectTo: callbackUrl ?? "/"
+    });
+  }
 
-  return null;
+  return <SignInForm action={handleSignIn} />;
 }

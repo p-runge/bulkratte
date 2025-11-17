@@ -53,7 +53,7 @@ export default async function HomePage() {
                 }
               )}
             </p>
-            <Link href="/api/auth/signin" passHref>
+            <Link href="/auth/signin" passHref>
               <Button className="cursor-pointer" variant="default" size="lg">
                 {intl.formatMessage({
                   id: "home.cta",
