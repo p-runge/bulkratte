@@ -14,15 +14,21 @@ export default async function SetIdPage({
   const { setId } = await params;
   const intl = await getIntl();
 
+  // const sets = await api.set.getList();
+  // const selectedSet = sets.find((set) => set.id === setId);
+  // const cards = await api.card.getList();
+
   // Pokemon API data
   const sets = await pokemonAPI.fetchPokemonSets();
   const selectedSet = sets.find((s) => s.id === setId);
   if (!selectedSet) {
-    throw new Error(
-      intl.formatMessage(
-        { id: "set.notFound", defaultMessage: "Set with ID {setId} not found" },
-        { setId }
-      )
+    return (
+      <div>
+        {intl.formatMessage({
+          id: "set.notFound",
+          defaultMessage: "Set not found",
+        })}
+      </div>
     );
   }
 
