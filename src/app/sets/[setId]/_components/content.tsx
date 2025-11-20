@@ -130,7 +130,7 @@ export default function Content({ set, cards }: Props) {
             <div
               className={
                 viewMode === "grid"
-                  ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                  ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8 gap-4"
                   : "space-y-2"
               }
             >
@@ -140,20 +140,8 @@ export default function Content({ set, cards }: Props) {
                   className={cn("transition-all", { "p-2": viewMode === "list" })}
                 >
                   <CardContent className={viewMode === "grid" ? "p-4" : "p-2"}>
-                    <div className="flex items-start gap-3">
-                      {/* Card Thumbnail */}
-                      <div className="flex-shrink-0">
-                        <CardImage
-                          small={card.images.small}
-                          large={card.images.large}
-                          alt={card.name}
-                          width={64}
-                          height={88}
-                          className="w-16 h-22 object-cover rounded border shadow-sm"
-                        />
-                      </div>
-
-                      <div className="flex-1 min-w-0">
+                    <div className="flex flex-col items-start gap-3">
+                      <div>
                         <div className="flex items-center gap-2 mb-2">
                           <h3
                             className="font-semibold truncate"
@@ -182,6 +170,16 @@ export default function Content({ set, cards }: Props) {
                           </span>
                         </div>
                       </div>
+
+                      {/* Card Thumbnail */}
+                      <CardImage
+                        small={card.images.small}
+                        large={card.images.large}
+                        alt={card.name}
+                        width={128}
+                        height={176}
+                        className="w-32 h-44 object-cover rounded border shadow-sm"
+                      />
                     </div>
                   </CardContent>
                 </Card>
