@@ -128,57 +128,53 @@ export default function Content({ set, cards }: Props) {
           {/* Cards Display */}
           {
             <div
-              className={
-                viewMode === "grid"
-                  ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8 gap-4"
-                  : "space-y-2"
-              }
+              className={cn(
+                viewMode === "grid" && "grid grid-cols-2 md:flex md:flex-wrap gap-2 justify-between",
+                viewMode === "list" && "space-y-2"
+              )}
             >
               {filteredCards.map((card) => (
                 <Card
                   key={card.id}
-                  className={cn("transition-all", { "p-2": viewMode === "list" })}
+                  className={cn("transition-all p-0")}
                 >
-                  <CardContent className={viewMode === "grid" ? "p-4" : "p-2"}>
-                    <div className="flex flex-col items-start gap-3">
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3
-                            className="font-semibold truncate"
-                            title={card.name}
-                          >
-                            {card.name}
-                          </h3>
-                          <span className="text-sm flex items-center gap-2">
-                            <span className="flex items-center gap-0.5">
-                              ({`${card.number}/${set.total}`})
-                              {rarityIconMap[card.rarity as Rarity] ?? (
-                                <span>{card.rarity}</span>
-                              )}
-                            </span>
+                  <CardContent className="p-2">
+                    <div className="mb-2">
+                      <h3
+                        className="font-semibold truncate"
+                        title={card.name}
+                      >
+                        {card.name}
+                      </h3>
+                      <div className="text-sm flex items-center gap-2">
+                        {/* base set has no symbol */}
+                        {set.symbol && (
+                          <Image
+                            src={set.symbol}
+                            alt={`${set.name} symbol`}
+                            width={16}
+                            height={16}
+                            unoptimized
+                          />
+                        )}
 
-                            {/* base set has no symbol */}
-                            {set.symbol && (
-                              <Image
-                                src={set.symbol}
-                                alt={`${set.name} symbol`}
-                                width={16}
-                                height={16}
-                                unoptimized
-                              />
-                            )}
-                          </span>
-                        </div>
+                        <span>({`${card.number}/${set.total}`})</span>
+
+                        {rarityIconMap[card.rarity as Rarity] ?? (
+                          <span>{card.rarity}</span>
+                        )}
                       </div>
+                    </div>
 
-                      {/* Card Thumbnail */}
+                    {/* Card Thumbnail */}
+                    <div className="relative">
                       <CardImage
                         small={card.images.small}
                         large={card.images.large}
                         alt={card.name}
-                        width={128}
-                        height={176}
-                        className="w-32 h-44 object-cover rounded border shadow-sm"
+                        width={245}
+                        height={337}
+                        className="w-min-[100px]  w-max-[245px] h-auto object-cover rounded border shadow-sm"
                       />
                     </div>
                   </CardContent>
