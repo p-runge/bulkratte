@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Toggle } from "@/components/ui/toggle";
-import { PokemonCard, PokemonSet } from "@/lib/pokemon-api";
+// import { PokemonCard, PokemonSet } from "@/lib/pokemon-api";
 import { cn } from "@/lib/utils";
 import {
   Circle,
@@ -18,6 +18,7 @@ import { Rarity } from "pokemon-tcg-sdk-typescript/dist/sdk";
 import { ReactNode, useState } from "react";
 import { useIntl } from 'react-intl';
 import CardImage from "./card-image";
+import { Set as PokemonSet, Card as PokemonCard } from "@/lib/db"
 
 type Props = {
   set: PokemonSet;
@@ -169,8 +170,8 @@ export default function Content({ set, cards }: Props) {
                     {/* Card Thumbnail */}
                     <div className="relative">
                       <CardImage
-                        small={card.images.small}
-                        large={card.images.large}
+                        small={card.imageSmall}
+                        large={card.imageLarge}
                         alt={card.name}
                         width={245}
                         height={337}

@@ -1,8 +1,8 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectTrigger } from "@/components/ui/select";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { api } from "@/lib/api/server";
 import { getIntl } from "@/lib/i18n/server";
-import pokemonAPI from "@/lib/pokemon-api";
 import Link from "next/link";
 import Content from "./_components/content";
 
@@ -14,13 +14,9 @@ export default async function SetIdPage({
   const { setId } = await params;
   const intl = await getIntl();
 
-  // const sets = await api.set.getList();
-  // const selectedSet = sets.find((set) => set.id === setId);
-  // const cards = await api.card.getList();
+  const sets = await api.set.getList();
+  const selectedSet = sets.find((set) => set.id === setId);
 
-  // Pokemon API data
-  const sets = await pokemonAPI.fetchPokemonSets();
-  const selectedSet = sets.find((s) => s.id === setId);
   if (!selectedSet) {
     return (
       <div>
@@ -31,8 +27,7 @@ export default async function SetIdPage({
       </div>
     );
   }
-
-  const cards = await pokemonAPI.fetchPokemonCards(setId);
+  const cards = await api.card.getList({ setId });
 
   return (
     <TooltipProvider>
@@ -76,6 +71,7 @@ export default async function SetIdPage({
           </li>
         </ol>
       </nav>
+
       <Content set={selectedSet} cards={cards} />
     </TooltipProvider>
   )
