@@ -46,7 +46,6 @@ export default function Content({ sets }: Props) {
       filteredSets.filter((s) => s.series === series),
     ])
   ) as Record<string, PokemonSet[]>;
-  console.log("setsBySeries", setsBySeries);
 
   return (
     <>
