@@ -8,22 +8,25 @@ import {
   messages,
 } from ".";
 
-export async function getIntl() {
-  let locale: Locale;
-
+export async function getServerLocale(): Promise<Locale> {
   const acceptLanguage = (await headers()).get("accept-language") || "";
   const headerLocale = acceptLanguage;
   const languageCode = headerLocale.split("-")[0]!;
+
   if (LOCALES.includes(headerLocale)) {
     // exact match
-    locale = headerLocale as Locale;
+    return headerLocale as Locale;
   } else if (BROWSER_LANGUAGES[languageCode]) {
     // matches core language code -> use mapped locale
-    locale = BROWSER_LANGUAGES[languageCode]! as Locale;
+    return BROWSER_LANGUAGES[languageCode]! as Locale;
   } else {
     // fallback to default locale
-    locale = DEFAULT_LOCALE;
+    return DEFAULT_LOCALE;
   }
+}
+
+export async function getIntl() {
+  const locale = await getServerLocale();
 
   return createIntl({
     locale,

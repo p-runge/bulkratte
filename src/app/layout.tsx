@@ -1,12 +1,11 @@
 import { TRPCReactProvider } from "@/lib/api/react";
-import { DEFAULT_LOCALE } from "@/lib/i18n";
 import { I18nProvider } from "@/lib/i18n/client";
+import { getServerLocale } from "@/lib/i18n/server";
 import { ThemeProvider } from "@/providers/theme-provider";
 import "@total-typescript/ts-reset";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
 import PlausibleProvider from "next-plausible";
-import { cookies } from "next/headers";
 import type React from "react";
 import "./globals.css";
 
@@ -21,9 +20,8 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const cookieStore = await cookies();
-  const preferredLocale = cookieStore.get("preferred-locale")?.value || DEFAULT_LOCALE;
-  const lang = preferredLocale.substring(0, 2);
+  const serverLocale = await getServerLocale();
+  const lang = serverLocale.substring(0, 2);
 
   return (
     <html lang={lang} suppressHydrationWarning>
@@ -36,7 +34,7 @@ export default async function RootLayout({
               enableSystem
               disableTransitionOnChange
             >
-              <I18nProvider>{children}</I18nProvider>
+              <I18nProvider serverLocale={serverLocale}>{children}</I18nProvider>
             </ThemeProvider>
           </TRPCReactProvider>
         </PlausibleProvider>

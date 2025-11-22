@@ -7,10 +7,14 @@ import { persist } from "zustand/middleware";
 
 export function I18nProvider({
   children,
+  serverLocale,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
+  serverLocale: Locale;
 }) {
-  const locale = useLanguageStore((state) => state.locale)
+  // Server locale already reflects user's preference via cookie/middleware
+  // So we can use it directly without causing hydration issues
+  const locale = serverLocale;
 
   return (
     <IntlProvider locale={locale} messages={messages[locale]} defaultLocale={DEFAULT_LOCALE} onError={(error) => {
@@ -28,6 +32,11 @@ export function I18nProvider({
 
 
 function getInitialLocale() {
+  // Only access navigator on client
+  if (typeof window === 'undefined') {
+    return DEFAULT_LOCALE;
+  }
+
   let locale: Locale;
 
   if (LOCALES.includes(navigator.language as Locale)) {
