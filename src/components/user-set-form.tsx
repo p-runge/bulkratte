@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api/react";
 import { AppRouter } from "@/lib/api/routers/_app";
 import { RHFForm, useRHFForm } from "@/lib/form/utils";
-import { Save } from "lucide-react";
+import { Plus, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Controller } from "react-hook-form";
 import { FormattedMessage, useIntl } from "react-intl";
@@ -17,20 +17,22 @@ import z from "zod";
 type UserSet = Awaited<ReturnType<AppRouter["userSet"]["getById"]>>
 
 type Props = {
-  userSet: UserSet;
+  mode: "create" | "edit";
+  userSet?: UserSet;
 }
 
-export function EditUserSetPageContent({ userSet }: Props) {
+export default function UserSetForm({ mode, userSet }: Props) {
   const router = useRouter();
   const intl = useIntl();
 
   const apiUtils = api.useUtils();
   const { mutateAsync: updateUserSet } = api.userSet.update.useMutation();
+  const { mutateAsync: createUserSet } = api.userSet.create.useMutation();
 
   const form = useRHFForm(FormSchema, {
     defaultValues: {
-      name: userSet.set.name,
-      cardIds: userSet.cards.map((card) => card.cardId),
+      name: userSet?.set.name ?? "",
+      cardIds: userSet?.cards.map((card) => card.cardId) ?? [],
     }
   });
 
@@ -48,22 +50,39 @@ export function EditUserSetPageContent({ userSet }: Props) {
   };
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
-    await updateUserSet(
-      {
-        id: userSet.set.id,
-        name: data.name,
-        cardIds: new Set(data.cardIds),
-      },
-      {
-        async onSuccess() {
-          await apiUtils.userSet.getById.invalidate({ id: userSet.set.id });
-          router.push("/collection");
+    if (mode === "create") {
+      await createUserSet(
+        {
+          name: data.name,
+          cardIds: new Set(data.cardIds),
         },
-        onError(error) {
-          console.error("Error updating user set:", error);
+        {
+          onSuccess() {
+            router.push("/collection");
+          },
+          onError(error) {
+            console.error("Error creating user set:", error);
+          },
+        }
+      );
+    } else {
+      await updateUserSet(
+        {
+          id: userSet!.set.id,
+          name: data.name,
+          cardIds: new Set(data.cardIds),
         },
-      }
-    );
+        {
+          async onSuccess() {
+            await apiUtils.userSet.getById.invalidate({ id: userSet!.set.id });
+            router.push("/collection");
+          },
+          onError(error) {
+            console.error("Error updating user set:", error);
+          },
+        }
+      );
+    }
   };
 
   return (
@@ -100,15 +119,27 @@ export function EditUserSetPageContent({ userSet }: Props) {
               <Button
                 type="submit"
                 disabled={
-                  form.formState.isSubmitting || !form.formState.isDirty
+                  form.formState.isSubmitting || (mode === "edit" && !form.formState.isDirty)
                 }
                 size="lg"
               >
-                <Save className="h-5 w-5 mr-2" />
-                <FormattedMessage
-                  id="userSet.save"
-                  defaultMessage="Save Changes"
-                />
+                {mode === "create" ? (
+                  <>
+                    <Plus className="h-5 w-5 mr-2" />
+                    <FormattedMessage
+                      id="userSet.createButton"
+                      defaultMessage="Create Set"
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-5 w-5 mr-2" />
+                    <FormattedMessage
+                      id="userSet.save"
+                      defaultMessage="Save Changes"
+                    />
+                  </>
+                )}
               </Button>
             </div>
           </RHFForm>

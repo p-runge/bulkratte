@@ -1,9 +1,9 @@
-import Link from "next/link";
-import { EditUserSetPageContent } from "./_components/content";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import { getIntl } from "@/lib/i18n/server";
+import UserSetForm from "@/components/user-set-form";
 import { api } from "@/lib/api/server";
+import { getIntl } from "@/lib/i18n/server";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 export default async function EditUserSetPage({
   params,
@@ -40,6 +40,6 @@ export default async function EditUserSetPage({
         </p>
       </div>
     </div>
-    <EditUserSetPageContent userSet={userSet} />
+    <UserSetForm mode="edit" userSet={userSet} />
   </>;
 }
