@@ -87,9 +87,9 @@ export default function UserSetForm({ mode, userSet }: Props) {
     <>
       <Card className="p-6 mb-6">
         <div>
-          <RHFForm form={form} onSubmit={onSubmit} className="flex flex-col sm:flex-row gap-4">
+          <RHFForm form={form} onSubmit={onSubmit} className="flex flex-col sm:flex-row gap-4 sm:items-end ">
             <div className="flex-1 space-y-2">
-              <FormField form={form} name="name" />
+              <FormField name="name" label="Name" />
             </div>
             <div className="flex items-center gap-4">
               <div className="text-sm text-muted-foreground">

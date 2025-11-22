@@ -1,16 +1,21 @@
 import { DevTool } from '@hookform/devtools'
 import { zodResolver } from '@hookform/resolvers/zod'
 import React, { useCallback, useEffect } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { useIntl } from 'react-intl'
 import type z from 'zod'
 import {
   Field,
   FieldDescription,
-  FieldError,
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 import type {
   FieldValues,
@@ -73,7 +78,7 @@ export function RHFForm<T extends FieldValues>({
           disabled={form.formState.isSubmitting}
           className={cn('w-full border-none p-0 m-0', className)}
         >
-          {children}
+          <FormProvider {...form}>{children}</FormProvider>
         </fieldset>
       </form>
       <DevTool control={form.control} />
@@ -114,22 +119,33 @@ export function useFormCloseHandler<T extends FieldValues>(
 }
 
 type FormFieldProps<T extends FieldValues> = {
-  form: UseFormReturn<T>;
   name: Path<T>
+  label?: string;
   description?: React.ReactNode;
 }
 
-export function FormField<T extends FieldValues>({ form, name, description }: FormFieldProps<T>) {
+export function FormField<T extends FieldValues>({ name, label, description }: FormFieldProps<T>) {
+  const form = useFormContext();
   return (
     <Controller
       name={name}
       control={form.control}
       render={({ field, fieldState }) => (
         <Field data-invalid={fieldState.invalid}>
-          <FieldLabel htmlFor={field.name}>Name</FieldLabel>
-          <Input {...field} id={field.name} aria-invalid={fieldState.invalid} />
+          {label && <FieldLabel htmlFor={field.name}>{label}</FieldLabel>}
+          <TooltipProvider>
+            <Tooltip open={fieldState.invalid}>
+              <TooltipTrigger asChild>
+                <Input {...field} id={field.name} aria-invalid={fieldState.invalid} />
+              </TooltipTrigger>
+              {fieldState.invalid && (
+                <TooltipContent side="top" className="bg-destructive text-destructive-foreground" arrowClassName='bg-destructive fill-destructive'>
+                  {fieldState.error?.message}
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
           {description && <FieldDescription>{description}</FieldDescription>}
-          {fieldState.invalid ? <FieldError errors={[fieldState.error]} /> : <p className='text-sm'>&nbsp;</p>}
         </Field>
       )}
     />
