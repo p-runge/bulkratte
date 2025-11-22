@@ -117,13 +117,16 @@ export function EditUserSetPageContent({ userSet }: Props) {
 
       <hr className="mb-6" />
 
-      <Controller name="cardIds" control={form.control} render={({ field }) => (
-        <CardBrowser
-          selectedCards={new Set(field.value)}
-          onCardToggle={(cardId: string) => {
-            handleCardToggle(cardId);
-          }}
-        />
+      <Controller name="cardIds" control={form.control} render={({ field, fieldState }) => (
+        <>
+          <p className="text-sm text-error">{fieldState.error?.message ?? "\u00A0"}</p>
+          <CardBrowser
+            selectedCards={new Set(field.value)}
+            onCardToggle={(cardId: string) => {
+              handleCardToggle(cardId);
+            }}
+          />
+        </>
       )}>
       </Controller>
     </>

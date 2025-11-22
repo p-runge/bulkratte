@@ -41,6 +41,10 @@
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
 
+  /* success, error */
+  --color-success: oklch(0.6 0.15 140);
+  --color-error: oklch(0.65 0.18 30);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
