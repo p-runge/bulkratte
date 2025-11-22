@@ -36,15 +36,15 @@ export function EditUserSetPageContent({ userSet }: Props) {
 
   const handleCardToggle = (cardId: string) => {
     const currentCardIds = form.getValues("cardIds");
-    if (currentCardIds.includes(cardId)) {
-      form.setValue(
-        "cardIds",
-        currentCardIds.filter((id) => id !== cardId),
-        { shouldDirty: true }
-      );
+    const cardSet = new Set(currentCardIds);
+
+    if (cardSet.has(cardId)) {
+      cardSet.delete(cardId);
     } else {
-      form.setValue("cardIds", [...currentCardIds, cardId], { shouldDirty: true });
+      cardSet.add(cardId);
     }
+
+    form.setValue("cardIds", Array.from(cardSet), { shouldDirty: true });
   };
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
@@ -52,7 +52,7 @@ export function EditUserSetPageContent({ userSet }: Props) {
       {
         id: userSet.set.id,
         name: data.name,
-        cardIds: data.cardIds,
+        cardIds: new Set(data.cardIds),
       },
       {
         async onSuccess() {

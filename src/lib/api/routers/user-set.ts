@@ -9,7 +9,7 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const userSetRouter = createTRPCRouter({
   create: protectedProcedure
-    .input(z.object({ name: z.string().min(1), cardIds: z.array(z.string()) }))
+    .input(z.object({ name: z.string().min(1), cardIds: z.set(z.string()) }))
     .mutation(async ({ ctx, input }) => {
       const userSet = await ctx.db
         .insert(userSetsTable)
@@ -22,7 +22,7 @@ export const userSetRouter = createTRPCRouter({
         })
         .then((res) => res[0]!);
 
-      const cardValues = input.cardIds.map((cardId) => ({
+      const cardValues = Array.from(input.cardIds).map((cardId) => ({
         user_set_id: userSet.id,
         card_id: cardId,
       }));
@@ -78,7 +78,7 @@ export const userSetRouter = createTRPCRouter({
       z.object({
         id: z.string().uuid(),
         name: z.string().min(1),
-        cardIds: z.array(z.string()),
+        cardIds: z.set(z.string()),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -124,7 +124,7 @@ export const userSetRouter = createTRPCRouter({
         .delete(userSetCardsTable)
         .where(eq(userSetCardsTable.user_set_id, input.id));
 
-      const cardValues = input.cardIds.map((cardId) => ({
+      const cardValues = Array.from(input.cardIds).map((cardId) => ({
         user_set_id: input.id,
         card_id: cardId,
       }));

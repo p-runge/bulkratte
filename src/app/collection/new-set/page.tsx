@@ -56,7 +56,7 @@ export default function NewSetPage() {
     createUserSet(
       {
         name: setName,
-        cardIds: Array.from(selectedCards),
+        cardIds: selectedCards,
       },
       {
         onSettled() {
