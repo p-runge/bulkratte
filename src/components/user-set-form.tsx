@@ -3,11 +3,9 @@
 import { CardBrowser } from "@/components/card-browser";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api/react";
 import { AppRouter } from "@/lib/api/routers/_app";
-import { RHFForm, useRHFForm } from "@/lib/form/utils";
+import { FormField, RHFForm, useRHFForm } from "@/lib/form/utils";
 import { Plus, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Controller } from "react-hook-form";
@@ -89,22 +87,9 @@ export default function UserSetForm({ mode, userSet }: Props) {
     <>
       <Card className="p-6 mb-6">
         <div>
-          <RHFForm form={form} onSubmit={onSubmit} className="flex flex-col sm:flex-row gap-4 sm:items-end">
+          <RHFForm form={form} onSubmit={onSubmit} className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1 space-y-2">
-              <Label htmlFor="user-set-name">
-                {intl.formatMessage({
-                  id: "userSet.nameLabel",
-                  defaultMessage: "Set Name",
-                })}
-              </Label>
-              <Input
-                {...form.register("name")}
-                placeholder={intl.formatMessage({
-                  id: "userSet.namePlaceholder",
-                  defaultMessage: "My Awesome Set",
-                })}
-                className="text-lg"
-              />
+              <FormField form={form} name="name" />
             </div>
             <div className="flex items-center gap-4">
               <div className="text-sm text-muted-foreground">
@@ -150,7 +135,7 @@ export default function UserSetForm({ mode, userSet }: Props) {
 
       <Controller name="cardIds" control={form.control} render={({ field, fieldState }) => (
         <>
-          <p className="text-sm text-error">{fieldState.error?.message ?? "\u00A0"}</p>
+          <p className="text-sm text-destructive">{fieldState.error?.message ?? "\u00A0"}</p>
           <CardBrowser
             selectedCards={new Set(field.value)}
             onCardToggle={(cardId: string) => {

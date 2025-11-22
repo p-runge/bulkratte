@@ -1,12 +1,20 @@
 import { DevTool } from '@hookform/devtools'
 import { zodResolver } from '@hookform/resolvers/zod'
 import React, { useCallback, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { useIntl } from 'react-intl'
 import type z from 'zod'
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
 
 import type {
   FieldValues,
+  Path,
   SubmitHandler,
   UseFormProps,
   UseFormReturn,
@@ -103,4 +111,27 @@ export function useFormCloseHandler<T extends FieldValues>(
     }
     onClose()
   }, [form.formState.isDirty, intl, onClose])
+}
+
+type FormFieldProps<T extends FieldValues> = {
+  form: UseFormReturn<T>;
+  name: Path<T>
+  description?: React.ReactNode;
+}
+
+export function FormField<T extends FieldValues>({ form, name, description }: FormFieldProps<T>) {
+  return (
+    <Controller
+      name={name}
+      control={form.control}
+      render={({ field, fieldState }) => (
+        <Field data-invalid={fieldState.invalid}>
+          <FieldLabel htmlFor={field.name}>Name</FieldLabel>
+          <Input {...field} id={field.name} aria-invalid={fieldState.invalid} />
+          {description && <FieldDescription>{description}</FieldDescription>}
+          {fieldState.invalid ? <FieldError errors={[fieldState.error]} /> : <p className='text-sm'>&nbsp;</p>}
+        </Field>
+      )}
+    />
+  )
 }
