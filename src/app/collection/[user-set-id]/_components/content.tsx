@@ -6,69 +6,57 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api/react";
-import { ArrowLeft, Save } from "lucide-react";
-import Link from "next/link";
+import { AppRouter } from "@/lib/api/routers/_app";
+import { RHFForm, useRHFForm } from "@/lib/form/utils";
+import { Save } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useIntl } from "react-intl";
+import { Controller } from "react-hook-form";
+import { FormattedMessage, useIntl } from "react-intl";
+import z from "zod";
 
-export function EditUserSetPageContent({ userSetId }: { userSetId: string }) {
+type UserSet = Awaited<ReturnType<AppRouter["userSet"]["getById"]>>
+
+type Props = {
+  userSet: UserSet;
+}
+
+export function EditUserSetPageContent({ userSet }: Props) {
   const router = useRouter();
   const intl = useIntl();
 
-  const [userSetName, setUserSetName] = useState("");
-  const [selectedCards, setSelectedCards] = useState<Set<string>>(new Set());
-  const [isSaving, setIsSaving] = useState(false);
+  const apiUtils = api.useUtils();
+  const { mutateAsync: updateUserSet } = api.userSet.update.useMutation();
 
-  const { data: userSet } = api.userSet.getById.useQuery({ id: userSetId });
-
-  useEffect(() => {
-    if (userSet) {
-      setUserSetName(userSet.set.name);
-      const initialSelectedCards = new Set(
-        userSet.cards?.map((card) => card.cardId) || []
-      );
-      setSelectedCards(initialSelectedCards);
+  const form = useRHFForm(FormSchema, {
+    defaultValues: {
+      name: userSet.set.name,
+      cardIds: userSet.cards.map((card) => card.cardId),
     }
-  }, [userSet]);
+  });
 
   const handleCardToggle = (cardId: string) => {
-    setSelectedCards((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(cardId)) {
-        newSet.delete(cardId);
-      } else {
-        newSet.add(cardId);
-      }
-      return newSet;
-    });
+    const currentCardIds = form.getValues("cardIds");
+    if (currentCardIds.includes(cardId)) {
+      form.setValue(
+        "cardIds",
+        currentCardIds.filter((id) => id !== cardId),
+        { shouldDirty: true }
+      );
+    } else {
+      form.setValue("cardIds", [...currentCardIds, cardId], { shouldDirty: true });
+    }
   };
 
-  const apiUtils = api.useUtils();
-  const { mutate: updateUserSet } = api.userSet.update.useMutation();
-
-  const handleSaveUserSet = async () => {
-    if (!userSetName.trim()) {
-      console.error("No set name provided");
-      return;
-    }
-
-    if (selectedCards.size === 0) {
-      console.error("No cards selected");
-      return;
-    }
-
-    setIsSaving(true);
-
-    updateUserSet(
+  async function onSubmit(data: z.infer<typeof FormSchema>) {
+    await updateUserSet(
       {
-        id: userSetId,
-        name: userSetName.trim(),
-        cardIds: Array.from(selectedCards),
+        id: userSet.set.id,
+        name: data.name,
+        cardIds: data.cardIds,
       },
       {
-        onSuccess() {
-          apiUtils.userSet.getById.invalidate({ id: userSetId });
+        async onSuccess() {
+          await apiUtils.userSet.getById.invalidate({ id: userSet.set.id });
           router.push("/collection");
         },
         onError(error) {
@@ -80,86 +68,69 @@ export function EditUserSetPageContent({ userSetId }: { userSetId: string }) {
 
   return (
     <>
-      <div className="flex items-center gap-4 mb-6">
-        <Link href="/collection">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">
-            {intl.formatMessage({
-              id: "userSet.title.edit",
-              defaultMessage: "Edit Set",
-            })}
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {intl.formatMessage({
-              id: "userSet.subtitle",
-              defaultMessage: "Name your set and select cards to add",
-            })}
-          </p>
-        </div>
-      </div>
-
       <Card className="p-6 mb-6">
-        <div className="flex flex-col sm:flex-row gap-4 items-end">
-          <div className="flex-1 space-y-2">
-            <Label htmlFor="user-set-name">
-              {intl.formatMessage({
-                id: "userSet.nameLabel",
-                defaultMessage: "Set Name",
-              })}
-            </Label>
-            <Input
-              id="user-set-name"
-              placeholder={intl.formatMessage({
-                id: "userSet.namePlaceholder",
-                defaultMessage: "My Awesome Set",
-              })}
-              value={userSetName}
-              onChange={(e) => setUserSetName(e.target.value)}
-              className="text-lg"
-            />
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-sm text-muted-foreground">
-              {intl.formatMessage(
-                {
-                  id: "userSet.cardsSelected",
-                  defaultMessage: "{count} cards selected",
-                },
-                { count: selectedCards.size }
-              )}
-            </div>
-            <Button
-              onClick={handleSaveUserSet}
-              disabled={
-                isSaving || !userSetName.trim() || selectedCards.size === 0
-              }
-              size="lg"
-            >
-              <Save className="h-5 w-5 mr-2" />
-              {isSaving
-                ? intl.formatMessage({
-                  id: "userSet.saving",
-                  defaultMessage: "Saving...",
-                })
-                : intl.formatMessage({
-                  id: "userSet.save",
-                  defaultMessage: "Save Changes",
+        <div>
+          <RHFForm form={form} onSubmit={onSubmit} className="flex flex-col sm:flex-row gap-4 sm:items-end">
+            <div className="flex-1 space-y-2">
+              <Label htmlFor="user-set-name">
+                {intl.formatMessage({
+                  id: "userSet.nameLabel",
+                  defaultMessage: "Set Name",
                 })}
-            </Button>
-          </div>
+              </Label>
+              <Input
+                {...form.register("name")}
+                placeholder={intl.formatMessage({
+                  id: "userSet.namePlaceholder",
+                  defaultMessage: "My Awesome Set",
+                })}
+                className="text-lg"
+              />
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-sm text-muted-foreground">
+                {intl.formatMessage(
+                  {
+                    id: "userSet.cardsSelected",
+                    defaultMessage: "{count} cards selected",
+                  },
+                  { count: form.getValues("cardIds").length }
+                )}
+              </div>
+              <Button
+                type="submit"
+                disabled={
+                  form.formState.isSubmitting || !form.formState.isDirty
+                }
+                size="lg"
+              >
+                <Save className="h-5 w-5 mr-2" />
+                <FormattedMessage
+                  id="userSet.save"
+                  defaultMessage="Save Changes"
+                />
+              </Button>
+            </div>
+          </RHFForm>
         </div>
       </Card>
 
       <hr className="mb-6" />
 
-      <CardBrowser
-        selectedCards={selectedCards}
-        onCardToggle={handleCardToggle}
-      />
+      <Controller name="cardIds" control={form.control} render={({ field }) => (
+        <CardBrowser
+          selectedCards={new Set(field.value)}
+          onCardToggle={(cardId: string) => {
+            handleCardToggle(cardId);
+          }}
+        />
+      )}>
+      </Controller>
     </>
   );
 }
+
+const FormSchema = z.object({
+  name: z.string().min(1, "Set name is required"),
+  cardIds: z.array(z.string()).min(1, "At least one card must be selected"),
+});
