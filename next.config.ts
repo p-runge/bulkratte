@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
         hostname: "assets.tcgdex.net",
       },
     ],
+    minimumCacheTTL: 60 * 60 * 24 * 365, // 1 year
   },
 };
 
