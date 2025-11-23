@@ -133,18 +133,28 @@ export function FormField<T extends FieldValues>({ name, label, description }: F
       render={({ field, fieldState }) => (
         <Field data-invalid={fieldState.invalid}>
           {label && <FieldLabel htmlFor={field.name}>{label}</FieldLabel>}
-          <TooltipProvider>
-            <Tooltip open={fieldState.invalid}>
-              <TooltipTrigger asChild>
-                <Input {...field} id={field.name} aria-invalid={fieldState.invalid} />
-              </TooltipTrigger>
-              {fieldState.invalid && (
-                <TooltipContent side="top" className="bg-destructive text-destructive-foreground" arrowClassName='bg-destructive fill-destructive'>
-                  {fieldState.error?.message}
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
+          {/* wrap a relative element around the input... */}
+          <div className='relative'>
+            <Input {...field} id={field.name} aria-invalid={fieldState.invalid} />
+            <TooltipProvider>
+              <Tooltip open={fieldState.invalid}>
+                <TooltipTrigger asChild>
+                  {/* ... so that the tooltip can be positioned at a placeholder anchor div */}
+                  <div className='absolute bottom-0 left-4' />
+                </TooltipTrigger>
+                {fieldState.invalid && (
+                  <TooltipContent
+                    side="bottom"
+                    align="start"
+                    className="bg-destructive text-destructive-foreground -ml-2"
+                    arrowClassName='bg-destructive fill-destructive'
+                  >
+                    {fieldState.error?.message}
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+          </div>
           {description && <FieldDescription>{description}</FieldDescription>}
         </Field>
       )}
