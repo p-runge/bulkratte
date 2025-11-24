@@ -1,28 +1,4 @@
 {
-  "addCard.conditionLabel": [
-    {
-      "type": 0,
-      "value": "Add Card with Condition:"
-    }
-  ],
-  "addCard.selectLanguage": [
-    {
-      "type": 0,
-      "value": "Select Language:"
-    }
-  ],
-  "addCard.selectLanguageHint": [
-    {
-      "type": 0,
-      "value": "Choose language, then click condition to add"
-    }
-  ],
-  "addCard.title": [
-    {
-      "type": 0,
-      "value": "Add Card"
-    }
-  ],
   "breadcrumb.label": [
     {
       "type": 0,
@@ -39,70 +15,6 @@
     {
       "type": 0,
       "value": "Browse Sets"
-    }
-  ],
-  "bulk.helper": [
-    {
-      "type": 0,
-      "value": "Select cards using the checkboxes to add them in bulk with the same settings."
-    }
-  ],
-  "bulk.selectVariant": [
-    {
-      "type": 0,
-      "value": "Select variant"
-    }
-  ],
-  "bulk.selectedCount": [
-    {
-      "type": 1,
-      "value": "count"
-    },
-    {
-      "type": 0,
-      "value": " cards selected"
-    }
-  ],
-  "button.addToCollection": [
-    {
-      "type": 0,
-      "value": "Add to Collection"
-    }
-  ],
-  "button.cancel": [
-    {
-      "type": 0,
-      "value": "Cancel"
-    }
-  ],
-  "button.clearSelection": [
-    {
-      "type": 0,
-      "value": "Clear Selection"
-    }
-  ],
-  "button.close": [
-    {
-      "type": 0,
-      "value": "Close"
-    }
-  ],
-  "button.saveChanges": [
-    {
-      "type": 0,
-      "value": "Save Changes"
-    }
-  ],
-  "button.selectAllVisible": [
-    {
-      "type": 0,
-      "value": "Select All Visible"
-    }
-  ],
-  "button.settings": [
-    {
-      "type": 0,
-      "value": "Settings"
     }
   ],
   "cardFilter.button.clearSelection": [
@@ -247,104 +159,16 @@
       "value": "My Collection"
     }
   ],
-  "editCard.noteLabel": [
+  "form.unsavedChanges": [
     {
       "type": 0,
-      "value": "Note"
+      "value": "You have unsaved changes. Are you sure you want to close?"
     }
   ],
-  "editCard.notePlaceholder": [
+  "form.validation.required": [
     {
       "type": 0,
-      "value": "Add a note about this specific card..."
-    }
-  ],
-  "editCard.photoAlt": [
-    {
-      "type": 0,
-      "value": "Photo "
-    },
-    {
-      "type": 1,
-      "value": "index"
-    }
-  ],
-  "editCard.photosLabel": [
-    {
-      "type": 0,
-      "value": "Photos"
-    }
-  ],
-  "editCard.remove": [
-    {
-      "type": 0,
-      "value": "Remove Card"
-    }
-  ],
-  "editCard.title": [
-    {
-      "type": 0,
-      "value": "Edit Card - "
-    },
-    {
-      "type": 1,
-      "value": "name"
-    },
-    {
-      "type": 0,
-      "value": " ("
-    },
-    {
-      "type": 1,
-      "value": "variant"
-    },
-    {
-      "type": 0,
-      "value": " - "
-    },
-    {
-      "type": 1,
-      "value": "condition"
-    },
-    {
-      "type": 0,
-      "value": " - "
-    },
-    {
-      "type": 1,
-      "value": "language"
-    },
-    {
-      "type": 0,
-      "value": ")"
-    }
-  ],
-  "header.ownedOverTotal": [
-    {
-      "type": 1,
-      "value": "owned"
-    },
-    {
-      "type": 0,
-      "value": "/"
-    },
-    {
-      "type": 1,
-      "value": "total"
-    },
-    {
-      "type": 0,
-      "value": " Cards"
-    }
-  ],
-  "header.totalCards": [
-    {
-      "type": 1,
-      "value": "total"
-    },
-    {
-      "type": 0,
-      "value": " Total Cards"
+      "value": "This field is required."
     }
   ],
   "home.browseSets": [
@@ -407,18 +231,6 @@
       "value": "My Collection"
     }
   ],
-  "mode.bulk": [
-    {
-      "type": 0,
-      "value": "Bulk"
-    }
-  ],
-  "mode.individual": [
-    {
-      "type": 0,
-      "value": "Individual"
-    }
-  ],
   "navigation.collection": [
     {
       "type": 0,
@@ -463,28 +275,6 @@
     {
       "type": 0,
       "value": "No cards found matching your search criteria."
-    }
-  ],
-  "photos.alt": [
-    {
-      "type": 0,
-      "value": "Card photo "
-    },
-    {
-      "type": 1,
-      "value": "index"
-    }
-  ],
-  "photos.title": [
-    {
-      "type": 0,
-      "value": "Card Photos"
-    }
-  ],
-  "rarity.all": [
-    {
-      "type": 0,
-      "value": "All Rarities"
     }
   ],
   "search.placeholder": [
@@ -544,15 +334,7 @@
   "set.notFound": [
     {
       "type": 0,
-      "value": "Set with ID "
-    },
-    {
-      "type": 1,
-      "value": "setId"
-    },
-    {
-      "type": 0,
-      "value": " not found"
+      "value": "Set not found"
     }
   ],
   "set.symbolAlt": [
@@ -571,42 +353,6 @@
       "value": "Sets"
     }
   ],
-  "settings.defaultLanguage": [
-    {
-      "type": 0,
-      "value": "Default Language"
-    }
-  ],
-  "settings.title": [
-    {
-      "type": 0,
-      "value": "Settings"
-    }
-  ],
-  "tooltip.bulkDesc": [
-    {
-      "type": 0,
-      "value": "Select multiple cards with checkboxes, then add the same variant/condition/language to all at once. Great for adding many similar cards quickly."
-    }
-  ],
-  "tooltip.bulkTitle": [
-    {
-      "type": 0,
-      "value": "Bulk Mode:"
-    }
-  ],
-  "tooltip.individualDesc": [
-    {
-      "type": 0,
-      "value": "Add cards one by one using the + dropdown on each card. Perfect for adding specific cards with different conditions."
-    }
-  ],
-  "tooltip.individualTitle": [
-    {
-      "type": 0,
-      "value": "Individual Mode:"
-    }
-  ],
   "userSet.cardsSelected": [
     {
       "type": 1,
@@ -623,34 +369,10 @@
       "value": "Create Set"
     }
   ],
-  "userSet.creating": [
-    {
-      "type": 0,
-      "value": "Creating..."
-    }
-  ],
-  "userSet.nameLabel": [
-    {
-      "type": 0,
-      "value": "Set Name"
-    }
-  ],
-  "userSet.namePlaceholder": [
-    {
-      "type": 0,
-      "value": "My Awesome Set"
-    }
-  ],
   "userSet.save": [
     {
       "type": 0,
       "value": "Save Changes"
-    }
-  ],
-  "userSet.saving": [
-    {
-      "type": 0,
-      "value": "Saving..."
     }
   ],
   "userSet.subtitle": [
@@ -671,14 +393,10 @@
       "value": "Create New Set"
     }
   ],
-  "variant.total": [
+  "userSetForm.validation.atLeastOneCard": [
     {
       "type": 0,
-      "value": "Total: "
-    },
-    {
-      "type": 1,
-      "value": "count"
+      "value": "At least one card must be selected."
     }
   ]
 }

@@ -8,6 +8,7 @@ import { AppRouter } from "@/lib/api/routers/_app";
 import { FormField, RHFForm, useRHFForm } from "@/lib/form/utils";
 import { Plus, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useMemo } from "react";
 import { Controller } from "react-hook-form";
 import { FormattedMessage, useIntl } from "react-intl";
 import z from "zod";
@@ -27,6 +28,7 @@ export default function UserSetForm({ mode, userSet }: Props) {
   const { mutateAsync: updateUserSet } = api.userSet.update.useMutation();
   const { mutateAsync: createUserSet } = api.userSet.create.useMutation();
 
+  const FormSchema = useFormSchema();
   const form = useRHFForm(FormSchema, {
     defaultValues: {
       name: userSet?.set.name ?? "",
@@ -149,7 +151,17 @@ export default function UserSetForm({ mode, userSet }: Props) {
   );
 }
 
-const FormSchema = z.object({
-  name: z.string().min(1, "Set name is required"),
-  cardIds: z.array(z.string()).min(1, "At least one card must be selected"),
-});
+function useFormSchema() {
+  const intl = useIntl();
+
+  return useMemo(() => z.object({
+    name: z.string().min(1, intl.formatMessage({
+      id: "form.validation.required",
+      defaultMessage: "This field is required.",
+    })),
+    cardIds: z.array(z.string()).min(1, intl.formatMessage({
+      id: "userSetForm.validation.atLeastOneCard",
+      defaultMessage: "At least one card must be selected.",
+    })),
+  }), [intl]);
+}
