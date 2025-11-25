@@ -1,6 +1,7 @@
 import { createCallerFactory, createTRPCRouter } from "@/lib/api/trpc";
 import { cardRouter } from "./card";
 import { setRouter } from "./set";
+import { userCardRouter } from "./user-card";
 import { userSetRouter } from "./user-set";
 
 /**
@@ -11,6 +12,7 @@ import { userSetRouter } from "./user-set";
 export const appRouter = createTRPCRouter({
   card: cardRouter,
   set: setRouter,
+  userCard: userCardRouter,
   userSet: userSetRouter,
 });
 
