@@ -139,8 +139,9 @@ export default function UserSetForm({ mode, userSet }: Props) {
         <>
           <p className="text-sm text-destructive">{fieldState.error?.message ?? "\u00A0"}</p>
           <CardBrowser
+            selectionMode="multi"
             selectedCards={new Set(field.value)}
-            onCardToggle={(cardId: string) => {
+            onCardClick={(cardId: string) => {
               handleCardToggle(cardId);
             }}
           />

@@ -5,12 +5,20 @@ import { useEffect, useState } from "react";
 import { CardFilters, type FilterState } from "./card-filters";
 import { CardGrid } from "./card-grid";
 
-type CardBrowserProps = {
-  selectedCards: Set<string>;
-  onCardToggle: (cardId: string) => void;
+type CardBrowserSingleProps = {
+  selectionMode: "single";
+  onCardClick: (cardId: string) => void;
 };
 
-export function CardBrowser({ selectedCards, onCardToggle }: CardBrowserProps) {
+type CardBrowserMultiProps = {
+  selectionMode: "multi";
+  selectedCards: Set<string>;
+  onCardClick: (cardId: string) => void;
+};
+
+type CardBrowserProps = CardBrowserSingleProps | CardBrowserMultiProps;
+
+export function CardBrowser(props: CardBrowserProps) {
   const [filters, setFilters] = useState<FilterState>({
     setId: "",
     rarity: "",
@@ -56,8 +64,9 @@ export function CardBrowser({ selectedCards, onCardToggle }: CardBrowserProps) {
 
       <CardGrid
         cards={cards}
-        selectedCards={selectedCards}
-        onCardToggle={onCardToggle}
+        selectionMode={props.selectionMode}
+        selectedCards={props.selectionMode === "multi" ? props.selectedCards : new Set()}
+        onCardClick={props.onCardClick}
         isLoading={isLoading}
       />
     </div>

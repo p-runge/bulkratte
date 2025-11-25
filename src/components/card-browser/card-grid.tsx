@@ -2,20 +2,22 @@
 
 import type { Card } from "@/lib/db";
 import { cn } from "@/lib/utils";
-import { Check } from "lucide-react";
+import { Check, Circle } from "lucide-react";
 import Image from "next/image";
 
 type CardGridProps = {
   cards: Card[];
+  selectionMode: "single" | "multi";
   selectedCards: Set<string>;
-  onCardToggle: (cardId: string) => void;
+  onCardClick: (cardId: string) => void;
   isLoading: boolean;
 };
 
 export function CardGrid({
   cards,
+  selectionMode,
   selectedCards,
-  onCardToggle,
+  onCardClick,
   isLoading,
 }: CardGridProps) {
   if (cards.length === 0 && !isLoading) {
@@ -34,7 +36,7 @@ export function CardGrid({
           return (
             <button
               key={card.id}
-              onClick={() => onCardToggle(card.id)}
+              onClick={() => onCardClick(card.id)}
               className={cn(
                 "group relative rounded-lg overflow-hidden transition-all hover:scale-105",
                 "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background",
@@ -53,7 +55,11 @@ export function CardGrid({
                 {isSelected && (
                   <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
                     <div className="bg-primary rounded-full p-2 border-black border">
-                      <Check className="h-6 w-6 text-primary-foreground" />
+                      {selectionMode === "multi" ? (
+                        <Check className="h-6 w-6 text-primary-foreground" />
+                      ) : (
+                        <Circle className="h-6 w-6 text-primary-foreground fill-current" />
+                      )}
                     </div>
                   </div>
                 )}
