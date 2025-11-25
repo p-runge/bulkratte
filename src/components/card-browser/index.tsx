@@ -8,12 +8,14 @@ import { CardGrid } from "./card-grid";
 type CardBrowserSingleProps = {
   selectionMode: "single";
   onCardClick: (cardId: string) => void;
+  maxHeightGrid?: string;
 };
 
 type CardBrowserMultiProps = {
   selectionMode: "multi";
   selectedCards: Set<string>;
   onCardClick: (cardId: string) => void;
+  maxHeightGrid?: string;
 };
 
 type CardBrowserProps = CardBrowserSingleProps | CardBrowserMultiProps;
@@ -68,6 +70,7 @@ export function CardBrowser(props: CardBrowserProps) {
         selectedCards={props.selectionMode === "multi" ? props.selectedCards : new Set()}
         onCardClick={props.onCardClick}
         isLoading={isLoading}
+        maxHeight={props.maxHeightGrid}
       />
     </div>
   );

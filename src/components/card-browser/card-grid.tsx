@@ -11,6 +11,7 @@ type CardGridProps = {
   selectedCards: Set<string>;
   onCardClick: (cardId: string) => void;
   isLoading: boolean;
+  maxHeight?: string;
 };
 
 export function CardGrid({
@@ -19,6 +20,7 @@ export function CardGrid({
   selectedCards,
   onCardClick,
   isLoading,
+  maxHeight,
 }: CardGridProps) {
   if (cards.length === 0 && !isLoading) {
     return (
@@ -29,7 +31,9 @@ export function CardGrid({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 overflow-y-auto" style={{
+      maxHeight,
+    }}>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
         {cards.map((card) => {
           const isSelected = selectedCards.has(card.id);
