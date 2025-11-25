@@ -245,7 +245,7 @@ export const userCardsTable = pgTable("user_cards", {
     .primaryKey()
     .default(sql`gen_random_uuid()`),
   user_id: uuid("user_id").notNull(),
-  card_id: uuid("card_id").notNull(),
+  card_id: text("card_id").notNull(),
   language: languageEnum(),
   variant: variantEnum(),
   condition: conditionEnum(),
