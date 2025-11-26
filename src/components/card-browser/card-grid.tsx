@@ -52,6 +52,7 @@ export function CardGrid({
                   src={card.imageSmall || "/placeholder.svg"}
                   width="250"
                   height="350"
+                  unoptimized
                   alt={`${card.name} - ${card.number}`}
                   className="w-full h-full object-cover"
                   loading="lazy"

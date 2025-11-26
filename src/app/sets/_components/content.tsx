@@ -99,6 +99,7 @@ export default function Content({ sets }: Props) {
                   )}
                   width={64}
                   height={64}
+                  unoptimized
                   className="inline-block w-16 h-16 object-contain object-center mr-2"
                 />
               )}
@@ -155,6 +156,7 @@ export default function Content({ sets }: Props) {
                                   )}
                                   width={48}
                                   height={48}
+                                  unoptimized
                                   className="inline-block w-12 h-12 object-contain object-center mr-2"
                                 />
                               )}
@@ -188,6 +190,7 @@ export default function Content({ sets }: Props) {
                                 )}
                                 width={24}
                                 height={24}
+                                unoptimized
                                 className="inline-block w-6 h-6 object-contain object-center mr-2"
                               />
                             )}

@@ -31,6 +31,7 @@ export default function CardImage({
         alt={alt}
         width={width}
         height={height}
+        unoptimized
         className={cn(
           "cursor-zoom-in transition-transform hover:scale-105",
           className
@@ -60,6 +61,7 @@ export default function CardImage({
             alt={alt}
             width={600}
             height={825}
+            unoptimized
             className="w-auto h-auto object-contain"
             draggable={false}
             priority

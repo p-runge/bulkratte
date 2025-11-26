@@ -58,6 +58,7 @@ export default function CreateCardDialog({
                   alt={card.name}
                   width={240}
                   height={165}
+                  unoptimized
                   className="w-auto h-auto object-contain rounded-md"
                   draggable={false}
                   priority
