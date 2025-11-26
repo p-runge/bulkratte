@@ -33,7 +33,9 @@ async function run() {
   const messages = JSON.parse(data) as Record<string, string>;
   console.log("Translating", Object.keys(messages).length, "messages");
 
-  const targetLocales = LOCALES.filter((locale) => locale !== DEFAULT_LOCALE);
+  const targetLocales = Object.values(LOCALES).filter(
+    (locale) => locale !== DEFAULT_LOCALE
+  );
   console.log("Target locales:", targetLocales);
 
   await Promise.all(targetLocales.map((locale) => translate(locale, data)));
@@ -42,66 +44,96 @@ async function run() {
 }
 
 async function translate(locale: string, data: string) {
-  if (!client) {
-    return;
-  }
+  if (!client) throw new Error("OpenAI client is not initialized");
 
-  const response = await client.responses.create({
-    model: "gpt-4o-mini",
-    instructions: `
-You are a translation engine.
-The input will be the content of a JSON file with the following structure:
+  // parse source messages to determine which keys still need translation
+  const sourceMessages = JSON.parse(data) as Record<string, string>;
 
-\`\`\`
-{
-  "text": "The text to be translated",
-}
-\`\`\`
-
-Translate the whole file from the source language (en-US) to the target language (${locale}).
-Only respond with the translated text. Do not include any other text.
-
-The application this text is used in is a web application for collection trading cards, so please use appropriate translations for that context.
-    `,
-    input: data,
-  });
-
-  let oldFileJSON;
+  // load existing translations (if any)
+  let oldFileJSON: Record<string, string>;
   try {
     const oldFileContent = await fs.readFile(
       `src/lib/i18n/translated/${locale}.json`,
       "utf-8"
     );
     oldFileJSON = JSON.parse(oldFileContent) as Record<string, string>;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (e) {
-    // file does not exist yet or is invalid
-    oldFileJSON = {} as Record<string, string>;
+    console.error(`No existing translation file for locale ${locale}`, e);
+    oldFileJSON = {};
   }
 
+  // determine keys that are present in source but missing in existing translations
+  const keysToTranslate = Object.keys(sourceMessages).filter(
+    (k) => !(k in oldFileJSON)
+  );
+
+  if (keysToTranslate.length === 0) {
+    // nothing to translate; however ensure we remove any stale keys and write file
+    const cleaned: Record<string, string> = {};
+    for (const k of Object.keys(oldFileJSON)) {
+      if (k in sourceMessages) cleaned[k] = oldFileJSON[k]!;
+    }
+    const path = `src/lib/i18n/translated/${locale}.json`;
+    await fs.writeFile(path, JSON.stringify(cleaned, null, 2) + "\n");
+    console.log(
+      `No missing keys for ${locale}. Written existing file to ${path}`
+    );
+    return;
+  }
+
+  // build a partial JSON containing only missing keys to minimize request size
+  const partialSource: Record<string, string> = {};
+  for (const k of keysToTranslate) partialSource[k] = sourceMessages[k]!;
+
+  console.log(
+    `Translating ${Object.keys(partialSource).length} messages to ${locale}`
+  );
+  // return
+
+  const response = await client.responses.create({
+    model: "gpt-4o-mini",
+    instructions: `You are a translation engine.
+The input will be a JSON object containing only the keys that need translation, for example:
+
+\`\`\`
+{
+  "some.key": "Text to translate",
+  "another.key": "Another text"
+}
+\`\`\`
+
+Make sure to escape any special characters properly so that the output is valid JSON.
+
+Translate the whole file from the source language (${DEFAULT_LOCALE}) to the target language (${locale}).
+Only respond with the translated text. Do not include any other text.
+
+The application this text is used in is a web application for collection trading cards, so please use appropriate translations for that context.`,
+    input: JSON.stringify(partialSource),
+  });
+
   // validate response is valid JSON
+  let newFileJSON: Record<string, string>;
   try {
-    JSON.parse(response.output_text);
+    newFileJSON = JSON.parse(response.output_text) as Record<string, string>;
   } catch (e) {
-    console.error("Response is not valid JSON", response);
+    console.error("Response is not valid JSON", response.output_text);
     throw e;
   }
 
-  // TODO: consider checking for updated translations in the source file and re-translate those
+  const merged: Record<string, string> = { ...newFileJSON, ...oldFileJSON };
 
-  // merge new file into old one, but don't overwrite existing keys
-  const newFileJSON = JSON.parse(response.output_text) as Record<
-    string,
-    string
-  >;
-  const merged = { ...newFileJSON, ...oldFileJSON };
-  // remove keys not present in the source file anymore
+  // ensure we only keep keys that still exist in the source messages
   for (const key of Object.keys(merged)) {
-    if (!(key in newFileJSON)) {
-      delete merged[key];
-    }
+    if (!(key in sourceMessages)) delete merged[key];
   }
-  const newFileContent = JSON.stringify(merged, null, 2);
+
+  const sortedKeys = Object.keys(merged).sort();
+  const sortedMerged: Record<string, string> = {};
+  for (const key of sortedKeys) {
+    sortedMerged[key] = merged[key]!;
+  }
+
+  const newFileContent = JSON.stringify(sortedMerged, null, 2) + "\n";
 
   // write to file
   const path = `src/lib/i18n/translated/${locale}.json`;
