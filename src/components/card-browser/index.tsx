@@ -37,7 +37,10 @@ export function CardBrowser(props: CardBrowserProps) {
     isLoading,
     refetch: fetchCards,
   } = api.card.getList.useQuery();
-  const cards = cardListData || [];
+  const cards = cardListData?.map((card) => ({
+    ...card,
+    gridId: card.id,
+  })) ?? [];
 
   // Handle filter changes with debounce for search
   useEffect(() => {

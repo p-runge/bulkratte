@@ -5,8 +5,10 @@ import { cn } from "@/lib/utils";
 import { Check, Circle } from "lucide-react";
 import Image from "next/image";
 
+type CardWithGridId = Card & { gridId: string };
+
 type CardGridProps = {
-  cards: Card[];
+  cards: CardWithGridId[];
   selectionMode: "single" | "multi";
   selectedCards: Set<string>;
   onCardClick: (cardId: string) => void;
@@ -39,7 +41,7 @@ export function CardGrid({
           const isSelected = selectedCards.has(card.id);
           return (
             <button
-              key={card.id}
+              key={card.gridId}
               onClick={() => onCardClick(card.id)}
               className={cn(
                 "group relative rounded-lg overflow-hidden transition-all hover:scale-105",
