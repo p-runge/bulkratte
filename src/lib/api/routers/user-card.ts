@@ -1,4 +1,5 @@
 import {
+  cardsTable,
   conditionEnum,
   languageEnum,
   userCardsTable,
@@ -49,9 +50,19 @@ export const userCardRouter = createTRPCRouter({
         variant: userCardsTable.variant,
         condition: userCardsTable.condition,
         notes: userCardsTable.notes,
+        card: {
+          id: cardsTable.id,
+          name: cardsTable.name,
+          number: cardsTable.number,
+          rarity: cardsTable.rarity,
+          imageSmall: cardsTable.imageSmall,
+          imageLarge: cardsTable.imageLarge,
+          setId: cardsTable.setId,
+        },
       })
       .from(userCardsTable)
       .where(eq(userCardsTable.user_id, ctx.session.user.id))
+      .leftJoin(cardsTable, eq(userCardsTable.card_id, cardsTable.id))
       .orderBy(userCardsTable.created_at);
 
     return userCards;
