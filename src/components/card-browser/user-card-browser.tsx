@@ -3,7 +3,7 @@
 import { api } from "@/lib/api/react";
 import { useEffect, useState } from "react";
 import { CardFilters, type FilterState } from "./card-filters";
-import { CardGrid } from "./card-grid";
+import { CardGrid, CardWithGridId } from "./card-grid";
 
 type UserCardBrowserProps = {
   onCardClick: (cardId: string) => void;
@@ -29,8 +29,8 @@ export function UserCardBrowser(props: UserCardBrowserProps) {
   } = api.userCard.getList.useQuery();
   const cards = data?.map((userCard) => ({
     gridId: userCard.id,
-    ...userCard.card,
-  })) ?? [];
+    ...userCard.card!,
+  })) as CardWithGridId[];
 
   // Handle filter changes with debounce for search
   useEffect(() => {

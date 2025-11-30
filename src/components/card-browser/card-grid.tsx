@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { Check, Circle } from "lucide-react";
 import Image from "next/image";
 
-type CardWithGridId = Card & { gridId: string };
+export type CardWithGridId = Card & { gridId: string };
 
 type CardGridProps = {
   cards: CardWithGridId[];

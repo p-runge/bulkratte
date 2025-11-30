@@ -51,6 +51,8 @@ export const userCardRouter = createTRPCRouter({
         condition: userCardsTable.condition,
         notes: userCardsTable.notes,
         card: {
+          created_at: userCardsTable.created_at,
+          updated_at: userCardsTable.updated_at,
           id: cardsTable.id,
           name: cardsTable.name,
           number: cardsTable.number,
