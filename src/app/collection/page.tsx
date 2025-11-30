@@ -10,7 +10,7 @@ import { api } from "@/lib/api/server";
 import { getIntl } from "@/lib/i18n/server";
 import { BookHeart, Library, Plus } from "lucide-react";
 import Link from "next/link";
-import MyCardsTab from "./_components/my-card-tab";
+import MyCardsTab from "./_components/my-cards-tab";
 
 export default async function CollectionPage() {
   const intl = await getIntl();
@@ -78,7 +78,7 @@ async function MySetsTab() {
           </Button>
         </Link>
       </div>
-      {true || userSets.length === 0 ? (
+      {userSets.length === 0 ? (
         // No sets
         <Card className="text-center py-12">
           <CardContent>

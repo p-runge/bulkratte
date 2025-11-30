@@ -21,6 +21,7 @@ export default function CreateCardDialog({
     }
   );
   const { mutateAsync: addCardToCollection } = api.userCard.create.useMutation();
+  const apiUtils = api.useUtils();
 
   async function handleAddCard() {
     if (card) {
@@ -33,6 +34,7 @@ export default function CreateCardDialog({
         notes: undefined,
         photos: undefined,
       });
+      await apiUtils.userCard.getList.invalidate();
     }
     onClose();
   }
