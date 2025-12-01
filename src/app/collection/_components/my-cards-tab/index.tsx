@@ -11,7 +11,7 @@ import { api } from "@/lib/api/react";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { useIntl } from "react-intl";
-import CreateCardDialog from "./create-card-dialog";
+import CreateUserCardDialog from "./create-user-card-dialog";
 
 export default function MyCardsTab() {
   const intl = useIntl();
@@ -68,7 +68,7 @@ export default function MyCardsTab() {
         )}
       </TabsContent>
 
-      {isCreateCardDialogOpen && <CreateCardDialog
+      {isCreateCardDialogOpen && <CreateUserCardDialog
         onClose={() => setIsCreateCardDialogOpen(false)}
       />}
     </>

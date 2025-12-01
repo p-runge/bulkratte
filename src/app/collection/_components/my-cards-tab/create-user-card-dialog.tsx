@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { useIntl } from "react-intl";
 
-export default function CreateCardDialog({
+export default function CreateUserCardDialog({
   onClose,
 }: {
   onClose: () => void;
