@@ -1,10 +1,5 @@
-import {
-  cardsTable,
-  conditionEnum,
-  languageEnum,
-  userCardsTable,
-  variantEnum,
-} from "@/lib/db/index";
+import { cardsTable, userCardsTable } from "@/lib/db";
+import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";

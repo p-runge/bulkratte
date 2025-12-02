@@ -1,6 +1,7 @@
 // fetch sets from external API and insert into the database
 import { env } from "@/env";
-import { cardsTable, db, Rarity, setsTable } from "@/lib/db";
+import { cardsTable, db, setsTable } from "@/lib/db";
+import { Rarity } from "@/lib/db/enums";
 import pokemonAPI from "@/lib/pokemon-api";
 
 export async function fetchAndStoreSets(withCards = true) {
