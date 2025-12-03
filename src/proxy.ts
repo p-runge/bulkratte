@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { DEFAULT_LOCALE } from "./lib/i18n";
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const modifiedHeaders = new Headers(req.headers);
 
   // Overwrite the "accept-language" header based on cookie value
