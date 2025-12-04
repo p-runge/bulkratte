@@ -61,7 +61,7 @@ export default function CreateUserCardDialog({
 
   return (
     <Dialog open onOpenChange={onClose} modal>
-      <DialogContent className="max-h-[90vh]">
+      <DialogContent className="max-h-[90vh] w-3xl sm:max-w-screen">
         <DialogHeader>
           <DialogTitle>
             {intl.formatMessage({
