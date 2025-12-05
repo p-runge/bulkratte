@@ -106,7 +106,10 @@ export default function Content({ set, cards }: Props) {
                   </Select> */}
                 </div>
 
-                <div className="flex gap-2 items-center">
+                {/* 
+                  // TODO: uncomment this when list view is redesigned
+                */}
+                {/* <div className="flex gap-2 items-center">
                   <Toggle
                     pressed={viewMode === "grid"}
                     onPressedChange={() => setViewMode("grid")}
@@ -121,7 +124,7 @@ export default function Content({ set, cards }: Props) {
                   >
                     <List className="h-4 w-4" />
                   </Toggle>
-                </div>
+                </div> */}
               </div>
             </CardContent>
           </Card>
