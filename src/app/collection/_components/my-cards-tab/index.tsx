@@ -12,14 +12,21 @@ import { Plus } from "lucide-react";
 import { useState } from "react";
 import { useIntl } from "react-intl";
 import CreateUserCardDialog from "./create-user-card-dialog";
+import Loader from "@/components/loader";
 
 export default function MyCardsTab() {
   const intl = useIntl();
 
   const [isCreateCardDialogOpen, setIsCreateCardDialogOpen] = useState(false);
 
-  const { data } = api.userCard.getList.useQuery();
+  const { data, isLoading } = api.userCard.getList.useQuery();
   const userCards = data ?? [];
+
+  if (isLoading) {
+    return <div className="flex justify-center">
+      <Loader />
+    </div>;
+  }
 
   return (
     <>
