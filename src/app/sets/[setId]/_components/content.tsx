@@ -2,14 +2,11 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Toggle } from "@/components/ui/toggle";
-// import { PokemonCard, PokemonSet } from "@/lib/pokemon-api";
+import { Card as PokemonCard, Set as PokemonSet } from "@/lib/db";
 import { cn } from "@/lib/utils";
 import {
   Circle,
   Diamond,
-  Grid,
-  List,
   Search,
   Star
 } from "lucide-react";
@@ -18,7 +15,6 @@ import { Rarity } from "pokemon-tcg-sdk-typescript/dist/sdk";
 import { ReactNode, useState } from "react";
 import { useIntl } from 'react-intl';
 import CardImage from "./card-image";
-import { Set as PokemonSet, Card as PokemonCard } from "@/lib/db"
 
 type Props = {
   set: PokemonSet;
@@ -28,7 +24,7 @@ export default function Content({ set, cards }: Props) {
   const intl = useIntl();
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode] = useState<"grid" | "list">("grid");
   const [filterRarity] = useState<string>("all");
 
   const filteredCards = cards.filter((card) => {
