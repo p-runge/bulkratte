@@ -61,7 +61,7 @@ export default function CreateUserCardDialog({
 
   return (
     <Dialog open onOpenChange={onClose} modal>
-      <DialogContent className="max-h-[90vh] w-3xl sm:max-w-screen">
+      <DialogContent className="max-h-[90vh] w-5xl sm:max-w-screen">
         <DialogHeader>
           <DialogTitle>
             {intl.formatMessage({
@@ -72,7 +72,7 @@ export default function CreateUserCardDialog({
         </DialogHeader>
         {/* TODO: add default settings here (language, condition, variant, etc.) */}
         <RHFForm form={form} onSubmit={handleSubmit} className="py-4">
-          {!selectedCardId ? <CardBrowser selectionMode="single" onCardClick={(cardId) => setSelectedCardId(cardId)} maxHeightGrid="400px" /> :
+          {!selectedCardId ? <CardBrowser selectionMode="single" onCardClick={(cardId) => setSelectedCardId(cardId)} maxHeightGrid="600px" /> :
             card ? (
               <div className="flex gap-6">
                 <Image

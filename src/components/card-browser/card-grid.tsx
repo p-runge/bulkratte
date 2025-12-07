@@ -36,7 +36,13 @@ export function CardGrid({
     <div className="space-y-4 overflow-y-auto" style={{
       maxHeight,
     }}>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+      <div
+        className="gap-4"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(clamp(120px, 20vw, 245px), 1fr))',
+        }}
+      >
         {cards.map((card) => {
           const isSelected = selectedCards.has(card.id);
           return (
@@ -46,14 +52,15 @@ export function CardGrid({
               className={cn(
                 "group relative rounded-lg overflow-hidden transition-all hover:scale-105",
                 "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background",
-                isSelected && "ring-2 ring-primary"
+                isSelected && "ring-2 ring-primary",
+                "w-full"
               )}
             >
-              <div className="aspect-[2.5/3.5] relative">
+              <div className="aspect-[245/337] relative">
                 <Image
                   src={card.imageSmall || "/placeholder.svg"}
-                  width="250"
-                  height="350"
+                  width="245"
+                  height="337"
                   unoptimized
                   alt={`${card.name} - ${card.number}`}
                   className="w-full h-full object-cover"
