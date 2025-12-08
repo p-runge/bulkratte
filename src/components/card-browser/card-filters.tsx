@@ -88,7 +88,7 @@ export function CardFilters({ onFilterChange }: CardFiltersProps) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <Label htmlFor="search" className="text-sm text-muted-foreground">
             {intl.formatMessage({ id: "cardFilter.search.placeholder", defaultMessage: "Search" })}
           </Label>
@@ -101,7 +101,7 @@ export function CardFilters({ onFilterChange }: CardFiltersProps) {
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <Label htmlFor="set" className="text-sm text-muted-foreground">
             {intl.formatMessage({ id: "cardFilter.set.label", defaultMessage: "Set" })}
           </Label>
@@ -123,7 +123,7 @@ export function CardFilters({ onFilterChange }: CardFiltersProps) {
           </Select>
         </div>
 
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <Label htmlFor="rarity" className="text-sm text-muted-foreground">
             {intl.formatMessage({ id: "cardFilter.rarity.label", defaultMessage: "Rarity" })}
           </Label>
@@ -145,7 +145,7 @@ export function CardFilters({ onFilterChange }: CardFiltersProps) {
           </Select>
         </div>
 
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <Label htmlFor="date-from" className="text-sm text-muted-foreground">
             {intl.formatMessage({ id: "cardFilter.date.from", defaultMessage: "Release From" })}
           </Label>
@@ -159,7 +159,7 @@ export function CardFilters({ onFilterChange }: CardFiltersProps) {
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <Label htmlFor="date-to" className="text-sm text-muted-foreground">
             {intl.formatMessage({ id: "cardFilter.date.to", defaultMessage: "Release To" })}
           </Label>
