@@ -5,17 +5,20 @@ import { useEffect, useState } from "react";
 import { CardFilters, type FilterState } from "./card-filters";
 import { CardGrid } from "./card-grid";
 
-type CardBrowserSingleProps = {
-  selectionMode: "single";
+type CardBrowserCoreProps = {
   onCardClick: (cardId: string) => void;
+  setId?: string;
   maxHeightGrid?: string;
+  // Common props can be defined here if needed
 };
 
-type CardBrowserMultiProps = {
+type CardBrowserSingleProps = CardBrowserCoreProps & {
+  selectionMode: "single";
+};
+
+type CardBrowserMultiProps = CardBrowserCoreProps & {
   selectionMode: "multi";
   selectedCards: Set<string>;
-  onCardClick: (cardId: string) => void;
-  maxHeightGrid?: string;
 };
 
 type CardBrowserProps = CardBrowserSingleProps | CardBrowserMultiProps;
@@ -36,7 +39,9 @@ export function CardBrowser(props: CardBrowserProps) {
     data: cardListData,
     isLoading,
     refetch: fetchCards,
-  } = api.card.getList.useQuery();
+  } = api.card.getList.useQuery({
+    setId: props.setId,
+  });
   const cards = cardListData?.map((card) => ({
     ...card,
     gridId: card.id,

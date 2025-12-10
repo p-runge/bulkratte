@@ -1,40 +1,23 @@
 "use client";
 
+import { CardBrowser } from "@/components/card-browser";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Card as PokemonCard, Set as PokemonSet } from "@/lib/db";
-import { cn } from "@/lib/utils";
+import { Set as PokemonSet } from "@/lib/db";
 import {
-  Circle,
-  Diamond,
-  Search,
-  Star
+  Search
 } from "lucide-react";
 import Image from "next/image";
-import { Rarity } from "pokemon-tcg-sdk-typescript/dist/sdk";
-import { ReactNode, useState } from "react";
+import { useState } from "react";
 import { useIntl } from 'react-intl';
-import CardImage from "./card-image";
 
 type Props = {
   set: PokemonSet;
-  cards: PokemonCard[];
 };
-export default function Content({ set, cards }: Props) {
+export default function Content({ set }: Props) {
   const intl = useIntl();
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode] = useState<"grid" | "list">("grid");
-  const [filterRarity] = useState<string>("all");
-
-  const filteredCards = cards.filter((card) => {
-    const matchesSearch =
-      card.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      card.number.includes(searchTerm);
-    const matchesRarity =
-      filterRarity === "all" || card.rarity === filterRarity;
-    return matchesSearch && matchesRarity;
-  });
 
   return (
     <div className="space-y-6">
@@ -126,86 +109,25 @@ export default function Content({ set, cards }: Props) {
           </Card>
 
           {/* Cards Display */}
-          {
-            <div
-              className={cn(
-                viewMode === "grid" && "grid grid-cols-2 md:flex md:flex-wrap gap-2 justify-between",
-                viewMode === "list" && "space-y-2"
-              )}
-            >
-              {filteredCards.map((card) => (
-                <Card
-                  key={card.id}
-                  className={cn("transition-all p-0")}
-                >
-                  <CardContent className="p-2">
-                    <div className="mb-2">
-                      <h3
-                        className="font-semibold truncate"
-                        title={card.name}
-                      >
-                        {card.name}
-                      </h3>
-                      <div className="text-sm flex items-center gap-2">
-                        {/* base set has no symbol */}
-                        {set.symbol && (
-                          <Image
-                            src={set.symbol}
-                            alt={`${set.name} symbol`}
-                            width={16}
-                            height={16}
-                            unoptimized
-                          />
-                        )}
-
-                        <span>({`${card.number}/${set.total}`})</span>
-
-                        {rarityIconMap[card.rarity as Rarity] ?? (
-                          <span>{card.rarity}</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Card Thumbnail */}
-                    <div className="relative">
-                      <CardImage
-                        small={card.imageSmall}
-                        large={card.imageLarge}
-                        alt={card.name}
-                        width={245}
-                        height={337}
-                        className="w-min-[100px]  w-max-[245px] h-auto object-cover rounded border shadow-sm"
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          }
-
-          {filteredCards.length === 0 && (
-            <Card>
-              <CardContent className="text-center py-12">
-                <p className="text-muted-foreground">
-                  {intl.formatMessage({ id: "noCardsFound", defaultMessage: "No cards found matching your search criteria." })}
-                </p>
-              </CardContent>
-            </Card>
-          )}
+          <CardBrowser selectionMode="single" onCardClick={
+            (cardId) => {
+              console.log("Card clicked:", cardId);
+            }
+          } setId={set.id} />
         </>
       )}
     </div>
   );
 }
 
-const rarityIconMap = {
-  Common: <Circle className="w-3 h-3 fill-black" />,
-  Uncommon: <Diamond className="w-3 h-3 fill-black" />,
-  Rare: <Star className="w-3 h-3 fill-black" />,
-  "Rare Holo": (
-    <span className="flex items-center">
-      <Star className="w-3 h-3 fill-black" />
-      <span className="text-xs">H</span>
-    </span>
-  ),
-} as Partial<Record<Rarity, ReactNode>>;
+// const rarityIconMap = {
+//   Common: <Circle className="w-3 h-3 fill-black" />,
+//   Uncommon: <Diamond className="w-3 h-3 fill-black" />,
+//   Rare: <Star className="w-3 h-3 fill-black" />,
+//   "Rare Holo": (
+//     <span className="flex items-center">
+//       <Star className="w-3 h-3 fill-black" />
+//       <span className="text-xs">H</span>
+//     </span>
+//   ),
+// } as Partial<Record<Rarity, ReactNode>>;

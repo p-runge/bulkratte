@@ -27,7 +27,6 @@ export default async function SetIdPage({
       </div>
     );
   }
-  const cards = await api.card.getList({ setId });
 
   return (
     <TooltipProvider>
@@ -72,7 +71,7 @@ export default async function SetIdPage({
         </ol>
       </nav>
 
-      <Content set={selectedSet} cards={cards} />
+      <Content set={selectedSet} />
     </TooltipProvider>
   )
 };
