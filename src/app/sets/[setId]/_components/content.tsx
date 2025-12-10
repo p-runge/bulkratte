@@ -1,9 +1,11 @@
 "use client";
 
 import { CardBrowser } from "@/components/card-browser";
+import { CardImageDialog } from "@/components/card-image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Set as PokemonSet } from "@/lib/db";
+import { api } from "@/lib/api/react";
+import { Card as CardType, Set as PokemonSet } from "@/lib/db";
 import {
   Search
 } from "lucide-react";
@@ -18,6 +20,11 @@ export default function Content({ set }: Props) {
   const intl = useIntl();
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCard, setSelectedCard] = useState<CardType | null>(null);
+
+  const { data: cards } = api.card.getList.useQuery({
+    setId: set.id,
+  });
 
   return (
     <div className="space-y-6">
@@ -111,10 +118,22 @@ export default function Content({ set }: Props) {
           {/* Cards Display */}
           <CardBrowser selectionMode="single" onCardClick={
             (cardId) => {
-              console.log("Card clicked:", cardId);
+              const card = cards?.find((c) => c.id === cardId);
+              if (card) {
+                setSelectedCard(card);
+              }
             }
           } setId={set.id} />
         </>
+      )}
+
+      {selectedCard && (
+        <CardImageDialog
+          large={selectedCard.imageLarge}
+          alt={`${selectedCard.name} card image`}
+          open={!!selectedCard}
+          onOpenChange={(open) => !open && setSelectedCard(null)}
+        />
       )}
     </div>
   );
