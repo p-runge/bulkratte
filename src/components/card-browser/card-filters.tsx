@@ -11,13 +11,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api/react";
+import { rarityEnum } from "@/lib/db/enums";
 import { X } from "lucide-react";
 import { useState } from "react";
 import { useIntl } from "react-intl";
-
-type CardFiltersProps = {
-  onFilterChange: (filters: FilterState) => void;
-};
 
 export type FilterState = {
   setId: string;
@@ -27,14 +24,9 @@ export type FilterState = {
   releaseDateTo: string;
 };
 
-const RARITIES = [
-  "Common",
-  "Uncommon",
-  "Rare",
-  "Rare Holo",
-  "Ultra Rare",
-  "Secret Rare",
-];
+type CardFiltersProps = {
+  onFilterChange: (filters: FilterState) => void;
+};
 
 export function CardFilters({ onFilterChange }: CardFiltersProps) {
   const intl = useIntl();
@@ -136,8 +128,8 @@ export function CardFilters({ onFilterChange }: CardFiltersProps) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{intl.formatMessage({ id: "cardFilter.rarity.all", defaultMessage: "All rarities" })}</SelectItem>
-              {RARITIES.map((rarity) => (
-                <SelectItem key={rarity} value={rarity.toLowerCase()}>
+              {rarityEnum.enumValues.map((rarity) => (
+                <SelectItem key={rarity} value={rarity}>
                   {rarity}
                 </SelectItem>
               ))}
