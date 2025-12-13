@@ -23,23 +23,27 @@ export type FilterState = {
   releaseDateFrom: string;
   releaseDateTo: string;
 };
+const EMPTY_FILTERS: FilterState = {
+  setId: "",
+  rarity: "",
+  search: "",
+  releaseDateFrom: "",
+  releaseDateTo: "",
+};
 
 type CardFiltersProps = {
   onFilterChange: (filters: FilterState) => void;
+  disableSetFilter?: boolean;
 };
 
-export function CardFilters({ onFilterChange }: CardFiltersProps) {
+export function CardFilters({ onFilterChange, disableSetFilter = false }: CardFiltersProps) {
   const intl = useIntl();
 
-  const [filters, setFilters] = useState<FilterState>({
-    setId: "",
-    rarity: "",
-    search: "",
-    releaseDateFrom: "",
-    releaseDateTo: "",
-  });
+  const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
 
-  const { data: setListData } = api.set.getList.useQuery();
+  const { data: setListData } = api.set.getList.useQuery(
+    undefined, { enabled: !disableSetFilter }
+  );
   const sets = setListData || [];
 
   const updateFilter = (key: keyof FilterState, value: string) => {
@@ -49,15 +53,8 @@ export function CardFilters({ onFilterChange }: CardFiltersProps) {
   };
 
   const clearFilters = () => {
-    const emptyFilters: FilterState = {
-      setId: "",
-      rarity: "",
-      search: "",
-      releaseDateFrom: "",
-      releaseDateTo: "",
-    };
-    setFilters(emptyFilters);
-    onFilterChange(emptyFilters);
+    setFilters(EMPTY_FILTERS);
+    onFilterChange(EMPTY_FILTERS);
   };
 
   const hasActiveFilters = Object.values(filters).some((v) => v !== "");
@@ -93,27 +90,29 @@ export function CardFilters({ onFilterChange }: CardFiltersProps) {
           />
         </div>
 
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="set" className="text-sm text-muted-foreground">
-            {intl.formatMessage({ id: "cardFilter.set.label", defaultMessage: "Set" })}
-          </Label>
-          <Select
-            value={filters.setId}
-            onValueChange={(value) => updateFilter("setId", value)}
-          >
-            <SelectTrigger id="set" className="bg-background">
-              <SelectValue placeholder="All sets" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{intl.formatMessage({ id: "cardFilter.set.all", defaultMessage: "All sets" })}</SelectItem>
-              {sets.map((set) => (
-                <SelectItem key={set.id} value={set.id}>
-                  {set.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {!disableSetFilter ? (
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="set" className="text-sm text-muted-foreground">
+              {intl.formatMessage({ id: "cardFilter.set.label", defaultMessage: "Set" })}
+            </Label>
+            <Select
+              value={filters.setId}
+              onValueChange={(value) => updateFilter("setId", value)}
+            >
+              <SelectTrigger id="set" className="bg-background">
+                <SelectValue placeholder="All sets" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{intl.formatMessage({ id: "cardFilter.set.all", defaultMessage: "All sets" })}</SelectItem>
+                {sets.map((set) => (
+                  <SelectItem key={set.id} value={set.id}>
+                    {set.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : <div />}
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="rarity" className="text-sm text-muted-foreground">

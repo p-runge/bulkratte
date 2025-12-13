@@ -70,7 +70,7 @@ export function CardBrowser(props: CardBrowserProps) {
 
   return (
     <div className="space-y-6">
-      <CardFilters onFilterChange={setFilters} />
+      <CardFilters onFilterChange={setFilters} disableSetFilter={!!props.setId} />
 
       <CardGrid
         cards={cards}
