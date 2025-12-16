@@ -35,7 +35,7 @@
     "@tcgdex/sdk": "^2.7.0",
     "@trpc/client": "^11.0.0",
     "@trpc/react-query": "^11.0.0",
-    "@trpc/server": "^11.0.0",
+    "@trpc/server": "^11.8.0",
     "@trpc/tanstack-react-query": "^11.6.0",
     "@vercel/speed-insights": "^1.2.0",
     "class-variance-authority": "^0.7.1",
