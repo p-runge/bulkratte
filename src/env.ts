@@ -9,6 +9,8 @@ export const env = createEnv({
     DATABASE_URL: z.string().url(),
     AUTH_DISCORD_CLIENT_ID: z.string(),
     AUTH_DISCORD_CLIENT_SECRET: z.string(),
+    AUTH_GOOGLE_CLIENT_ID: z.string(),
+    AUTH_GOOGLE_CLIENT_SECRET: z.string(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
