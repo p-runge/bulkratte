@@ -55,7 +55,7 @@
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-hook-form": "^7.69.0",
-    "react-intl": "^7.1.14",
+    "react-intl": "^8.0.8",
     "server-only": "^0.0.1",
     "superjson": "^2.2.6",
     "tailwind-merge": "^3.4.0",
