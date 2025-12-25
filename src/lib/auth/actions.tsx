@@ -6,7 +6,8 @@ import { signIn, signOut } from ".";
 
 export async function handleSignIn(callbackUrl: string | null) {
   "use server";
-  await signIn("discord", {
+  // redirect to default sign in page of NextAuth
+  await signIn(undefined, {
     redirectTo: callbackUrl ?? "/"
   });
 }
