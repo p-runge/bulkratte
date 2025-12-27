@@ -12,6 +12,7 @@ import superjson from "superjson";
 import { ZodError } from "zod";
 import { auth } from "../auth";
 import { db } from "../db";
+import { LOCALES, DEFAULT_LOCALE, type Locale } from "../i18n";
 
 // import { auth } from "~/server/auth";
 // import { db } from "~/server/db";
@@ -31,9 +32,23 @@ import { db } from "../db";
 export const createTRPCContext = async (opts: { headers: Headers }) => {
   const session = await auth();
 
+  // Extract language from cookies, validate against supported locales
+  const cookieHeader = opts.headers.get("cookie") || "";
+  const languageCookie = cookieHeader
+    .split(";")
+    .find((c) => c.trim().startsWith("preferred-locale="));
+  const languageValue = languageCookie?.split("=")[1]?.trim();
+
+  // Validate that the language is a supported locale
+  const language: Locale =
+    languageValue && LOCALES.includes(languageValue as Locale)
+      ? (languageValue as Locale)
+      : DEFAULT_LOCALE;
+
   return {
     db,
     session,
+    language,
     ...opts,
   };
 };

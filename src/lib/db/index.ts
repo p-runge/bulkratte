@@ -63,6 +63,47 @@ export type Card = typeof cardsTable.$inferSelect;
 
 /**
  * --------------------------------
+ * Localization
+ * -------------------------------
+ */
+
+// Localizations table for translating core data
+export const localizationsTable = pgTable(
+  "localizations",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    table_name: varchar("table_name", { length: 64 }).notNull(),
+    column_name: varchar("column_name", { length: 64 }).notNull(),
+    record_id: varchar("record_id", { length: 16 }).notNull(),
+    language: languageEnum().notNull(),
+    value: text("value").notNull(),
+    created_at: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updated_at: timestamp("updated_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    // Unique constraint: one translation per table+column+record+language
+    uniqueTranslationIdx: index("unique_translation_idx").on(
+      table.table_name,
+      table.column_name,
+      table.record_id,
+      table.language
+    ),
+    // Index for faster lookups by record
+    recordLookupIdx: index("record_lookup_idx").on(
+      table.table_name,
+      table.record_id
+    ),
+  })
+);
+
+/**
+ * --------------------------------
  * Auth data
  * -------------------------------
  */

@@ -1,10 +1,11 @@
 import { desc, eq, not } from "drizzle-orm";
 import { db, setsTable } from "@/lib/db";
+import { localizeRecords, localizeRecord } from "@/lib/db/localization";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import z from "zod";
 
 export const setRouter = createTRPCRouter({
-  getList: publicProcedure.query(async () => {
+  getList: publicProcedure.query(async ({ ctx }) => {
     const sets = await db
       .select()
       .from(setsTable)
@@ -15,16 +16,20 @@ export const setRouter = createTRPCRouter({
         )
       )
       .orderBy(desc(setsTable.releaseDate));
-    return sets;
+
+    return localizeRecords(sets, "sets", ["name", "series"], ctx.language);
   }),
 
-  getById: publicProcedure.input(z.string()).query(async ({ input }) => {
+  getById: publicProcedure.input(z.string()).query(async ({ input, ctx }) => {
     const set = await db
       .select()
       .from(setsTable)
       .where(eq(setsTable.id, input))
       .limit(1)
       .then((res) => res[0]);
-    return set;
+
+    if (!set) return null;
+
+    return localizeRecord(set, "sets", ["name", "series"], ctx.language);
   }),
 });
