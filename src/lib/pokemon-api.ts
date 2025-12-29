@@ -1,4 +1,4 @@
-import TCGdex from "@tcgdex/sdk";
+import TCGdex, { SupportedLanguages } from "@tcgdex/sdk";
 
 // Instantiate the SDK with your preferred language
 const tcgdex = new TCGdex("en");
@@ -38,7 +38,7 @@ const cardLanguages = [
   { code: "zh", name: "Chinese", flag: "🇨🇳" },
 ];
 
-function getCardLanguageInfo(languageCode: string) {
+function getCardLanguageInfo(languageCode: SupportedLanguages) {
   return (
     cardLanguages.find((l) => l.code === languageCode) || cardLanguages[0]!
   );
@@ -180,6 +180,55 @@ async function fetchPokemonCards(setId: string): Promise<PokemonCard[]> {
   }));
 }
 
+// Language-specific fetch functions for localization
+async function fetchPokemonSetsForLanguage(
+  languageCode: SupportedLanguages
+): Promise<PokemonSet[]> {
+  const langTcgdex = new TCGdex(languageCode);
+  return langTcgdex.set.list().then(async (sets) => {
+    console.log(`Fetched set list with ${sets.length} sets from API.`);
+    const fullSets = await Promise.all(sets.map(async (set) => set.getSet()));
+
+    return fullSets.map(
+      (set) =>
+        ({
+          id: set.id,
+          name: set.name,
+          series: set.serie.name,
+          logo: set.logo ? `${set.logo}.webp` : null,
+          symbol: set.symbol ? `${set.symbol}.webp` : null,
+          releaseDate: set.releaseDate,
+          total: set.cardCount.official,
+          totalWithSecretRares: set.cardCount.total,
+          variants: getVariants(set.id),
+        } satisfies PokemonSet)
+    );
+  });
+}
+
+async function fetchPokemonCardsForLanguage(
+  setId: string,
+  languageCode: SupportedLanguages
+): Promise<PokemonCard[]> {
+  const langTcgdex = new TCGdex(languageCode);
+  const set = await langTcgdex.set.get(setId);
+  if (!set) return [];
+
+  const fullCards = await Promise.all(set.cards.map((card) => card.getCard()));
+
+  return fullCards.map((card) => ({
+    id: card.id,
+    name: card.name,
+    number: card.localId,
+    rarity: card.rarity,
+    set: { id: card.set.id, name: card.set.name },
+    images: {
+      small: `https://assets.tcgdex.net/en/${set.serie.id}/${setId}/${card.localId}/low.webp`,
+      large: `https://assets.tcgdex.net/en/${set.serie.id}/${setId}/${card.localId}/high.webp`,
+    },
+  }));
+}
+
 const pokemonAPI = {
   cardLanguages,
   getCardLanguageInfo,
@@ -189,5 +238,7 @@ const pokemonAPI = {
   getVariants,
   fetchPokemonSets,
   fetchPokemonCards,
+  fetchPokemonSetsForLanguage,
+  fetchPokemonCardsForLanguage,
 };
 export default pokemonAPI;
