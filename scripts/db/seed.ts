@@ -3,6 +3,7 @@ import { env } from "@/env";
 import { cardsTable, db, setsTable } from "@/lib/db";
 import { Rarity } from "@/lib/db/enums";
 import pokemonAPI from "@/lib/pokemon-api";
+import TCGdex from "@tcgdex/sdk";
 
 export async function fetchAndStoreSets(withCards = true) {
   console.log("Fetching and storing sets...");
@@ -52,6 +53,7 @@ export async function fetchAndStoreCards(setId: string) {
   console.log("Fetching and storing cards...");
   try {
     const cards = await pokemonAPI.fetchPokemonCards(setId);
+    const rawSet = await new TCGdex("en").set.get(setId);
     console.log(`Fetched ${cards.length} cards from the API.`);
     console.log("cards", cards);
 
@@ -64,8 +66,24 @@ export async function fetchAndStoreCards(setId: string) {
           name: card.name,
           number: card.number,
           rarity: card.rarity as Rarity,
-          imageSmall: card.images.small,
-          imageLarge: card.images.large,
+          imageSmall:
+            card.images?.small ??
+            pokemonAPI.getImageUrl(
+              "en",
+              rawSet!.serie.id,
+              setId,
+              card.number,
+              "small"
+            ),
+          imageLarge:
+            card.images?.large ??
+            pokemonAPI.getImageUrl(
+              "en",
+              rawSet!.serie.id,
+              setId,
+              card.number,
+              "large"
+            ),
           setId: card.set.id,
         })
         .onConflictDoUpdate({
@@ -74,8 +92,24 @@ export async function fetchAndStoreCards(setId: string) {
             name: card.name,
             number: card.number,
             rarity: card.rarity as Rarity,
-            imageSmall: card.images.small,
-            imageLarge: card.images.large,
+            imageSmall:
+              card.images?.small ??
+              pokemonAPI.getImageUrl(
+                "en",
+                rawSet!.serie.id,
+                setId,
+                card.number,
+                "small"
+              ),
+            imageLarge:
+              card.images?.large ??
+              pokemonAPI.getImageUrl(
+                "en",
+                rawSet!.serie.id,
+                setId,
+                card.number,
+                "large"
+              ),
             setId: card.set.id,
           },
         });

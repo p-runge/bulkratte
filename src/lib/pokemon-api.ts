@@ -21,7 +21,7 @@ export type PokemonCard = {
   number: string;
   rarity: string;
   set: { id: string; name: string };
-  images: { small: string; large: string };
+  images?: { small: string; large: string };
   // supertype: string;
   // subtypes: string[];
 };
@@ -214,6 +214,10 @@ async function fetchPokemonCardsForLanguage(
   const set = await langTcgdex.set.get(setId);
   if (!set) return [];
 
+  const testImage = await fetch(
+    pokemonAPI.getImageUrl(languageCode, set.serie.id, setId, "1", "small")
+  );
+
   const fullCards = await Promise.all(set.cards.map((card) => card.getCard()));
 
   return fullCards.map((card) => ({
@@ -222,11 +226,36 @@ async function fetchPokemonCardsForLanguage(
     number: card.localId,
     rarity: card.rarity,
     set: { id: card.set.id, name: card.set.name },
-    images: {
-      small: `https://assets.tcgdex.net/en/${set.serie.id}/${setId}/${card.localId}/low.webp`,
-      large: `https://assets.tcgdex.net/en/${set.serie.id}/${setId}/${card.localId}/high.webp`,
-    },
+    images: testImage.ok
+      ? {
+          small: getImageUrl(
+            languageCode,
+            set.serie.id,
+            setId,
+            card.localId,
+            "small"
+          ),
+          large: getImageUrl(
+            languageCode,
+            set.serie.id,
+            setId,
+            card.localId,
+            "large"
+          ),
+        }
+      : undefined,
   }));
+}
+
+function getImageUrl(
+  languageCode: SupportedLanguages,
+  seriesId: string,
+  setId: string,
+  cardNumber: string,
+  size: "small" | "large"
+): string {
+  const sizePath = size === "small" ? "low" : "high";
+  return `https://assets.tcgdex.net/${languageCode}/${seriesId}/${setId}/${cardNumber}/${sizePath}.webp`;
 }
 
 const pokemonAPI = {
@@ -240,5 +269,6 @@ const pokemonAPI = {
   fetchPokemonCards,
   fetchPokemonSetsForLanguage,
   fetchPokemonCardsForLanguage,
+  getImageUrl,
 };
 export default pokemonAPI;

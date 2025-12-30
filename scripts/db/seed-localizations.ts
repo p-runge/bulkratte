@@ -3,7 +3,7 @@ import { env } from "@/env";
 import pokemonAPI from "@/lib/pokemon-api";
 import { DEFAULT_LOCALE, LOCALES, type Locale } from "@/lib/i18n";
 import { upsertLocalization } from "@/lib/db/localization";
-import { SupportedLanguages } from "@tcgdex/sdk";
+import TCGdex, { SupportedLanguages } from "@tcgdex/sdk";
 
 // Map locale codes to language codes used by TCGdex API
 const LOCALE_TO_LANGUAGE: Record<Locale, SupportedLanguages> = {
@@ -47,9 +47,47 @@ async function seedLocalizationsForLanguage(locale: Locale) {
       );
       console.log(`  Fetched ${cards.length} cards from the API.`);
 
+      const rawSet = await new TCGdex(languageCode).set.get(set.id);
+
+      let imagesAreLocalized;
+      try {
+        const testCard = cards[0];
+        if (rawSet && testCard) {
+          await fetch(
+            `https://assets.tcgdex.net/${languageCode}/${rawSet.serie.id}${testCard.set.id}/${testCard.number}/low.webp`
+          ).then((res) => {
+            if (!res.ok) throw new Error("Image not found");
+          });
+          imagesAreLocalized = true;
+        }
+      } catch (error) {
+        console.warn(
+          `    ⚠️  Could not find localized images for cards in set ${set.id} (${set.name})`
+        );
+        imagesAreLocalized = false;
+      }
+
       for (const card of cards) {
         await upsertLocalization("cards", "name", card.id, locale, card.name);
-        cardCount++;
+
+        if (rawSet && imagesAreLocalized) {
+          // images
+          await upsertLocalization(
+            "cards",
+            "image_small",
+            card.id,
+            locale,
+            `https://assets.tcgdex.net/${languageCode}/${rawSet.serie.id}/${set.id}/${card.number}/low.webp`
+          );
+          await upsertLocalization(
+            "cards",
+            "image_large",
+            card.id,
+            locale,
+            `https://assets.tcgdex.net/${languageCode}/${rawSet.serie.id}/${set.id}/${card.number}/high.webp`
+          );
+          cardCount++;
+        }
       }
       console.log(`    ✓ Localized ${cards.length} cards`);
     }

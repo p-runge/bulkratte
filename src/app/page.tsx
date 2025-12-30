@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { getIntl } from "@/lib/i18n/server";
 import Image from "next/image";
 import Link from "next/link";
+import TCGdex from "@tcgdex/sdk";
 
 export default async function HomePage() {
   const session = await auth();
