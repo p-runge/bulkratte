@@ -77,10 +77,22 @@
       "value": "Set"
     }
   ],
+  "collection.actions.addFirstCard": [
+    {
+      "type": 0,
+      "value": "Füge deine erste Karte hinzu"
+    }
+  ],
   "collection.actions.addFirstSet": [
     {
       "type": 0,
       "value": "Füge dein erstes Set hinzu"
+    }
+  ],
+  "collection.actions.addNewCard": [
+    {
+      "type": 0,
+      "value": "Neue Karte hinzufügen"
     }
   ],
   "collection.actions.addNewSet": [
@@ -89,10 +101,22 @@
       "value": "Neues Set hinzufügen"
     }
   ],
-  "collection.card.qty": [
+  "collection.cards.create.addButton": [
     {
       "type": 0,
-      "value": "Anz."
+      "value": "Karte zur Sammlung hinzufügen"
+    }
+  ],
+  "collection.cards.create.cancelButton": [
+    {
+      "type": 0,
+      "value": "Abbrechen"
+    }
+  ],
+  "collection.cards.create.title": [
+    {
+      "type": 0,
+      "value": "Neue Karte hinzufügen"
     }
   ],
   "collection.cards.noneDescription": [
@@ -105,16 +129,6 @@
     {
       "type": 0,
       "value": "Noch keine Karten in deiner Sammlung"
-    }
-  ],
-  "collection.cards.owned": [
-    {
-      "type": 1,
-      "value": "count"
-    },
-    {
-      "type": 0,
-      "value": " Karten im Besitz"
     }
   ],
   "collection.description": [
@@ -271,7 +285,7 @@
       "value": "Abmelden"
     }
   ],
-  "noCardsFound": [
+  "no_cards_found": [
     {
       "type": 0,
       "value": "Keine Karten gefunden, die deinen Suchkriterien entsprechen."

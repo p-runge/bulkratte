@@ -77,10 +77,22 @@
       "value": "Set"
     }
   ],
+  "collection.actions.addFirstCard": [
+    {
+      "type": 0,
+      "value": "Add Your First Card"
+    }
+  ],
   "collection.actions.addFirstSet": [
     {
       "type": 0,
       "value": "Add Your First Set"
+    }
+  ],
+  "collection.actions.addNewCard": [
+    {
+      "type": 0,
+      "value": "Add New Card"
     }
   ],
   "collection.actions.addNewSet": [
@@ -89,10 +101,22 @@
       "value": "Add New Set"
     }
   ],
-  "collection.card.qty": [
+  "collection.cards.create.addButton": [
     {
       "type": 0,
-      "value": "Qty"
+      "value": "Add Card to Collection"
+    }
+  ],
+  "collection.cards.create.cancelButton": [
+    {
+      "type": 0,
+      "value": "Cancel"
+    }
+  ],
+  "collection.cards.create.title": [
+    {
+      "type": 0,
+      "value": "Add New Card"
     }
   ],
   "collection.cards.noneDescription": [
@@ -105,16 +129,6 @@
     {
       "type": 0,
       "value": "No cards in your collection yet"
-    }
-  ],
-  "collection.cards.owned": [
-    {
-      "type": 1,
-      "value": "count"
-    },
-    {
-      "type": 0,
-      "value": " cards owned"
     }
   ],
   "collection.description": [
@@ -271,16 +285,16 @@
       "value": "Sign Out"
     }
   ],
-  "noCardsFound": [
+  "no_cards_found": [
     {
       "type": 0,
-      "value": "No cards found matching your search criteria."
+      "value": "No cards found. Try adjusting your filters."
     }
   ],
   "search.placeholder": [
     {
       "type": 0,
-      "value": "Search cards..."
+      "value": "Search set names..."
     }
   ],
   "series.logoAlt": [

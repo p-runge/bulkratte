@@ -4,6 +4,7 @@ import type { Card } from "@/lib/db";
 import { cn } from "@/lib/utils";
 import { Check, Circle } from "lucide-react";
 import Image from "next/image";
+import { FormattedMessage } from "react-intl";
 
 export type CardWithGridId = Card & { gridId: string };
 
@@ -27,7 +28,10 @@ export function CardGrid({
   if (cards.length === 0 && !isLoading) {
     return (
       <div className="flex items-center justify-center h-64 text-muted-foreground">
-        No cards found. Try adjusting your filters.
+        <FormattedMessage
+          id="no_cards_found"
+          defaultMessage="No cards found. Try adjusting your filters."
+        />
       </div>
     );
   }
@@ -56,7 +60,7 @@ export function CardGrid({
                 "w-full"
               )}
             >
-              <div className="aspect-[245/337] relative">
+              <div className="aspect-245/337 relative">
                 <Image
                   src={card.imageSmall || "/placeholder.svg"}
                   width="245"
@@ -78,7 +82,7 @@ export function CardGrid({
                   </div>
                 )}
               </div>
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+              <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/80 to-transparent p-2">
                 <p className="text-xs text-white font-medium truncate">
                   {card.name}
                 </p>
