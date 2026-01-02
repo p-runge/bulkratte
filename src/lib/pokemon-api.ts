@@ -258,6 +258,18 @@ function getImageUrl(
   return `https://assets.tcgdex.net/${languageCode}/${seriesId}/${setId}/${cardNumber}/${sizePath}.webp`;
 }
 
+async function fetchPriceForCard(cardId: string): Promise<number | null> {
+  return tcgdex.card.get(cardId).then(async (card) => {
+    if (!card) return null;
+
+    // @ts-expect-error -- pricing is not yet typed in tcgdex sdk
+    const priceInEur: number | undefined = card.pricing?.cardmarket?.avg7;
+
+    // parse EUR (float) value to cents (integer)
+    return priceInEur ? Math.floor(priceInEur * 100) : null;
+  });
+}
+
 const pokemonAPI = {
   cardLanguages,
   getCardLanguageInfo,
@@ -270,5 +282,6 @@ const pokemonAPI = {
   fetchPokemonSetsForLanguage,
   fetchPokemonCardsForLanguage,
   getImageUrl,
+  fetchPriceForCard,
 };
 export default pokemonAPI;

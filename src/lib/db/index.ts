@@ -11,7 +11,7 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
-import { rarityEnum, conditionEnum, variantEnum, languageEnum } from "./enums";
+import { conditionEnum, languageEnum, rarityEnum, variantEnum } from "./enums";
 
 export const db = drizzle(env.DATABASE_URL);
 
@@ -60,6 +60,21 @@ export const cardsTable = pgTable("cards", {
     .references(() => setsTable.id),
 });
 export type Card = typeof cardsTable.$inferSelect;
+
+// Card Price table
+export const cardPricesTable = pgTable("card_prices", {
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  created_at: timestamp("created_at", { mode: "string" })
+    .notNull()
+    .defaultNow(),
+  updated_at: timestamp("updated_at", { mode: "string" })
+    .notNull()
+    .defaultNow(),
+  card_id: text("card_id").notNull().unique(),
+  price: integer().notNull(),
+});
 
 /**
  * --------------------------------

@@ -4,9 +4,9 @@ import type { Card } from "@/lib/db";
 import { cn } from "@/lib/utils";
 import { Check, Circle } from "lucide-react";
 import Image from "next/image";
-import { FormattedMessage } from "react-intl";
+import { FormattedMessage, useIntl } from "react-intl";
 
-export type CardWithGridId = Card & { gridId: string };
+export type CardWithGridId = Card & { price: number | undefined } & { gridId: string };
 
 type CardGridProps = {
   cards: CardWithGridId[];
@@ -25,6 +25,8 @@ export function CardGrid({
   isLoading,
   maxHeight,
 }: CardGridProps) {
+  const intl = useIntl();
+
   if (cards.length === 0 && !isLoading) {
     return (
       <div className="flex items-center justify-center h-64 text-muted-foreground">
@@ -84,9 +86,11 @@ export function CardGrid({
               </div>
               <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/80 to-transparent p-2">
                 <p className="text-xs text-white font-medium truncate">
-                  {card.name}
+                  {card.number} - {card.name}
                 </p>
-                <p className="text-xs text-white/70">{card.number}</p>
+                <p className="text-xs text-white/70">{
+                  card.price !== undefined && `${intl.formatNumber(card.price / 100, { style: "currency", currency: "EUR" })} (avg. 7d)`
+                }</p>
               </div>
             </button>
           );

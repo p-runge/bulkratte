@@ -1,8 +1,9 @@
-import { cardsTable, db } from "@/lib/db";
+import { cardPricesTable, cardsTable, db } from "@/lib/db";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import z from "zod";
 import { eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import pokemonAPI from "@/lib/pokemon-api";
 
 export const cardRouter = createTRPCRouter({
   getList: publicProcedure
@@ -20,7 +21,64 @@ export const cardRouter = createTRPCRouter({
         .where(input?.setId ? eq(cardsTable.setId, input.setId) : undefined)
         .orderBy(cardsTable.updated_at)
         .limit(input?.setId ? -1 : 100);
-      return cards;
+
+      const cardsWithPrices = await Promise.all(
+        cards.map(async (card) => {
+          const prices = await db
+            .select({
+              price: cardPricesTable.price,
+              updatedAt: cardPricesTable.updated_at,
+            })
+            .from(cardPricesTable)
+            .where(eq(cardPricesTable.card_id, card.id))
+            .limit(1);
+
+          const price = prices[0];
+          let shouldUpdatePrice = false;
+          if (!price) {
+            shouldUpdatePrice = true;
+            // check if price is older than 24 hours
+          } else if (
+            Date.now() - new Date(price.updatedAt).getTime() >
+            1000 * 60 * 60 * 24
+          ) {
+            shouldUpdatePrice = true;
+          }
+
+          let newPrice = null;
+          if (shouldUpdatePrice) {
+            try {
+              const price = await pokemonAPI.fetchPriceForCard(card.id);
+              if (price !== null) {
+                // upsert price
+                await db
+                  .insert(cardPricesTable)
+                  .values({
+                    card_id: card.id,
+                    price: price,
+                  })
+                  .onConflictDoUpdate({
+                    target: cardPricesTable.card_id,
+                    set: {
+                      price: price,
+                      updated_at: new Date().toISOString(),
+                    },
+                  });
+              }
+              newPrice = price;
+            } catch (e) {
+              console.error("Error fetching price for card", card.id, e);
+            }
+          }
+
+          return {
+            price: newPrice ?? price?.price,
+            ...card,
+          };
+        })
+      );
+
+      return cardsWithPrices;
     }),
 
   getById: publicProcedure
