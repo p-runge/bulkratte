@@ -22,6 +22,8 @@ export type FilterState = {
   search: string;
   releaseDateFrom: string;
   releaseDateTo: string;
+  sortBy: string;
+  sortOrder: "asc" | "desc";
 };
 const EMPTY_FILTERS: FilterState = {
   setId: "",
@@ -29,6 +31,8 @@ const EMPTY_FILTERS: FilterState = {
   search: "",
   releaseDateFrom: "",
   releaseDateTo: "",
+  sortBy: "number",
+  sortOrder: "asc",
 };
 
 type CardFiltersProps = {
@@ -162,6 +166,58 @@ export function CardFilters({ onFilterChange, disableSetFilter = false }: CardFi
             onChange={(e) => updateFilter("releaseDateTo", e.target.value)}
             className="bg-background"
           />
+        </div>
+      </div>
+
+      <div className="flex gap-4">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="sort-by" className="text-sm text-muted-foreground">
+            {intl.formatMessage({ id: "cardFilter.sortBy.label", defaultMessage: "Sort By" })}
+          </Label>
+          <Select
+            value={filters.sortBy}
+            onValueChange={(value) => updateFilter("sortBy", value)}
+          >
+            <SelectTrigger id="sort-by" className="bg-background">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="number">
+                {intl.formatMessage({ id: "cardFilter.sortBy.number", defaultMessage: "Card Number" })}
+              </SelectItem>
+              <SelectItem value="name">
+                {intl.formatMessage({ id: "cardFilter.sortBy.name", defaultMessage: "Card Name" })}
+              </SelectItem>
+              <SelectItem value="rarity">
+                {intl.formatMessage({ id: "cardFilter.sortBy.rarity", defaultMessage: "Card Rarity" })}
+              </SelectItem>
+              <SelectItem value="price">
+                {intl.formatMessage({ id: "cardFilter.sortBy.price", defaultMessage: "Card Price" })}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="sort-order" className="text-sm text-muted-foreground">
+            {intl.formatMessage({ id: "cardFilter.sortOrder.label", defaultMessage: "Sort Order" })}
+          </Label>
+          <Select
+            value={filters.sortOrder}
+            onValueChange={(value) => updateFilter("sortOrder", value as "asc" | "desc")}
+          >
+            <SelectTrigger id="sort-order" className="bg-background">
+              <SelectValue placeholder="Sort order" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="asc">
+                {intl.formatMessage({ id: "cardFilter.sortOrder.asc", defaultMessage: "Ascending" })}
+              </SelectItem>
+              <SelectItem value="desc">
+                {intl.formatMessage({ id: "cardFilter.sortOrder.desc", defaultMessage: "Descending" })}
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </div>
