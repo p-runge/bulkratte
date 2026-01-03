@@ -17,6 +17,8 @@ export function UserCardBrowser(props: UserCardBrowserProps) {
     search: "",
     releaseDateFrom: "",
     releaseDateTo: "",
+    sortBy: "number",
+    sortOrder: "asc",
   });
   const [searchDebounce, setSearchDebounce] = useState<NodeJS.Timeout | null>(
     null
