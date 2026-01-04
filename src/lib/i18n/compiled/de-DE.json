@@ -77,6 +77,54 @@
       "value": "Set"
     }
   ],
+  "cardFilter.sortBy.label": [
+    {
+      "type": 0,
+      "value": "Sortieren nach"
+    }
+  ],
+  "cardFilter.sortBy.name": [
+    {
+      "type": 0,
+      "value": "Kartenname"
+    }
+  ],
+  "cardFilter.sortBy.number": [
+    {
+      "type": 0,
+      "value": "Kartennummer"
+    }
+  ],
+  "cardFilter.sortBy.price": [
+    {
+      "type": 0,
+      "value": "Kartenpreis"
+    }
+  ],
+  "cardFilter.sortBy.rarity": [
+    {
+      "type": 0,
+      "value": "Kartenseltenheit"
+    }
+  ],
+  "cardFilter.sortOrder.asc": [
+    {
+      "type": 0,
+      "value": "Aufsteigend"
+    }
+  ],
+  "cardFilter.sortOrder.desc": [
+    {
+      "type": 0,
+      "value": "Absteigend"
+    }
+  ],
+  "cardFilter.sortOrder.label": [
+    {
+      "type": 0,
+      "value": "Sortierreihenfolge"
+    }
+  ],
   "collection.actions.addFirstCard": [
     {
       "type": 0,
@@ -391,6 +439,18 @@
       "value": "Set erstellen"
     }
   ],
+  "userSet.imageDescription": [
+    {
+      "type": 0,
+      "value": "Bilder werden automatisch auf 100px herunterskaliert"
+    }
+  ],
+  "userSet.imageLabel": [
+    {
+      "type": 0,
+      "value": "Set-Bild (optional)"
+    }
+  ],
   "userSet.save": [
     {
       "type": 0,
@@ -413,6 +473,12 @@
     {
       "type": 0,
       "value": "Neues Set erstellen"
+    }
+  ],
+  "userSet.uploadImage": [
+    {
+      "type": 0,
+      "value": "Bild hochladen"
     }
   ],
   "userSetForm.validation.atLeastOneCard": [
