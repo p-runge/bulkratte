@@ -242,6 +242,7 @@ export const userSetsTable = pgTable("user_sets", {
     .notNull()
     .defaultNow(),
   name: varchar("name", { length: 128 }).notNull(),
+  image: text("image"),
   user_id: uuid("user_id")
     .notNull()
     .references(() => usersTable.id),

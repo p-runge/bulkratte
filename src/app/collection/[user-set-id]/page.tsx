@@ -25,19 +25,28 @@ export default async function EditUserSetPage({
           <ArrowLeft className="h-5 w-5" />
         </Button>
       </Link>
-      <div>
-        <h1 className="text-3xl font-bold">
-          {intl.formatMessage({
-            id: "userSet.title.edit",
-            defaultMessage: "Edit Set",
-          })}
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          {intl.formatMessage({
-            id: "userSet.subtitle",
-            defaultMessage: "Name your set and select cards to add",
-          })}
-        </p>
+      <div className="flex items-center gap-4">
+        {userSet.set.image && (
+          <img
+            src={userSet.set.image}
+            alt={userSet.set.name}
+            className="w-16 h-16 object-contain rounded border"
+          />
+        )}
+        <div>
+          <h1 className="text-3xl font-bold">
+            {intl.formatMessage({
+              id: "userSet.title.edit",
+              defaultMessage: "Edit Set",
+            })}
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            {intl.formatMessage({
+              id: "userSet.subtitle",
+              defaultMessage: "Name your set and select cards to add",
+            })}
+          </p>
+        </div>
       </div>
     </div>
     <UserSetForm mode="edit" userSet={userSet} />

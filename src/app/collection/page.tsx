@@ -138,16 +138,25 @@ function MySetsTab() {
               className="block"
             >
               <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <CardTitle className="text-lg">{userSet.name}</CardTitle>
-                </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">
-                    {intl.formatMessage({
-                      id: "collection.sets.cardDescription",
-                      defaultMessage: "View and manage cards in this set.",
-                    })}
-                  </p>
+                  <div className="flex gap-4">
+                    {userSet.image && (
+                      <img
+                        src={userSet.image}
+                        alt={userSet.name}
+                        className="w-24 h-24 sm:w-12 sm:h-12 xl:w-24 xl:h-24 object-contain rounded border shrink-0"
+                      />
+                    )}
+                    <div>
+                      <CardTitle className="text-lg">{userSet.name}</CardTitle>
+                      <p className="text-muted-foreground">
+                        {intl.formatMessage({
+                          id: "collection.sets.cardDescription",
+                          defaultMessage: "View and manage cards in this set.",
+                        })}
+                      </p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </Link>

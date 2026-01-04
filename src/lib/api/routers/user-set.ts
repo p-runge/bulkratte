@@ -9,12 +9,19 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const userSetRouter = createTRPCRouter({
   create: protectedProcedure
-    .input(z.object({ name: z.string().min(1), cardIds: z.set(z.string()) }))
+    .input(
+      z.object({
+        name: z.string().min(1),
+        cardIds: z.set(z.string()),
+        image: z.string().optional(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       const userSet = await ctx.db
         .insert(userSetsTable)
         .values({
           name: input.name,
+          image: input.image ?? null,
           user_id: ctx.session.user.id,
         })
         .returning({
@@ -39,6 +46,7 @@ export const userSetRouter = createTRPCRouter({
         .select({
           id: userSetsTable.id,
           name: userSetsTable.name,
+          image: userSetsTable.image,
           userId: userSetsTable.user_id,
         })
         .from(userSetsTable)
@@ -79,6 +87,7 @@ export const userSetRouter = createTRPCRouter({
         id: z.string().uuid(),
         name: z.string().min(1),
         cardIds: z.set(z.string()),
+        image: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -107,7 +116,7 @@ export const userSetRouter = createTRPCRouter({
 
       await ctx.db
         .update(userSetsTable)
-        .set({ name: input.name })
+        .set({ name: input.name, image: input.image ?? null })
         .where(
           and(
             eq(userSetsTable.id, input.id),
@@ -139,6 +148,7 @@ export const userSetRouter = createTRPCRouter({
       .select({
         id: userSetsTable.id,
         name: userSetsTable.name,
+        image: userSetsTable.image,
       })
       .from(userSetsTable)
       .where(eq(userSetsTable.user_id, ctx.session.user.id))
