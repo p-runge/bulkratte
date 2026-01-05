@@ -221,6 +221,18 @@
       "value": "Meine Sammlung"
     }
   ],
+  "confirm-button.cancel": [
+    {
+      "type": 0,
+      "value": "Abbrechen"
+    }
+  ],
+  "confirm-button.confirm": [
+    {
+      "type": 0,
+      "value": "Bestätigen"
+    }
+  ],
   "form.unsavedChanges": [
     {
       "type": 0,
@@ -423,6 +435,12 @@
       "value": "Kartensets"
     }
   ],
+  "userSet.action.delete": [
+    {
+      "type": 0,
+      "value": "Set löschen"
+    }
+  ],
   "userSet.cardsSelected": [
     {
       "type": 1,
@@ -437,6 +455,18 @@
     {
       "type": 0,
       "value": "Set erstellen"
+    }
+  ],
+  "userSet.delete.confirmDescription": [
+    {
+      "type": 0,
+      "value": "Bist du sicher, dass du dieses Set löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden."
+    }
+  ],
+  "userSet.delete.confirmTitle": [
+    {
+      "type": 0,
+      "value": "Set löschen"
     }
   ],
   "userSet.imageDescription": [

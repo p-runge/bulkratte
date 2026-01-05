@@ -157,6 +157,50 @@ export const userSetRouter = createTRPCRouter({
     return userSets ?? null;
   }),
 
+  deleteById: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const userSet = await ctx.db
+        .select({
+          id: userSetsTable.id,
+          userId: userSetsTable.user_id,
+        })
+        .from(userSetsTable)
+        .where(eq(userSetsTable.id, input.id))
+        .then((res) => res[0]);
+
+      if (!userSet) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `User set with id ${input.id} not found`,
+        });
+      }
+
+      if (userSet.userId !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to delete this user set",
+        });
+      }
+
+      // Delete all cards associated with this user set
+      await ctx.db
+        .delete(userSetCardsTable)
+        .where(eq(userSetCardsTable.user_set_id, input.id));
+
+      // Delete the user set
+      await ctx.db
+        .delete(userSetsTable)
+        .where(
+          and(
+            eq(userSetsTable.id, input.id),
+            eq(userSetsTable.user_id, ctx.session.user.id)
+          )
+        );
+
+      return { success: true };
+    }),
+
   // TODO: remove
   getSecretMessage: protectedProcedure.query(() => {
     return "you can now see this secret message!";
