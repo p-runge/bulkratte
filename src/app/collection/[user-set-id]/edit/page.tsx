@@ -1,10 +1,10 @@
 import { Button } from "@/components/ui/button";
-import UserSetForm from "@/components/user-set-form";
 import { api } from "@/lib/api/server";
 import { getIntl } from "@/lib/i18n/server";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { DeleteUserSetButton } from "../_components/delete-user-set-button";
+import { EditSetContent } from "../_components/edit-set-content";
 
 export default async function EditUserSetPage({
   params,
@@ -55,7 +55,7 @@ export default async function EditUserSetPage({
           <DeleteUserSetButton userSetId={userSetId} />
         </div>
       </div>
-      <UserSetForm mode="edit" userSet={userSet} />
+      <EditSetContent userSet={userSet} />
     </>
   );
 }

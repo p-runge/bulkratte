@@ -67,11 +67,27 @@ export function BinderView({ userSet, userCards, onCardClick }: BinderViewProps)
     return acc;
   }, {} as Record<string, UserCard[]>);
 
+  // Build an array with cards at their order positions, nulls for empty slots
+  const maxOrder = Math.max(...userSet.cards.map((c) => c.order ?? 0), 0);
+  const orderedCards: (typeof userSet.cards[number] | null)[] = Array(maxOrder + 1).fill(null);
+
+  userSet.cards.forEach((card) => {
+    if (card.order !== null && card.order !== undefined) {
+      orderedCards[card.order] = card;
+    }
+  });
+
+  // Ensure we have at least 2 pages worth of slots
+  const minSlots = CARDS_PER_PAGE * PAGES_VISIBLE;
+  while (orderedCards.length < minSlots) {
+    orderedCards.push(null);
+  }
+
   // Split cards into pages
-  const totalPages = Math.ceil(userSet.cards.length / CARDS_PER_PAGE);
+  const totalPages = Math.ceil(orderedCards.length / CARDS_PER_PAGE);
   const pages: (typeof userSet.cards[number] | null)[][] = [];
   for (let i = 0; i < totalPages; i++) {
-    pages.push(userSet.cards.slice(i * CARDS_PER_PAGE, (i + 1) * CARDS_PER_PAGE));
+    pages.push(orderedCards.slice(i * CARDS_PER_PAGE, (i + 1) * CARDS_PER_PAGE));
   }
 
   // Pad the last page to have 9 slots

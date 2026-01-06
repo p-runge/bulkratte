@@ -12,7 +12,12 @@ export const userSetRouter = createTRPCRouter({
     .input(
       z.object({
         name: z.string().min(1),
-        cardIds: z.set(z.string()),
+        cards: z.array(
+          z.object({
+            userSetCardId: z.string().uuid().nullable(),
+            cardId: z.string().nullable(),
+          })
+        ),
         image: z.string().optional(),
       })
     )
@@ -29,12 +34,21 @@ export const userSetRouter = createTRPCRouter({
         })
         .then((res) => res[0]!);
 
-      const cardValues = Array.from(input.cardIds).map((cardId) => ({
-        user_set_id: userSet.id,
-        card_id: cardId,
-      }));
+      // Filter out null values and create cards with proper order
+      const cardValues = input.cards
+        .map((card, index) => 
+          card.cardId ? { cardId: card.cardId, order: index } : null
+        )
+        .filter((item): item is { cardId: string; order: number } => item !== null)
+        .map(({ cardId, order }) => ({
+          user_set_id: userSet.id,
+          card_id: cardId,
+          order,
+        }));
 
-      await ctx.db.insert(userSetCardsTable).values(cardValues);
+      if (cardValues.length > 0) {
+        await ctx.db.insert(userSetCardsTable).values(cardValues);
+      }
 
       return userSet.id;
     }),
@@ -75,6 +89,7 @@ export const userSetRouter = createTRPCRouter({
           id: userSetCardsTable.id,
           cardId: userSetCardsTable.card_id,
           userCardId: userSetCardsTable.user_card_id,
+          order: userSetCardsTable.order,
           card: {
             id: cardsTable.id,
             name: cardsTable.name,
@@ -88,7 +103,7 @@ export const userSetRouter = createTRPCRouter({
         .from(userSetCardsTable)
         .leftJoin(cardsTable, eq(userSetCardsTable.card_id, cardsTable.id))
         .where(eq(userSetCardsTable.user_set_id, input.id))
-        .orderBy(asc(userSetCardsTable.created_at), asc(userSetCardsTable.id));
+        .orderBy(asc(userSetCardsTable.order), asc(userSetCardsTable.id));
 
       return {
         set: userSet,
@@ -101,7 +116,12 @@ export const userSetRouter = createTRPCRouter({
       z.object({
         id: z.string().uuid(),
         name: z.string().min(1),
-        cardIds: z.set(z.string()),
+        cards: z.array(
+          z.object({
+            userSetCardId: z.string().uuid().nullable(), // null for new cards
+            cardId: z.string().nullable(),
+          })
+        ),
         image: z.string().optional(),
       })
     )
@@ -144,45 +164,73 @@ export const userSetRouter = createTRPCRouter({
         })
         .then((res) => res[0]!);
 
-      // Get existing cards in this set
+      // Get all existing cards to find which ones to delete
       const existingCards = await ctx.db
-        .select({ cardId: userSetCardsTable.card_id })
+        .select({
+          id: userSetCardsTable.id,
+        })
         .from(userSetCardsTable)
         .where(eq(userSetCardsTable.user_set_id, input.id));
 
-      const existingCardIds = new Set(existingCards.map((c) => c.cardId));
-      const newCardIds = input.cardIds;
-
-      // Find cards to add (in newCardIds but not in existingCardIds)
-      const cardsToAdd = Array.from(newCardIds).filter(
-        (id) => !existingCardIds.has(id)
+      const existingIds = new Set(existingCards.map((c) => c.id));
+      const inputIds = new Set(
+        input.cards
+          .map((c) => c.userSetCardId)
+          .filter((id): id is string => id !== null)
       );
 
-      // Find cards to remove (in existingCardIds but not in newCardIds)
-      const cardsToRemove = Array.from(existingCardIds).filter(
-        (id) => !newCardIds.has(id)
+      // Find cards to delete (exist in DB but not in input)
+      const idsToDelete = Array.from(existingIds).filter(
+        (id) => !inputIds.has(id)
       );
 
-      // Remove cards that are no longer in the set
-      if (cardsToRemove.length > 0) {
-        await ctx.db
-          .delete(userSetCardsTable)
-          .where(
-            and(
-              eq(userSetCardsTable.user_set_id, input.id),
-              inArray(userSetCardsTable.card_id, cardsToRemove)
-            )
-          );
+      if (idsToDelete.length > 0) {
+        await ctx.db.delete(userSetCardsTable).where(
+          and(
+            eq(userSetCardsTable.user_set_id, input.id),
+            inArray(userSetCardsTable.id, idsToDelete)
+          )
+        );
       }
 
-      // Add new cards
-      if (cardsToAdd.length > 0) {
-        const cardValues = cardsToAdd.map((cardId) => ({
-          user_set_id: input.id,
-          card_id: cardId,
-        }));
+      // Process each card in the input array
+      // First, set all existing cards to negative orders to avoid conflicts
+      const existingCardsToUpdate = input.cards.filter(
+        (card) => card.userSetCardId !== null
+      );
+      
+      for (let i = 0; i < existingCardsToUpdate.length; i++) {
+        const card = existingCardsToUpdate[i];
+        if (card?.userSetCardId) {
+          await ctx.db
+            .update(userSetCardsTable)
+            .set({ order: -(i + 1) }) // Negative to avoid conflicts
+            .where(eq(userSetCardsTable.id, card.userSetCardId));
+        }
+      }
 
-        await ctx.db.insert(userSetCardsTable).values(cardValues);
+      // Now update with final order and cardId
+      for (let order = 0; order < input.cards.length; order++) {
+        const card = input.cards[order];
+        if (!card || !card.cardId) continue;
+
+        if (card.userSetCardId) {
+          // Update existing card's order and cardId
+          await ctx.db
+            .update(userSetCardsTable)
+            .set({
+              order,
+              card_id: card.cardId,
+            })
+            .where(eq(userSetCardsTable.id, card.userSetCardId));
+        } else {
+          // Insert new card
+          await ctx.db.insert(userSetCardsTable).values({
+            user_set_id: input.id,
+            card_id: card.cardId,
+            order,
+          });
+        }
       }
 
       return userSet;

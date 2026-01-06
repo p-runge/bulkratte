@@ -10,7 +10,6 @@ type CardBrowserCoreProps = {
   onCardClick: (cardId: string) => void;
   setId?: string;
   maxHeightGrid?: string;
-  // Common props can be defined here if needed
 };
 
 type CardBrowserSingleProps = CardBrowserCoreProps & {
@@ -22,7 +21,15 @@ type CardBrowserMultiProps = CardBrowserCoreProps & {
   selectedCards: Set<string>;
 };
 
-type CardBrowserProps = CardBrowserSingleProps | CardBrowserMultiProps;
+type CardBrowserSelectMultipleProps = {
+  mode: "select-multiple";
+  onSelect: (selectedCardIds: Set<string>) => void;
+  onClose: () => void;
+  setId?: string;
+  maxHeightGrid?: string;
+};
+
+type CardBrowserProps = CardBrowserSingleProps | CardBrowserMultiProps | CardBrowserSelectMultipleProps;
 
 export function CardBrowser(props: CardBrowserProps) {
   const [filters, setFilters] = useState<FilterState>({
@@ -37,14 +44,38 @@ export function CardBrowser(props: CardBrowserProps) {
   const [searchDebounce, setSearchDebounce] = useState<NodeJS.Timeout | null>(
     null
   );
+  const [selectedCards, setSelectedCards] = useState<Set<string>>(new Set());
+
+  const isSelectMultipleMode = "mode" in props && props.mode === "select-multiple";
+  const setId = "setId" in props ? props.setId : undefined;
 
   const {
     data: cardListData,
     isLoading,
     refetch: fetchCards,
   } = api.card.getList.useQuery({
-    setId: props.setId,
+    setId: setId,
   });
+
+  const handleCardClick = (cardId: string) => {
+    if (isSelectMultipleMode) {
+      const newSelected = new Set(selectedCards);
+      if (newSelected.has(cardId)) {
+        newSelected.delete(cardId);
+      } else {
+        newSelected.add(cardId);
+      }
+      setSelectedCards(newSelected);
+    } else {
+      props.onCardClick(cardId);
+    }
+  };
+
+  const handleConfirmSelection = () => {
+    if (isSelectMultipleMode) {
+      props.onSelect(selectedCards);
+    }
+  };
 
   // Map cards and apply sorting
   const cards = (cardListData?.map((card) => ({
@@ -104,17 +135,37 @@ export function CardBrowser(props: CardBrowserProps) {
   }, [filters]);
 
   return (
-    <div className="space-y-6">
-      <CardFilters onFilterChange={setFilters} disableSetFilter={!!props.setId} />
+    <>
+      <div className="space-y-6">
+        <CardFilters onFilterChange={setFilters} disableSetFilter={!!setId} />
 
-      <CardGrid
-        cards={cards}
-        selectionMode={props.selectionMode}
-        selectedCards={props.selectionMode === "multi" ? props.selectedCards : new Set()}
-        onCardClick={props.onCardClick}
-        isLoading={isLoading}
-        maxHeight={props.maxHeightGrid}
-      />
-    </div>
+        <CardGrid
+          cards={cards}
+          selectionMode={isSelectMultipleMode ? "multi" : ("selectionMode" in props ? props.selectionMode : "single")}
+          selectedCards={isSelectMultipleMode ? selectedCards : ("selectionMode" in props && props.selectionMode === "multi" ? props.selectedCards : new Set())}
+          onCardClick={handleCardClick}
+          isLoading={isLoading}
+          maxHeight={"maxHeightGrid" in props ? props.maxHeightGrid : undefined}
+        />
+      </div>
+
+      {isSelectMultipleMode && (
+        <div className="flex justify-end gap-2 pt-4 border-t mt-4 bg-background sticky bottom-0">
+          <button
+            onClick={props.onClose}
+            className="px-4 py-2 border rounded-md hover:bg-muted"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleConfirmSelection}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+            disabled={selectedCards.size === 0}
+          >
+            Add {selectedCards.size} card{selectedCards.size !== 1 ? "s" : ""}
+          </button>
+        </div>
+      )}
+    </>
   );
 }

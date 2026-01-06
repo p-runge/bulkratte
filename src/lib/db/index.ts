@@ -8,6 +8,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -248,21 +249,33 @@ export const userSetsTable = pgTable("user_sets", {
     .references(() => usersTable.id),
 });
 
-export const userSetCardsTable = pgTable("user_set_cards", {
-  id: uuid("id")
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
-  created_at: timestamp("created_at", { mode: "string" })
-    .notNull()
-    .defaultNow(),
-  updated_at: timestamp("updated_at", { mode: "string" })
-    .notNull()
-    .defaultNow(),
-  user_set_id: uuid("user_set_id")
-    .notNull()
-    .references(() => userSetsTable.id),
-  card_id: varchar("card_id", { length: 16 })
-    .notNull()
-    .references(() => cardsTable.id),
-  user_card_id: uuid("user_card_id").references(() => userCardsTable.id),
-});
+export const userSetCardsTable = pgTable(
+  "user_set_cards",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    created_at: timestamp("created_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updated_at: timestamp("updated_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+    user_set_id: uuid("user_set_id")
+      .notNull()
+      .references(() => userSetsTable.id),
+    card_id: varchar("card_id", { length: 16 })
+      .notNull()
+      .references(() => cardsTable.id),
+    user_card_id: uuid("user_card_id")
+      .references(() => userCardsTable.id)
+      .unique(),
+    order: integer("order").notNull(),
+  },
+  (table) => ({
+    uniqueUserSetOrderIdx: uniqueIndex("unique_user_set_order_idx").on(
+      table.user_set_id,
+      table.order
+    ),
+  })
+);

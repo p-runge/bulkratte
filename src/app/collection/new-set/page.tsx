@@ -1,10 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import UserSetForm from "@/components/user-set-form";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useIntl } from "react-intl";
+import { CreateSetContent } from "./_components/create-set-content";
 
 export default function NewSetPage() {
   const intl = useIntl();
@@ -33,7 +33,7 @@ export default function NewSetPage() {
         </div>
       </div>
 
-      <UserSetForm mode="create" />
+      <CreateSetContent />
     </>
   );
 }
