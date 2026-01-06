@@ -1,5 +1,5 @@
-import german from "@/lib/i18n/translated/de-DE.json";
-import english from "@/lib/i18n/translated/en-US.json";
+import german from "@/lib/i18n/compiled/de-DE.json";
+import english from "@/lib/i18n/compiled/en-US.json";
 import { ComponentProps } from "react";
 import { IntlProvider } from "react-intl";
 

@@ -43,3 +43,6 @@ next-env.d.ts
 
 # local
 .local
+
+# i18n compiled files (regenerated on build)
+src/lib/i18n/compiled/

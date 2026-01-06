@@ -1,31 +1,8 @@
 import fs from "node:fs/promises";
 
 import { DEFAULT_LOCALE, LOCALES } from "@/lib/i18n";
-import dotenv from "dotenv";
-import OpenAI from "openai";
-
-dotenv.config();
-
-const client = process.env.OPENAI_API_KEY
-  ? new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    })
-  : undefined;
 
 async function run() {
-  if (!client) {
-    console.error("Env var OPENAI_API_KEY is not set");
-
-    // Just copy the source file to the translated folder
-    const data = await fs.readFile(
-      `src/lib/i18n/extracted/${DEFAULT_LOCALE}.json`,
-      "utf-8"
-    );
-    fs.writeFile(`src/lib/i18n/translated/${DEFAULT_LOCALE}.json`, data);
-    console.log(`Written to src/lib/i18n/translated/${DEFAULT_LOCALE}.json`);
-    return;
-  }
-
   const data = await fs.readFile(
     `src/lib/i18n/extracted/${DEFAULT_LOCALE}.json`,
     "utf-8"
@@ -39,13 +16,9 @@ async function run() {
   console.log("Target locales:", targetLocales);
 
   await Promise.all(targetLocales.map((locale) => translate(locale, data)));
-  fs.writeFile(`src/lib/i18n/translated/${DEFAULT_LOCALE}.json`, data);
-  console.log(`Written to src/lib/i18n/translated/${DEFAULT_LOCALE}.json`);
 }
 
 async function translate(locale: string, data: string) {
-  if (!client) throw new Error("OpenAI client is not initialized");
-
   // parse source messages to determine which keys still need translation
   const sourceMessages = JSON.parse(data) as Record<string, string>;
 
@@ -86,41 +59,24 @@ async function translate(locale: string, data: string) {
   for (const k of keysToTranslate) partialSource[k] = sourceMessages[k]!;
 
   console.log(
-    `Translating ${Object.keys(partialSource).length} messages to ${locale}`
+    `Need to translate ${
+      Object.keys(partialSource).length
+    } messages to ${locale}`
   );
-  // return
 
-  const response = await client.responses.create({
-    model: "gpt-4o-mini",
-    instructions: `You are a translation engine.
-The input will be a JSON object containing only the keys that need translation, for example:
+  console.log("\n=== TRANSLATION REQUEST ===");
+  console.log(`Target Language: ${locale}`);
+  console.log(`Keys to translate: ${Object.keys(partialSource).length}`);
+  console.log(
+    "\nCopy the prompt below and use GitHub Copilot Chat to translate it:"
+  );
+  console.log(
+    `\n\`\`\`\nTake a look at the files in src/lib/i18n/translated and check if have all the keys that are also defined in src/lib/i18n/extracted. If there are missing keys, translate them now and update the files accordingly. Make sure to keep the same keys and their order as in the extracted file. Make sure the translations match the tone and context of the application, which is a tool for managing trading card collections.\n\`\`\``
+  );
+  console.log("\n=== END OF REQUEST ===\n");
 
-\`\`\`
-{
-  "some.key": "Text to translate",
-  "another.key": "Another text"
-}
-\`\`\`
-
-Make sure to escape any special characters properly so that the output is valid JSON.
-
-Translate the whole file from the source language (${DEFAULT_LOCALE}) to the target language (${locale}).
-Only respond with the translated text. Do not include any other text.
-
-The application this text is used in is a web application for collection trading cards, so please use appropriate translations for that context.`,
-    input: JSON.stringify(partialSource),
-  });
-
-  // validate response is valid JSON
-  let newFileJSON: Record<string, string>;
-  try {
-    newFileJSON = JSON.parse(response.output_text) as Record<string, string>;
-  } catch (e) {
-    console.error("Response is not valid JSON", response.output_text);
-    throw e;
-  }
-
-  const merged: Record<string, string> = { ...newFileJSON, ...oldFileJSON };
+  // Just preserve existing translations - user needs to manually add new ones
+  const merged: Record<string, string> = { ...oldFileJSON };
 
   // ensure we only keep keys that still exist in the source messages
   for (const key of Object.keys(merged)) {
