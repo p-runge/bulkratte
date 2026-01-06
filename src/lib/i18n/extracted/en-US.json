@@ -24,6 +24,7 @@
   "card.filter.sort.price": "Card Price",
   "card.filter.sort.rarity": "Card Rarity",
   "card.filter.title": "Filter Cards",
+  "card.picker.button.add": "Add {count, plural, one {# card} other {# cards}}",
   "common.breadcrumb.label": "Breadcrumb",
   "common.button.cancel": "Cancel",
   "common.button.confirm": "Confirm",

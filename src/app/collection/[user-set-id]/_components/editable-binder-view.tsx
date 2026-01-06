@@ -8,6 +8,7 @@ import { Plus, X } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { CardBrowser } from "@/components/card-browser";
+import { CardPicker } from "@/components/card-browser/card-picker";
 
 type UserSet = Awaited<ReturnType<AppRouter["userSet"]["getById"]>>;
 
@@ -249,8 +250,7 @@ export function EditableBinderView({ userSet, cards, onCardsChange }: EditableBi
             <DialogTitle>Add Cards to Set</DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto min-h-0">
-            <CardBrowser
-              mode="select-multiple"
+            <CardPicker
               onSelect={handleCardSelect}
               onClose={() => setAddDialogOpen(false)}
             />

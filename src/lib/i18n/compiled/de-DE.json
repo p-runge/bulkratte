@@ -149,6 +149,42 @@
       "value": "Karten filtern"
     }
   ],
+  "card.picker.button.add": [
+    {
+      "offset": 0,
+      "options": {
+        "one": {
+          "value": [
+            {
+              "type": 7
+            },
+            {
+              "type": 0,
+              "value": " Karte"
+            }
+          ]
+        },
+        "other": {
+          "value": [
+            {
+              "type": 7
+            },
+            {
+              "type": 0,
+              "value": " Karten"
+            }
+          ]
+        }
+      },
+      "pluralType": "cardinal",
+      "type": 6,
+      "value": "count"
+    },
+    {
+      "type": 0,
+      "value": " hinzufügen"
+    }
+  ],
   "common.breadcrumb.label": [
     {
       "type": 0,

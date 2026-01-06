@@ -149,6 +149,42 @@
       "value": "Filter Cards"
     }
   ],
+  "card.picker.button.add": [
+    {
+      "type": 0,
+      "value": "Add "
+    },
+    {
+      "offset": 0,
+      "options": {
+        "one": {
+          "value": [
+            {
+              "type": 7
+            },
+            {
+              "type": 0,
+              "value": " card"
+            }
+          ]
+        },
+        "other": {
+          "value": [
+            {
+              "type": 7
+            },
+            {
+              "type": 0,
+              "value": " cards"
+            }
+          ]
+        }
+      },
+      "pluralType": "cardinal",
+      "type": 6,
+      "value": "count"
+    }
+  ],
   "common.breadcrumb.label": [
     {
       "type": 0,

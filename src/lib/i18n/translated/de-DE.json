@@ -24,6 +24,7 @@
   "card.filter.sort.price": "Kartenpreis",
   "card.filter.sort.rarity": "Kartenseltenheit",
   "card.filter.title": "Karten filtern",
+  "card.picker.button.add": "{count, plural, one {# Karte} other {# Karten}} hinzufügen",
   "common.breadcrumb.label": "Pfadnavigation",
   "common.button.cancel": "Abbrechen",
   "common.button.confirm": "Bestätigen",

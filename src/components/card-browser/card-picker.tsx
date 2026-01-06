@@ -1,0 +1,62 @@
+"use client";
+
+import { useState } from "react";
+import { useIntl } from "react-intl";
+import { CardBrowser } from "./index";
+
+type CardPickerProps = {
+  onSelect: (selectedCardIds: Set<string>) => void;
+  onClose: () => void;
+  setId?: string;
+  maxHeightGrid?: string;
+};
+
+export function CardPicker(props: CardPickerProps) {
+  const intl = useIntl();
+  const [selectedCards, setSelectedCards] = useState<Set<string>>(new Set());
+
+  const handleCardClick = (cardId: string) => {
+    const newSelected = new Set(selectedCards);
+    if (newSelected.has(cardId)) {
+      newSelected.delete(cardId);
+    } else {
+      newSelected.add(cardId);
+    }
+    setSelectedCards(newSelected);
+  };
+
+  const handleConfirmSelection = () => {
+    props.onSelect(selectedCards);
+  };
+
+  return (
+    <>
+      <CardBrowser
+        selectionMode="multi"
+        selectedCards={selectedCards}
+        onCardClick={handleCardClick}
+        setId={props.setId}
+        maxHeightGrid={props.maxHeightGrid}
+      />
+
+      <div className="flex justify-end gap-2 pt-4 border-t mt-4 bg-background sticky bottom-0">
+        <button
+          onClick={props.onClose}
+          className="px-4 py-2 border rounded-md hover:bg-muted"
+        >
+          {intl.formatMessage({ id: "common.button.cancel", defaultMessage: "Cancel" })}
+        </button>
+        <button
+          onClick={handleConfirmSelection}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+          disabled={selectedCards.size === 0}
+        >
+          {intl.formatMessage(
+            { id: "card.picker.button.add", defaultMessage: "Add {count, plural, one {# card} other {# cards}}" },
+            { count: selectedCards.size }
+          )}
+        </button>
+      </div>
+    </>
+  );
+}
