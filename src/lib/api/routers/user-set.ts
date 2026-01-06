@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-import { userSetCardsTable, userSetsTable } from "@/lib/db/index";
+import { cardsTable, userSetCardsTable, userSetsTable } from "@/lib/db/index";
 import { TRPCError } from "@trpc/server";
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull, ne } from "drizzle-orm";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 // const userId = "a2136270-6628-418e-b9f5-8892ba5c79f2"; // TODO: Replace with actual user ID from session
@@ -71,9 +71,24 @@ export const userSetRouter = createTRPCRouter({
       }
 
       const userSetCards = await ctx.db
-        .select({ cardId: userSetCardsTable.card_id })
+        .select({
+          id: userSetCardsTable.id,
+          cardId: userSetCardsTable.card_id,
+          userCardId: userSetCardsTable.user_card_id,
+          card: {
+            id: cardsTable.id,
+            name: cardsTable.name,
+            number: cardsTable.number,
+            rarity: cardsTable.rarity,
+            imageSmall: cardsTable.imageSmall,
+            imageLarge: cardsTable.imageLarge,
+            setId: cardsTable.setId,
+          },
+        })
         .from(userSetCardsTable)
-        .where(eq(userSetCardsTable.user_set_id, input.id));
+        .leftJoin(cardsTable, eq(userSetCardsTable.card_id, cardsTable.id))
+        .where(eq(userSetCardsTable.user_set_id, input.id))
+        .orderBy(asc(userSetCardsTable.created_at), asc(userSetCardsTable.id));
 
       return {
         set: userSet,
@@ -129,18 +144,166 @@ export const userSetRouter = createTRPCRouter({
         })
         .then((res) => res[0]!);
 
-      await ctx.db
-        .delete(userSetCardsTable)
+      // Get existing cards in this set
+      const existingCards = await ctx.db
+        .select({ cardId: userSetCardsTable.card_id })
+        .from(userSetCardsTable)
         .where(eq(userSetCardsTable.user_set_id, input.id));
 
-      const cardValues = Array.from(input.cardIds).map((cardId) => ({
-        user_set_id: input.id,
-        card_id: cardId,
-      }));
+      const existingCardIds = new Set(existingCards.map((c) => c.cardId));
+      const newCardIds = input.cardIds;
 
-      await ctx.db.insert(userSetCardsTable).values(cardValues);
+      // Find cards to add (in newCardIds but not in existingCardIds)
+      const cardsToAdd = Array.from(newCardIds).filter(
+        (id) => !existingCardIds.has(id)
+      );
+
+      // Find cards to remove (in existingCardIds but not in newCardIds)
+      const cardsToRemove = Array.from(existingCardIds).filter(
+        (id) => !newCardIds.has(id)
+      );
+
+      // Remove cards that are no longer in the set
+      if (cardsToRemove.length > 0) {
+        await ctx.db
+          .delete(userSetCardsTable)
+          .where(
+            and(
+              eq(userSetCardsTable.user_set_id, input.id),
+              inArray(userSetCardsTable.card_id, cardsToRemove)
+            )
+          );
+      }
+
+      // Add new cards
+      if (cardsToAdd.length > 0) {
+        const cardValues = cardsToAdd.map((cardId) => ({
+          user_set_id: input.id,
+          card_id: cardId,
+        }));
+
+        await ctx.db.insert(userSetCardsTable).values(cardValues);
+      }
 
       return userSet;
+    }),
+
+  placeCard: protectedProcedure
+    .input(
+      z.object({
+        userSetCardId: z.string().uuid(),
+        userCardId: z.string().uuid(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Verify the user_set_card belongs to a set owned by this user
+      const userSetCard = await ctx.db
+        .select({
+          userSetId: userSetCardsTable.user_set_id,
+        })
+        .from(userSetCardsTable)
+        .where(eq(userSetCardsTable.id, input.userSetCardId))
+        .then((res) => res[0]);
+
+      if (!userSetCard) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User set card not found",
+        });
+      }
+
+      const userSet = await ctx.db
+        .select({ userId: userSetsTable.user_id })
+        .from(userSetsTable)
+        .where(eq(userSetsTable.id, userSetCard.userSetId))
+        .then((res) => res[0]);
+
+      if (!userSet || userSet.userId !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to modify this user set",
+        });
+      }
+
+      // Check if this user card is already placed in another user set
+      const existingPlacement = await ctx.db
+        .select({
+          userSetId: userSetCardsTable.user_set_id,
+          setName: userSetsTable.name,
+        })
+        .from(userSetCardsTable)
+        .leftJoin(
+          userSetsTable,
+          eq(userSetCardsTable.user_set_id, userSetsTable.id)
+        )
+        .where(
+          and(
+            eq(userSetCardsTable.user_card_id, input.userCardId),
+            ne(userSetCardsTable.user_set_id, userSetCard.userSetId)
+          )
+        )
+        .limit(1)
+        .then((res) => res[0]);
+
+      if (existingPlacement) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `This card is already placed in "${existingPlacement.setName}". Please unplace it from that set first.`,
+        });
+      }
+
+      // Update the user_card_id
+      await ctx.db
+        .update(userSetCardsTable)
+        .set({ user_card_id: input.userCardId })
+        .where(eq(userSetCardsTable.id, input.userSetCardId));
+
+      return { success: true };
+    }),
+
+  unplaceCard: protectedProcedure
+    .input(
+      z.object({
+        userSetCardId: z.string().uuid(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Verify the user_set_card belongs to a set owned by this user
+      const userSetCard = await ctx.db
+        .select({
+          userSetId: userSetCardsTable.user_set_id,
+        })
+        .from(userSetCardsTable)
+        .where(eq(userSetCardsTable.id, input.userSetCardId))
+        .then((res) => res[0]);
+
+      if (!userSetCard) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User set card not found",
+        });
+      }
+
+      const userSet = await ctx.db
+        .select({ userId: userSetsTable.user_id })
+        .from(userSetsTable)
+        .where(eq(userSetsTable.id, userSetCard.userSetId))
+        .then((res) => res[0]);
+
+      if (!userSet || userSet.userId !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to modify this user set",
+        });
+      }
+
+      // Set user_card_id to null
+      await ctx.db
+        .update(userSetCardsTable)
+        .set({ user_card_id: null })
+        .where(eq(userSetCardsTable.id, input.userSetCardId));
+
+      return { success: true };
     }),
 
   getList: protectedProcedure.query(async ({ ctx }) => {
@@ -155,6 +318,29 @@ export const userSetRouter = createTRPCRouter({
       .orderBy(userSetsTable.created_at);
 
     return userSets ?? null;
+  }),
+
+  getPlacedUserCardIds: protectedProcedure.query(async ({ ctx }) => {
+    // Get all user_card_ids that are currently placed in any user set
+    const placedCards = await ctx.db
+      .select({
+        userCardId: userSetCardsTable.user_card_id,
+        userSetId: userSetCardsTable.user_set_id,
+        setName: userSetsTable.name,
+      })
+      .from(userSetCardsTable)
+      .leftJoin(
+        userSetsTable,
+        eq(userSetCardsTable.user_set_id, userSetsTable.id)
+      )
+      .where(
+        and(
+          eq(userSetsTable.user_id, ctx.session.user.id),
+          isNotNull(userSetCardsTable.user_card_id)
+        )
+      );
+
+    return placedCards;
   }),
 
   deleteById: protectedProcedure

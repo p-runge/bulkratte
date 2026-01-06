@@ -31,5 +31,12 @@ export async function getIntl() {
   return createIntl({
     locale,
     messages: messages[locale],
+    onError: (err) => {
+      if (err.code === "MISSING_TRANSLATION") {
+        // Suppress missing translation errors on server
+        return;
+      }
+      throw err;
+    },
   });
 }

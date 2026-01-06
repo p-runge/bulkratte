@@ -221,6 +221,18 @@
       "value": "Meine Sammlung"
     }
   ],
+  "common.cancel": [
+    {
+      "type": 0,
+      "value": "Abbrechen"
+    }
+  ],
+  "common.saving": [
+    {
+      "type": 0,
+      "value": "Speichern..."
+    }
+  ],
   "confirm-button.cancel": [
     {
       "type": 0,
@@ -435,10 +447,34 @@
       "value": "Kartensets"
     }
   ],
+  "userCard.form.condition": [
+    {
+      "type": 0,
+      "value": "Zustand"
+    }
+  ],
+  "userCard.form.language": [
+    {
+      "type": 0,
+      "value": "Sprache"
+    }
+  ],
+  "userCard.form.variant": [
+    {
+      "type": 0,
+      "value": "Variante"
+    }
+  ],
   "userSet.action.delete": [
     {
       "type": 0,
       "value": "Set löschen"
+    }
+  ],
+  "userSet.action.editSet": [
+    {
+      "type": 0,
+      "value": "Set bearbeiten"
     }
   ],
   "userSet.cardsSelected": [
@@ -479,6 +515,86 @@
     {
       "type": 0,
       "value": "Set-Bild (optional)"
+    }
+  ],
+  "userSet.placing.addAndPlace": [
+    {
+      "type": 0,
+      "value": "Neue Karte zur Sammlung hinzufügen & platzieren"
+    }
+  ],
+  "userSet.placing.addNew": [
+    {
+      "type": 0,
+      "value": "Neue hinzufügen"
+    }
+  ],
+  "userSet.placing.changeCard": [
+    {
+      "type": 0,
+      "value": "Platzierte Karte ändern"
+    }
+  ],
+  "userSet.placing.currentlyPlaced": [
+    {
+      "type": 0,
+      "value": "Aktuell platziert"
+    }
+  ],
+  "userSet.placing.currentlySelected": [
+    {
+      "type": 0,
+      "value": "(Aktuell platziert)"
+    }
+  ],
+  "userSet.placing.hideCardsFromOtherSets": [
+    {
+      "type": 0,
+      "value": "Karten aus anderen Sets ausblenden"
+    }
+  ],
+  "userSet.placing.placeCard": [
+    {
+      "type": 0,
+      "value": "Karte im Ordner platzieren"
+    }
+  ],
+  "userSet.placing.placedInOtherSet": [
+    {
+      "type": 0,
+      "value": "(In \""
+    },
+    {
+      "type": 1,
+      "value": "setName"
+    },
+    {
+      "type": 0,
+      "value": "\")"
+    }
+  ],
+  "userSet.placing.selectExisting": [
+    {
+      "type": 0,
+      "value": "Aus Sammlung auswählen"
+    }
+  ],
+  "userSet.placing.showCardsFromOtherSets": [
+    {
+      "type": 0,
+      "value": "Karten aus anderen Sets anzeigen"
+    }
+  ],
+  "userSet.placing.subtitle": [
+    {
+      "type": 0,
+      "value": "Platziere deine Karten in diesem Set"
+    }
+  ],
+  "userSet.placing.unplace": [
+    {
+      "type": 0,
+      "value": "Entfernen"
     }
   ],
   "userSet.save": [

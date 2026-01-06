@@ -122,8 +122,8 @@ export default function UserSetForm({ mode, userSet }: Props) {
           image: data.image || undefined,
         },
         {
-          onSuccess() {
-            router.push("/collection");
+          onSuccess(userSetId) {
+            router.push(`/collection/${userSetId}/edit`);
           },
           onError(error) {
             console.error("Error creating user set:", error);
@@ -141,7 +141,7 @@ export default function UserSetForm({ mode, userSet }: Props) {
         {
           async onSuccess() {
             await apiUtils.userSet.getById.invalidate({ id: userSet!.set.id });
-            router.push("/collection");
+            router.push(`/collection/${userSet!.set.id}`);
           },
           onError(error) {
             console.error("Error updating user set:", error);

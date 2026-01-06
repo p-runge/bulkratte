@@ -1,0 +1,444 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { api } from "@/lib/api/react";
+import { AppRouter } from "@/lib/api/routers/_app";
+import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
+import { RHFForm, useRHFForm } from "@/lib/form/utils";
+import { cn } from "@/lib/utils";
+import { Plus } from "lucide-react";
+import Image from "next/image";
+import { useState } from "react";
+import { useIntl } from "react-intl";
+import z from "zod";
+
+type UserCard = Awaited<ReturnType<AppRouter["userCard"]["getList"]>>[number];
+
+interface PlaceCardDialogProps {
+  userSetId: string;
+  cardId: string;
+  userSetCardId: string;
+  hasUserCard: boolean;
+  isPlaced: boolean;
+  currentUserCardId: string | null;
+  userCards: UserCard[];
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+const FormSchema = z.object({
+  condition: z.enum(conditionEnum.enumValues),
+  language: z.enum(languageEnum.enumValues),
+  variant: z.enum(variantEnum.enumValues),
+});
+
+export function PlaceCardDialog({
+  userSetId,
+  cardId,
+  userSetCardId,
+  hasUserCard,
+  isPlaced,
+  currentUserCardId,
+  userCards,
+  onClose,
+  onSuccess,
+}: PlaceCardDialogProps) {
+  const intl = useIntl();
+  const [mode, setMode] = useState<"select" | "create">(
+    hasUserCard ? "select" : "create"
+  );
+  const [showCardsFromOtherSets, setShowCardsFromOtherSets] = useState(false);
+
+  const { data: card } = api.card.getById.useQuery({ cardId });
+  const { data: placedUserCards } = api.userSet.getPlacedUserCardIds.useQuery();
+  const { mutateAsync: placeCard, isPending: isPlacing } =
+    api.userSet.placeCard.useMutation();
+  const { mutateAsync: unplaceCard, isPending: isUnplacing } =
+    api.userSet.unplaceCard.useMutation();
+  const { mutateAsync: createUserCard, isPending: isCreating } =
+    api.userCard.create.useMutation();
+  const apiUtils = api.useUtils();
+
+  const form = useRHFForm(FormSchema, {
+    defaultValues: {
+      condition: "Near Mint",
+      language: "en",
+      variant: "Unlimited",
+    },
+  });
+
+  // Create a map of user_card_id to the set it's placed in
+  const placedCardsMap = new Map(
+    (placedUserCards ?? []).map((pc) => [
+      pc.userCardId,
+      { userSetId: pc.userSetId, setName: pc.setName },
+    ])
+  );
+
+  // Filter user cards to only show those matching this cardId and not already placed elsewhere
+  const matchingUserCards = userCards
+    .filter((uc) => uc.cardId === cardId)
+    .map((uc) => {
+      const placement = placedCardsMap.get(uc.id);
+      const isPlacedElsewhere =
+        placement && placement.userSetId !== userSetId;
+      return {
+        ...uc,
+        isPlacedElsewhere,
+        placementInfo: isPlacedElsewhere ? placement : null,
+      };
+    });
+
+  // Find the currently placed user card
+  const currentlyPlacedCard = currentUserCardId
+    ? userCards.find((uc) => uc.id === currentUserCardId)
+    : null;
+
+  const handleSelectUserCard = async (userCardId: string) => {
+    try {
+      await placeCard({ userSetCardId, userCardId });
+      await apiUtils.userSet.getById.invalidate({ id: userSetId });
+      await apiUtils.userSet.getPlacedUserCardIds.invalidate();
+      onSuccess();
+    } catch (error: any) {
+      // Error will be shown by tRPC, just log it
+      console.error("Failed to place card:", error.message);
+    }
+  };
+
+  const handleUnplace = async () => {
+    await unplaceCard({ userSetCardId });
+    await apiUtils.userSet.getById.invalidate({ id: userSetId });
+    await apiUtils.userSet.getPlacedUserCardIds.invalidate();
+    onSuccess();
+  };
+
+  const handleCreateAndPlace = async (data: z.infer<typeof FormSchema>) => {
+    const newUserCard = await createUserCard({
+      cardId,
+      condition: data.condition,
+      language: data.language,
+      variant: data.variant,
+    });
+
+    try {
+      await placeCard({ userSetCardId, userCardId: newUserCard.id });
+      await apiUtils.userSet.getById.invalidate({ id: userSetId });
+      await apiUtils.userSet.getPlacedUserCardIds.invalidate();
+      await apiUtils.userCard.getList.invalidate();
+      onSuccess();
+    } catch (error: any) {
+      // If placing fails, we still created the card, so just close
+      console.error("Failed to place card:", error.message);
+      await apiUtils.userCard.getList.invalidate();
+      onSuccess();
+    }
+  };
+
+  if (!card) {
+    return null;
+  }
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>
+            {isPlaced
+              ? intl.formatMessage({
+                id: "userSet.placing.changeCard",
+                defaultMessage: "Change Placed Card",
+              })
+              : intl.formatMessage({
+                id: "userSet.placing.placeCard",
+                defaultMessage: "Place Card in Binder",
+              })}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="py-4">
+          <div className="flex gap-4 mb-6">
+            <Image
+              src={card.imageSmall}
+              alt={card.name}
+              width={128}
+              height={179}
+              unoptimized
+              className="w-32 h-auto object-contain rounded"
+            />
+            <div>
+              <h3 className="text-xl font-bold">{card.name}</h3>
+              <p className="text-sm text-muted-foreground">
+                #{card.number} · {card.rarity}
+              </p>
+            </div>
+          </div>
+
+          {isPlaced && currentlyPlacedCard && (
+            <div className="mb-6 p-4 border rounded-lg bg-muted/30">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold">
+                  {intl.formatMessage({
+                    id: "userSet.placing.currentlyPlaced",
+                    defaultMessage: "Currently Placed",
+                  })}
+                </h4>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleUnplace}
+                  disabled={isUnplacing}
+                >
+                  {intl.formatMessage({
+                    id: "userSet.placing.unplace",
+                    defaultMessage: "Unplace",
+                  })}
+                </Button>
+              </div>
+              <div className="flex items-center gap-3">
+                <Image
+                  src={currentlyPlacedCard.card.imageSmall ?? ""}
+                  alt={currentlyPlacedCard.card.name ?? ""}
+                  width={64}
+                  height={89}
+                  unoptimized
+                  className="w-16 h-auto object-contain rounded"
+                />
+                <div>
+                  <div className="font-medium">{currentlyPlacedCard.card.name}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {currentlyPlacedCard.language} · {currentlyPlacedCard.variant} ·{" "}
+                    {currentlyPlacedCard.condition}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {hasUserCard && (
+            <div className="flex gap-2 mb-4">
+              <Button
+                variant={mode === "select" ? "default" : "outline"}
+                onClick={() => setMode("select")}
+                size="sm"
+              >
+                {intl.formatMessage({
+                  id: "userSet.placing.selectExisting",
+                  defaultMessage: "Select from Collection",
+                })}
+              </Button>
+              <Button
+                variant={mode === "create" ? "default" : "outline"}
+                onClick={() => setMode("create")}
+                size="sm"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                {intl.formatMessage({
+                  id: "userSet.placing.addNew",
+                  defaultMessage: "Add New",
+                })}
+              </Button>
+            </div>
+          )}
+
+          {mode === "select" ? (
+            <>
+              <ScrollArea className="h-64">
+                <div className="space-y-2">
+                  {matchingUserCards
+                    .filter(
+                      (uc) =>
+                        uc.id !== currentUserCardId &&
+                        (!uc.isPlacedElsewhere || showCardsFromOtherSets)
+                    )
+                    .map((userCard) => {
+                      const isCurrentlyPlaced =
+                        userCard.id === currentUserCardId;
+                      return (
+                        <button
+                          key={userCard.id}
+                          onClick={() => handleSelectUserCard(userCard.id)}
+                          disabled={
+                            isPlacing ||
+                            isCurrentlyPlaced ||
+                            userCard.isPlacedElsewhere
+                          }
+                          className={cn(
+                            "w-full p-3 rounded border text-left transition-colors",
+                            isCurrentlyPlaced
+                              ? "bg-primary/10 border-primary cursor-not-allowed"
+                              : userCard.isPlacedElsewhere
+                                ? "opacity-50 cursor-not-allowed bg-muted"
+                                : "hover:bg-accent disabled:opacity-50"
+                          )}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Image
+                              src={userCard.card.imageSmall ?? ""}
+                              alt={userCard.card.name ?? ""}
+                              width={64}
+                              height={89}
+                              unoptimized
+                              className="w-16 h-auto object-contain rounded"
+                            />
+                            <div className="flex-1">
+                              <div className="font-medium">
+                                {userCard.card.name}
+                                {isCurrentlyPlaced && (
+                                  <span className="ml-2 text-xs text-primary">
+                                    {intl.formatMessage({
+                                      id: "userSet.placing.currentlySelected",
+                                      defaultMessage: "(Currently Placed)",
+                                    })}
+                                  </span>
+                                )}
+                                {userCard.isPlacedElsewhere && (
+                                  <span className="ml-2 text-xs text-muted-foreground">
+                                    {intl.formatMessage(
+                                      {
+                                        id: "userSet.placing.placedInOtherSet",
+                                        defaultMessage: '(In "{setName}")',
+                                      },
+                                      {
+                                        setName:
+                                          userCard.placementInfo?.setName,
+                                      }
+                                    )}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                {userCard.language} · {userCard.variant} ·{" "}
+                                {userCard.condition}
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                </div>
+              </ScrollArea>
+
+              {matchingUserCards.some((uc) => uc.isPlacedElsewhere) && (
+                <div className="mt-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      setShowCardsFromOtherSets(!showCardsFromOtherSets)
+                    }
+                    className="w-full"
+                  >
+                    {showCardsFromOtherSets
+                      ? intl.formatMessage({
+                        id: "userSet.placing.hideCardsFromOtherSets",
+                        defaultMessage: "Hide cards from other sets",
+                      })
+                      : intl.formatMessage({
+                        id: "userSet.placing.showCardsFromOtherSets",
+                        defaultMessage: "Show cards from other sets",
+                      })}
+                  </Button>
+                </div>
+              )}
+            </>
+          ) : (
+            <RHFForm form={form} onSubmit={handleCreateAndPlace}>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    {intl.formatMessage({
+                      id: "userCard.form.language",
+                      defaultMessage: "Language",
+                    })}
+                  </label>
+                  <select
+                    {...form.register("language")}
+                    className="w-full p-2 rounded border bg-background"
+                  >
+                    {languageEnum.enumValues.map((lang) => (
+                      <option key={lang} value={lang}>
+                        {lang}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    {intl.formatMessage({
+                      id: "userCard.form.variant",
+                      defaultMessage: "Variant",
+                    })}
+                  </label>
+                  <select
+                    {...form.register("variant")}
+                    className="w-full p-2 rounded border bg-background"
+                  >
+                    {variantEnum.enumValues.map((variant) => (
+                      <option key={variant} value={variant}>
+                        {variant}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    {intl.formatMessage({
+                      id: "userCard.form.condition",
+                      defaultMessage: "Condition",
+                    })}
+                  </label>
+                  <select
+                    {...form.register("condition")}
+                    className="w-full p-2 rounded border bg-background"
+                  >
+                    {conditionEnum.enumValues.map((condition) => (
+                      <option key={condition} value={condition}>
+                        {condition}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <DialogFooter className="mt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onClose}
+                  disabled={isCreating}
+                >
+                  {intl.formatMessage({
+                    id: "common.cancel",
+                    defaultMessage: "Cancel",
+                  })}
+                </Button>
+                <Button type="submit" disabled={isCreating}>
+                  {isCreating
+                    ? intl.formatMessage({
+                      id: "common.saving",
+                      defaultMessage: "Saving...",
+                    })
+                    : intl.formatMessage({
+                      id: "userSet.placing.addAndPlace",
+                      defaultMessage: "Add New Card to Collection & Place It",
+                    })}
+                </Button>
+              </DialogFooter>
+            </RHFForm>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

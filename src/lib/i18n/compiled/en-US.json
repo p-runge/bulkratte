@@ -221,6 +221,18 @@
       "value": "My Collection"
     }
   ],
+  "common.cancel": [
+    {
+      "type": 0,
+      "value": "Cancel"
+    }
+  ],
+  "common.saving": [
+    {
+      "type": 0,
+      "value": "Saving..."
+    }
+  ],
   "confirm-button.cancel": [
     {
       "type": 0,
@@ -427,10 +439,34 @@
       "value": "Sets"
     }
   ],
+  "userCard.form.condition": [
+    {
+      "type": 0,
+      "value": "Condition"
+    }
+  ],
+  "userCard.form.language": [
+    {
+      "type": 0,
+      "value": "Language"
+    }
+  ],
+  "userCard.form.variant": [
+    {
+      "type": 0,
+      "value": "Variant"
+    }
+  ],
   "userSet.action.delete": [
     {
       "type": 0,
       "value": "Delete Set"
+    }
+  ],
+  "userSet.action.editSet": [
+    {
+      "type": 0,
+      "value": "Edit Set"
     }
   ],
   "userSet.cardsSelected": [
@@ -471,6 +507,86 @@
     {
       "type": 0,
       "value": "Set Image (optional)"
+    }
+  ],
+  "userSet.placing.addAndPlace": [
+    {
+      "type": 0,
+      "value": "Add New Card to Collection & Place It"
+    }
+  ],
+  "userSet.placing.addNew": [
+    {
+      "type": 0,
+      "value": "Add New"
+    }
+  ],
+  "userSet.placing.changeCard": [
+    {
+      "type": 0,
+      "value": "Change Placed Card"
+    }
+  ],
+  "userSet.placing.currentlyPlaced": [
+    {
+      "type": 0,
+      "value": "Currently Placed"
+    }
+  ],
+  "userSet.placing.currentlySelected": [
+    {
+      "type": 0,
+      "value": "(Currently Placed)"
+    }
+  ],
+  "userSet.placing.hideCardsFromOtherSets": [
+    {
+      "type": 0,
+      "value": "Hide cards from other sets"
+    }
+  ],
+  "userSet.placing.placeCard": [
+    {
+      "type": 0,
+      "value": "Place Card in Binder"
+    }
+  ],
+  "userSet.placing.placedInOtherSet": [
+    {
+      "type": 0,
+      "value": "(In \""
+    },
+    {
+      "type": 1,
+      "value": "setName"
+    },
+    {
+      "type": 0,
+      "value": "\")"
+    }
+  ],
+  "userSet.placing.selectExisting": [
+    {
+      "type": 0,
+      "value": "Select from Collection"
+    }
+  ],
+  "userSet.placing.showCardsFromOtherSets": [
+    {
+      "type": 0,
+      "value": "Show cards from other sets"
+    }
+  ],
+  "userSet.placing.subtitle": [
+    {
+      "type": 0,
+      "value": "Place your cards into this set"
+    }
+  ],
+  "userSet.placing.unplace": [
+    {
+      "type": 0,
+      "value": "Unplace"
     }
   ],
   "userSet.save": [

@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
+import UserSetForm from "@/components/user-set-form";
 import { api } from "@/lib/api/server";
 import { getIntl } from "@/lib/i18n/server";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { UserSetContent } from "./_components/user-set-content";
+import { DeleteUserSetButton } from "../_components/delete-user-set-button";
 
-export default async function UserSetPage({
+export default async function EditUserSetPage({
   params,
 }: {
   params: Promise<{ ["user-set-id"]: string }>;
@@ -21,7 +22,7 @@ export default async function UserSetPage({
   return (
     <>
       <div className="flex items-center gap-4 mb-6">
-        <Link href="/collection">
+        <Link href={`/collection/${userSetId}`}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -35,30 +36,26 @@ export default async function UserSetPage({
             />
           )}
           <div>
-            <h1 className="text-3xl font-bold">{userSet.set.name}</h1>
+            <h1 className="text-3xl font-bold">
+              {intl.formatMessage({
+                id: "userSet.title.edit",
+                defaultMessage: "Edit Set",
+              })}
+            </h1>
             <p className="text-muted-foreground mt-1">
               {intl.formatMessage({
-                id: "userSet.placing.subtitle",
-                defaultMessage: "Place your cards into this set",
+                id: "userSet.subtitle",
+                defaultMessage: "Name your set and select cards to add",
               })}
             </p>
           </div>
         </div>
 
         <div className="ml-auto">
-          <Link href={`/collection/${userSetId}/edit`}>
-            <Button variant="outline">
-              <Pencil className="h-4 w-4 mr-2" />
-              {intl.formatMessage({
-                id: "userSet.action.editSet",
-                defaultMessage: "Edit Set",
-              })}
-            </Button>
-          </Link>
+          <DeleteUserSetButton userSetId={userSetId} />
         </div>
       </div>
-
-      <UserSetContent userSetId={userSetId} />
+      <UserSetForm mode="edit" userSet={userSet} />
     </>
   );
 }
