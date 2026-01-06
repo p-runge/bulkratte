@@ -31,7 +31,7 @@ export function CardGrid({
     return (
       <div className="flex items-center justify-center h-64 text-muted-foreground">
         <FormattedMessage
-          id="no_cards_found"
+          id="card.browser.empty"
           defaultMessage="No cards found. Try adjusting your filters."
         />
       </div>

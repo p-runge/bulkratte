@@ -21,7 +21,7 @@ export default async function SetIdPage({
     return (
       <div>
         {intl.formatMessage({
-          id: "set.notFound",
+          id: "page.set.error.not_found",
           defaultMessage: "Set not found",
         })}
       </div>
@@ -34,14 +34,14 @@ export default async function SetIdPage({
       <nav
         className="text-sm mb-4"
         aria-label={intl.formatMessage({
-          id: "breadcrumb.label",
+          id: "common.breadcrumb.label",
           defaultMessage: "Breadcrumb",
         })}
       >
         <ol className="list-reset flex text-muted-foreground">
           <li>
             <Link href="/sets" className="hover:underline">
-              {intl.formatMessage({ id: "sets.label", defaultMessage: "Sets" })}
+              {intl.formatMessage({ id: "page.sets.label", defaultMessage: "Sets" })}
             </Link>
           </li>
           <li className="font-semibold flex">

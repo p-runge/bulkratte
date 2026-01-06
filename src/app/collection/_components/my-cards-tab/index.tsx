@@ -35,7 +35,7 @@ export default function MyCardsTab() {
           <Button onClick={() => setIsCreateCardDialogOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
             {intl.formatMessage({
-              id: "collection.actions.addNewCard",
+              id: "page.collection.action.add_card",
               defaultMessage: "Add New Card",
             })}
           </Button>
@@ -46,13 +46,13 @@ export default function MyCardsTab() {
             <CardContent>
               <h3 className="text-lg font-semibold mb-2">
                 {intl.formatMessage({
-                  id: "collection.cards.noneTitle",
+                  id: "page.collection.cards.empty.title",
                   defaultMessage: "No cards in your collection yet",
                 })}
               </h3>
               <p className="text-muted-foreground mb-6">
                 {intl.formatMessage({
-                  id: "collection.cards.noneDescription",
+                  id: "page.collection.cards.empty.description",
                   defaultMessage:
                     "Start adding cards to your collection!",
                 })}
@@ -60,7 +60,7 @@ export default function MyCardsTab() {
               <Button onClick={() => setIsCreateCardDialogOpen(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 {intl.formatMessage({
-                  id: "collection.actions.addFirstCard",
+                  id: "page.collection.action.add_first_card",
                   defaultMessage: "Add Your First Card",
                 })}
               </Button>

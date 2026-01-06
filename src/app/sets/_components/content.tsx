@@ -54,13 +54,13 @@ export default function Content({ sets }: Props) {
           <div className="container mx-auto p-4">
             <h1 className="text-3xl font-bold mb-2">
               {intl.formatMessage({
-                id: "browseSets.title",
+                id: "page.sets.title",
                 defaultMessage: "Browse Sets",
               })}
             </h1>
             <p className="text-muted-foreground">
               {intl.formatMessage({
-                id: "browseSets.description",
+                id: "page.sets.description",
                 defaultMessage:
                   "Browse all available Pokémon card sets. Click on a set to view its cards or mark sets you're actively collecting.",
               })}
@@ -70,7 +70,7 @@ export default function Content({ sets }: Props) {
               type="text"
               autoFocus
               placeholder={intl.formatMessage({
-                id: "search.placeholder",
+                id: "page.sets.search.placeholder",
                 defaultMessage: "Search set names...",
               })}
               value={search}
@@ -92,7 +92,7 @@ export default function Content({ sets }: Props) {
                   src={seriesSets[0]!.logo}
                   alt={intl.formatMessage(
                     {
-                      id: "series.logoAlt",
+                      id: "set.series.logo.alt",
                       defaultMessage: "{series} logo",
                     },
                     { series }
@@ -123,14 +123,14 @@ export default function Content({ sets }: Props) {
                     ? extras > 0
                       ? intl.formatMessage(
                         {
-                          id: "set.cardsCountWithExtras",
+                          id: "set.cards.count_with_extras",
                           defaultMessage: "{total} (+{extras}) cards",
                         },
                         { total: set.total, extras }
                       )
                       : intl.formatMessage(
                         {
-                          id: "set.cardsCount",
+                          id: "set.cards.count",
                           defaultMessage: "{total} cards",
                         },
                         { total: set.total }
@@ -149,7 +149,7 @@ export default function Content({ sets }: Props) {
                                   src={set.logo}
                                   alt={intl.formatMessage(
                                     {
-                                      id: "set.logoAlt",
+                                      id: "set.logo.alt",
                                       defaultMessage: "{setName} logo",
                                     },
                                     { setName: set.name }
@@ -183,7 +183,7 @@ export default function Content({ sets }: Props) {
                                 src={set.symbol}
                                 alt={intl.formatMessage(
                                   {
-                                    id: "set.symbolAlt",
+                                    id: "set.symbol.alt",
                                     defaultMessage: "{setName} symbol",
                                   },
                                   { setName: set.name }

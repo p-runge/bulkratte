@@ -11,31 +11,31 @@ export async function MobileMenuContent({ session }: { session: Session | null }
       <Link href="/"
       // onClick={() => setIsOpen(false)}
       >
-        <Button variant="ghost" className="w-full text-left">{intl.formatMessage({ id: "navigation.home", defaultMessage: "Home" })}</Button>
+        <Button variant="ghost" className="w-full text-left">{intl.formatMessage({ id: "nav.link.home", defaultMessage: "Home" })}</Button>
       </Link>
       <Link href="/sets"
-      // onClick={() => setIsOpen(false)}
+      // onClick(() => setIsOpen(false)}
       >
-        <Button variant="ghost" className="w-full text-left">{intl.formatMessage({ id: "navigation.sets", defaultMessage: "Sets" })}</Button>
+        <Button variant="ghost" className="w-full text-left">{intl.formatMessage({ id: "nav.link.sets", defaultMessage: "Sets" })}</Button>
       </Link>
       {session && (
         <Link href="/collection"
         // onClick={() => setIsOpen(false)}
         >
-          <Button variant="ghost" className="w-full text-left">{intl.formatMessage({ id: "navigation.collection", defaultMessage: "My Collection" })}</Button>
+          <Button variant="ghost" className="w-full text-left">{intl.formatMessage({ id: "nav.link.collection", defaultMessage: "My Collection" })}</Button>
         </Link>
       )}
       {session ? (
         <Link href="/auth/signout"
         // onClick={() => setIsOpen(false)}
         >
-          <Button variant="default" className="w-full text-left">{intl.formatMessage({ id: "navigation.signOut", defaultMessage: "Sign Out" })}</Button>
+          <Button variant="default" className="w-full text-left">{intl.formatMessage({ id: "nav.action.signout", defaultMessage: "Sign Out" })}</Button>
         </Link>
       ) : (
         <Link href="/auth/signin"
         // onClick={() => setIsOpen(false)}
         >
-          <Button variant="default" className="w-full text-left">{intl.formatMessage({ id: "navigation.signIn", defaultMessage: "Sign In" })}</Button>
+          <Button variant="default" className="w-full text-left">{intl.formatMessage({ id: "nav.action.signin", defaultMessage: "Sign In" })}</Button>
         </Link>
       )}
     </div>

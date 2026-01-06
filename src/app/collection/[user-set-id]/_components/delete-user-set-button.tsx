@@ -19,11 +19,11 @@ export function DeleteUserSetButton({ userSetId }: { userSetId: string }) {
   return (
     <ConfirmButton
       title={intl.formatMessage({
-        id: "userSet.delete.confirmTitle",
+        id: "dialog.delete_set.title",
         defaultMessage: "Delete Set",
       })}
       description={intl.formatMessage({
-        id: "userSet.delete.confirmDescription",
+        id: "dialog.delete_set.description",
         defaultMessage:
           "Are you sure you want to delete this set? This action cannot be undone.",
       })}
@@ -35,7 +35,7 @@ export function DeleteUserSetButton({ userSetId }: { userSetId: string }) {
       disabled={deleteUserSet.isPending}
     >
       {intl.formatMessage({
-        id: "userSet.action.delete",
+        id: "page.set.action.delete",
         defaultMessage: "Delete Set",
       })}
     </ConfirmButton>

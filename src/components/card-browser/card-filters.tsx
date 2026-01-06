@@ -66,7 +66,7 @@ export function CardFilters({ onFilterChange, disableSetFilter = false }: CardFi
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-lg">{intl.formatMessage({ id: "cardFilter.filter.title", defaultMessage: "Filter Cards" })}</h3>
+        <h3 className="font-semibold text-lg">{intl.formatMessage({ id: "card.filter.title", defaultMessage: "Filter Cards" })}</h3>
         {hasActiveFilters && (
           <Button
             variant="ghost"
@@ -75,7 +75,7 @@ export function CardFilters({ onFilterChange, disableSetFilter = false }: CardFi
             className="h-8 px-2 text-muted-foreground hover:text-foreground"
           >
             <X className="h-4 w-4 mr-1" />
-            {intl.formatMessage({ id: "cardFilter.button.clearSelection", defaultMessage: "Clear" })}
+            {intl.formatMessage({ id: "card.filter.button.clear", defaultMessage: "Clear" })}
           </Button>
         )}
       </div>
@@ -83,11 +83,11 @@ export function CardFilters({ onFilterChange, disableSetFilter = false }: CardFi
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
         <div className="flex flex-col gap-2">
           <Label htmlFor="search" className="text-sm text-muted-foreground">
-            {intl.formatMessage({ id: "cardFilter.search.placeholder", defaultMessage: "Search" })}
+            {intl.formatMessage({ id: "card.filter.search.label", defaultMessage: "Search" })}
           </Label>
           <Input
             id="search"
-            placeholder={intl.formatMessage({ id: "cardFilter.search.placeholder", defaultMessage: "Card name or number..." })}
+            placeholder={intl.formatMessage({ id: "card.filter.search.placeholder", defaultMessage: "Card name or number..." })}
             value={filters.search}
             onChange={(e) => updateFilter("search", e.target.value)}
             className="bg-background"
@@ -97,17 +97,17 @@ export function CardFilters({ onFilterChange, disableSetFilter = false }: CardFi
         {!disableSetFilter ? (
           <div className="flex flex-col gap-2">
             <Label htmlFor="set" className="text-sm text-muted-foreground">
-              {intl.formatMessage({ id: "cardFilter.set.label", defaultMessage: "Set" })}
+              {intl.formatMessage({ id: "card.filter.set.label", defaultMessage: "Set" })}
             </Label>
             <Select
               value={filters.setId}
               onValueChange={(value) => updateFilter("setId", value)}
             >
               <SelectTrigger id="set" className="bg-background">
-                <SelectValue placeholder="All sets" />
+                <SelectValue placeholder={intl.formatMessage({ id: "card.filter.set.placeholder", defaultMessage: "All sets" })} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{intl.formatMessage({ id: "cardFilter.set.all", defaultMessage: "All sets" })}</SelectItem>
+                <SelectItem value="all">{intl.formatMessage({ id: "card.filter.set.all", defaultMessage: "All sets" })}</SelectItem>
                 {sets.map((set) => (
                   <SelectItem key={set.id} value={set.id}>
                     {set.name}
@@ -120,17 +120,17 @@ export function CardFilters({ onFilterChange, disableSetFilter = false }: CardFi
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="rarity" className="text-sm text-muted-foreground">
-            {intl.formatMessage({ id: "cardFilter.rarity.label", defaultMessage: "Rarity" })}
+            {intl.formatMessage({ id: "card.filter.rarity.label", defaultMessage: "Rarity" })}
           </Label>
           <Select
             value={filters.rarity}
             onValueChange={(value) => updateFilter("rarity", value)}
           >
             <SelectTrigger id="rarity" className="bg-background">
-              <SelectValue placeholder="All rarities" />
+              <SelectValue placeholder={intl.formatMessage({ id: "card.filter.rarity.placeholder", defaultMessage: "All rarities" })} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{intl.formatMessage({ id: "cardFilter.rarity.all", defaultMessage: "All rarities" })}</SelectItem>
+              <SelectItem value="all">{intl.formatMessage({ id: "card.filter.rarity.all", defaultMessage: "All rarities" })}</SelectItem>
               {rarityEnum.enumValues.map((rarity) => (
                 <SelectItem key={rarity} value={rarity}>
                   {rarity}
@@ -142,12 +142,12 @@ export function CardFilters({ onFilterChange, disableSetFilter = false }: CardFi
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="date-from" className="text-sm text-muted-foreground">
-            {intl.formatMessage({ id: "cardFilter.date.from", defaultMessage: "Release From" })}
+            {intl.formatMessage({ id: "card.filter.date.from", defaultMessage: "Release From" })}
           </Label>
           <Input
             id="date-from"
             type="date"
-            placeholder={intl.formatMessage({ id: "cardFilter.date.placeholder", defaultMessage: "From" })}
+            placeholder={intl.formatMessage({ id: "card.filter.date.placeholder.from", defaultMessage: "From" })}
             value={filters.releaseDateFrom}
             onChange={(e) => updateFilter("releaseDateFrom", e.target.value)}
             className="bg-background"
@@ -156,12 +156,12 @@ export function CardFilters({ onFilterChange, disableSetFilter = false }: CardFi
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="date-to" className="text-sm text-muted-foreground">
-            {intl.formatMessage({ id: "cardFilter.date.to", defaultMessage: "Release To" })}
+            {intl.formatMessage({ id: "card.filter.date.to", defaultMessage: "Release To" })}
           </Label>
           <Input
             id="date-to"
             type="date"
-            placeholder={intl.formatMessage({ id: "cardFilter.date.placeholder", defaultMessage: "To" })}
+            placeholder={intl.formatMessage({ id: "card.filter.date.placeholder.to", defaultMessage: "To" })}
             value={filters.releaseDateTo}
             onChange={(e) => updateFilter("releaseDateTo", e.target.value)}
             className="bg-background"
@@ -172,27 +172,27 @@ export function CardFilters({ onFilterChange, disableSetFilter = false }: CardFi
       <div className="flex gap-4">
         <div className="flex flex-col gap-2">
           <Label htmlFor="sort-by" className="text-sm text-muted-foreground">
-            {intl.formatMessage({ id: "cardFilter.sortBy.label", defaultMessage: "Sort By" })}
+            {intl.formatMessage({ id: "card.filter.sort.label", defaultMessage: "Sort By" })}
           </Label>
           <Select
             value={filters.sortBy}
             onValueChange={(value) => updateFilter("sortBy", value)}
           >
             <SelectTrigger id="sort-by" className="bg-background">
-              <SelectValue placeholder="Sort by" />
+              <SelectValue placeholder={intl.formatMessage({ id: "card.filter.sort.placeholder", defaultMessage: "Sort by" })} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="number">
-                {intl.formatMessage({ id: "cardFilter.sortBy.number", defaultMessage: "Card Number" })}
+                {intl.formatMessage({ id: "card.filter.sort.number", defaultMessage: "Card Number" })}
               </SelectItem>
               <SelectItem value="name">
-                {intl.formatMessage({ id: "cardFilter.sortBy.name", defaultMessage: "Card Name" })}
+                {intl.formatMessage({ id: "card.filter.sort.name", defaultMessage: "Card Name" })}
               </SelectItem>
               <SelectItem value="rarity">
-                {intl.formatMessage({ id: "cardFilter.sortBy.rarity", defaultMessage: "Card Rarity" })}
+                {intl.formatMessage({ id: "card.filter.sort.rarity", defaultMessage: "Card Rarity" })}
               </SelectItem>
               <SelectItem value="price">
-                {intl.formatMessage({ id: "cardFilter.sortBy.price", defaultMessage: "Card Price" })}
+                {intl.formatMessage({ id: "card.filter.sort.price", defaultMessage: "Card Price" })}
               </SelectItem>
             </SelectContent>
           </Select>
@@ -200,21 +200,21 @@ export function CardFilters({ onFilterChange, disableSetFilter = false }: CardFi
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="sort-order" className="text-sm text-muted-foreground">
-            {intl.formatMessage({ id: "cardFilter.sortOrder.label", defaultMessage: "Sort Order" })}
+            {intl.formatMessage({ id: "card.filter.order.label", defaultMessage: "Sort Order" })}
           </Label>
           <Select
             value={filters.sortOrder}
             onValueChange={(value) => updateFilter("sortOrder", value as "asc" | "desc")}
           >
             <SelectTrigger id="sort-order" className="bg-background">
-              <SelectValue placeholder="Sort order" />
+              <SelectValue placeholder={intl.formatMessage({ id: "card.filter.order.placeholder", defaultMessage: "Sort order" })} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="asc">
-                {intl.formatMessage({ id: "cardFilter.sortOrder.asc", defaultMessage: "Ascending" })}
+                {intl.formatMessage({ id: "card.filter.order.asc", defaultMessage: "Ascending" })}
               </SelectItem>
               <SelectItem value="desc">
-                {intl.formatMessage({ id: "cardFilter.sortOrder.desc", defaultMessage: "Descending" })}
+                {intl.formatMessage({ id: "card.filter.order.desc", defaultMessage: "Descending" })}
               </SelectItem>
             </SelectContent>
           </Select>

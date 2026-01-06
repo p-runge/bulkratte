@@ -15,7 +15,7 @@ export default async function HomePage() {
     <main className="min-h-screen flex flex-col justify-center items-center px-4">
       <div className="flex flex-col lg:flex-row lg:gap-12 items-center">
         <div className="max-w-1/2 min-w-[300px] flex justify-end">
-          <Image src="/bulkratte_logo.png" alt="TCG Collector Logo" width={500} height={500} className="drop-shadow-[0_0_10px] drop-shadow-primary" />
+          <Image src="/bulkratte_logo.png" alt={intl.formatMessage({ id: "page.home.logo.alt", defaultMessage: "TCG Collector Logo" })} width={500} height={500} className="drop-shadow-[0_0_10px] drop-shadow-primary" />
         </div>
         <div className="max-w-2xl">
           <div className="mb-6 flex gap-4">
@@ -25,14 +25,14 @@ export default async function HomePage() {
 
           <h1 className="text-4xl lg:text-6xl font-bold mb-4 text-primary capitalize">{
             intl.formatMessage({
-              id: "home.title",
+              id: "page.home.title",
               defaultMessage: "Your TCG collection under control",
             })
           }</h1>
           <p className="text-lg text-muted-foreground mb-6"
           >
             {intl.formatMessage({
-              id: "home.description",
+              id: "page.home.description",
               defaultMessage:
                 "<i>{siteName}</i> is the easiest way to track your Pokémon card collection. Manage sets in multiple languages, variants, and conditions with ease.",
             },
@@ -46,7 +46,7 @@ export default async function HomePage() {
           {!session && <>
             <p className="mb-3 text-sm">
               {intl.formatMessage({
-                id: "home.ctaIntroduction",
+                id: "page.home.cta.intro",
                 defaultMessage: "Not a <i>Bulkratte</i> yet? Create an account and start organizing your collection today – 100% for free!",
               },
                 {
@@ -57,7 +57,7 @@ export default async function HomePage() {
             <Link href="/auth/signin" passHref>
               <Button className="cursor-pointer" variant="default" size="lg">
                 {intl.formatMessage({
-                  id: "home.cta",
+                  id: "page.home.action.signup",
                   defaultMessage: "Sign Up Now",
                 })}
               </Button>
@@ -70,7 +70,7 @@ export default async function HomePage() {
             <Link href="/sets" passHref className="mb-4">
               <Button className="cursor-pointer" variant="outline">
                 {intl.formatMessage({
-                  id: "home.browseSets",
+                  id: "page.home.action.browse_sets",
                   defaultMessage: "Browse Card Sets",
                 })}
               </Button>
@@ -80,7 +80,7 @@ export default async function HomePage() {
               <Link href="/collection" passHref>
                 <Button className="cursor-pointer">
                   {intl.formatMessage({
-                    id: "home.viewCollection",
+                    id: "page.home.action.view_collection",
                     defaultMessage: "My Collection",
                   })}
                 </Button>

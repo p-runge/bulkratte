@@ -24,7 +24,7 @@ export default async function HeaderContent({ session }: {
             src="/bulkratte_head_logo.png"
             alt={
               intl.formatMessage(
-                { id: "navigation.logoAlt", defaultMessage: "{logoName} Logo" },
+                { id: "nav.logo.alt", defaultMessage: "{logoName} Logo" },
                 { logoName: "TCG Collector" }
               )
             }
@@ -43,23 +43,23 @@ export default async function HeaderContent({ session }: {
       {/* Desktop navigation */}
       <div className="hidden md:flex items-center gap-4">
         <Link href="/">
-          <Button variant="ghost">{intl.formatMessage({ id: "navigation.home", defaultMessage: "Home" })}</Button>
+          <Button variant="ghost">{intl.formatMessage({ id: "nav.link.home", defaultMessage: "Home" })}</Button>
         </Link>
         <Link href="/sets">
-          <Button variant="ghost">{intl.formatMessage({ id: "navigation.sets", defaultMessage: "Sets" })}</Button>
+          <Button variant="ghost">{intl.formatMessage({ id: "nav.link.sets", defaultMessage: "Sets" })}</Button>
         </Link>
         {session && (
           <Link href="/collection">
-            <Button variant="ghost">{intl.formatMessage({ id: "navigation.collection", defaultMessage: "My Collection" })}</Button>
+            <Button variant="ghost">{intl.formatMessage({ id: "nav.link.collection", defaultMessage: "My Collection" })}</Button>
           </Link>
         )}
         {session ? (
           <Link href="/auth/signout">
-            <Button variant="default">{intl.formatMessage({ id: "navigation.signOut", defaultMessage: "Sign Out" })}</Button>
+            <Button variant="default">{intl.formatMessage({ id: "nav.action.signout", defaultMessage: "Sign Out" })}</Button>
           </Link>
         ) : (
           <Link href="/auth/signin">
-            <Button variant="default">{intl.formatMessage({ id: "navigation.signIn", defaultMessage: "Sign In" })}</Button>
+            <Button variant="default">{intl.formatMessage({ id: "nav.action.signin", defaultMessage: "Sign In" })}</Button>
           </Link>
         )}
       </div>

@@ -65,7 +65,7 @@ export default function CreateUserCardDialog({
         <DialogHeader>
           <DialogTitle>
             {intl.formatMessage({
-              id: "collection.cards.create.title",
+              id: "dialog.create_card.title",
               defaultMessage: "Add New Card",
             })}
           </DialogTitle>
@@ -97,7 +97,7 @@ export default function CreateUserCardDialog({
                         <>
                           <Label className="mb-2 block font-medium">
                             {intl.formatMessage({
-                              id: "collection.cards.form.variantLabel",
+                              id: "form.field.variant.label",
                               defaultMessage: "Variant",
                             })}
                           </Label>
@@ -126,7 +126,7 @@ export default function CreateUserCardDialog({
                         <>
                           <Label className="mb-2 block font-medium">
                             {intl.formatMessage({
-                              id: "collection.cards.form.conditionLabel",
+                              id: "form.field.condition.label",
                               defaultMessage: "Condition",
                             })}
                           </Label>
@@ -155,7 +155,7 @@ export default function CreateUserCardDialog({
                         <>
                           <Label className="mb-2 block font-medium">
                             {intl.formatMessage({
-                              id: "collection.cards.form.languageLabel",
+                              id: "form.field.language.label",
                               defaultMessage: "Language",
                             })}
                           </Label>
@@ -187,13 +187,13 @@ export default function CreateUserCardDialog({
           {selectedCardId && <DialogFooter>
             <Button variant="ghost" onClick={onClose} disabled={!card}>
               {intl.formatMessage({
-                id: "collection.cards.create.cancelButton",
+                id: "common.button.cancel",
                 defaultMessage: "Cancel",
               })}
             </Button>
             <Button type="submit" disabled={!card}>
               {intl.formatMessage({
-                id: "collection.cards.create.addButton",
+                id: "dialog.create_card.button.add",
                 defaultMessage: "Add Card to Collection",
               })}
             </Button>

@@ -105,7 +105,7 @@ export function useFormCloseHandler<T extends FieldValues>(
     if (form.formState.isDirty) {
       const confirmed = window.confirm(
         intl.formatMessage({
-          id: 'form.unsavedChanges',
+          id: 'form.validation.unsaved_changes',
           defaultMessage:
             'You have unsaved changes. Are you sure you want to close?',
         }),

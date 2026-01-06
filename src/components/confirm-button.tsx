@@ -52,7 +52,7 @@ export default function ConfirmButton({
           <DialogFooter>
             <Button onClick={handleClose} variant="outline">
               <FormattedMessage
-                id="confirm-button.cancel"
+                id="common.button.cancel"
                 defaultMessage="Cancel"
               />
             </Button>
@@ -61,7 +61,7 @@ export default function ConfirmButton({
               variant={destructive ? 'destructive' : 'default'}
             >
               <FormattedMessage
-                id="confirm-button.confirm"
+                id="common.button.confirm"
                 defaultMessage="Confirm"
               />
             </Button>

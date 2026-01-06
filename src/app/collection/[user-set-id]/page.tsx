@@ -38,7 +38,7 @@ export default async function UserSetPage({
             <h1 className="text-3xl font-bold">{userSet.set.name}</h1>
             <p className="text-muted-foreground mt-1">
               {intl.formatMessage({
-                id: "userSet.placing.subtitle",
+                id: "page.set.detail.description",
                 defaultMessage: "Place your cards into this set",
               })}
             </p>
@@ -50,7 +50,7 @@ export default async function UserSetPage({
             <Button variant="outline">
               <Pencil className="h-4 w-4 mr-2" />
               {intl.formatMessage({
-                id: "userSet.action.editSet",
+                id: "page.set.action.edit",
                 defaultMessage: "Edit Set",
               })}
             </Button>

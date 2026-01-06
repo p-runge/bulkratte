@@ -154,11 +154,11 @@ export function PlaceCardDialog({
           <DialogTitle>
             {isPlaced
               ? intl.formatMessage({
-                id: "userSet.placing.changeCard",
+                id: "dialog.place_card.title.change",
                 defaultMessage: "Change Placed Card",
               })
               : intl.formatMessage({
-                id: "userSet.placing.placeCard",
+                id: "dialog.place_card.title.place",
                 defaultMessage: "Place Card in Binder",
               })}
           </DialogTitle>
@@ -187,7 +187,7 @@ export function PlaceCardDialog({
               <div className="flex items-center justify-between mb-3">
                 <h4 className="font-semibold">
                   {intl.formatMessage({
-                    id: "userSet.placing.currentlyPlaced",
+                    id: "dialog.place_card.currently_placed",
                     defaultMessage: "Currently Placed",
                   })}
                 </h4>
@@ -198,7 +198,7 @@ export function PlaceCardDialog({
                   disabled={isUnplacing}
                 >
                   {intl.formatMessage({
-                    id: "userSet.placing.unplace",
+                    id: "dialog.place_card.action.unplace",
                     defaultMessage: "Unplace",
                   })}
                 </Button>
@@ -231,7 +231,7 @@ export function PlaceCardDialog({
                 size="sm"
               >
                 {intl.formatMessage({
-                  id: "userSet.placing.selectExisting",
+                  id: "dialog.place_card.mode.select_existing",
                   defaultMessage: "Select from Collection",
                 })}
               </Button>
@@ -242,7 +242,7 @@ export function PlaceCardDialog({
               >
                 <Plus className="w-4 h-4 mr-1" />
                 {intl.formatMessage({
-                  id: "userSet.placing.addNew",
+                  id: "dialog.place_card.mode.add_new",
                   defaultMessage: "Add New",
                 })}
               </Button>
@@ -295,7 +295,7 @@ export function PlaceCardDialog({
                                 {isCurrentlyPlaced && (
                                   <span className="ml-2 text-xs text-primary">
                                     {intl.formatMessage({
-                                      id: "userSet.placing.currentlySelected",
+                                      id: "dialog.place_card.label.currently_placed",
                                       defaultMessage: "(Currently Placed)",
                                     })}
                                   </span>
@@ -304,7 +304,7 @@ export function PlaceCardDialog({
                                   <span className="ml-2 text-xs text-muted-foreground">
                                     {intl.formatMessage(
                                       {
-                                        id: "userSet.placing.placedInOtherSet",
+                                        id: "dialog.place_card.label.placed_elsewhere",
                                         defaultMessage: '(In "{setName}")',
                                       },
                                       {
@@ -339,11 +339,11 @@ export function PlaceCardDialog({
                   >
                     {showCardsFromOtherSets
                       ? intl.formatMessage({
-                        id: "userSet.placing.hideCardsFromOtherSets",
+                        id: "dialog.place_card.filter.hide_other_sets",
                         defaultMessage: "Hide cards from other sets",
                       })
                       : intl.formatMessage({
-                        id: "userSet.placing.showCardsFromOtherSets",
+                        id: "dialog.place_card.filter.show_other_sets",
                         defaultMessage: "Show cards from other sets",
                       })}
                   </Button>
@@ -356,7 +356,7 @@ export function PlaceCardDialog({
                 <div>
                   <label className="text-sm font-medium mb-2 block">
                     {intl.formatMessage({
-                      id: "userCard.form.language",
+                      id: "form.field.language.label",
                       defaultMessage: "Language",
                     })}
                   </label>
@@ -375,7 +375,7 @@ export function PlaceCardDialog({
                 <div>
                   <label className="text-sm font-medium mb-2 block">
                     {intl.formatMessage({
-                      id: "userCard.form.variant",
+                      id: "form.field.variant.label",
                       defaultMessage: "Variant",
                     })}
                   </label>
@@ -394,7 +394,7 @@ export function PlaceCardDialog({
                 <div>
                   <label className="text-sm font-medium mb-2 block">
                     {intl.formatMessage({
-                      id: "userCard.form.condition",
+                      id: "form.field.condition.label",
                       defaultMessage: "Condition",
                     })}
                   </label>
@@ -419,18 +419,18 @@ export function PlaceCardDialog({
                   disabled={isCreating}
                 >
                   {intl.formatMessage({
-                    id: "common.cancel",
+                    id: "common.button.cancel",
                     defaultMessage: "Cancel",
                   })}
                 </Button>
                 <Button type="submit" disabled={isCreating}>
                   {isCreating
                     ? intl.formatMessage({
-                      id: "common.saving",
+                      id: "common.button.saving",
                       defaultMessage: "Saving...",
                     })
                     : intl.formatMessage({
-                      id: "userSet.placing.addAndPlace",
+                      id: "dialog.place_card.action.add_and_place",
                       defaultMessage: "Add New Card to Collection & Place It",
                     })}
                 </Button>

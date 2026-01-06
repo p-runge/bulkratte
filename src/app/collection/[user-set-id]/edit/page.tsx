@@ -38,13 +38,13 @@ export default async function EditUserSetPage({
           <div>
             <h1 className="text-3xl font-bold">
               {intl.formatMessage({
-                id: "userSet.title.edit",
+                id: "page.set.edit.title",
                 defaultMessage: "Edit Set",
               })}
             </h1>
             <p className="text-muted-foreground mt-1">
               {intl.formatMessage({
-                id: "userSet.subtitle",
+                id: "page.set.edit.description",
                 defaultMessage: "Name your set and select cards to add",
               })}
             </p>

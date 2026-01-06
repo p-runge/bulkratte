@@ -1,275 +1,473 @@
 {
-  "breadcrumb.label": [
+  "card.browser.empty": [
     {
       "type": 0,
-      "value": "Pfadnavigation"
+      "value": "Keine Karten gefunden, die deinen Suchkriterien entsprechen."
     }
   ],
-  "browseSets.description": [
-    {
-      "type": 0,
-      "value": "Durchsuche alle verfügbaren Pokémon-Kartensets. Klicke auf ein Set, um seine Karten anzuzeigen oder um Sets zu markieren, die du aktiv sammelst."
-    }
-  ],
-  "browseSets.title": [
-    {
-      "type": 0,
-      "value": "Sets durchsuchen"
-    }
-  ],
-  "cardFilter.button.clearSelection": [
+  "card.filter.button.clear": [
     {
       "type": 0,
       "value": "Auswahl aufheben"
     }
   ],
-  "cardFilter.date.from": [
+  "card.filter.date.from": [
     {
       "type": 0,
       "value": "Veröffentlichung ab"
     }
   ],
-  "cardFilter.date.placeholder": [
+  "card.filter.date.placeholder.from": [
+    {
+      "type": 0,
+      "value": "Von"
+    }
+  ],
+  "card.filter.date.placeholder.to": [
     {
       "type": 0,
       "value": "Bis"
     }
   ],
-  "cardFilter.date.to": [
+  "card.filter.date.to": [
     {
       "type": 0,
       "value": "Veröffentlichung bis"
     }
   ],
-  "cardFilter.filter.title": [
-    {
-      "type": 0,
-      "value": "Karten filtern"
-    }
-  ],
-  "cardFilter.rarity.all": [
-    {
-      "type": 0,
-      "value": "Alle Seltenheiten"
-    }
-  ],
-  "cardFilter.rarity.label": [
-    {
-      "type": 0,
-      "value": "Seltenheit"
-    }
-  ],
-  "cardFilter.search.placeholder": [
-    {
-      "type": 0,
-      "value": "Kartenname oder -nummer..."
-    }
-  ],
-  "cardFilter.set.all": [
-    {
-      "type": 0,
-      "value": "Alle Sets"
-    }
-  ],
-  "cardFilter.set.label": [
-    {
-      "type": 0,
-      "value": "Set"
-    }
-  ],
-  "cardFilter.sortBy.label": [
-    {
-      "type": 0,
-      "value": "Sortieren nach"
-    }
-  ],
-  "cardFilter.sortBy.name": [
-    {
-      "type": 0,
-      "value": "Kartenname"
-    }
-  ],
-  "cardFilter.sortBy.number": [
-    {
-      "type": 0,
-      "value": "Kartennummer"
-    }
-  ],
-  "cardFilter.sortBy.price": [
-    {
-      "type": 0,
-      "value": "Kartenpreis"
-    }
-  ],
-  "cardFilter.sortBy.rarity": [
-    {
-      "type": 0,
-      "value": "Kartenseltenheit"
-    }
-  ],
-  "cardFilter.sortOrder.asc": [
+  "card.filter.order.asc": [
     {
       "type": 0,
       "value": "Aufsteigend"
     }
   ],
-  "cardFilter.sortOrder.desc": [
+  "card.filter.order.desc": [
     {
       "type": 0,
       "value": "Absteigend"
     }
   ],
-  "cardFilter.sortOrder.label": [
+  "card.filter.order.label": [
     {
       "type": 0,
       "value": "Sortierreihenfolge"
     }
   ],
-  "collection.actions.addFirstCard": [
+  "card.filter.order.placeholder": [
     {
       "type": 0,
-      "value": "Füge deine erste Karte hinzu"
+      "value": "Sortierreihenfolge"
     }
   ],
-  "collection.actions.addFirstSet": [
+  "card.filter.rarity.all": [
     {
       "type": 0,
-      "value": "Füge dein erstes Set hinzu"
+      "value": "Alle Seltenheiten"
     }
   ],
-  "collection.actions.addNewCard": [
+  "card.filter.rarity.label": [
     {
       "type": 0,
-      "value": "Neue Karte hinzufügen"
+      "value": "Seltenheit"
     }
   ],
-  "collection.actions.addNewSet": [
+  "card.filter.rarity.placeholder": [
     {
       "type": 0,
-      "value": "Neues Set hinzufügen"
+      "value": "Alle Seltenheiten"
     }
   ],
-  "collection.cards.create.addButton": [
+  "card.filter.search.label": [
     {
       "type": 0,
-      "value": "Karte zur Sammlung hinzufügen"
+      "value": "Suchen"
     }
   ],
-  "collection.cards.create.cancelButton": [
+  "card.filter.search.placeholder": [
     {
       "type": 0,
-      "value": "Abbrechen"
+      "value": "Kartenname oder -nummer..."
     }
   ],
-  "collection.cards.create.title": [
+  "card.filter.set.all": [
     {
       "type": 0,
-      "value": "Neue Karte hinzufügen"
+      "value": "Alle Sets"
     }
   ],
-  "collection.cards.noneDescription": [
+  "card.filter.set.label": [
     {
       "type": 0,
-      "value": "Füge Karten zu deiner Sammlung hinzu!"
+      "value": "Set"
     }
   ],
-  "collection.cards.noneTitle": [
+  "card.filter.set.placeholder": [
     {
       "type": 0,
-      "value": "Noch keine Karten in deiner Sammlung"
+      "value": "Alle Sets"
     }
   ],
-  "collection.description": [
+  "card.filter.sort.label": [
     {
       "type": 0,
-      "value": "Verwalte und verfolge deine Pokémon-Kartensammlung"
+      "value": "Sortieren nach"
     }
   ],
-  "collection.sets.cardDescription": [
+  "card.filter.sort.name": [
     {
       "type": 0,
-      "value": "Karten in diesem Set anzeigen und verwalten."
+      "value": "Kartenname"
     }
   ],
-  "collection.sets.noneDescription": [
+  "card.filter.sort.number": [
     {
       "type": 0,
-      "value": "Füge dein erstes Set hinzu!"
+      "value": "Kartennummer"
     }
   ],
-  "collection.sets.noneTitle": [
+  "card.filter.sort.placeholder": [
     {
       "type": 0,
-      "value": "Noch keine Sets vorhanden"
+      "value": "Sortieren nach"
     }
   ],
-  "collection.tabs.cards": [
+  "card.filter.sort.price": [
     {
       "type": 0,
-      "value": "Meine Karten"
+      "value": "Kartenpreis"
     }
   ],
-  "collection.tabs.sets": [
+  "card.filter.sort.rarity": [
     {
       "type": 0,
-      "value": "Meine Sets"
+      "value": "Kartenseltenheit"
     }
   ],
-  "collection.title": [
+  "card.filter.title": [
     {
       "type": 0,
-      "value": "Meine Sammlung"
+      "value": "Karten filtern"
     }
   ],
-  "common.cancel": [
+  "common.breadcrumb.label": [
     {
       "type": 0,
-      "value": "Abbrechen"
+      "value": "Pfadnavigation"
     }
   ],
-  "common.saving": [
-    {
-      "type": 0,
-      "value": "Speichern..."
-    }
-  ],
-  "confirm-button.cancel": [
+  "common.button.cancel": [
     {
       "type": 0,
       "value": "Abbrechen"
     }
   ],
-  "confirm-button.confirm": [
+  "common.button.confirm": [
     {
       "type": 0,
       "value": "Bestätigen"
     }
   ],
-  "form.unsavedChanges": [
+  "common.button.saving": [
+    {
+      "type": 0,
+      "value": "Speichern..."
+    }
+  ],
+  "dialog.create_card.button.add": [
+    {
+      "type": 0,
+      "value": "Karte zur Sammlung hinzufügen"
+    }
+  ],
+  "dialog.create_card.title": [
+    {
+      "type": 0,
+      "value": "Neue Karte hinzufügen"
+    }
+  ],
+  "dialog.delete_set.description": [
+    {
+      "type": 0,
+      "value": "Bist du sicher, dass du dieses Set löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden."
+    }
+  ],
+  "dialog.delete_set.title": [
+    {
+      "type": 0,
+      "value": "Set löschen"
+    }
+  ],
+  "dialog.place_card.action.add_and_place": [
+    {
+      "type": 0,
+      "value": "Neue Karte zur Sammlung hinzufügen & platzieren"
+    }
+  ],
+  "dialog.place_card.action.unplace": [
+    {
+      "type": 0,
+      "value": "Entfernen"
+    }
+  ],
+  "dialog.place_card.currently_placed": [
+    {
+      "type": 0,
+      "value": "Aktuell platziert"
+    }
+  ],
+  "dialog.place_card.filter.hide_other_sets": [
+    {
+      "type": 0,
+      "value": "Karten aus anderen Sets ausblenden"
+    }
+  ],
+  "dialog.place_card.filter.show_other_sets": [
+    {
+      "type": 0,
+      "value": "Karten aus anderen Sets anzeigen"
+    }
+  ],
+  "dialog.place_card.label.currently_placed": [
+    {
+      "type": 0,
+      "value": "(Aktuell platziert)"
+    }
+  ],
+  "dialog.place_card.label.placed_elsewhere": [
+    {
+      "type": 0,
+      "value": "(In \""
+    },
+    {
+      "type": 1,
+      "value": "setName"
+    },
+    {
+      "type": 0,
+      "value": "\")"
+    }
+  ],
+  "dialog.place_card.mode.add_new": [
+    {
+      "type": 0,
+      "value": "Neue hinzufügen"
+    }
+  ],
+  "dialog.place_card.mode.select_existing": [
+    {
+      "type": 0,
+      "value": "Aus Sammlung auswählen"
+    }
+  ],
+  "dialog.place_card.title.change": [
+    {
+      "type": 0,
+      "value": "Platzierte Karte ändern"
+    }
+  ],
+  "dialog.place_card.title.place": [
+    {
+      "type": 0,
+      "value": "Karte im Ordner platzieren"
+    }
+  ],
+  "form.field.condition.label": [
+    {
+      "type": 0,
+      "value": "Zustand"
+    }
+  ],
+  "form.field.image.description": [
+    {
+      "type": 0,
+      "value": "Bilder werden automatisch auf 100px herunterskaliert"
+    }
+  ],
+  "form.field.image.label": [
+    {
+      "type": 0,
+      "value": "Set-Bild (optional)"
+    }
+  ],
+  "form.field.image.preview.alt": [
+    {
+      "type": 0,
+      "value": "Set-Vorschau"
+    }
+  ],
+  "form.field.image.upload": [
+    {
+      "type": 0,
+      "value": "Bild hochladen"
+    }
+  ],
+  "form.field.language.label": [
+    {
+      "type": 0,
+      "value": "Sprache"
+    }
+  ],
+  "form.field.set_name.label": [
+    {
+      "type": 0,
+      "value": "Set-Name"
+    }
+  ],
+  "form.field.set_name.placeholder": [
+    {
+      "type": 0,
+      "value": "Set-Namen eingeben"
+    }
+  ],
+  "form.field.variant.label": [
+    {
+      "type": 0,
+      "value": "Variante"
+    }
+  ],
+  "form.validation.unsaved_changes": [
     {
       "type": 0,
       "value": "Du hast ungespeicherte Änderungen. Bist du sicher, dass du schließen möchtest?"
     }
   ],
-  "form.validation.required": [
+  "nav.action.signin": [
     {
       "type": 0,
-      "value": "Dies ist ein Pflichtfeld."
+      "value": "Anmelden"
     }
   ],
-  "home.browseSets": [
+  "nav.action.signout": [
+    {
+      "type": 0,
+      "value": "Abmelden"
+    }
+  ],
+  "nav.link.collection": [
+    {
+      "type": 0,
+      "value": "Meine Sammlung"
+    }
+  ],
+  "nav.link.home": [
+    {
+      "type": 0,
+      "value": "Startseite"
+    }
+  ],
+  "nav.link.sets": [
+    {
+      "type": 0,
+      "value": "Sets"
+    }
+  ],
+  "nav.logo.alt": [
+    {
+      "type": 1,
+      "value": "logoName"
+    },
+    {
+      "type": 0,
+      "value": " Logo"
+    }
+  ],
+  "page.collection.action.add_card": [
+    {
+      "type": 0,
+      "value": "Neue Karte hinzufügen"
+    }
+  ],
+  "page.collection.action.add_first_card": [
+    {
+      "type": 0,
+      "value": "Füge deine erste Karte hinzu"
+    }
+  ],
+  "page.collection.action.add_first_set": [
+    {
+      "type": 0,
+      "value": "Füge dein erstes Set hinzu"
+    }
+  ],
+  "page.collection.action.add_set": [
+    {
+      "type": 0,
+      "value": "Neues Set hinzufügen"
+    }
+  ],
+  "page.collection.cards.empty.description": [
+    {
+      "type": 0,
+      "value": "Füge Karten zu deiner Sammlung hinzu!"
+    }
+  ],
+  "page.collection.cards.empty.title": [
+    {
+      "type": 0,
+      "value": "Noch keine Karten in deiner Sammlung"
+    }
+  ],
+  "page.collection.description": [
+    {
+      "type": 0,
+      "value": "Verwalte und verfolge deine Pokémon-Kartensammlung"
+    }
+  ],
+  "page.collection.sets.card.description": [
+    {
+      "type": 0,
+      "value": "Karten in diesem Set anzeigen und verwalten."
+    }
+  ],
+  "page.collection.sets.empty.description": [
+    {
+      "type": 0,
+      "value": "Füge dein erstes Set hinzu!"
+    }
+  ],
+  "page.collection.sets.empty.title": [
+    {
+      "type": 0,
+      "value": "Noch keine Sets vorhanden"
+    }
+  ],
+  "page.collection.tab.cards": [
+    {
+      "type": 0,
+      "value": "Meine Karten"
+    }
+  ],
+  "page.collection.tab.sets": [
+    {
+      "type": 0,
+      "value": "Meine Sets"
+    }
+  ],
+  "page.collection.title": [
+    {
+      "type": 0,
+      "value": "Meine Sammlung"
+    }
+  ],
+  "page.home.action.browse_sets": [
     {
       "type": 0,
       "value": "Sets durchsuchen"
     }
   ],
-  "home.cta": [
+  "page.home.action.signup": [
     {
       "type": 0,
       "value": "Jetzt Anmelden"
     }
   ],
-  "home.ctaIntroduction": [
+  "page.home.action.view_collection": [
+    {
+      "type": 0,
+      "value": "Meine Sammlung"
+    }
+  ],
+  "page.home.cta.intro": [
     {
       "type": 0,
       "value": "Noch keine "
@@ -289,7 +487,7 @@
       "value": "? Erstelle ein Konto und beginne noch heute, deine Sammlung zu organisieren – 100% kostenlos!"
     }
   ],
-  "home.description": [
+  "page.home.description": [
     {
       "children": [
         {
@@ -305,81 +503,113 @@
       "value": " ist die einfachste Möglichkeit, deine Pokémon-Kartensammlung zu organisieren. Verwalte Sets mit Leichtigkeit in mehreren Sprachen, Varianten und Zuständen."
     }
   ],
-  "home.title": [
+  "page.home.logo.alt": [
+    {
+      "type": 0,
+      "value": "TCG Collector Logo"
+    }
+  ],
+  "page.home.title": [
     {
       "type": 0,
       "value": "Deine TCG-Sammlung im Griff"
     }
   ],
-  "home.viewCollection": [
+  "page.set.action.create": [
     {
       "type": 0,
-      "value": "Meine Sammlung"
+      "value": "Set erstellen"
     }
   ],
-  "navigation.collection": [
+  "page.set.action.delete": [
     {
       "type": 0,
-      "value": "Meine Sammlung"
+      "value": "Set löschen"
     }
   ],
-  "navigation.home": [
+  "page.set.action.edit": [
     {
       "type": 0,
-      "value": "Startseite"
+      "value": "Set bearbeiten"
     }
   ],
-  "navigation.logoAlt": [
+  "page.set.action.save": [
+    {
+      "type": 0,
+      "value": "Änderungen speichern"
+    }
+  ],
+  "page.set.detail.description": [
+    {
+      "type": 0,
+      "value": "Platziere deine Karten in diesem Set"
+    }
+  ],
+  "page.set.edit.description": [
+    {
+      "type": 0,
+      "value": "Benenne dein Set und wähle Karten zum Hinzufügen aus"
+    }
+  ],
+  "page.set.edit.title": [
+    {
+      "type": 0,
+      "value": "Set bearbeiten"
+    }
+  ],
+  "page.set.error.not_found": [
+    {
+      "type": 0,
+      "value": "Set nicht gefunden"
+    }
+  ],
+  "page.set.form.cards_selected": [
     {
       "type": 1,
-      "value": "logoName"
+      "value": "count"
     },
     {
       "type": 0,
-      "value": " Logo"
+      "value": " Karten ausgewählt"
     }
   ],
-  "navigation.sets": [
+  "page.set.new.description": [
     {
       "type": 0,
-      "value": "Sets"
+      "value": "Benenne dein Set und wähle Karten zum Hinzufügen aus"
     }
   ],
-  "navigation.signIn": [
+  "page.set.new.title": [
     {
       "type": 0,
-      "value": "Anmelden"
+      "value": "Neues Set erstellen"
     }
   ],
-  "navigation.signOut": [
+  "page.sets.description": [
     {
       "type": 0,
-      "value": "Abmelden"
+      "value": "Durchsuche alle verfügbaren Pokémon-Kartensets. Klicke auf ein Set, um seine Karten anzuzeigen oder um Sets zu markieren, die du aktiv sammelst."
     }
   ],
-  "no_cards_found": [
+  "page.sets.label": [
     {
       "type": 0,
-      "value": "Keine Karten gefunden, die deinen Suchkriterien entsprechen."
+      "value": "Kartensets"
     }
   ],
-  "search.placeholder": [
+  "page.sets.search.placeholder": [
     {
       "type": 0,
-      "value": "Karten suchen..."
+      "value": "Set-Namen suchen..."
     }
   ],
-  "series.logoAlt": [
-    {
-      "type": 1,
-      "value": "series"
-    },
+  "page.sets.title": [
     {
       "type": 0,
-      "value": "-Logo"
+      "value": "Sets durchsuchen"
     }
   ],
-  "set.cardsCount": [
+  "set.cards.count": [
     {
       "type": 1,
       "value": "total"
@@ -389,7 +619,7 @@
       "value": " Karten"
     }
   ],
-  "set.cardsCountWithExtras": [
+  "set.cards.count_with_extras": [
     {
       "type": 1,
       "value": "total"
@@ -407,7 +637,7 @@
       "value": ") Karten"
     }
   ],
-  "set.logoAlt": [
+  "set.logo.alt": [
     {
       "type": 1,
       "value": "setName"
@@ -417,21 +647,17 @@
       "value": "-Logo"
     }
   ],
-  "set.notFound": [
-    {
-      "type": 0,
-      "value": "Set mit der ID "
-    },
+  "set.series.logo.alt": [
     {
       "type": 1,
-      "value": "setId"
+      "value": "series"
     },
     {
       "type": 0,
-      "value": " nicht gefunden"
+      "value": "-Logo"
     }
   ],
-  "set.symbolAlt": [
+  "set.symbol.alt": [
     {
       "type": 1,
       "value": "setName"
@@ -439,198 +665,6 @@
     {
       "type": 0,
       "value": " Symbol"
-    }
-  ],
-  "sets.label": [
-    {
-      "type": 0,
-      "value": "Kartensets"
-    }
-  ],
-  "userCard.form.condition": [
-    {
-      "type": 0,
-      "value": "Zustand"
-    }
-  ],
-  "userCard.form.language": [
-    {
-      "type": 0,
-      "value": "Sprache"
-    }
-  ],
-  "userCard.form.variant": [
-    {
-      "type": 0,
-      "value": "Variante"
-    }
-  ],
-  "userSet.action.delete": [
-    {
-      "type": 0,
-      "value": "Set löschen"
-    }
-  ],
-  "userSet.action.editSet": [
-    {
-      "type": 0,
-      "value": "Set bearbeiten"
-    }
-  ],
-  "userSet.cardsSelected": [
-    {
-      "type": 1,
-      "value": "count"
-    },
-    {
-      "type": 0,
-      "value": " Karten ausgewählt"
-    }
-  ],
-  "userSet.createButton": [
-    {
-      "type": 0,
-      "value": "Set erstellen"
-    }
-  ],
-  "userSet.delete.confirmDescription": [
-    {
-      "type": 0,
-      "value": "Bist du sicher, dass du dieses Set löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden."
-    }
-  ],
-  "userSet.delete.confirmTitle": [
-    {
-      "type": 0,
-      "value": "Set löschen"
-    }
-  ],
-  "userSet.imageDescription": [
-    {
-      "type": 0,
-      "value": "Bilder werden automatisch auf 100px herunterskaliert"
-    }
-  ],
-  "userSet.imageLabel": [
-    {
-      "type": 0,
-      "value": "Set-Bild (optional)"
-    }
-  ],
-  "userSet.placing.addAndPlace": [
-    {
-      "type": 0,
-      "value": "Neue Karte zur Sammlung hinzufügen & platzieren"
-    }
-  ],
-  "userSet.placing.addNew": [
-    {
-      "type": 0,
-      "value": "Neue hinzufügen"
-    }
-  ],
-  "userSet.placing.changeCard": [
-    {
-      "type": 0,
-      "value": "Platzierte Karte ändern"
-    }
-  ],
-  "userSet.placing.currentlyPlaced": [
-    {
-      "type": 0,
-      "value": "Aktuell platziert"
-    }
-  ],
-  "userSet.placing.currentlySelected": [
-    {
-      "type": 0,
-      "value": "(Aktuell platziert)"
-    }
-  ],
-  "userSet.placing.hideCardsFromOtherSets": [
-    {
-      "type": 0,
-      "value": "Karten aus anderen Sets ausblenden"
-    }
-  ],
-  "userSet.placing.placeCard": [
-    {
-      "type": 0,
-      "value": "Karte im Ordner platzieren"
-    }
-  ],
-  "userSet.placing.placedInOtherSet": [
-    {
-      "type": 0,
-      "value": "(In \""
-    },
-    {
-      "type": 1,
-      "value": "setName"
-    },
-    {
-      "type": 0,
-      "value": "\")"
-    }
-  ],
-  "userSet.placing.selectExisting": [
-    {
-      "type": 0,
-      "value": "Aus Sammlung auswählen"
-    }
-  ],
-  "userSet.placing.showCardsFromOtherSets": [
-    {
-      "type": 0,
-      "value": "Karten aus anderen Sets anzeigen"
-    }
-  ],
-  "userSet.placing.subtitle": [
-    {
-      "type": 0,
-      "value": "Platziere deine Karten in diesem Set"
-    }
-  ],
-  "userSet.placing.unplace": [
-    {
-      "type": 0,
-      "value": "Entfernen"
-    }
-  ],
-  "userSet.save": [
-    {
-      "type": 0,
-      "value": "Änderungen speichern"
-    }
-  ],
-  "userSet.subtitle": [
-    {
-      "type": 0,
-      "value": "Benenne dein Set und wähle Karten zum Hinzufügen aus"
-    }
-  ],
-  "userSet.title.edit": [
-    {
-      "type": 0,
-      "value": "Set bearbeiten"
-    }
-  ],
-  "userSet.title.new": [
-    {
-      "type": 0,
-      "value": "Neues Set erstellen"
-    }
-  ],
-  "userSet.uploadImage": [
-    {
-      "type": 0,
-      "value": "Bild hochladen"
-    }
-  ],
-  "userSetForm.validation.atLeastOneCard": [
-    {
-      "type": 0,
-      "value": "Mindestens eine Karte muss ausgewählt sein."
     }
   ]
 }

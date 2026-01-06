@@ -36,10 +36,12 @@ export const userSetRouter = createTRPCRouter({
 
       // Filter out null values and create cards with proper order
       const cardValues = input.cards
-        .map((card, index) => 
+        .map((card, index) =>
           card.cardId ? { cardId: card.cardId, order: index } : null
         )
-        .filter((item): item is { cardId: string; order: number } => item !== null)
+        .filter(
+          (item): item is { cardId: string; order: number } => item !== null
+        )
         .map(({ cardId, order }) => ({
           user_set_id: userSet.id,
           card_id: cardId,
@@ -185,12 +187,14 @@ export const userSetRouter = createTRPCRouter({
       );
 
       if (idsToDelete.length > 0) {
-        await ctx.db.delete(userSetCardsTable).where(
-          and(
-            eq(userSetCardsTable.user_set_id, input.id),
-            inArray(userSetCardsTable.id, idsToDelete)
-          )
-        );
+        await ctx.db
+          .delete(userSetCardsTable)
+          .where(
+            and(
+              eq(userSetCardsTable.user_set_id, input.id),
+              inArray(userSetCardsTable.id, idsToDelete)
+            )
+          );
       }
 
       // Process each card in the input array
@@ -198,7 +202,7 @@ export const userSetRouter = createTRPCRouter({
       const existingCardsToUpdate = input.cards.filter(
         (card) => card.userSetCardId !== null
       );
-      
+
       for (let i = 0; i < existingCardsToUpdate.length; i++) {
         const card = existingCardsToUpdate[i];
         if (card?.userSetCardId) {

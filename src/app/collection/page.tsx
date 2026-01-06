@@ -41,13 +41,13 @@ export default function CollectionPage() {
         <div>
           <h1 className="text-3xl font-bold mb-2">
             {intl.formatMessage({
-              id: "collection.title",
+              id: "page.collection.title",
               defaultMessage: "My Collection",
             })}
           </h1>
           <p className="text-muted-foreground">
             {intl.formatMessage({
-              id: "collection.description",
+              id: "page.collection.description",
               defaultMessage: "Track and manage your Pokémon card collection",
             })}
           </p>
@@ -59,7 +59,7 @@ export default function CollectionPage() {
             <span className="inline-flex items-center gap-2">
               <BookHeart className="w-4 h-4" />
               {intl.formatMessage({
-                id: "collection.tabs.sets",
+                id: "page.collection.tab.sets",
                 defaultMessage: "My Sets",
               })}
             </span>
@@ -68,7 +68,7 @@ export default function CollectionPage() {
             <span className="inline-flex items-center gap-2">
               <Library className="w-4 h-4" />
               {intl.formatMessage({
-                id: "collection.tabs.cards",
+                id: "page.collection.tab.cards",
                 defaultMessage: "My Cards",
               })}
             </span>
@@ -95,7 +95,7 @@ function MySetsTab() {
           <Button>
             <Plus className="w-4 h-4 mr-2" />
             {intl.formatMessage({
-              id: "collection.actions.addNewSet",
+              id: "page.collection.action.add_set",
               defaultMessage: "Add New Set",
             })}
           </Button>
@@ -107,13 +107,13 @@ function MySetsTab() {
           <CardContent>
             <h3 className="text-lg font-semibold mb-2">
               {intl.formatMessage({
-                id: "collection.sets.noneTitle",
+                id: "page.collection.sets.empty.title",
                 defaultMessage: "No sets added yet",
               })}
             </h3>
             <p className="mb-6 text-muted-foreground">
               {intl.formatMessage({
-                id: "collection.sets.noneDescription",
+                id: "page.collection.sets.empty.description",
                 defaultMessage: "Add your first set!",
               })}
             </p>
@@ -121,7 +121,7 @@ function MySetsTab() {
               <Button>
                 <Plus className="w-4 h-4 mr-2" />
                 {intl.formatMessage({
-                  id: "collection.actions.addFirstSet",
+                  id: "page.collection.action.add_first_set",
                   defaultMessage: "Add Your First Set",
                 })}
               </Button>
@@ -151,7 +151,7 @@ function MySetsTab() {
                       <CardTitle className="text-lg">{userSet.name}</CardTitle>
                       <p className="text-muted-foreground">
                         {intl.formatMessage({
-                          id: "collection.sets.cardDescription",
+                          id: "page.collection.sets.card.description",
                           defaultMessage: "View and manage cards in this set.",
                         })}
                       </p>
