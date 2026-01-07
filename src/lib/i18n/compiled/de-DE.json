@@ -551,6 +551,30 @@
       "value": "Deine TCG-Sammlung im Griff"
     }
   ],
+  "page.not_found.action.home": [
+    {
+      "type": 0,
+      "value": "Zurück zur Startseite"
+    }
+  ],
+  "page.not_found.description": [
+    {
+      "type": 0,
+      "value": "Hoppla! Diese Seite scheint in deiner Sammlung noch zu fehlen."
+    }
+  ],
+  "page.not_found.logo.alt": [
+    {
+      "type": 0,
+      "value": "Bulkratte Logo"
+    }
+  ],
+  "page.not_found.title": [
+    {
+      "type": 0,
+      "value": "Seite nicht gefunden"
+    }
+  ],
   "page.set.action.create": [
     {
       "type": 0,

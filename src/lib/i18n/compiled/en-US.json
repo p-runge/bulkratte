@@ -551,6 +551,30 @@
       "value": "Your TCG collection under control"
     }
   ],
+  "page.not_found.action.home": [
+    {
+      "type": 0,
+      "value": "Head Back Home"
+    }
+  ],
+  "page.not_found.description": [
+    {
+      "type": 0,
+      "value": "Oops! This page still seems to be missing from your collection."
+    }
+  ],
+  "page.not_found.logo.alt": [
+    {
+      "type": 0,
+      "value": "Bulkratte Logo"
+    }
+  ],
+  "page.not_found.title": [
+    {
+      "type": 0,
+      "value": "Page Not Found"
+    }
+  ],
   "page.set.action.create": [
     {
       "type": 0,
