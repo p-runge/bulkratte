@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api/server";
 import { getIntl } from "@/lib/i18n/server";
 import { TRPCError } from "@trpc/server";
-import { ArrowLeft, Lock, Pencil } from "lucide-react";
+import { ArrowLeft, Pencil } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PrivateSet } from "./_components/private-set";
 import { UserSetContent } from "./_components/user-set-content";
 
 export default async function UserSetPage({
@@ -24,57 +24,15 @@ export default async function UserSetPage({
   try {
     userSet = await api.userSet.getById({ id: userSetId });
   } catch (error: unknown) {
-    if (!(error instanceof TRPCError)) {
-      throw error;
-    }
-
-    switch (error.code) {
-      case "FORBIDDEN": {
-        return (
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <Card className="w-full max-w-md">
-              <CardHeader className="text-center">
-                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-                  <Lock className="h-6 w-6 text-muted-foreground" />
-                </div>
-                <CardTitle>
-                  {intl.formatMessage({
-                    id: "page.user_set.private.title",
-                    defaultMessage: "This Set is Private",
-                  })}
-                </CardTitle>
-                <CardDescription>
-                  {intl.formatMessage({
-                    id: "page.user_set.private.description",
-                    defaultMessage: "This collection set is private and can only be viewed by its owner.",
-                  })}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex justify-center">
-                <Link href="/collection">
-                  <Button variant="outline">
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    {intl.formatMessage({
-                      id: "page.user_set.private.back",
-                      defaultMessage: "Back to My Collection",
-                    })}
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </div>
-        );
+    if (error instanceof TRPCError) {
+      if (error.code === "FORBIDDEN") {
+        return <PrivateSet />;
       }
-      case "NOT_FOUND":
-        {
-          notFound();
-        }
-      default:
-        throw error;
+      if (error.code === "NOT_FOUND") {
+        notFound();
+      }
     }
-
-
-
+    throw error;
   }
 
   return (
