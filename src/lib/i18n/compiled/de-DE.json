@@ -645,6 +645,24 @@
       "value": "Sets durchsuchen"
     }
   ],
+  "page.user_set.private.back": [
+    {
+      "type": 0,
+      "value": "Zurück zu meiner Sammlung"
+    }
+  ],
+  "page.user_set.private.description": [
+    {
+      "type": 0,
+      "value": "Dieses Sammlungsset ist privat und kann nur vom Besitzer eingesehen werden."
+    }
+  ],
+  "page.user_set.private.title": [
+    {
+      "type": 0,
+      "value": "Dieses Set ist privat"
+    }
+  ],
   "set.cards.count": [
     {
       "type": 1,

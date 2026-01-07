@@ -645,6 +645,24 @@
       "value": "Browse Sets"
     }
   ],
+  "page.user_set.private.back": [
+    {
+      "type": 0,
+      "value": "Back to My Collection"
+    }
+  ],
+  "page.user_set.private.description": [
+    {
+      "type": 0,
+      "value": "This collection set is private and can only be viewed by its owner."
+    }
+  ],
+  "page.user_set.private.title": [
+    {
+      "type": 0,
+      "value": "This Set is Private"
+    }
+  ],
   "set.cards.count": [
     {
       "type": 1,
