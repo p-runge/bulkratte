@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { commonMessages } from "@/lib/i18n/common-messages";
 import { getIntl } from "@/lib/i18n/server";
 import { Session } from "next-auth";
 import Image from "next/image";
@@ -22,12 +23,7 @@ export default async function HeaderContent({ session }: {
         >
           <Image
             src="/bulkratte_head_logo.png"
-            alt={
-              intl.formatMessage(
-                { id: "nav.logo.alt", defaultMessage: "{logoName} Logo" },
-                { logoName: "TCG Collector" }
-              )
-            }
+            alt={intl.formatMessage(commonMessages.logoAlt)}
             width={80}
             height={80}
             className="-my-4 drop-shadow-[0_0_3px] drop-shadow-primary"

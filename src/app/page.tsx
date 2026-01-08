@@ -2,6 +2,7 @@ import { DarkModeToggle } from "@/components/dark-mode-toggle";
 import { LanguageDropdown } from "@/components/language-dropdown";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
+import { commonMessages } from "@/lib/i18n/common-messages";
 import { getIntl } from "@/lib/i18n/server";
 import Image from "next/image";
 import Link from "next/link";
@@ -14,7 +15,7 @@ export default async function HomePage() {
     <main className="min-h-screen flex flex-col justify-center items-center px-4">
       <div className="flex flex-col lg:flex-row lg:gap-12 items-center">
         <div className="max-w-1/2 min-w-75 flex justify-end">
-          <Image src="/bulkratte_logo.png" alt={intl.formatMessage({ id: "page.home.logo.alt", defaultMessage: "TCG Collector Logo" })} width={500} height={500} className="drop-shadow-[0_0_10px] drop-shadow-primary" />
+          <Image src="/bulkratte_logo.png" alt={intl.formatMessage(commonMessages.logoAlt)} width={500} height={500} className="drop-shadow-[0_0_10px] drop-shadow-primary" />
         </div>
         <div className="max-w-2xl">
           <div className="mb-6 flex gap-4">

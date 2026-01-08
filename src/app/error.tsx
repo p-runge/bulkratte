@@ -1,11 +1,28 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { commonMessages } from "@/lib/i18n/common-messages";
-import { getIntl } from "@/lib/i18n/server";
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect } from "react";
+import { useIntl } from "react-intl";
 
-export default async function NotFound() {
-  const intl = await getIntl();
+/**
+ * This component is automatically used by Next.js when an error occurs
+ * in a page or layout component. No manual implementation needed.
+ */
+export default function Error({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  const intl = useIntl();
+
+  useEffect(() => {
+    console.error(error);
+  }, [error]);
 
   return (
     <main className="min-h-screen flex flex-col justify-center items-center px-4 bg-background">
@@ -21,25 +38,37 @@ export default async function NotFound() {
         </div>
 
         <div className="space-y-4 text-center lg:text-left">
-          <h1 className="text-5xl lg:text-6xl font-bold text-primary">404</h1>
+          <h1 className="text-5xl lg:text-6xl font-bold text-destructive">
+            {intl.formatMessage({
+              id: "page.error.heading",
+              defaultMessage: "Unknown Error",
+            })}
+          </h1>
           <h2 className="text-2xl lg:text-3xl font-semibold text-foreground">
             {intl.formatMessage({
-              id: "page.not_found.title",
-              defaultMessage: "Page Not Found",
+              id: "page.error.title",
+              defaultMessage: "Something went wrong!",
             })}
           </h2>
           <p className="text-base lg:text-lg text-muted-foreground max-w-md">
             {intl.formatMessage({
-              id: "page.not_found.description",
-              defaultMessage: "Oops! This page still seems to be missing from your collection.",
+              id: "page.error.description",
+              defaultMessage:
+                "Looks like the Bulkratte nibbled on something it better shouldn't have. But don't worry, your collection is safe!",
             })}
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start pt-2">
+            <Button size="lg" variant="default" onClick={reset}>
+              {intl.formatMessage({
+                id: "page.error.action.retry",
+                defaultMessage: "Try Again",
+              })}
+            </Button>
             <Link href="/">
-              <Button size="lg" variant="default">
+              <Button size="lg" variant="outline">
                 {intl.formatMessage({
-                  id: "page.not_found.action.home",
+                  id: "page.error.action.home",
                   defaultMessage: "Head Back Home",
                 })}
               </Button>
