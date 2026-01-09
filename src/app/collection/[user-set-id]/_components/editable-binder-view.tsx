@@ -1,25 +1,24 @@
 "use client";
 
+import { CardPicker } from "@/components/card-browser/card-picker";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AppRouter } from "@/lib/api/routers/_app";
 import { cn } from "@/lib/utils";
 import { Plus, X } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
-import { CardBrowser } from "@/components/card-browser";
-import { CardPicker } from "@/components/card-browser/card-picker";
+import { MinimalCardData } from "./edit-set-content";
 
-type UserSet = Awaited<ReturnType<AppRouter["userSet"]["getById"]>>;
+
 
 interface EditableBinderViewProps {
-  userSet: UserSet;
-  cards: Array<{ userSetCardId: string | null; cardId: string | null }>; // Array of cards with their IDs
+  cards: Array<{ userSetCardId: string | null; cardId: string | null }>;
+  cardDataMap: Map<string, MinimalCardData>;
   onCardsChange: (cards: Array<{ userSetCardId: string | null; cardId: string | null }>) => void;
 }
 
 interface EditableSlotProps {
-  cardId: string | null;
+  card: MinimalCardData | null;
   index: number;
   onRemove: () => void;
   onAdd: () => void;
@@ -27,11 +26,10 @@ interface EditableSlotProps {
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent) => void;
   isDragging: boolean;
-  allCards: UserSet["cards"];
 }
 
 function EditableSlot({
-  cardId,
+  card,
   index,
   onRemove,
   onAdd,
@@ -39,11 +37,8 @@ function EditableSlot({
   onDragOver,
   onDrop,
   isDragging,
-  allCards,
 }: EditableSlotProps) {
-  const cardData = cardId ? allCards.find((c) => c.cardId === cardId) : null;
-
-  if (!cardId || !cardData?.card) {
+  if (!card) {
     // Empty slot
     return (
       <div
@@ -78,8 +73,8 @@ function EditableSlot({
       )}
     >
       <Image
-        src={cardData.card.imageSmall}
-        alt={cardData.card.name}
+        src={card.imageSmall}
+        alt={card.name}
         width={200}
         height={280}
         unoptimized
@@ -100,7 +95,7 @@ function EditableSlot({
 const CARDS_PER_PAGE = 9; // 3x3 grid
 const PAGES_VISIBLE = 2; // Show 2 pages side by side
 
-export function EditableBinderView({ userSet, cards, onCardsChange }: EditableBinderViewProps) {
+export function EditableBinderView({ cards, cardDataMap, onCardsChange }: EditableBinderViewProps) {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [addingAtIndex, setAddingAtIndex] = useState<number | null>(null);
@@ -221,10 +216,11 @@ export function EditableBinderView({ userSet, cards, onCardsChange }: EditableBi
             <div className="grid grid-cols-3 gap-2">
               {page.map((card, slotIndex) => {
                 const globalIndex = pageIndex * CARDS_PER_PAGE + slotIndex;
+                const cardData = card?.cardId ? cardDataMap.get(card.cardId) ?? null : null;
                 return (
                   <EditableSlot
                     key={globalIndex}
-                    cardId={card?.cardId ?? null}
+                    card={cardData}
                     index={globalIndex}
                     onRemove={() => handleRemove(globalIndex)}
                     onAdd={() => handleAdd(globalIndex)}
@@ -232,7 +228,6 @@ export function EditableBinderView({ userSet, cards, onCardsChange }: EditableBi
                     onDragOver={handleDragOver}
                     onDrop={handleDrop(globalIndex)}
                     isDragging={draggedIndex === globalIndex}
-                    allCards={userSet.cards}
                   />
                 );
               })}

@@ -1,7 +1,7 @@
 import { cardPricesTable, cardsTable, db } from "@/lib/db";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import z from "zod";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import pokemonAPI from "@/lib/pokemon-api";
 
@@ -103,5 +103,24 @@ export const cardRouter = createTRPCRouter({
       }
 
       return card;
+    }),
+
+  getByIds: publicProcedure
+    .input(
+      z.object({
+        cardIds: z.array(z.string()),
+      })
+    )
+    .query(async ({ input }) => {
+      if (input.cardIds.length === 0) {
+        return [];
+      }
+
+      const cards = await db
+        .select()
+        .from(cardsTable)
+        .where(inArray(cardsTable.id, input.cardIds));
+
+      return cards;
     }),
 });

@@ -1,16 +1,22 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { ImageUpload, useImageUpload } from "@/components/image-upload";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api/react";
 import { AppRouter } from "@/lib/api/routers/_app";
 import { Save } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 import { EditableBinderView } from "./editable-binder-view";
+
+export type MinimalCardData = {
+  id: string;
+  name: string;
+  imageSmall: string;
+};
 
 type UserSet = Awaited<ReturnType<AppRouter["userSet"]["getById"]>>;
 
@@ -50,13 +56,63 @@ export function EditSetContent({ userSet }: EditSetContentProps) {
   })();
 
   const [cards, setCards] = useState<Array<{ userSetCardId: string | null; cardId: string | null }>>(initialCards);
+
+  // Build initial cardDataMap from existing cards
+  const initialCardDataMap = new Map<string, MinimalCardData>();
+  userSet.cards.forEach((userCard) => {
+    if (userCard.card) {
+      initialCardDataMap.set(userCard.cardId, {
+        id: userCard.card.id,
+        name: userCard.card.name,
+        imageSmall: userCard.card.imageSmall,
+      });
+    }
+  });
+
+  const [cardDataMap, setCardDataMap] = useState<Map<string, MinimalCardData>>(initialCardDataMap);
+  const [cardIdsToFetch, setCardIdsToFetch] = useState<string[]>([]);
   const [isDirty, setIsDirty] = useState(false);
 
   const apiUtils = api.useUtils();
   const { mutateAsync: updateUserSet, isPending } = api.userSet.update.useMutation();
+  const { data: fetchedCards } = api.card.getByIds.useQuery(
+    { cardIds: cardIdsToFetch },
+    { enabled: cardIdsToFetch.length > 0 }
+  );
+
+  // When new cards are fetched, add them to cardDataMap
+  useEffect(() => {
+    if (!fetchedCards || fetchedCards.length === 0) return;
+
+    setCardDataMap((prevMap) => {
+      const newMap = new Map(prevMap);
+      fetchedCards.forEach((card) => {
+        newMap.set(card.id, {
+          id: card.id,
+          name: card.name,
+          imageSmall: card.imageSmall,
+        });
+      });
+      return newMap;
+    });
+
+    // Clear fetch queue
+    setCardIdsToFetch([]);
+  }, [fetchedCards]);
 
   const handleCardsChange = (newCards: Array<{ userSetCardId: string | null; cardId: string | null }>) => {
+    // Find card IDs that we don't have in our map yet
+    const missingCardIds = newCards
+      .map((slot) => slot.cardId)
+      .filter((id): id is string => id !== null && !cardDataMap.has(id));
+
     setCards(newCards);
+
+    // Trigger fetching of missing cards
+    if (missingCardIds.length > 0) {
+      setCardIdsToFetch(missingCardIds);
+    }
+
     setIsDirty(true);
   };
 
@@ -129,8 +185,8 @@ export function EditSetContent({ userSet }: EditSetContentProps) {
       </div>
 
       <EditableBinderView
-        userSet={userSet}
         cards={cards}
+        cardDataMap={cardDataMap}
         onCardsChange={handleCardsChange}
       />
     </div>
