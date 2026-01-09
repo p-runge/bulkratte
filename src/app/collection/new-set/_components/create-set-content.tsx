@@ -1,21 +1,25 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { ImageUpload, useImageUpload } from "@/components/image-upload";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api/react";
 import { Save } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
+import { MinimalCardData } from "../../[user-set-id]/_components/edit-set-content";
 import { EditableBinderView } from "../../[user-set-id]/_components/editable-binder-view";
+
 
 export function CreateSetContent() {
   const router = useRouter();
   const intl = useIntl();
   const [name, setName] = useState("");
   const [cards, setCards] = useState<Array<{ userSetCardId: string | null; cardId: string | null }>>([]);
+  const [cardDataMap, setCardDataMap] = useState<Map<string, MinimalCardData>>(new Map());
+  const [cardIdsToFetch, setCardIdsToFetch] = useState<string[]>([]);
   const {
     fileInputRef,
     imagePreview,
@@ -25,12 +29,43 @@ export function CreateSetContent() {
   } = useImageUpload();
 
   const { mutateAsync: createUserSet, isPending } = api.userSet.create.useMutation();
+  const { data: fetchedCards } = api.card.getByIds.useQuery(
+    { cardIds: cardIdsToFetch },
+    { enabled: cardIdsToFetch.length > 0 }
+  );
 
-  // Fetch all cards to have the data available
-  const { data: allCardsData } = api.card.getList.useQuery({});
+  // When new cards are fetched, add them to cardDataMap
+  useEffect(() => {
+    if (!fetchedCards || fetchedCards.length === 0) return;
+
+    setCardDataMap((prevMap) => {
+      const newMap = new Map(prevMap);
+      fetchedCards.forEach((card) => {
+        newMap.set(card.id, {
+          id: card.id,
+          name: card.name,
+          imageSmall: card.imageSmall,
+        });
+      });
+      return newMap;
+    });
+
+    // Clear fetch queue
+    setCardIdsToFetch([]);
+  }, [fetchedCards]);
 
   const handleCardsChange = (newCards: Array<{ userSetCardId: string | null; cardId: string | null }>) => {
+    // Find card IDs that we don't have in our map yet
+    const missingCardIds = newCards
+      .map((slot) => slot.cardId)
+      .filter((id): id is string => id !== null && !cardDataMap.has(id));
+
     setCards(newCards);
+
+    // Trigger fetching of missing cards
+    if (missingCardIds.length > 0) {
+      setCardIdsToFetch(missingCardIds);
+    }
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,29 +89,6 @@ export function CreateSetContent() {
       console.error("Error creating user set:", error);
     }
   };
-
-  // Build userSet object with the selected cards
-  const userSet = useMemo(() => {
-    const selectedCardData = cards
-      .map((card, index) => {
-        if (!card.cardId) return null;
-        const cardData = allCardsData?.find((c) => c.id === card.cardId);
-        if (!cardData) return null;
-        return {
-          id: `temp-${index}`,
-          cardId: card.cardId,
-          userCardId: null,
-          order: index,
-          card: cardData,
-        };
-      })
-      .filter((item): item is NonNullable<typeof item> => item !== null);
-
-    return {
-      set: { id: "", name: "", image: null },
-      cards: selectedCardData,
-    };
-  }, [cards, allCardsData]);
 
   return (
     <div className="space-y-6">
@@ -127,8 +139,8 @@ export function CreateSetContent() {
       </div>
 
       <EditableBinderView
-        userSet={userSet}
         cards={cards}
+        cardDataMap={cardDataMap}
         onCardsChange={handleCardsChange}
       />
     </div>
