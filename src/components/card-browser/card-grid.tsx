@@ -3,6 +3,7 @@
 import type { Card } from "@/lib/db";
 import { cn } from "@/lib/utils";
 import { Check, Circle } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import Image from "next/image";
 import { FormattedMessage, useIntl } from "react-intl";
 
@@ -13,6 +14,7 @@ type CardGridProps = {
   selectionMode: "single" | "multi";
   selectedCards: Set<string>;
   onCardClick: (cardId: string) => void;
+  onSelectAll?: (selectAll: boolean) => void;
   isLoading: boolean;
   maxHeight?: string;
 };
@@ -22,10 +24,20 @@ export function CardGrid({
   selectionMode,
   selectedCards,
   onCardClick,
+  onSelectAll,
   isLoading,
   maxHeight,
 }: CardGridProps) {
   const intl = useIntl();
+
+  const allSelected = cards.length > 0 && cards.every((card) => selectedCards.has(card.id));
+  const someSelected = cards.some((card) => selectedCards.has(card.id));
+
+  const handleSelectAllChange = () => {
+    if (onSelectAll) {
+      onSelectAll(!allSelected);
+    }
+  };
 
   if (cards.length === 0 && !isLoading) {
     return (
@@ -42,6 +54,26 @@ export function CardGrid({
     <div className="space-y-4 overflow-y-auto" style={{
       maxHeight,
     }}>
+      {selectionMode === "multi" && onSelectAll && cards.length > 0 && (
+        <div className="flex items-center gap-2 pb-2 border-b">
+          <Checkbox
+            checked={allSelected}
+            data-state={someSelected && !allSelected ? "indeterminate" : allSelected ? "checked" : "unchecked"}
+            onCheckedChange={handleSelectAllChange}
+            id="select-all"
+          />
+          <label
+            htmlFor="select-all"
+            className="text-sm font-medium cursor-pointer select-none"
+          >
+            <FormattedMessage
+              id="card.browser.selectAll"
+              defaultMessage="Select all ({count})"
+              values={{ count: cards.length }}
+            />
+          </label>
+        </div>
+      )}
       <div
         className="gap-4"
         style={{
@@ -49,8 +81,9 @@ export function CardGrid({
           gridTemplateColumns: 'repeat(auto-fit, minmax(clamp(120px, 20vw, 245px), 1fr))',
         }}
       >
-        {cards.map((card) => {
+        {cards.map((card, index) => {
           const isSelected = selectedCards.has(card.id);
+          const selectionIndex = isSelected ? Array.from(selectedCards).indexOf(card.id) + 1 : 0;
           return (
             <button
               key={card.gridId}
@@ -74,9 +107,9 @@ export function CardGrid({
                 />
                 {isSelected && (
                   <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                    <div className="bg-primary rounded-full p-2 border-black border">
+                    <div className="bg-primary rounded-full border-black border w-10 h-10 flex items-center justify-center">
                       {selectionMode === "multi" ? (
-                        <Check className="h-6 w-6 text-primary-foreground" />
+                        <span className="text-lg font-bold text-primary-foreground">{selectionIndex}</span>
                       ) : (
                         <Circle className="h-6 w-6 text-primary-foreground fill-current" />
                       )}

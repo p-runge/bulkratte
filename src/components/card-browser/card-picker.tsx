@@ -25,6 +25,10 @@ export function CardPicker(props: CardPickerProps) {
     setSelectedCards(newSelected);
   };
 
+  const handleSelectAll = (cardIds: string[]) => {
+    setSelectedCards(new Set(cardIds));
+  };
+
   const handleConfirmSelection = () => {
     props.onSelect(selectedCards);
   };
@@ -35,6 +39,7 @@ export function CardPicker(props: CardPickerProps) {
         selectionMode="multi"
         selectedCards={selectedCards}
         onCardClick={handleCardClick}
+        onSelectAll={handleSelectAll}
         setId={props.setId}
         maxHeightGrid={props.maxHeightGrid}
       />

@@ -16,6 +16,7 @@ type CardBrowserMultiProps = {
   selectionMode: "multi";
   selectedCards: Set<string>;
   onCardClick: (cardId: string) => void;
+  onSelectAll?: (cardIds: string[]) => void;
   setId?: string;
   maxHeightGrid?: string;
 };
@@ -52,6 +53,18 @@ export function CardBrowser(props: CardBrowserProps) {
     gridId: card.id,
   })) ?? []);
 
+  const handleSelectAll = (selectAll: boolean) => {
+    if (props.selectionMode !== "multi" || !props.onSelectAll) return;
+
+    if (selectAll) {
+      // Select all cards
+      props.onSelectAll(cards.map(card => card.id));
+    } else {
+      // Deselect all cards
+      props.onSelectAll([]);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <CardFilters onFilterChange={setFilters} disableSetFilter={!!props.setId} />
@@ -61,6 +74,7 @@ export function CardBrowser(props: CardBrowserProps) {
         selectionMode={props.selectionMode}
         selectedCards={props.selectionMode === "multi" ? props.selectedCards : new Set()}
         onCardClick={props.onCardClick}
+        onSelectAll={props.selectionMode === "multi" ? handleSelectAll : undefined}
         isLoading={isLoading}
         maxHeight={props.maxHeightGrid}
       />
