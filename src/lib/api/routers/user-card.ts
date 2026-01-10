@@ -1,7 +1,7 @@
-import { cardsTable, userCardsTable } from "@/lib/db";
+import { cardsTable, setsTable, userCardsTable } from "@/lib/db";
 import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
 import { TRPCError } from "@trpc/server";
-import { and, eq } from "drizzle-orm";
+import { and, asc, desc, eq, gte, like, lte, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -36,34 +36,118 @@ export const userCardRouter = createTRPCRouter({
       return userCard;
     }),
 
-  getList: protectedProcedure.query(async ({ ctx }) => {
-    const userCards = await ctx.db
-      .select({
-        id: userCardsTable.id,
-        cardId: userCardsTable.card_id,
-        language: userCardsTable.language,
-        variant: userCardsTable.variant,
-        condition: userCardsTable.condition,
-        notes: userCardsTable.notes,
-        card: {
-          created_at: userCardsTable.created_at,
-          updated_at: userCardsTable.updated_at,
-          id: cardsTable.id,
-          name: cardsTable.name,
-          number: cardsTable.number,
-          rarity: cardsTable.rarity,
-          imageSmall: cardsTable.imageSmall,
-          imageLarge: cardsTable.imageLarge,
-          setId: cardsTable.setId,
-        },
-      })
-      .from(userCardsTable)
-      .where(eq(userCardsTable.user_id, ctx.session.user.id))
-      .leftJoin(cardsTable, eq(userCardsTable.card_id, cardsTable.id))
-      .orderBy(userCardsTable.created_at);
+  getList: protectedProcedure
+    .input(
+      z
+        .object({
+          setId: z.string().optional(),
+          search: z.string().optional(),
+          rarity: z.string().optional(),
+          releaseDateFrom: z.string().optional(),
+          releaseDateTo: z.string().optional(),
+          sortBy: z
+            .enum(["number", "name", "rarity", "price"])
+            .optional()
+            .default("number"),
+          sortOrder: z.enum(["asc", "desc"]).optional().default("asc"),
+        })
+        .optional()
+    )
+    .query(async ({ ctx, input }) => {
+      // Build WHERE conditions
+      const conditions = [eq(userCardsTable.user_id, ctx.session.user.id)];
 
-    return userCards;
-  }),
+      if (input?.setId) {
+        conditions.push(eq(cardsTable.setId, input.setId));
+      }
+
+      if (input?.search) {
+        const searchCondition = or(
+          like(cardsTable.name, `%${input.search}%`),
+          like(cardsTable.number, `%${input.search}%`)
+        );
+        if (searchCondition) {
+          conditions.push(searchCondition);
+        }
+      }
+
+      if (input?.rarity && input.rarity !== "all") {
+        conditions.push(sql`${cardsTable.rarity} = ${input.rarity}`);
+      }
+
+      if (input?.releaseDateFrom || input?.releaseDateTo) {
+        const dateConditions = [];
+        if (input.releaseDateFrom) {
+          dateConditions.push(
+            gte(setsTable.releaseDate, input.releaseDateFrom)
+          );
+        }
+        if (input.releaseDateTo) {
+          dateConditions.push(lte(setsTable.releaseDate, input.releaseDateTo));
+        }
+        if (dateConditions.length > 0) {
+          const dateCondition = and(...dateConditions);
+          if (dateCondition) {
+            conditions.push(dateCondition);
+          }
+        }
+      }
+
+      const whereClause =
+        conditions.length > 0 ? and(...conditions) : undefined;
+
+      // Determine order by clause
+      let orderByClause;
+      const orderDirection = input?.sortOrder === "desc" ? desc : asc;
+
+      switch (input?.sortBy) {
+        case "name":
+          orderByClause = orderDirection(cardsTable.name);
+          break;
+        case "rarity":
+          orderByClause = orderDirection(cardsTable.rarity);
+          break;
+        case "price":
+          orderByClause = orderDirection(userCardsTable.created_at); // User cards don't have price, fallback to created_at
+          break;
+        case "number":
+        default:
+          // For card number, we want to sort numerically
+          // Handle empty strings by converting to NULL, then default to 0
+          orderByClause = orderDirection(
+            sql`COALESCE(CAST(NULLIF(regexp_replace(${cardsTable.number}, '[^0-9]', '', 'g'), '') AS INTEGER), 0)`
+          );
+          break;
+      }
+
+      const userCards = await ctx.db
+        .select({
+          id: userCardsTable.id,
+          cardId: userCardsTable.card_id,
+          language: userCardsTable.language,
+          variant: userCardsTable.variant,
+          condition: userCardsTable.condition,
+          notes: userCardsTable.notes,
+          card: {
+            created_at: userCardsTable.created_at,
+            updated_at: userCardsTable.updated_at,
+            id: cardsTable.id,
+            name: cardsTable.name,
+            number: cardsTable.number,
+            rarity: cardsTable.rarity,
+            imageSmall: cardsTable.imageSmall,
+            imageLarge: cardsTable.imageLarge,
+            setId: cardsTable.setId,
+          },
+        })
+        .from(userCardsTable)
+        .leftJoin(cardsTable, eq(userCardsTable.card_id, cardsTable.id))
+        .leftJoin(setsTable, eq(cardsTable.setId, setsTable.id))
+        .where(whereClause)
+        .orderBy(orderByClause);
+
+      return userCards;
+    }),
 
   delete: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))

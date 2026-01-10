@@ -1,7 +1,7 @@
 "use client";
 
 import { api } from "@/lib/api/react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CardFilters, type FilterState } from "./card-filters";
 import { CardGrid, CardWithGridId } from "./card-grid";
 
@@ -20,40 +20,23 @@ export function UserCardBrowser(props: UserCardBrowserProps) {
     sortBy: "number",
     sortOrder: "asc",
   });
-  const [searchDebounce, setSearchDebounce] = useState<NodeJS.Timeout | null>(
-    null
-  );
 
   const {
     data,
     isLoading,
-    refetch: fetchUserCards,
-  } = api.userCard.getList.useQuery();
+  } = api.userCard.getList.useQuery({
+    setId: filters.setId && filters.setId !== "all" ? filters.setId : undefined,
+    search: filters.search || undefined,
+    rarity: filters.rarity && filters.rarity !== "all" ? filters.rarity : undefined,
+    releaseDateFrom: filters.releaseDateFrom || undefined,
+    releaseDateTo: filters.releaseDateTo || undefined,
+    sortBy: filters.sortBy as "number" | "name" | "rarity" | "price",
+    sortOrder: filters.sortOrder,
+  });
   const cards = data?.map((userCard) => ({
     gridId: userCard.id,
     ...userCard.card!,
   })) as CardWithGridId[];
-
-  // Handle filter changes with debounce for search
-  useEffect(() => {
-    if (searchDebounce) {
-      clearTimeout(searchDebounce);
-    }
-
-    const timeout = setTimeout(
-      () => {
-        fetchUserCards();
-      },
-      filters.search ? 500 : 0
-    ); // Debounce search by 500ms
-
-    setSearchDebounce(timeout);
-
-    return () => {
-      if (timeout) clearTimeout(timeout);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters]);
 
   return (
     <div className="space-y-6">

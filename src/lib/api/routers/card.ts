@@ -1,7 +1,18 @@
-import { cardPricesTable, cardsTable, db } from "@/lib/db";
+import { cardPricesTable, cardsTable, db, setsTable } from "@/lib/db";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import z from "zod";
-import { eq, inArray } from "drizzle-orm";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gte,
+  inArray,
+  like,
+  lte,
+  or,
+  sql,
+} from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import pokemonAPI from "@/lib/pokemon-api";
 
@@ -11,69 +22,156 @@ export const cardRouter = createTRPCRouter({
       z
         .object({
           setId: z.string().optional(),
+          search: z.string().optional(),
+          rarity: z.string().optional(),
+          releaseDateFrom: z.string().optional(),
+          releaseDateTo: z.string().optional(),
+          sortBy: z
+            .enum(["number", "name", "rarity", "price"])
+            .optional()
+            .default("number"),
+          sortOrder: z.enum(["asc", "desc"]).optional().default("asc"),
         })
         .optional()
     )
     .query(async ({ input }) => {
-      const cards = await db
-        .select()
+      // Build WHERE conditions
+      const conditions = [];
+
+      if (input?.setId) {
+        conditions.push(eq(cardsTable.setId, input.setId));
+      }
+
+      if (input?.search) {
+        const searchCondition = or(
+          like(cardsTable.name, `%${input.search}%`),
+          like(cardsTable.number, `%${input.search}%`)
+        );
+        if (searchCondition) {
+          conditions.push(searchCondition);
+        }
+      }
+
+      if (input?.rarity && input.rarity !== "all") {
+        conditions.push(sql`${cardsTable.rarity} = ${input.rarity}`);
+      }
+
+      if (input?.releaseDateFrom || input?.releaseDateTo) {
+        const dateConditions = [];
+        if (input.releaseDateFrom) {
+          dateConditions.push(
+            gte(setsTable.releaseDate, input.releaseDateFrom)
+          );
+        }
+        if (input.releaseDateTo) {
+          dateConditions.push(lte(setsTable.releaseDate, input.releaseDateTo));
+        }
+        if (dateConditions.length > 0) {
+          const dateCondition = and(...dateConditions);
+          if (dateCondition) {
+            conditions.push(dateCondition);
+          }
+        }
+      }
+
+      const whereClause =
+        conditions.length > 0 ? and(...conditions) : undefined;
+
+      // Determine order by clause
+      let orderByClause;
+      const orderDirection = input?.sortOrder === "desc" ? desc : asc;
+
+      switch (input?.sortBy) {
+        case "name":
+          orderByClause = orderDirection(cardsTable.name);
+          break;
+        case "rarity":
+          orderByClause = orderDirection(cardsTable.rarity);
+          break;
+        case "price":
+          orderByClause = orderDirection(cardPricesTable.price);
+          break;
+        case "number":
+        default:
+          // For card number, we want to sort numerically
+          // Handle empty strings by converting to NULL, then default to 0
+          orderByClause = orderDirection(
+            sql`COALESCE(CAST(NULLIF(regexp_replace(${cardsTable.number}, '[^0-9]', '', 'g'), '') AS INTEGER), 0)`
+          );
+          break;
+      }
+
+      // Build the query with joins and conditions
+      const query = db
+        .select({
+          card: cardsTable,
+          releaseDate: setsTable.releaseDate,
+          price: cardPricesTable.price,
+        })
         .from(cardsTable)
-        .where(input?.setId ? eq(cardsTable.setId, input.setId) : undefined)
-        .orderBy(cardsTable.updated_at)
+        .innerJoin(setsTable, eq(cardsTable.setId, setsTable.id))
+        .leftJoin(cardPricesTable, eq(cardsTable.id, cardPricesTable.card_id))
+        .where(whereClause)
+        .orderBy(orderByClause)
         .limit(input?.setId ? -1 : 100);
 
-      const cardsWithPrices = await Promise.all(
-        cards.map(async (card) => {
-          const prices = await db
-            .select({
-              price: cardPricesTable.price,
-              updatedAt: cardPricesTable.updated_at,
-            })
-            .from(cardPricesTable)
-            .where(eq(cardPricesTable.card_id, card.id))
-            .limit(1);
+      const results = await query;
 
-          const price = prices[0];
+      // Process results and handle price updates
+      const cardsWithPrices = await Promise.all(
+        results.map(async ({ card, price: existingPrice }) => {
           let shouldUpdatePrice = false;
-          if (!price) {
+          if (!existingPrice) {
             shouldUpdatePrice = true;
-            // check if price is older than 24 hours
-          } else if (
-            Date.now() - new Date(price.updatedAt).getTime() >
-            1000 * 60 * 60 * 24
-          ) {
-            shouldUpdatePrice = true;
+          } else {
+            // Check if price is older than 24 hours
+            const priceRecord = await db
+              .select({
+                updatedAt: cardPricesTable.updated_at,
+              })
+              .from(cardPricesTable)
+              .where(eq(cardPricesTable.card_id, card.id))
+              .limit(1)
+              .then((rows) => rows[0]);
+
+            if (
+              priceRecord &&
+              Date.now() - new Date(priceRecord.updatedAt).getTime() >
+                1000 * 60 * 60 * 24
+            ) {
+              shouldUpdatePrice = true;
+            }
           }
 
           let newPrice = null;
           if (shouldUpdatePrice) {
             try {
-              const price = await pokemonAPI.fetchPriceForCard(card.id);
-              if (price !== null) {
+              const fetchedPrice = await pokemonAPI.fetchPriceForCard(card.id);
+              if (fetchedPrice !== null) {
                 // upsert price
                 await db
                   .insert(cardPricesTable)
                   .values({
                     card_id: card.id,
-                    price: price,
+                    price: fetchedPrice,
                   })
                   .onConflictDoUpdate({
                     target: cardPricesTable.card_id,
                     set: {
-                      price: price,
+                      price: fetchedPrice,
                       updated_at: new Date().toISOString(),
                     },
                   });
               }
-              newPrice = price;
+              newPrice = fetchedPrice;
             } catch (e) {
               console.error("Error fetching price for card", card.id, e);
             }
           }
 
           return {
-            price: newPrice ?? price?.price,
             ...card,
+            price: newPrice ?? existingPrice ?? undefined,
           };
         })
       );
