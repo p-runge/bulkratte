@@ -27,7 +27,7 @@ function BinderCard({ cardData, userCardsByCardId, onCardClick }: BinderCardProp
   if (!cardData || !cardData.card) {
     // Empty slot
     return (
-      <div className="aspect-[2.5/3.5] bg-muted/30 rounded border-2 border-dashed border-muted-foreground/20" />
+      <div className="aspect-245/337 bg-muted/30 rounded border-2 border-dashed border-muted-foreground/20" />
     );
   }
 
@@ -39,20 +39,27 @@ function BinderCard({ cardData, userCardsByCardId, onCardClick }: BinderCardProp
     <button
       onClick={() => onCardClick(userSetCardId, cardId, hasUserCard, isPlaced, userCardId)}
       className={cn(
-        "aspect-[2.5/3.5] rounded relative transition-all hover:scale-105",
-        "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-        !isPlaced && "opacity-40 grayscale",
-        hasUserCard && !isPlaced && "ring-2 ring-yellow-500"
+        "cursor-pointer aspect-245/337 rounded relative overflow-hidden",
+        "transition-all hover:scale-105",
+        hasUserCard && !isPlaced && "border-4 border-yellow-500"
       )}
     >
-      <Image
-        src={card.imageSmall}
-        alt={card.name}
-        width={200}
-        height={280}
-        unoptimized
-        className="w-full h-full object-contain rounded"
-      />
+      <div
+        className={cn(
+          "focus:outline-none focus:ring-4 focus:ring-ring focus:ring-offset-2",
+          !isPlaced && "opacity-40 grayscale",
+          hasUserCard && !isPlaced && "-m-1"
+        )}
+      >
+        <Image
+          src={card.imageSmall}
+          alt={card.name}
+          width={245}
+          height={337}
+          unoptimized
+          className="w-full h-full object-contain rounded"
+        />
+      </div>
     </button>
   );
 }
