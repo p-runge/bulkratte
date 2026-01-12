@@ -59,6 +59,7 @@ export function UserSetContent({ userSetId }: UserSetContentProps) {
   return (
     <>
       <BinderView
+        mode="view"
         userSet={userSet}
         userCards={userCards}
         onCardClick={handleCardClick}

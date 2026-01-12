@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 import { MinimalCardData } from "../../[user-set-id]/_components/edit-set-content";
-import { EditableBinderView } from "../../[user-set-id]/_components/editable-binder-view";
+import { BinderView } from "../../[user-set-id]/_components/binder-view";
 
 
 export function CreateSetContent() {
@@ -138,7 +138,8 @@ export function CreateSetContent() {
         </div>
       </div>
 
-      <EditableBinderView
+      <BinderView
+        mode="edit"
         cards={cards}
         cardDataMap={cardDataMap}
         onCardsChange={handleCardsChange}

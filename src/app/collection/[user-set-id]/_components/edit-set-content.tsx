@@ -10,7 +10,7 @@ import { Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
-import { EditableBinderView } from "./editable-binder-view";
+import { BinderView } from "./binder-view";
 
 export type MinimalCardData = {
   id: string;
@@ -184,7 +184,8 @@ export function EditSetContent({ userSet }: EditSetContentProps) {
         </div>
       </div>
 
-      <EditableBinderView
+      <BinderView
+        mode="edit"
         cards={cards}
         cardDataMap={cardDataMap}
         onCardsChange={handleCardsChange}

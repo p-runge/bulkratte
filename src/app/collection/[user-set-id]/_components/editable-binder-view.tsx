@@ -7,8 +7,9 @@ import ConfirmButton from "@/components/confirm-button";
 import { cn } from "@/lib/utils";
 import { Plus, X, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { MinimalCardData } from "./edit-set-content";
+import { useBinderPagination, CARDS_PER_PAGE } from "../_lib/use-binder-pagination";
 
 
 
@@ -93,33 +94,37 @@ function EditableSlot({
   );
 }
 
-const CARDS_PER_PAGE = 9; // 3x3 grid
-
 export function EditableBinderView({ cards, cardDataMap, onCardsChange }: EditableBinderViewProps) {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [addingAtIndex, setAddingAtIndex] = useState<number | null>(null);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
 
-  // Detect mobile viewport
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768); // md breakpoint
-    };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  const PAGES_VISIBLE = isMobile ? 1 : 2;
-
-  // Ensure we have enough slots to show at least the visible pages
-  const minSlots = CARDS_PER_PAGE * PAGES_VISIBLE;
+  // Ensure we have enough slots to show at least the visible pages initially
   const paddedCards = [...cards];
+
+  // Use binder pagination hook
+  const pagination = useBinderPagination({ totalItems: paddedCards.length });
+  const {
+    isMobile,
+    PAGES_VISIBLE,
+    buildPagesArray,
+    isCoverPage,
+    getDisplayPageNumber,
+    getTotalPages,
+    canGoNext,
+    canGoPrev,
+    goNext,
+    goPrev,
+    useKeyboardNavigation,
+    getVisiblePages,
+    getStartPageIndex,
+    onTouchStart,
+    onTouchMove,
+    onTouchEnd,
+    setCurrentPage,
+  } = pagination;
+
+  const minSlots = CARDS_PER_PAGE * PAGES_VISIBLE;
   while (paddedCards.length < minSlots) {
     paddedCards.push({ userSetCardId: null, cardId: null });
   }
@@ -204,83 +209,20 @@ export function EditableBinderView({ cards, cardDataMap, onCardsChange }: Editab
     setAddingAtIndex(null);
   };
 
-  // Split into pages
-  const totalPages = Math.ceil(paddedCards.length / CARDS_PER_PAGE);
-  const pages: Array<Array<{ userSetCardId: string | null; cardId: string | null }>> = [];
-  for (let i = 0; i < totalPages; i++) {
-    pages.push(paddedCards.slice(i * CARDS_PER_PAGE, (i + 1) * CARDS_PER_PAGE));
-  }
+  // Build pages with cover pages
+  const pages = buildPagesArray(
+    paddedCards,
+    { userSetCardId: null, cardId: null }
+  );
+  const totalPages = getTotalPages(pages);
+  const totalContentPages = Math.ceil(paddedCards.length / CARDS_PER_PAGE);
 
-  // Pad the last page
-  if (pages.length > 0) {
-    const lastPage = pages[pages.length - 1]!;
-    while (lastPage.length < CARDS_PER_PAGE) {
-      lastPage.push({ userSetCardId: null, cardId: null });
-    }
-  }
+  // Set up keyboard navigation
+  useKeyboardNavigation(totalPages);
 
-  // Navigation handlers
-  const maxPageGroup = Math.max(0, Math.ceil(totalPages / PAGES_VISIBLE) - 1);
-  const canGoNext = currentPage < maxPageGroup;
-  const canGoPrev = currentPage > 0;
-
-  const goNext = () => {
-    if (canGoNext) {
-      setCurrentPage(prev => prev + 1);
-    }
-  };
-
-  const goPrev = () => {
-    if (canGoPrev) {
-      setCurrentPage(prev => prev - 1);
-    }
-  };
-
-  // Arrow key support
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        goPrev();
-      } else if (e.key === "ArrowRight") {
-        e.preventDefault();
-        goNext();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentPage, maxPageGroup]);
-
-  // Swipe support
-  const minSwipeDistance = 50;
-
-  const onTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0]!.clientX);
-  };
-
-  const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0]!.clientX);
-  };
-
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
-
-    if (isLeftSwipe && canGoNext) {
-      goNext();
-    } else if (isRightSwipe && canGoPrev) {
-      goPrev();
-    }
-  };
-
-  // Calculate visible pages based on current page
-  const startPageIndex = currentPage * PAGES_VISIBLE;
-  const visiblePages = pages.slice(startPageIndex, startPageIndex + PAGES_VISIBLE);
+  // Get visible pages
+  const visiblePages = getVisiblePages(pages);
+  const startPageIndex = getStartPageIndex();
 
   // Check if all slots are filled (no empty slots)
   const hasEmptySlots = paddedCards.some(card => card.cardId === null);
@@ -293,8 +235,10 @@ export function EditableBinderView({ cards, cardDataMap, onCardsChange }: Editab
     }
     onCardsChange(newCards);
     // Navigate to the last page group
-    const newTotalPages = Math.ceil(newCards.length / CARDS_PER_PAGE);
-    const newMaxPageGroup = Math.max(0, Math.ceil(newTotalPages / PAGES_VISIBLE) - 1);
+    const newTotalContentPages = Math.ceil(newCards.length / CARDS_PER_PAGE);
+    const newPages = buildPagesArray(newCards, { userSetCardId: null, cardId: null });
+    const newTotalPages = getTotalPages(newPages);
+    const newMaxPageGroup = pagination.getMaxPageGroup(newTotalPages);
     setCurrentPage(newMaxPageGroup);
   };
 
@@ -316,9 +260,15 @@ export function EditableBinderView({ cards, cardDataMap, onCardsChange }: Editab
     onCardsChange(trimmed);
 
     // Adjust current page if needed
-    const newTotalPages = Math.ceil(Math.max(trimmed.length, minSlots) / CARDS_PER_PAGE);
-    const newMaxPageGroup = Math.max(0, Math.ceil(newTotalPages / PAGES_VISIBLE) - 1);
-    if (currentPage > newMaxPageGroup) {
+    const newPaddedCards = [...trimmed];
+    const newMinSlots = CARDS_PER_PAGE * PAGES_VISIBLE;
+    while (newPaddedCards.length < newMinSlots) {
+      newPaddedCards.push({ userSetCardId: null, cardId: null });
+    }
+    const newPages = buildPagesArray(newPaddedCards, { userSetCardId: null, cardId: null });
+    const newTotalPages = getTotalPages(newPages);
+    const newMaxPageGroup = pagination.getMaxPageGroup(newTotalPages);
+    if (pagination.currentPage > newMaxPageGroup) {
       setCurrentPage(newMaxPageGroup);
     }
   };
@@ -327,22 +277,22 @@ export function EditableBinderView({ cards, cardDataMap, onCardsChange }: Editab
     <>
       <div className="relative">
         {/* Navigation Buttons */}
-        {canGoPrev && (
+        {canGoPrev() && (
           <Button
             variant="outline"
             size="icon"
             className="absolute left-0 top-1/2 -translate-y-1/2 z-10 hidden md:flex"
-            onClick={goPrev}
+            onClick={() => goPrev()}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
         )}
-        {canGoNext && (
+        {canGoNext(totalPages) && (
           <Button
             variant="outline"
             size="icon"
             className="absolute right-0 top-1/2 -translate-y-1/2 z-10 hidden md:flex"
-            onClick={goNext}
+            onClick={() => goNext(totalPages)}
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -352,25 +302,27 @@ export function EditableBinderView({ cards, cardDataMap, onCardsChange }: Editab
           className="flex gap-2 justify-center items-start"
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
-          onTouchEnd={onTouchEnd}
+          onTouchEnd={() => onTouchEnd(totalPages)}
         >
           {visiblePages.map((page, pageIndex) => {
             const actualPageNumber = startPageIndex + pageIndex + 1;
+            const isCurrentCoverPage = isCoverPage(actualPageNumber, totalPages);
+
             return (
               <div
                 key={actualPageNumber}
                 className="bg-card border rounded-lg p-[2%] shadow-lg relative"
                 style={{ width: isMobile ? "min(90vw, 500px)" : "min(45vw, 500px)" }}
               >
-                {/* Delete Page Button */}
-                {totalPages > (isMobile ? 1 : PAGES_VISIBLE) && (
+                {/* Delete Page Button - only show on non-cover pages */}
+                {!isCurrentCoverPage && totalContentPages > (isMobile ? 1 : PAGES_VISIBLE) && (
                   <div className="absolute -top-3 -right-3 z-10">
                     <ConfirmButton
                       variant="destructive"
                       size="icon"
                       className="h-8 w-8 rounded-full shadow-md"
                       title="Delete Page"
-                      description={`Are you sure you want to delete page ${actualPageNumber}? All cards on this page will be removed.`}
+                      description={`Are you sure you want to delete page ${getDisplayPageNumber(actualPageNumber)}? All cards on this page will be removed.`}
                       destructive
                       onClick={() => handleDeletePage(actualPageNumber)}
                     >
@@ -378,27 +330,40 @@ export function EditableBinderView({ cards, cardDataMap, onCardsChange }: Editab
                     </ConfirmButton>
                   </div>
                 )}
-                <div className="grid grid-cols-3 gap-2">
-                  {page.map((card, slotIndex) => {
-                    const globalIndex = (startPageIndex + pageIndex) * CARDS_PER_PAGE + slotIndex;
-                    const cardData = card?.cardId ? cardDataMap.get(card.cardId) ?? null : null;
-                    return (
-                      <EditableSlot
-                        key={globalIndex}
-                        card={cardData}
-                        index={globalIndex}
-                        onRemove={() => handleRemove(globalIndex)}
-                        onAdd={() => handleAdd(globalIndex)}
-                        onDragStart={handleDragStart(globalIndex)}
-                        onDragOver={handleDragOver}
-                        onDrop={handleDrop(globalIndex)}
-                        isDragging={draggedIndex === globalIndex}
-                      />
-                    );
-                  })}
-                </div>
+                {isCurrentCoverPage ? (
+                  // Empty cover page - invisible grid to match height
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="aspect-[2.5/3.5] invisible col-span-3" />
+                    <div className="aspect-[2.5/3.5] invisible col-span-3" />
+                    <div className="aspect-[2.5/3.5] invisible col-span-3" />
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2">
+                    {page.map((card, slotIndex) => {
+                      const globalIndex = (startPageIndex + pageIndex) * CARDS_PER_PAGE + slotIndex;
+                      const cardData = card?.cardId ? cardDataMap.get(card.cardId) ?? null : null;
+                      return (
+                        <EditableSlot
+                          key={globalIndex}
+                          card={cardData}
+                          index={globalIndex}
+                          onRemove={() => handleRemove(globalIndex)}
+                          onAdd={() => handleAdd(globalIndex)}
+                          onDragStart={handleDragStart(globalIndex)}
+                          onDragOver={handleDragOver}
+                          onDrop={handleDrop(globalIndex)}
+                          isDragging={draggedIndex === globalIndex}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
                 <div className="text-center text-sm text-muted-foreground mt-4">
-                  Page {actualPageNumber}
+                  {isCurrentCoverPage ? (
+                    <span className="opacity-0">Cover</span>
+                  ) : (
+                    `Page ${getDisplayPageNumber(actualPageNumber)}`
+                  )}
                 </div>
               </div>
             );
@@ -418,19 +383,19 @@ export function EditableBinderView({ cards, cardDataMap, onCardsChange }: Editab
           <Button
             variant="outline"
             size="sm"
-            onClick={goPrev}
-            disabled={!canGoPrev}
+            onClick={() => goPrev()}
+            disabled={!canGoPrev()}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="text-sm text-muted-foreground self-center">
-            {currentPage + 1} / {maxPageGroup + 1}
+            {pagination.currentPage + 1} / {pagination.getMaxPageGroup(totalPages) + 1}
           </span>
           <Button
             variant="outline"
             size="sm"
-            onClick={goNext}
-            disabled={!canGoNext}
+            onClick={() => goNext(totalPages)}
+            disabled={!canGoNext(totalPages)}
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
