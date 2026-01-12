@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { FormattedMessage } from "react-intl";
 
 type UserSet = Awaited<ReturnType<AppRouter["userSet"]["getById"]>>;
 type UserCard = Awaited<ReturnType<AppRouter["userCard"]["getList"]>>[number];
@@ -113,6 +114,12 @@ export function BinderView({ userSet, userCards, onCardClick }: BinderViewProps)
   // Split cards into pages
   const totalPages = Math.ceil(orderedCards.length / CARDS_PER_PAGE);
   const pages: (typeof userSet.cards[number] | null)[][] = [];
+
+  // On desktop, add an empty first page so the first real page appears on the right (like a real binder)
+  if (!isMobile) {
+    pages.push(Array(CARDS_PER_PAGE).fill(null));
+  }
+
   for (let i = 0; i < totalPages; i++) {
     pages.push(orderedCards.slice(i * CARDS_PER_PAGE, (i + 1) * CARDS_PER_PAGE));
   }
@@ -125,8 +132,19 @@ export function BinderView({ userSet, userCards, onCardClick }: BinderViewProps)
     }
   }
 
-  // Navigation handlers
-  const maxPageGroup = Math.max(0, Math.ceil(totalPages / PAGES_VISIBLE) - 1);
+  // On desktop, if we have an odd number of actual content pages, add one more empty page
+  // to simulate the back side of a physical binder sheet
+  if (!isMobile && totalPages % 2 === 1) {
+    pages.push(Array(CARDS_PER_PAGE).fill(null));
+  }
+
+  // On desktop, add an empty last page so the last real page appears on the left (like a real binder)
+  if (!isMobile) {
+    pages.push(Array(CARDS_PER_PAGE).fill(null));
+  }
+
+  // Navigation handlers - use pages.length which accounts for the fake page on desktop
+  const maxPageGroup = Math.max(0, Math.ceil(pages.length / PAGES_VISIBLE) - 1);
   const canGoNext = currentPage < maxPageGroup;
   const canGoPrev = currentPage > 0;
 
@@ -213,32 +231,44 @@ export function BinderView({ userSet, userCards, onCardClick }: BinderViewProps)
       )}
 
       <div
-        className="flex gap-2 justify-center items-start"
+        className="flex gap-2 justify-center"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
         {visiblePages.map((page, pageIndex) => {
           const actualPageNumber = startPageIndex + pageIndex + 1;
+          const isFirstCoverPage = !isMobile && actualPageNumber === 1;
+          const isLastCoverPage = !isMobile && actualPageNumber === pages.length;
+          const isCoverPage = isFirstCoverPage || isLastCoverPage;
+
           return (
             <div
               key={actualPageNumber}
               className="bg-card border rounded-lg p-[2%] shadow-lg"
               style={{ width: isMobile ? "min(90vw, 500px)" : "min(45vw, 500px)" }}
             >
-              <div className="grid grid-cols-3 gap-2">
-                {Array.from({ length: CARDS_PER_PAGE }).map((_, slotIndex) => (
-                  <BinderCard
-                    key={`${actualPageNumber}-${slotIndex}`}
-                    cardData={page[slotIndex] ?? null}
-                    userCardsByCardId={userCardsByCardId}
-                    onCardClick={onCardClick}
-                  />
-                ))}
-              </div>
-              <div className="text-center text-sm text-muted-foreground mt-4">
-                Page {actualPageNumber}
-              </div>
+              {!isCoverPage && (
+                <>
+                  <div className="grid grid-cols-3 gap-2">
+                    {Array.from({ length: CARDS_PER_PAGE }).map((_, slotIndex) => (
+                      <BinderCard
+                        key={`${actualPageNumber}-${slotIndex}`}
+                        cardData={page[slotIndex] ?? null}
+                        userCardsByCardId={userCardsByCardId}
+                        onCardClick={onCardClick}
+                      />
+                    ))}
+                  </div>
+                  <div className="text-center text-sm text-muted-foreground mt-4">
+                    <FormattedMessage
+                      id="binder.page.number"
+                      defaultMessage="Page {pageNumber}"
+                      values={{ pageNumber: actualPageNumber - (isMobile ? 0 : 1) }}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           );
         })}

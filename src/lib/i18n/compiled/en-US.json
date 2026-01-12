@@ -1,8 +1,32 @@
 {
+  "binder.page.number": [
+    {
+      "type": 0,
+      "value": "Page "
+    },
+    {
+      "type": 1,
+      "value": "pageNumber"
+    }
+  ],
   "card.browser.empty": [
     {
       "type": 0,
       "value": "No cards found. Try adjusting your filters."
+    }
+  ],
+  "card.browser.selectAll": [
+    {
+      "type": 0,
+      "value": "Select all ("
+    },
+    {
+      "type": 1,
+      "value": "count"
+    },
+    {
+      "type": 0,
+      "value": ")"
     }
   ],
   "card.filter.button.clear": [
@@ -207,12 +231,6 @@
     {
       "type": 0,
       "value": "Saving..."
-    }
-  ],
-  "common.logo.alt": [
-    {
-      "type": 0,
-      "value": "Bulkratte Logo"
     }
   ],
   "dialog.create_card.button.add": [

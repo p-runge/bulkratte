@@ -1,8 +1,32 @@
 {
+  "binder.page.number": [
+    {
+      "type": 0,
+      "value": "Seite "
+    },
+    {
+      "type": 1,
+      "value": "pageNumber"
+    }
+  ],
   "card.browser.empty": [
     {
       "type": 0,
       "value": "Keine Karten gefunden, die deinen Suchkriterien entsprechen."
+    }
+  ],
+  "card.browser.selectAll": [
+    {
+      "type": 0,
+      "value": "Alle auswählen ("
+    },
+    {
+      "type": 1,
+      "value": "count"
+    },
+    {
+      "type": 0,
+      "value": ")"
     }
   ],
   "card.filter.button.clear": [
@@ -207,12 +231,6 @@
     {
       "type": 0,
       "value": "Speichern..."
-    }
-  ],
-  "common.logo.alt": [
-    {
-      "type": 0,
-      "value": "Bulkratte Logo"
     }
   ],
   "dialog.create_card.button.add": [

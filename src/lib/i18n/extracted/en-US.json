@@ -1,5 +1,7 @@
 {
+  "binder.page.number": "Page {pageNumber}",
   "card.browser.empty": "No cards found. Try adjusting your filters.",
+  "card.browser.selectAll": "Select all ({count})",
   "card.filter.button.clear": "Clear",
   "card.filter.date.from": "Release From",
   "card.filter.date.placeholder.from": "From",
@@ -29,7 +31,6 @@
   "common.button.cancel": "Cancel",
   "common.button.confirm": "Confirm",
   "common.button.saving": "Saving...",
-  "common.logo.alt": "Bulkratte Logo",
   "dialog.create_card.button.add": "Add Card to Collection",
   "dialog.create_card.title": "Add New Card",
   "dialog.delete_set.description": "Are you sure you want to delete this set? This action cannot be undone.",
