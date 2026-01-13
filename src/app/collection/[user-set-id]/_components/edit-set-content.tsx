@@ -168,16 +168,12 @@ export function EditSetContent({ userSet }: EditSetContentProps) {
         </div>
 
         <div className="flex items-end gap-4">
-          \n{" "}
           <div className="flex-1 space-y-2">
-            \n{" "}
             <Label htmlFor="name">
-              \n{" "}
               <FormattedMessage
                 id="form.field.set_name.label"
                 defaultMessage="Set Name"
               />
-              \n{" "}
             </Label>
             <Input
               id="name"
