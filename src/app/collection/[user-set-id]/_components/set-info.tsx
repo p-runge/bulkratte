@@ -16,31 +16,35 @@ interface SetInfoProps {
 }
 
 export function SetInfo({ userSet, userCards }: SetInfoProps) {
-  const { totalCards, placedCards, obtainedCards } = useMemo(() => {
-    const totalCards = userSet.cards.length;
-    const placedCards = userSet.cards.filter(
-      (card) => card.userCardId !== null,
-    ).length;
+  const { totalCards, placedCards, obtainedCards, obtainedButNotPlaced } =
+    useMemo(() => {
+      const totalCards = userSet.cards.length;
+      const placedCards = userSet.cards.filter(
+        (card) => card.userCardId !== null,
+      ).length;
 
-    // Get unique card IDs from the user set
-    const userSetCardIds = new Set(userSet.cards.map((card) => card.cardId));
+      // Get unique card IDs from the user set
+      const userSetCardIds = new Set(userSet.cards.map((card) => card.cardId));
 
-    // Count how many of these cards the user has in their collection
-    const obtainedCardIds = new Set(
-      userCards
-        .filter((userCard) => userSetCardIds.has(userCard.cardId))
-        .map((userCard) => userCard.cardId),
-    );
+      // Count how many of these cards the user has in their collection
+      const obtainedCardIds = new Set(
+        userCards
+          .filter((userCard) => userSetCardIds.has(userCard.cardId))
+          .map((userCard) => userCard.cardId),
+      );
 
-    const obtainedCards = obtainedCardIds.size;
+      const obtainedCards = obtainedCardIds.size;
+      const obtainedButNotPlaced = obtainedCards - placedCards;
 
-    return { totalCards, placedCards, obtainedCards };
-  }, [userSet, userCards]);
+      return { totalCards, placedCards, obtainedCards, obtainedButNotPlaced };
+    }, [userSet, userCards]);
 
   const placedPercentage =
     totalCards > 0 ? (placedCards / totalCards) * 100 : 0;
   const obtainedPercentage =
     totalCards > 0 ? (obtainedCards / totalCards) * 100 : 0;
+  const obtainedButNotPlacedPercentage =
+    totalCards > 0 ? (obtainedButNotPlaced / totalCards) * 100 : 0;
 
   return (
     <Card className="p-6 mb-6">
@@ -70,14 +74,14 @@ export function SetInfo({ userSet, userCards }: SetInfoProps) {
             <span className="text-muted-foreground">
               <FormattedMessage
                 id="binder.info.created.at"
-                defaultMessage="Created:"
+                defaultMessage="Created on:"
               />
             </span>
             <span className="font-medium">
               <FormattedDate
                 value={new Date(userSet.set.createdAt)}
                 year="numeric"
-                month="long"
+                month="numeric"
                 day="numeric"
               />
             </span>
@@ -97,7 +101,7 @@ export function SetInfo({ userSet, userCards }: SetInfoProps) {
           <div className="space-y-2">
             <Progress
               segments={[
-                { value: obtainedPercentage, className: "bg-blue-500/40" },
+                { value: obtainedPercentage, className: "bg-yellow-400" },
                 { value: placedPercentage, className: "bg-green-600" },
               ]}
               className="h-3"
@@ -116,18 +120,21 @@ export function SetInfo({ userSet, userCards }: SetInfoProps) {
                     {placedCards} ({placedPercentage.toFixed(1)}%)
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-sm bg-blue-500/40" />
-                  <span className="text-muted-foreground">
-                    <FormattedMessage
-                      id="binder.info.progress.obtained"
-                      defaultMessage="Obtained (inc. not placed)"
-                    />
-                  </span>
-                  <span className="font-medium">
-                    {obtainedCards} ({obtainedPercentage.toFixed(1)}%)
-                  </span>
-                </div>
+                {obtainedButNotPlaced > 0 && (
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-sm bg-yellow-400" />
+                    <span className="text-muted-foreground">
+                      <FormattedMessage
+                        id="binder.info.progress.obtained"
+                        defaultMessage="Obtained but not placed"
+                      />
+                    </span>
+                    <span className="font-medium">
+                      {obtainedButNotPlaced} (
+                      {obtainedButNotPlacedPercentage.toFixed(1)}%)
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>

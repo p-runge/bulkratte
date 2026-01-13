@@ -2,13 +2,13 @@
   "binder.info.created.at": [
     {
       "type": 0,
-      "value": "Erstellt:"
+      "value": "Erstellt am:"
     }
   ],
   "binder.info.progress.obtained": [
     {
       "type": 0,
-      "value": "Besessen (inkl. nicht platziert)"
+      "value": "Im Besitz aber nicht platziert"
     }
   ],
   "binder.info.progress.placed": [
@@ -32,7 +32,7 @@
   "binder.info.total.cards": [
     {
       "type": 0,
-      "value": "Anzahl Karten:"
+      "value": "Kartenanzahl:"
     }
   ],
   "binder.page.number": [

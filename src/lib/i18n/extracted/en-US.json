@@ -1,6 +1,6 @@
 {
-  "binder.info.created.at": "Created:",
-  "binder.info.progress.obtained": "Obtained (inc. not placed)",
+  "binder.info.created.at": "Created on:",
+  "binder.info.progress.obtained": "Obtained but not placed",
   "binder.info.progress.placed": "Placed in Binder",
   "binder.info.progress.title": "Collection Progress",
   "binder.info.title": "Set Information",

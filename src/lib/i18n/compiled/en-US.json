@@ -2,13 +2,13 @@
   "binder.info.created.at": [
     {
       "type": 0,
-      "value": "Created:"
+      "value": "Created on:"
     }
   ],
   "binder.info.progress.obtained": [
     {
       "type": 0,
-      "value": "Obtained (inc. not placed)"
+      "value": "Obtained but not placed"
     }
   ],
   "binder.info.progress.placed": [
