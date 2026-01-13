@@ -1,4 +1,40 @@
 {
+  "binder.info.created.at": [
+    {
+      "type": 0,
+      "value": "Erstellt:"
+    }
+  ],
+  "binder.info.progress.obtained": [
+    {
+      "type": 0,
+      "value": "Besessen (inkl. nicht platziert)"
+    }
+  ],
+  "binder.info.progress.placed": [
+    {
+      "type": 0,
+      "value": "Im Binder platziert"
+    }
+  ],
+  "binder.info.progress.title": [
+    {
+      "type": 0,
+      "value": "Sammlungsfortschritt"
+    }
+  ],
+  "binder.info.title": [
+    {
+      "type": 0,
+      "value": "Set-Informationen"
+    }
+  ],
+  "binder.info.total.cards": [
+    {
+      "type": 0,
+      "value": "Anzahl Karten:"
+    }
+  ],
   "binder.page.number": [
     {
       "type": 0,

@@ -1,4 +1,10 @@
 {
+  "binder.info.created.at": "Erstellt:",
+  "binder.info.progress.obtained": "Besessen (inkl. nicht platziert)",
+  "binder.info.progress.placed": "Im Binder platziert",
+  "binder.info.progress.title": "Sammlungsfortschritt",
+  "binder.info.title": "Set-Informationen",
+  "binder.info.total.cards": "Anzahl Karten:",
   "binder.page.number": "Seite {pageNumber}",
   "card.browser.empty": "Keine Karten gefunden, die deinen Suchkriterien entsprechen.",
   "card.browser.selectAll": "Alle auswählen ({count})",

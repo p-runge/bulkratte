@@ -1,4 +1,10 @@
 {
+  "binder.info.created.at": "Created:",
+  "binder.info.progress.obtained": "Obtained (inc. not placed)",
+  "binder.info.progress.placed": "Placed in Binder",
+  "binder.info.progress.title": "Collection Progress",
+  "binder.info.title": "Set Information",
+  "binder.info.total.cards": "Total Cards:",
   "binder.page.number": "Page {pageNumber}",
   "card.browser.empty": "No cards found. Try adjusting your filters.",
   "card.browser.selectAll": "Select all ({count})",

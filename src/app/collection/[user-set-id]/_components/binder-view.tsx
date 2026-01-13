@@ -3,15 +3,24 @@
 import { AppRouter } from "@/lib/api/routers/_app";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, Plus, X, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { FormattedMessage } from "react-intl";
 import { useState } from "react";
-import { useBinderPagination, CARDS_PER_PAGE } from "../_lib/use-binder-pagination";
+import {
+  useBinderPagination,
+  CARDS_PER_PAGE,
+} from "../_lib/use-binder-pagination";
 import { CardPicker } from "@/components/card-browser/card-picker";
 import ConfirmButton from "@/components/confirm-button";
 import { MinimalCardData } from "./edit-set-content";
+import { SetInfo } from "./set-info";
 
 type UserSet = Awaited<ReturnType<AppRouter["userSet"]["getById"]>>;
 type UserCard = Awaited<ReturnType<AppRouter["userCard"]["getList"]>>[number];
@@ -35,7 +44,9 @@ interface EditModeProps {
   mode: "edit";
   cards: Array<{ userSetCardId: string | null; cardId: string | null }>;
   cardDataMap: Map<string, MinimalCardData>;
-  onCardsChange: (cards: Array<{ userSetCardId: string | null; cardId: string | null }>) => void;
+  onCardsChange: (
+    cards: Array<{ userSetCardId: string | null; cardId: string | null }>
+  ) => void;
 }
 
 type BinderViewProps = ViewModeProps | EditModeProps;
@@ -66,7 +77,9 @@ function ViewSlot({ cardData, userCardsByCardId, onCardClick }: ViewSlotProps) {
 
   return (
     <button
-      onClick={() => onCardClick(userSetCardId, cardId, hasUserCard, isPlaced, userCardId)}
+      onClick={() =>
+        onCardClick(userSetCardId, cardId, hasUserCard, isPlaced, userCardId)
+      }
       className={cn(
         "cursor-pointer aspect-245/337 rounded relative overflow-hidden",
         "transition-all hover:scale-105",
@@ -193,8 +206,12 @@ export function BinderView(props: BinderViewProps) {
       return acc;
     }, {} as Record<string, UserCard[]>);
 
-    const maxOrder = Math.max(...props.userSet.cards.map((c) => c.order ?? 0), 0);
-    const tempOrderedCards: (typeof props.userSet.cards[number] | null)[] = Array(maxOrder + 1).fill(null);
+    const maxOrder = Math.max(
+      ...props.userSet.cards.map((c) => c.order ?? 0),
+      0
+    );
+    const tempOrderedCards: ((typeof props.userSet.cards)[number] | null)[] =
+      Array(maxOrder + 1).fill(null);
 
     props.userSet.cards.forEach((card) => {
       if (card.order !== null && card.order !== undefined) {
@@ -229,11 +246,16 @@ export function BinderView(props: BinderViewProps) {
   // Ensure minimum slots
   const minSlots = CARDS_PER_PAGE * PAGES_VISIBLE;
   while (orderedCards.length < minSlots) {
-    orderedCards.push(isEditMode ? { userSetCardId: null, cardId: null } : null);
+    orderedCards.push(
+      isEditMode ? { userSetCardId: null, cardId: null } : null
+    );
   }
 
   // Build pages
-  const pages = buildPagesArray(orderedCards, isEditMode ? { userSetCardId: null, cardId: null } : null);
+  const pages = buildPagesArray(
+    orderedCards,
+    isEditMode ? { userSetCardId: null, cardId: null } : null
+  );
   const totalPages = getTotalPages(pages);
   const totalContentPages = Math.ceil(orderedCards.length / CARDS_PER_PAGE);
 
@@ -266,8 +288,14 @@ export function BinderView(props: BinderViewProps) {
     const newCards = [...orderedCards];
     const draggedCard = newCards[draggedIndex];
 
-    newCards[draggedIndex] = newCards[targetIndex] ?? { userSetCardId: null, cardId: null };
-    newCards[targetIndex] = draggedCard ?? { userSetCardId: null, cardId: null };
+    newCards[draggedIndex] = newCards[targetIndex] ?? {
+      userSetCardId: null,
+      cardId: null,
+    };
+    newCards[targetIndex] = draggedCard ?? {
+      userSetCardId: null,
+      cardId: null,
+    };
 
     const lastNonEmptyIndex = newCards.findLastIndex((c) => c.cardId !== null);
     const trimmed = newCards.slice(0, lastNonEmptyIndex + 1);
@@ -302,7 +330,10 @@ export function BinderView(props: BinderViewProps) {
 
     let insertIndex = addingAtIndex;
     for (const cardId of cardsToAdd) {
-      while (insertIndex < newCards.length && newCards[insertIndex]?.cardId !== null) {
+      while (
+        insertIndex < newCards.length &&
+        newCards[insertIndex]?.cardId !== null
+      ) {
         insertIndex++;
       }
 
@@ -331,7 +362,10 @@ export function BinderView(props: BinderViewProps) {
     }
     props.onCardsChange(newCards);
 
-    const newPages = buildPagesArray(newCards, { userSetCardId: null, cardId: null });
+    const newPages = buildPagesArray(newCards, {
+      userSetCardId: null,
+      cardId: null,
+    });
     const newTotalPages = getTotalPages(newPages);
     const newMaxPageGroup = pagination.getMaxPageGroup(newTotalPages);
     setCurrentPage(newMaxPageGroup);
@@ -345,11 +379,12 @@ export function BinderView(props: BinderViewProps) {
 
     const newCards = [
       ...orderedCards.slice(0, pageStartIndex),
-      ...orderedCards.slice(pageEndIndex)
+      ...orderedCards.slice(pageEndIndex),
     ];
 
     const lastNonEmptyIndex = newCards.findLastIndex((c) => c.cardId !== null);
-    const trimmed = lastNonEmptyIndex >= 0 ? newCards.slice(0, lastNonEmptyIndex + 1) : [];
+    const trimmed =
+      lastNonEmptyIndex >= 0 ? newCards.slice(0, lastNonEmptyIndex + 1) : [];
 
     props.onCardsChange(trimmed);
 
@@ -357,7 +392,10 @@ export function BinderView(props: BinderViewProps) {
     while (newPaddedCards.length < minSlots) {
       newPaddedCards.push({ userSetCardId: null, cardId: null });
     }
-    const newPages = buildPagesArray(newPaddedCards, { userSetCardId: null, cardId: null });
+    const newPages = buildPagesArray(newPaddedCards, {
+      userSetCardId: null,
+      cardId: null,
+    });
     const newTotalPages = getTotalPages(newPages);
     const newMaxPageGroup = pagination.getMaxPageGroup(newTotalPages);
     if (pagination.currentPage > newMaxPageGroup) {
@@ -365,10 +403,16 @@ export function BinderView(props: BinderViewProps) {
     }
   };
 
-  const hasEmptySlots = isEditMode && orderedCards.some(card => card.cardId === null);
+  const hasEmptySlots =
+    isEditMode && orderedCards.some((card) => card.cardId === null);
 
   return (
     <>
+      {/* Set Info - only in view mode */}
+      {!isEditMode && (
+        <SetInfo userSet={props.userSet} userCards={props.userCards} />
+      )}
+
       <div className="relative">
         {/* Navigation Buttons */}
         {canGoPrev() && (
@@ -400,38 +444,52 @@ export function BinderView(props: BinderViewProps) {
         >
           {visiblePages.map((page, pageIndex) => {
             const actualPageNumber = startPageIndex + pageIndex + 1;
-            const isCurrentCoverPage = isCoverPage(actualPageNumber, totalPages);
+            const isCurrentCoverPage = isCoverPage(
+              actualPageNumber,
+              totalPages
+            );
 
             return (
               <div
                 key={actualPageNumber}
                 className="bg-card border rounded-lg p-[2%] shadow-lg relative"
-                style={{ width: isMobile ? "min(90vw, 500px)" : "min(45vw, 500px)" }}
+                style={{
+                  width: isMobile ? "min(90vw, 500px)" : "min(45vw, 500px)",
+                }}
               >
                 {/* Delete Page Button - only in edit mode on non-cover pages */}
-                {isEditMode && !isCurrentCoverPage && totalContentPages > (isMobile ? 1 : PAGES_VISIBLE) && (
-                  <div className="absolute -top-3 -right-3 z-10">
-                    <ConfirmButton
-                      variant="destructive"
-                      size="icon"
-                      className="h-8 w-8 rounded-full shadow-md"
-                      title="Delete Page"
-                      description={`Are you sure you want to delete page ${getDisplayPageNumber(actualPageNumber)}? All cards on this page will be removed.`}
-                      destructive
-                      onClick={() => handleDeletePage(actualPageNumber)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </ConfirmButton>
-                  </div>
-                )}
+                {isEditMode &&
+                  !isCurrentCoverPage &&
+                  totalContentPages > (isMobile ? 1 : PAGES_VISIBLE) && (
+                    <div className="absolute -top-3 -right-3 z-10">
+                      <ConfirmButton
+                        variant="destructive"
+                        size="icon"
+                        className="h-8 w-8 rounded-full shadow-md"
+                        title="Delete Page"
+                        description={`Are you sure you want to delete page ${getDisplayPageNumber(
+                          actualPageNumber
+                        )}? All cards on this page will be removed.`}
+                        destructive
+                        onClick={() => handleDeletePage(actualPageNumber)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </ConfirmButton>
+                    </div>
+                  )}
 
                 {!isCurrentCoverPage && (
                   <div className="grid grid-cols-3 gap-2">
                     {page.map((card, slotIndex) => {
-                      const globalIndex = (startPageIndex + pageIndex - (isMobile ? 0 : 1)) * CARDS_PER_PAGE + slotIndex;
+                      const globalIndex =
+                        (startPageIndex + pageIndex - (isMobile ? 0 : 1)) *
+                          CARDS_PER_PAGE +
+                        slotIndex;
 
                       if (isEditMode) {
-                        const cardData = card?.cardId ? props.cardDataMap.get(card.cardId) ?? null : null;
+                        const cardData = card?.cardId
+                          ? props.cardDataMap.get(card.cardId) ?? null
+                          : null;
                         return (
                           <EditSlot
                             key={globalIndex}
@@ -468,7 +526,9 @@ export function BinderView(props: BinderViewProps) {
                     <FormattedMessage
                       id="binder.page.number"
                       defaultMessage="Page {pageNumber}"
-                      values={{ pageNumber: getDisplayPageNumber(actualPageNumber) }}
+                      values={{
+                        pageNumber: getDisplayPageNumber(actualPageNumber),
+                      }}
                     />
                   )}
                 </div>
@@ -497,7 +557,8 @@ export function BinderView(props: BinderViewProps) {
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="text-sm text-muted-foreground self-center">
-            {pagination.currentPage + 1} / {pagination.getMaxPageGroup(totalPages) + 1}
+            {pagination.currentPage + 1} /{" "}
+            {pagination.getMaxPageGroup(totalPages) + 1}
           </span>
           <Button
             variant="outline"
@@ -512,11 +573,7 @@ export function BinderView(props: BinderViewProps) {
         {/* Add Page Button - only in edit mode */}
         {isEditMode && !hasEmptySlots && (
           <div className="flex justify-center mt-4">
-            <Button
-              variant="outline"
-              onClick={handleAddPage}
-              className="gap-2"
-            >
+            <Button variant="outline" onClick={handleAddPage} className="gap-2">
               <Plus className="h-4 w-4" />
               Add Page
             </Button>

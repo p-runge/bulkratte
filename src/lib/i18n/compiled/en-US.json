@@ -1,4 +1,40 @@
 {
+  "binder.info.created.at": [
+    {
+      "type": 0,
+      "value": "Created:"
+    }
+  ],
+  "binder.info.progress.obtained": [
+    {
+      "type": 0,
+      "value": "Obtained (inc. not placed)"
+    }
+  ],
+  "binder.info.progress.placed": [
+    {
+      "type": 0,
+      "value": "Placed in Binder"
+    }
+  ],
+  "binder.info.progress.title": [
+    {
+      "type": 0,
+      "value": "Collection Progress"
+    }
+  ],
+  "binder.info.title": [
+    {
+      "type": 0,
+      "value": "Set Information"
+    }
+  ],
+  "binder.info.total.cards": [
+    {
+      "type": 0,
+      "value": "Total Cards:"
+    }
+  ],
   "binder.page.number": [
     {
       "type": 0,

@@ -64,6 +64,7 @@ export const userSetRouter = createTRPCRouter({
           name: userSetsTable.name,
           image: userSetsTable.image,
           userId: userSetsTable.user_id,
+          createdAt: userSetsTable.created_at,
         })
         .from(userSetsTable)
         .where(eq(userSetsTable.id, input.id))
