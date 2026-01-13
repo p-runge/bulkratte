@@ -156,7 +156,7 @@ async function fetchPokemonSets(): Promise<PokemonSet[]> {
           total: set.cardCount.official,
           totalWithSecretRares: set.cardCount.total,
           variants: getVariants(set.id),
-        } satisfies PokemonSet)
+        }) satisfies PokemonSet,
     );
   });
 }
@@ -182,7 +182,7 @@ async function fetchPokemonCards(setId: string): Promise<PokemonCard[]> {
 
 // Language-specific fetch functions for localization
 async function fetchPokemonSetsForLanguage(
-  languageCode: SupportedLanguages
+  languageCode: SupportedLanguages,
 ): Promise<PokemonSet[]> {
   const langTcgdex = new TCGdex(languageCode);
   return langTcgdex.set.list().then(async (sets) => {
@@ -201,21 +201,21 @@ async function fetchPokemonSetsForLanguage(
           total: set.cardCount.official,
           totalWithSecretRares: set.cardCount.total,
           variants: getVariants(set.id),
-        } satisfies PokemonSet)
+        }) satisfies PokemonSet,
     );
   });
 }
 
 async function fetchPokemonCardsForLanguage(
   setId: string,
-  languageCode: SupportedLanguages
+  languageCode: SupportedLanguages,
 ): Promise<PokemonCard[]> {
   const langTcgdex = new TCGdex(languageCode);
   const set = await langTcgdex.set.get(setId);
   if (!set) return [];
 
   const testImage = await fetch(
-    pokemonAPI.getImageUrl(languageCode, set.serie.id, setId, "1", "small")
+    pokemonAPI.getImageUrl(languageCode, set.serie.id, setId, "1", "small"),
   );
 
   const fullCards = await Promise.all(set.cards.map((card) => card.getCard()));
@@ -233,14 +233,14 @@ async function fetchPokemonCardsForLanguage(
             set.serie.id,
             setId,
             card.localId,
-            "small"
+            "small",
           ),
           large: getImageUrl(
             languageCode,
             set.serie.id,
             setId,
             card.localId,
-            "large"
+            "large",
           ),
         }
       : undefined,
@@ -252,7 +252,7 @@ function getImageUrl(
   seriesId: string,
   setId: string,
   cardNumber: string,
-  size: "small" | "large"
+  size: "small" | "large",
 ): string {
   const sizePath = size === "small" ? "low" : "high";
   return `https://assets.tcgdex.net/${languageCode}/${seriesId}/${setId}/${cardNumber}/${sizePath}.webp`;

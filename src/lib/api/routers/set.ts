@@ -12,8 +12,8 @@ export const setRouter = createTRPCRouter({
       .where(
         not(
           // Only include physical TCG sets
-          eq(setsTable.series, "Pokémon TCG Pocket")
-        )
+          eq(setsTable.series, "Pokémon TCG Pocket"),
+        ),
       )
       .orderBy(desc(setsTable.releaseDate));
 

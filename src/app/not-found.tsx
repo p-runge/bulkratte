@@ -31,7 +31,8 @@ export default async function NotFound() {
           <p className="text-base lg:text-lg text-muted-foreground max-w-md">
             {intl.formatMessage({
               id: "page.not_found.description",
-              defaultMessage: "Oops! This page still seems to be missing from your collection.",
+              defaultMessage:
+                "Oops! This page still seems to be missing from your collection.",
             })}
           </p>
 

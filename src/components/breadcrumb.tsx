@@ -3,7 +3,7 @@ type Props = {
     // list of parent items with href
     ...{ label: string; href: string }[],
     // last item without href, just label
-    { label: string }
+    { label: string },
   ];
 };
 export default function Breadcrumb({ items }: Props) {

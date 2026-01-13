@@ -1,21 +1,22 @@
-import { DevTool } from '@hookform/devtools'
-import { zodResolver } from '@hookform/resolvers/zod'
-import React, { useCallback, useEffect } from 'react'
-import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-form'
-import { useIntl } from 'react-intl'
-import type z from 'zod'
+import { DevTool } from "@hookform/devtools";
+import { zodResolver } from "@hookform/resolvers/zod";
+import React, { useCallback, useEffect } from "react";
 import {
-  Field,
-  FieldDescription,
-  FieldLabel,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+  Controller,
+  FormProvider,
+  useForm,
+  useFormContext,
+} from "react-hook-form";
+import { useIntl } from "react-intl";
+import type z from "zod";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
+} from "@/components/ui/tooltip";
 
 import type {
   FieldValues,
@@ -23,8 +24,8 @@ import type {
   SubmitHandler,
   UseFormProps,
   UseFormReturn,
-} from 'react-hook-form'
-import { cn } from '../utils'
+} from "react-hook-form";
+import { cn } from "../utils";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useRHFForm<T extends z.ZodObject<any>>(
@@ -37,13 +38,13 @@ export function useRHFForm<T extends z.ZodObject<any>>(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(schema as any),
     ...options,
-  })
+  });
 }
 
 type Props<T extends FieldValues> = {
   form: UseFormReturn<T>;
   onSubmit: SubmitHandler<T>;
-} & Omit<React.FormHTMLAttributes<HTMLFormElement>, 'onSubmit'>;
+} & Omit<React.FormHTMLAttributes<HTMLFormElement>, "onSubmit">;
 
 export function RHFForm<T extends FieldValues>({
   form,
@@ -58,32 +59,32 @@ export function RHFForm<T extends FieldValues>({
        * Preventing the default behavior in the "beforeunload" event triggers a native
        * browser prompt asking the user to confirm if they want to leave the page.
        */
-      event.preventDefault()
+      event.preventDefault();
     }
   }
 
   useEffect(() => {
-    window.addEventListener('beforeunload', onBeforeUnload)
+    window.addEventListener("beforeunload", onBeforeUnload);
 
     return () => {
-      window.removeEventListener('beforeunload', onBeforeUnload)
-    }
+      window.removeEventListener("beforeunload", onBeforeUnload);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, []);
 
   return (
     <>
       <form onSubmit={form.handleSubmit(onSubmit)} {...props}>
         <fieldset
           disabled={form.formState.isSubmitting}
-          className={cn('w-full border-none p-0 m-0', className)}
+          className={cn("w-full border-none p-0 m-0", className)}
         >
           <FormProvider {...form}>{children}</FormProvider>
         </fieldset>
       </form>
       <DevTool control={form.control} />
     </>
-  )
+  );
 }
 
 /**
@@ -99,32 +100,36 @@ export function useFormCloseHandler<T extends FieldValues>(
   form: UseFormReturn<T>,
   onClose: () => void,
 ) {
-  const intl = useIntl()
+  const intl = useIntl();
 
   return useCallback(() => {
     if (form.formState.isDirty) {
       const confirmed = window.confirm(
         intl.formatMessage({
-          id: 'form.validation.unsaved_changes',
+          id: "form.validation.unsaved_changes",
           defaultMessage:
-            'You have unsaved changes. Are you sure you want to close?',
+            "You have unsaved changes. Are you sure you want to close?",
         }),
-      )
+      );
       if (!confirmed) {
-        return
+        return;
       }
     }
-    onClose()
-  }, [form.formState.isDirty, intl, onClose])
+    onClose();
+  }, [form.formState.isDirty, intl, onClose]);
 }
 
 type FormFieldProps<T extends FieldValues> = {
-  name: Path<T>
+  name: Path<T>;
   label?: string;
   description?: React.ReactNode;
-}
+};
 
-export function FormField<T extends FieldValues>({ name, label, description }: FormFieldProps<T>) {
+export function FormField<T extends FieldValues>({
+  name,
+  label,
+  description,
+}: FormFieldProps<T>) {
   const form = useFormContext();
   return (
     <Controller
@@ -134,20 +139,24 @@ export function FormField<T extends FieldValues>({ name, label, description }: F
         <Field data-invalid={fieldState.invalid}>
           {label && <FieldLabel htmlFor={field.name}>{label}</FieldLabel>}
           {/* wrap a relative element around the input... */}
-          <div className='relative'>
-            <Input {...field} id={field.name} aria-invalid={fieldState.invalid} />
+          <div className="relative">
+            <Input
+              {...field}
+              id={field.name}
+              aria-invalid={fieldState.invalid}
+            />
             <TooltipProvider>
               <Tooltip open={fieldState.invalid}>
                 <TooltipTrigger asChild>
                   {/* ... so that the tooltip can be positioned at a placeholder anchor div */}
-                  <div className='absolute bottom-0 left-4' />
+                  <div className="absolute bottom-0 left-4" />
                 </TooltipTrigger>
                 {fieldState.invalid && (
                   <TooltipContent
                     side="bottom"
                     align="start"
                     className="bg-destructive text-destructive-foreground -ml-2"
-                    arrowClassName='bg-destructive fill-destructive'
+                    arrowClassName="bg-destructive fill-destructive"
                   >
                     {fieldState.error?.message}
                   </TooltipContent>
@@ -159,5 +168,5 @@ export function FormField<T extends FieldValues>({ name, label, description }: F
         </Field>
       )}
     />
-  )
+  );
 }

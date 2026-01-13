@@ -39,7 +39,10 @@ export function EditSetContent({ userSet }: EditSetContentProps) {
   // Build initial cards array with userSetCardIds and cardIds
   const initialCards = (() => {
     const maxOrder = Math.max(...userSet.cards.map((c) => c.order ?? 0), 0);
-    const orderedCards: Array<{ userSetCardId: string | null; cardId: string | null }> = Array(maxOrder + 1)
+    const orderedCards: Array<{
+      userSetCardId: string | null;
+      cardId: string | null;
+    }> = Array(maxOrder + 1)
       .fill(null)
       .map(() => ({ userSetCardId: null, cardId: null }));
 
@@ -55,7 +58,10 @@ export function EditSetContent({ userSet }: EditSetContentProps) {
     return orderedCards;
   })();
 
-  const [cards, setCards] = useState<Array<{ userSetCardId: string | null; cardId: string | null }>>(initialCards);
+  const [cards, setCards] =
+    useState<Array<{ userSetCardId: string | null; cardId: string | null }>>(
+      initialCards,
+    );
 
   // Build initial cardDataMap from existing cards
   const initialCardDataMap = new Map<string, MinimalCardData>();
@@ -69,15 +75,17 @@ export function EditSetContent({ userSet }: EditSetContentProps) {
     }
   });
 
-  const [cardDataMap, setCardDataMap] = useState<Map<string, MinimalCardData>>(initialCardDataMap);
+  const [cardDataMap, setCardDataMap] =
+    useState<Map<string, MinimalCardData>>(initialCardDataMap);
   const [cardIdsToFetch, setCardIdsToFetch] = useState<string[]>([]);
   const [isDirty, setIsDirty] = useState(false);
 
   const apiUtils = api.useUtils();
-  const { mutateAsync: updateUserSet, isPending } = api.userSet.update.useMutation();
+  const { mutateAsync: updateUserSet, isPending } =
+    api.userSet.update.useMutation();
   const { data: fetchedCards } = api.card.getByIds.useQuery(
     { cardIds: cardIdsToFetch },
-    { enabled: cardIdsToFetch.length > 0 }
+    { enabled: cardIdsToFetch.length > 0 },
   );
 
   // When new cards are fetched, add them to cardDataMap
@@ -100,7 +108,9 @@ export function EditSetContent({ userSet }: EditSetContentProps) {
     setCardIdsToFetch([]);
   }, [fetchedCards]);
 
-  const handleCardsChange = (newCards: Array<{ userSetCardId: string | null; cardId: string | null }>) => {
+  const handleCardsChange = (
+    newCards: Array<{ userSetCardId: string | null; cardId: string | null }>,
+  ) => {
     // Find card IDs that we don't have in our map yet
     const missingCardIds = newCards
       .map((slot) => slot.cardId)
@@ -157,29 +167,47 @@ export function EditSetContent({ userSet }: EditSetContentProps) {
           />
         </div>
 
-        <div className="flex items-end gap-4">\n          <div className="flex-1 space-y-2">\n            <Label htmlFor="name">\n              <FormattedMessage id="form.field.set_name.label" defaultMessage="Set Name" />\n            </Label>
-          <Input
-            id="name"
-            value={name}
-            onChange={handleNameChange}
-            placeholder={intl.formatMessage({
-              id: "form.field.set_name.placeholder",
-              defaultMessage: "Enter set name",
-            })}
-          />
-        </div>
+        <div className="flex items-end gap-4">
+          \n{" "}
+          <div className="flex-1 space-y-2">
+            \n{" "}
+            <Label htmlFor="name">
+              \n{" "}
+              <FormattedMessage
+                id="form.field.set_name.label"
+                defaultMessage="Set Name"
+              />
+              \n{" "}
+            </Label>
+            <Input
+              id="name"
+              value={name}
+              onChange={handleNameChange}
+              placeholder={intl.formatMessage({
+                id: "form.field.set_name.placeholder",
+                defaultMessage: "Enter set name",
+              })}
+            />
+          </div>
           <div className="text-sm text-muted-foreground">
             {intl.formatMessage(
               {
                 id: "page.set.form.cards_selected",
                 defaultMessage: "{count} cards selected",
               },
-              { count: cards.filter(c => c.cardId !== null).length }
+              { count: cards.filter((c) => c.cardId !== null).length },
             )}
           </div>
-          <Button onClick={handleSave} disabled={!isDirty || isPending} size="lg">
+          <Button
+            onClick={handleSave}
+            disabled={!isDirty || isPending}
+            size="lg"
+          >
             <Save className="h-5 w-5 mr-2" />
-            <FormattedMessage id="page.set.action.save" defaultMessage="Save Changes" />
+            <FormattedMessage
+              id="page.set.action.save"
+              defaultMessage="Save Changes"
+            />
           </Button>
         </div>
       </div>

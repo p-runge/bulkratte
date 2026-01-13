@@ -10,11 +10,10 @@ interface ProgressSegment {
   className?: string;
 }
 
-interface ProgressProps
-  extends Omit<
-    React.ComponentPropsWithoutRef<typeof ProgressPrimitive.Root>,
-    "value"
-  > {
+interface ProgressProps extends Omit<
+  React.ComponentPropsWithoutRef<typeof ProgressPrimitive.Root>,
+  "value"
+> {
   value?: number;
   segments?: ProgressSegment[];
 }
@@ -31,7 +30,7 @@ const Progress = React.forwardRef<
       ref={ref}
       className={cn(
         "relative h-2 w-full overflow-hidden rounded-full bg-primary/20",
-        className
+        className,
       )}
       {...props}
     >
@@ -43,7 +42,7 @@ const Progress = React.forwardRef<
               key={index}
               className={cn(
                 "absolute top-0 left-0 h-full transition-all",
-                segment.className || "bg-primary"
+                segment.className || "bg-primary",
               )}
               style={{ width: `${segment.value || 0}%` }}
             />

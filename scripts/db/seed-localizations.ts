@@ -37,13 +37,13 @@ async function seedLocalizationsForLanguage(locale: Locale) {
 
       setCount++;
       console.log(
-        `  ✓ Set ${setCount}/${sets.length}: ${set.name} (${set.series})`
+        `  ✓ Set ${setCount}/${sets.length}: ${set.name} (${set.series})`,
       );
 
       // Fetch and localize cards for this set using pokemonAPI
       const cards = await pokemonAPI.fetchPokemonCardsForLanguage(
         set.id,
-        languageCode
+        languageCode,
       );
       console.log(`  Fetched ${cards.length} cards from the API.`);
 
@@ -54,7 +54,7 @@ async function seedLocalizationsForLanguage(locale: Locale) {
         const testCard = cards[0];
         if (rawSet && testCard) {
           await fetch(
-            `https://assets.tcgdex.net/${languageCode}/${rawSet.serie.id}${testCard.set.id}/${testCard.number}/low.webp`
+            `https://assets.tcgdex.net/${languageCode}/${rawSet.serie.id}${testCard.set.id}/${testCard.number}/low.webp`,
           ).then((res) => {
             if (!res.ok) throw new Error("Image not found");
           });
@@ -62,7 +62,7 @@ async function seedLocalizationsForLanguage(locale: Locale) {
         }
       } catch (error) {
         console.warn(
-          `    ⚠️  Could not find localized images for cards in set ${set.id} (${set.name})`
+          `    ⚠️  Could not find localized images for cards in set ${set.id} (${set.name})`,
         );
         imagesAreLocalized = false;
       }
@@ -77,14 +77,14 @@ async function seedLocalizationsForLanguage(locale: Locale) {
             "image_small",
             card.id,
             locale,
-            `https://assets.tcgdex.net/${languageCode}/${rawSet.serie.id}/${set.id}/${card.number}/low.webp`
+            `https://assets.tcgdex.net/${languageCode}/${rawSet.serie.id}/${set.id}/${card.number}/low.webp`,
           );
           await upsertLocalization(
             "cards",
             "image_large",
             card.id,
             locale,
-            `https://assets.tcgdex.net/${languageCode}/${rawSet.serie.id}/${set.id}/${card.number}/high.webp`
+            `https://assets.tcgdex.net/${languageCode}/${rawSet.serie.id}/${set.id}/${card.number}/high.webp`,
           );
           cardCount++;
         }
@@ -93,7 +93,7 @@ async function seedLocalizationsForLanguage(locale: Locale) {
     }
 
     console.log(
-      `✅ Completed ${locale}: ${setCount} sets, ${cardCount} cards localized`
+      `✅ Completed ${locale}: ${setCount} sets, ${cardCount} cards localized`,
     );
   } catch (error) {
     console.error(`❌ Error seeding localizations for ${locale}:`, error);
@@ -106,7 +106,7 @@ async function seedAllLocalizations() {
   const targetLocales = LOCALES.filter((locale) => locale !== DEFAULT_LOCALE);
 
   console.log(
-    `🌍 Starting localization seeding for ${targetLocales.length} languages`
+    `🌍 Starting localization seeding for ${targetLocales.length} languages`,
   );
   console.log(`   Languages: ${targetLocales.join(", ")}`);
   console.log(`   Skipping default language: ${DEFAULT_LOCALE}\n`);
@@ -139,7 +139,7 @@ async function run() {
         (answer) => {
           rl.close();
           resolve(answer);
-        }
+        },
       );
     });
 
@@ -150,7 +150,7 @@ async function run() {
   }
 
   console.log(
-    "Starting to seed database with localizations from external API..."
+    "Starting to seed database with localizations from external API...",
   );
 
   await seedAllLocalizations();

@@ -44,7 +44,7 @@ export default function Content({ sets }: Props) {
     seriesList.map((series) => [
       series,
       filteredSets.filter((s) => s.series === series),
-    ])
+    ]),
   ) as Record<string, PokemonSet[]>;
 
   return (
@@ -95,7 +95,7 @@ export default function Content({ sets }: Props) {
                       id: "set.series.logo.alt",
                       defaultMessage: "{series} logo",
                     },
-                    { series }
+                    { series },
                   )}
                   width={64}
                   height={64}
@@ -109,9 +109,8 @@ export default function Content({ sets }: Props) {
               {/* year range */}
               <span className="text-muted-foreground ml-2">
                 {`(${new Date(seriesSets[seriesSets.length - 1]!.releaseDate).getFullYear()} - ${new Date(
-                  seriesSets[0]!.releaseDate
-                ).getFullYear()
-                  })`}
+                  seriesSets[0]!.releaseDate,
+                ).getFullYear()})`}
               </span>
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -122,19 +121,19 @@ export default function Content({ sets }: Props) {
                   set.total != null
                     ? extras > 0
                       ? intl.formatMessage(
-                        {
-                          id: "set.cards.count_with_extras",
-                          defaultMessage: "{total} (+{extras}) cards",
-                        },
-                        { total: set.total, extras }
-                      )
+                          {
+                            id: "set.cards.count_with_extras",
+                            defaultMessage: "{total} (+{extras}) cards",
+                          },
+                          { total: set.total, extras },
+                        )
                       : intl.formatMessage(
-                        {
-                          id: "set.cards.count",
-                          defaultMessage: "{total} cards",
-                        },
-                        { total: set.total }
-                      )
+                          {
+                            id: "set.cards.count",
+                            defaultMessage: "{total} cards",
+                          },
+                          { total: set.total },
+                        )
                     : "";
 
                 return (
@@ -152,7 +151,7 @@ export default function Content({ sets }: Props) {
                                       id: "set.logo.alt",
                                       defaultMessage: "{setName} logo",
                                     },
-                                    { setName: set.name }
+                                    { setName: set.name },
                                   )}
                                   width={48}
                                   height={48}
@@ -164,13 +163,11 @@ export default function Content({ sets }: Props) {
                             </CardTitle>
                             <CardDescription className="mt-1 flex items-center">
                               <Calendar className="w-4 h-4 mr-1" />
-                              {
-                                intl.formatDate(new Date(set.releaseDate), {
-                                  year: "numeric",
-                                  month: "long",
-                                  day: "numeric",
-                                })
-                              }
+                              {intl.formatDate(new Date(set.releaseDate), {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              })}
                             </CardDescription>
                           </div>
                         </div>
@@ -186,7 +183,7 @@ export default function Content({ sets }: Props) {
                                     id: "set.symbol.alt",
                                     defaultMessage: "{setName} symbol",
                                   },
-                                  { setName: set.name }
+                                  { setName: set.name },
                                 )}
                                 width={24}
                                 height={24}

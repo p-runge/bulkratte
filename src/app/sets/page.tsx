@@ -11,7 +11,5 @@ export default async function SetsPage() {
     setsBySeries[set.series]!.push(set);
   });
 
-  return (
-    <Content sets={sets} />
-  );
+  return <Content sets={sets} />;
 }

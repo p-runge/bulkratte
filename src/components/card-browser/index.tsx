@@ -34,13 +34,13 @@ export function CardBrowser(props: CardBrowserProps) {
     sortOrder: "asc",
   });
 
-  const {
-    data: cardListData,
-    isLoading,
-  } = api.card.getList.useQuery({
-    setId: props.setId || (filters.setId && filters.setId !== "all" ? filters.setId : undefined),
+  const { data: cardListData, isLoading } = api.card.getList.useQuery({
+    setId:
+      props.setId ||
+      (filters.setId && filters.setId !== "all" ? filters.setId : undefined),
     search: filters.search || undefined,
-    rarity: filters.rarity && filters.rarity !== "all" ? filters.rarity : undefined,
+    rarity:
+      filters.rarity && filters.rarity !== "all" ? filters.rarity : undefined,
     releaseDateFrom: filters.releaseDateFrom || undefined,
     releaseDateTo: filters.releaseDateTo || undefined,
     sortBy: filters.sortBy as "number" | "name" | "rarity" | "price",
@@ -48,17 +48,18 @@ export function CardBrowser(props: CardBrowserProps) {
   });
 
   // Map cards to include gridId
-  const cards = (cardListData?.map((card) => ({
-    ...card,
-    gridId: card.id,
-  })) ?? []);
+  const cards =
+    cardListData?.map((card) => ({
+      ...card,
+      gridId: card.id,
+    })) ?? [];
 
   const handleSelectAll = (selectAll: boolean) => {
     if (props.selectionMode !== "multi" || !props.onSelectAll) return;
 
     if (selectAll) {
       // Select all cards
-      props.onSelectAll(cards.map(card => card.id));
+      props.onSelectAll(cards.map((card) => card.id));
     } else {
       // Deselect all cards
       props.onSelectAll([]);
@@ -67,14 +68,21 @@ export function CardBrowser(props: CardBrowserProps) {
 
   return (
     <div className="space-y-6">
-      <CardFilters onFilterChange={setFilters} disableSetFilter={!!props.setId} />
+      <CardFilters
+        onFilterChange={setFilters}
+        disableSetFilter={!!props.setId}
+      />
 
       <CardGrid
         cards={cards}
         selectionMode={props.selectionMode}
-        selectedCards={props.selectionMode === "multi" ? props.selectedCards : new Set()}
+        selectedCards={
+          props.selectionMode === "multi" ? props.selectedCards : new Set()
+        }
         onCardClick={props.onCardClick}
-        onSelectAll={props.selectionMode === "multi" ? handleSelectAll : undefined}
+        onSelectAll={
+          props.selectionMode === "multi" ? handleSelectAll : undefined
+        }
         isLoading={isLoading}
         maxHeight={props.maxHeightGrid}
       />

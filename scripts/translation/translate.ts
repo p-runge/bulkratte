@@ -5,13 +5,13 @@ import { DEFAULT_LOCALE, LOCALES } from "@/lib/i18n";
 async function run() {
   const data = await fs.readFile(
     `src/lib/i18n/extracted/${DEFAULT_LOCALE}.json`,
-    "utf-8"
+    "utf-8",
   );
   const messages = JSON.parse(data) as Record<string, string>;
   console.log("Translating", Object.keys(messages).length, "messages");
 
   const targetLocales = Object.values(LOCALES).filter(
-    (locale) => locale !== DEFAULT_LOCALE
+    (locale) => locale !== DEFAULT_LOCALE,
   );
   console.log("Target locales:", targetLocales);
 
@@ -27,7 +27,7 @@ async function translate(locale: string, data: string) {
   try {
     const oldFileContent = await fs.readFile(
       `src/lib/i18n/translated/${locale}.json`,
-      "utf-8"
+      "utf-8",
     );
     oldFileJSON = JSON.parse(oldFileContent) as Record<string, string>;
   } catch (e) {
@@ -37,7 +37,7 @@ async function translate(locale: string, data: string) {
 
   // determine keys that are present in source but missing in existing translations
   const keysToTranslate = Object.keys(sourceMessages).filter(
-    (k) => !(k in oldFileJSON)
+    (k) => !(k in oldFileJSON),
   );
 
   if (keysToTranslate.length === 0) {
@@ -49,7 +49,7 @@ async function translate(locale: string, data: string) {
     const path = `src/lib/i18n/translated/${locale}.json`;
     await fs.writeFile(path, JSON.stringify(cleaned, null, 2) + "\n");
     console.log(
-      `No missing keys for ${locale}. Written existing file to ${path}`
+      `No missing keys for ${locale}. Written existing file to ${path}`,
     );
     return;
   }
@@ -61,17 +61,17 @@ async function translate(locale: string, data: string) {
   console.log(
     `Need to translate ${
       Object.keys(partialSource).length
-    } messages to ${locale}`
+    } messages to ${locale}`,
   );
 
   console.log("\n=== TRANSLATION REQUEST ===");
   console.log(`Target Language: ${locale}`);
   console.log(`Keys to translate: ${Object.keys(partialSource).length}`);
   console.log(
-    "\nCopy the prompt below and use GitHub Copilot Chat to translate it:"
+    "\nCopy the prompt below and use GitHub Copilot Chat to translate it:",
   );
   console.log(
-    `\n\`\`\`\nTake a look at the files in src/lib/i18n/translated and check if have all the keys that are also defined in src/lib/i18n/extracted. If there are missing keys, translate them now and update the files accordingly. Make sure to keep the same keys and their order as in the extracted file. Make sure the translations match the tone and context of the application, which is a tool for managing trading card collections.\n\`\`\``
+    `\n\`\`\`\nTake a look at the files in src/lib/i18n/translated and check if have all the keys that are also defined in src/lib/i18n/extracted. If there are missing keys, translate them now and update the files accordingly. Make sure to keep the same keys and their order as in the extracted file. Make sure the translations match the tone and context of the application, which is a tool for managing trading card collections.\n\`\`\``,
   );
   console.log("\n=== END OF REQUEST ===\n");
 

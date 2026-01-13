@@ -108,14 +108,14 @@ export const localizationsTable = pgTable(
       table.table_name,
       table.column_name,
       table.record_id,
-      table.language
+      table.language,
     ),
     // Index for faster lookups by record
     recordLookupIdx: index("record_lookup_idx").on(
       table.table_name,
-      table.record_id
+      table.record_id,
     ),
-  })
+  }),
 );
 
 /**
@@ -160,7 +160,7 @@ export const accountsTable = pgTable(
   (table) => ({
     primaryKey: [table.provider, table.providerAccountId],
     userIdIndex: index("account_user_id_idx").on(table.userId),
-  })
+  }),
 );
 
 // Sessions table
@@ -177,7 +177,7 @@ export const sessionsTable = pgTable(
   },
   (table) => ({
     userIdIndex: index("session_user_id_idx").on(table.userId),
-  })
+  }),
 );
 
 // Verification Tokens table
@@ -190,7 +190,7 @@ export const verificationTokensTable = pgTable(
   },
   (table) => ({
     primaryKey: [table.identifier, table.token],
-  })
+  }),
 );
 
 // ...existing code...
@@ -275,7 +275,7 @@ export const userSetCardsTable = pgTable(
   (table) => ({
     uniqueUserSetOrderIdx: uniqueIndex("unique_user_set_order_idx").on(
       table.user_set_id,
-      table.order
+      table.order,
     ),
-  })
+  }),
 );

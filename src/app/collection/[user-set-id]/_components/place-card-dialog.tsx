@@ -53,7 +53,7 @@ export function PlaceCardDialog({
 }: PlaceCardDialogProps) {
   const intl = useIntl();
   const [mode, setMode] = useState<"select" | "create">(
-    hasUserCard ? "select" : "create"
+    hasUserCard ? "select" : "create",
   );
   const [showCardsFromOtherSets, setShowCardsFromOtherSets] = useState(false);
 
@@ -80,7 +80,7 @@ export function PlaceCardDialog({
     (placedUserCards ?? []).map((pc) => [
       pc.userCardId,
       { userSetId: pc.userSetId, setName: pc.setName },
-    ])
+    ]),
   );
 
   // Filter user cards to only show those matching this cardId and not already placed elsewhere
@@ -88,8 +88,7 @@ export function PlaceCardDialog({
     .filter((uc) => uc.cardId === cardId)
     .map((uc) => {
       const placement = placedCardsMap.get(uc.id);
-      const isPlacedElsewhere =
-        placement && placement.userSetId !== userSetId;
+      const isPlacedElsewhere = placement && placement.userSetId !== userSetId;
       return {
         ...uc,
         isPlacedElsewhere,
@@ -154,13 +153,13 @@ export function PlaceCardDialog({
           <DialogTitle>
             {isPlaced
               ? intl.formatMessage({
-                id: "dialog.place_card.title.change",
-                defaultMessage: "Change Placed Card",
-              })
+                  id: "dialog.place_card.title.change",
+                  defaultMessage: "Change Placed Card",
+                })
               : intl.formatMessage({
-                id: "dialog.place_card.title.place",
-                defaultMessage: "Place Card in Binder",
-              })}
+                  id: "dialog.place_card.title.place",
+                  defaultMessage: "Place Card in Binder",
+                })}
           </DialogTitle>
         </DialogHeader>
 
@@ -213,9 +212,12 @@ export function PlaceCardDialog({
                   className="w-16 h-auto object-contain rounded"
                 />
                 <div>
-                  <div className="font-medium">{currentlyPlacedCard.card.name}</div>
+                  <div className="font-medium">
+                    {currentlyPlacedCard.card.name}
+                  </div>
                   <div className="text-sm text-muted-foreground">
-                    {currentlyPlacedCard.language} · {currentlyPlacedCard.variant} ·{" "}
+                    {currentlyPlacedCard.language} ·{" "}
+                    {currentlyPlacedCard.variant} ·{" "}
                     {currentlyPlacedCard.condition}
                   </div>
                 </div>
@@ -257,7 +259,7 @@ export function PlaceCardDialog({
                     .filter(
                       (uc) =>
                         uc.id !== currentUserCardId &&
-                        (!uc.isPlacedElsewhere || showCardsFromOtherSets)
+                        (!uc.isPlacedElsewhere || showCardsFromOtherSets),
                     )
                     .map((userCard) => {
                       const isCurrentlyPlaced =
@@ -277,7 +279,7 @@ export function PlaceCardDialog({
                               ? "bg-primary/10 border-primary cursor-not-allowed"
                               : userCard.isPlacedElsewhere
                                 ? "opacity-50 cursor-not-allowed bg-muted"
-                                : "hover:bg-accent disabled:opacity-50"
+                                : "hover:bg-accent disabled:opacity-50",
                           )}
                         >
                           <div className="flex items-center gap-3">
@@ -310,7 +312,7 @@ export function PlaceCardDialog({
                                       {
                                         setName:
                                           userCard.placementInfo?.setName,
-                                      }
+                                      },
                                     )}
                                   </span>
                                 )}
@@ -339,13 +341,13 @@ export function PlaceCardDialog({
                   >
                     {showCardsFromOtherSets
                       ? intl.formatMessage({
-                        id: "dialog.place_card.filter.hide_other_sets",
-                        defaultMessage: "Hide cards from other sets",
-                      })
+                          id: "dialog.place_card.filter.hide_other_sets",
+                          defaultMessage: "Hide cards from other sets",
+                        })
                       : intl.formatMessage({
-                        id: "dialog.place_card.filter.show_other_sets",
-                        defaultMessage: "Show cards from other sets",
-                      })}
+                          id: "dialog.place_card.filter.show_other_sets",
+                          defaultMessage: "Show cards from other sets",
+                        })}
                   </Button>
                 </div>
               )}
@@ -426,13 +428,13 @@ export function PlaceCardDialog({
                 <Button type="submit" disabled={isCreating}>
                   {isCreating
                     ? intl.formatMessage({
-                      id: "common.button.saving",
-                      defaultMessage: "Saving...",
-                    })
+                        id: "common.button.saving",
+                        defaultMessage: "Saving...",
+                      })
                     : intl.formatMessage({
-                      id: "dialog.place_card.action.add_and_place",
-                      defaultMessage: "Add New Card to Collection & Place It",
-                    })}
+                        id: "dialog.place_card.action.add_and_place",
+                        defaultMessage: "Add New Card to Collection & Place It",
+                      })}
                 </Button>
               </DialogFooter>
             </RHFForm>

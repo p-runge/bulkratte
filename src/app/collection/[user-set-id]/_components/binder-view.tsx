@@ -35,7 +35,7 @@ interface ViewModeProps {
     cardId: string,
     hasUserCard: boolean,
     isPlaced: boolean,
-    currentUserCardId: string | null
+    currentUserCardId: string | null,
   ) => void;
 }
 
@@ -45,7 +45,7 @@ interface EditModeProps {
   cards: Array<{ userSetCardId: string | null; cardId: string | null }>;
   cardDataMap: Map<string, MinimalCardData>;
   onCardsChange: (
-    cards: Array<{ userSetCardId: string | null; cardId: string | null }>
+    cards: Array<{ userSetCardId: string | null; cardId: string | null }>,
   ) => void;
 }
 
@@ -60,7 +60,7 @@ interface ViewSlotProps {
     cardId: string,
     hasUserCard: boolean,
     isPlaced: boolean,
-    currentUserCardId: string | null
+    currentUserCardId: string | null,
   ) => void;
 }
 
@@ -83,14 +83,14 @@ function ViewSlot({ cardData, userCardsByCardId, onCardClick }: ViewSlotProps) {
       className={cn(
         "cursor-pointer aspect-245/337 rounded relative overflow-hidden",
         "transition-all hover:scale-105",
-        hasUserCard && !isPlaced && "border-4 border-yellow-500"
+        hasUserCard && !isPlaced && "border-4 border-yellow-500",
       )}
     >
       <div
         className={cn(
           "focus:outline-none focus:ring-4 focus:ring-ring focus:ring-offset-2",
           !isPlaced && "opacity-40 grayscale",
-          hasUserCard && !isPlaced && "-m-1"
+          hasUserCard && !isPlaced && "-m-1",
         )}
       >
         <Image
@@ -133,7 +133,7 @@ function EditSlot({
       <div
         className={cn(
           "aspect-[2.5/3.5] bg-muted/30 rounded border-2 border-dashed border-muted-foreground/20",
-          "flex items-center justify-center group hover:border-primary/50 transition-colors"
+          "flex items-center justify-center group hover:border-primary/50 transition-colors",
         )}
         onDragOver={onDragOver}
         onDrop={onDrop}
@@ -158,7 +158,7 @@ function EditSlot({
       onDrop={onDrop}
       className={cn(
         "aspect-[2.5/3.5] rounded relative group cursor-move",
-        isDragging && "opacity-50"
+        isDragging && "opacity-50",
       )}
     >
       <Image
@@ -198,17 +198,20 @@ export function BinderView(props: BinderViewProps) {
     orderedCards = paddedCards;
   } else {
     // View mode: Build ordered array from userSet
-    userCardsByCardId = props.userCards.reduce((acc, userCard) => {
-      if (!acc[userCard.cardId]) {
-        acc[userCard.cardId] = [];
-      }
-      acc[userCard.cardId]!.push(userCard);
-      return acc;
-    }, {} as Record<string, UserCard[]>);
+    userCardsByCardId = props.userCards.reduce(
+      (acc, userCard) => {
+        if (!acc[userCard.cardId]) {
+          acc[userCard.cardId] = [];
+        }
+        acc[userCard.cardId]!.push(userCard);
+        return acc;
+      },
+      {} as Record<string, UserCard[]>,
+    );
 
     const maxOrder = Math.max(
       ...props.userSet.cards.map((c) => c.order ?? 0),
-      0
+      0,
     );
     const tempOrderedCards: ((typeof props.userSet.cards)[number] | null)[] =
       Array(maxOrder + 1).fill(null);
@@ -247,14 +250,14 @@ export function BinderView(props: BinderViewProps) {
   const minSlots = CARDS_PER_PAGE * PAGES_VISIBLE;
   while (orderedCards.length < minSlots) {
     orderedCards.push(
-      isEditMode ? { userSetCardId: null, cardId: null } : null
+      isEditMode ? { userSetCardId: null, cardId: null } : null,
     );
   }
 
   // Build pages
   const pages = buildPagesArray(
     orderedCards,
-    isEditMode ? { userSetCardId: null, cardId: null } : null
+    isEditMode ? { userSetCardId: null, cardId: null } : null,
   );
   const totalPages = getTotalPages(pages);
   const totalContentPages = Math.ceil(orderedCards.length / CARDS_PER_PAGE);
@@ -446,7 +449,7 @@ export function BinderView(props: BinderViewProps) {
             const actualPageNumber = startPageIndex + pageIndex + 1;
             const isCurrentCoverPage = isCoverPage(
               actualPageNumber,
-              totalPages
+              totalPages,
             );
 
             return (
@@ -468,7 +471,7 @@ export function BinderView(props: BinderViewProps) {
                         className="h-8 w-8 rounded-full shadow-md"
                         title="Delete Page"
                         description={`Are you sure you want to delete page ${getDisplayPageNumber(
-                          actualPageNumber
+                          actualPageNumber,
                         )}? All cards on this page will be removed.`}
                         destructive
                         onClick={() => handleDeletePage(actualPageNumber)}
@@ -488,7 +491,7 @@ export function BinderView(props: BinderViewProps) {
 
                       if (isEditMode) {
                         const cardData = card?.cardId
-                          ? props.cardDataMap.get(card.cardId) ?? null
+                          ? (props.cardDataMap.get(card.cardId) ?? null)
                           : null;
                         return (
                           <EditSlot

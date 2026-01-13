@@ -11,8 +11,10 @@ interface UserSetContentProps {
 }
 
 export function UserSetContent({ userSetId }: UserSetContentProps) {
-  const { data: userSet, isLoading: isLoadingUserSet } = api.userSet.getById.useQuery({ id: userSetId });
-  const { data: userCards, isLoading: isLoadingUserCards } = api.userCard.getList.useQuery();
+  const { data: userSet, isLoading: isLoadingUserSet } =
+    api.userSet.getById.useQuery({ id: userSetId });
+  const { data: userCards, isLoading: isLoadingUserCards } =
+    api.userCard.getList.useQuery();
 
   const [dialogState, setDialogState] = useState<{
     open: boolean;
@@ -28,7 +30,7 @@ export function UserSetContent({ userSetId }: UserSetContentProps) {
     cardId: string,
     hasUserCard: boolean,
     isPlaced: boolean,
-    currentUserCardId: string | null
+    currentUserCardId: string | null,
   ) => {
     setDialogState({
       open: true,

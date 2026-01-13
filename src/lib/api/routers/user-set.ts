@@ -16,10 +16,10 @@ export const userSetRouter = createTRPCRouter({
           z.object({
             userSetCardId: z.string().uuid().nullable(),
             cardId: z.string().nullable(),
-          })
+          }),
         ),
         image: z.string().optional(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const userSet = await ctx.db
@@ -37,10 +37,10 @@ export const userSetRouter = createTRPCRouter({
       // Filter out null values and create cards with proper order
       const cardValues = input.cards
         .map((card, index) =>
-          card.cardId ? { cardId: card.cardId, order: index } : null
+          card.cardId ? { cardId: card.cardId, order: index } : null,
         )
         .filter(
-          (item): item is { cardId: string; order: number } => item !== null
+          (item): item is { cardId: string; order: number } => item !== null,
         )
         .map(({ cardId, order }) => ({
           user_set_id: userSet.id,
@@ -123,10 +123,10 @@ export const userSetRouter = createTRPCRouter({
           z.object({
             userSetCardId: z.string().uuid().nullable(), // null for new cards
             cardId: z.string().nullable(),
-          })
+          }),
         ),
         image: z.string().optional(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const userSet = await ctx.db
@@ -158,8 +158,8 @@ export const userSetRouter = createTRPCRouter({
         .where(
           and(
             eq(userSetsTable.id, input.id),
-            eq(userSetsTable.user_id, ctx.session.user.id)
-          )
+            eq(userSetsTable.user_id, ctx.session.user.id),
+          ),
         )
         .returning({
           id: userSetsTable.id,
@@ -179,12 +179,12 @@ export const userSetRouter = createTRPCRouter({
       const inputIds = new Set(
         input.cards
           .map((c) => c.userSetCardId)
-          .filter((id): id is string => id !== null)
+          .filter((id): id is string => id !== null),
       );
 
       // Find cards to delete (exist in DB but not in input)
       const idsToDelete = Array.from(existingIds).filter(
-        (id) => !inputIds.has(id)
+        (id) => !inputIds.has(id),
       );
 
       if (idsToDelete.length > 0) {
@@ -193,15 +193,15 @@ export const userSetRouter = createTRPCRouter({
           .where(
             and(
               eq(userSetCardsTable.user_set_id, input.id),
-              inArray(userSetCardsTable.id, idsToDelete)
-            )
+              inArray(userSetCardsTable.id, idsToDelete),
+            ),
           );
       }
 
       // Process each card in the input array
       // First, set all existing cards to negative orders to avoid conflicts
       const existingCardsToUpdate = input.cards.filter(
-        (card) => card.userSetCardId !== null
+        (card) => card.userSetCardId !== null,
       );
 
       for (let i = 0; i < existingCardsToUpdate.length; i++) {
@@ -246,7 +246,7 @@ export const userSetRouter = createTRPCRouter({
       z.object({
         userSetCardId: z.string().uuid(),
         userCardId: z.string().uuid(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       // Verify the user_set_card belongs to a set owned by this user
@@ -287,13 +287,13 @@ export const userSetRouter = createTRPCRouter({
         .from(userSetCardsTable)
         .leftJoin(
           userSetsTable,
-          eq(userSetCardsTable.user_set_id, userSetsTable.id)
+          eq(userSetCardsTable.user_set_id, userSetsTable.id),
         )
         .where(
           and(
             eq(userSetCardsTable.user_card_id, input.userCardId),
-            ne(userSetCardsTable.user_set_id, userSetCard.userSetId)
-          )
+            ne(userSetCardsTable.user_set_id, userSetCard.userSetId),
+          ),
         )
         .limit(1)
         .then((res) => res[0]);
@@ -318,7 +318,7 @@ export const userSetRouter = createTRPCRouter({
     .input(
       z.object({
         userSetCardId: z.string().uuid(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       // Verify the user_set_card belongs to a set owned by this user
@@ -384,13 +384,13 @@ export const userSetRouter = createTRPCRouter({
       .from(userSetCardsTable)
       .leftJoin(
         userSetsTable,
-        eq(userSetCardsTable.user_set_id, userSetsTable.id)
+        eq(userSetCardsTable.user_set_id, userSetsTable.id),
       )
       .where(
         and(
           eq(userSetsTable.user_id, ctx.session.user.id),
-          isNotNull(userSetCardsTable.user_card_id)
-        )
+          isNotNull(userSetCardsTable.user_card_id),
+        ),
       );
 
     return placedCards;
@@ -433,8 +433,8 @@ export const userSetRouter = createTRPCRouter({
         .where(
           and(
             eq(userSetsTable.id, input.id),
-            eq(userSetsTable.user_id, ctx.session.user.id)
-          )
+            eq(userSetsTable.user_id, ctx.session.user.id),
+          ),
         );
 
       return { success: true };

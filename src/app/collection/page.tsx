@@ -1,12 +1,7 @@
-"use client"
+"use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/lib/api/react";
 import { BookHeart, Library, Plus } from "lucide-react";
@@ -31,7 +26,8 @@ export default function CollectionPage() {
     } else {
       searchParams.set("m", tab);
     }
-    const newRelativePathQuery = window.location.pathname + '?' + searchParams.toString();
+    const newRelativePathQuery =
+      window.location.pathname + "?" + searchParams.toString();
     router.replace(newRelativePathQuery);
   }
 
@@ -53,7 +49,11 @@ export default function CollectionPage() {
           </p>
         </div>
       </div>
-      <Tabs defaultValue={defaultTab} className="w-full" onValueChange={(value) => setMQueryParam(value)} >
+      <Tabs
+        defaultValue={defaultTab}
+        className="w-full"
+        onValueChange={(value) => setMQueryParam(value)}
+      >
         <TabsList className="mb-6">
           <TabsTrigger value="collections">
             <span className="inline-flex items-center gap-2">

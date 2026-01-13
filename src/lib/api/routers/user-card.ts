@@ -15,7 +15,7 @@ export const userCardRouter = createTRPCRouter({
         condition: z.enum(conditionEnum.enumValues),
         notes: z.string().optional(),
         photos: z.array(z.string()).optional(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const userCard = await ctx.db
@@ -51,7 +51,7 @@ export const userCardRouter = createTRPCRouter({
             .default("number"),
           sortOrder: z.enum(["asc", "desc"]).optional().default("asc"),
         })
-        .optional()
+        .optional(),
     )
     .query(async ({ ctx, input }) => {
       // Build WHERE conditions
@@ -64,7 +64,7 @@ export const userCardRouter = createTRPCRouter({
       if (input?.search) {
         const searchCondition = or(
           like(cardsTable.name, `%${input.search}%`),
-          like(cardsTable.number, `%${input.search}%`)
+          like(cardsTable.number, `%${input.search}%`),
         );
         if (searchCondition) {
           conditions.push(searchCondition);
@@ -79,7 +79,7 @@ export const userCardRouter = createTRPCRouter({
         const dateConditions = [];
         if (input.releaseDateFrom) {
           dateConditions.push(
-            gte(setsTable.releaseDate, input.releaseDateFrom)
+            gte(setsTable.releaseDate, input.releaseDateFrom),
           );
         }
         if (input.releaseDateTo) {
@@ -115,7 +115,7 @@ export const userCardRouter = createTRPCRouter({
           // For card number, we want to sort numerically
           // Handle empty strings by converting to NULL, then default to 0
           orderByClause = orderDirection(
-            sql`COALESCE(CAST(NULLIF(regexp_replace(${cardsTable.number}, '[^0-9]', '', 'g'), '') AS INTEGER), 0)`
+            sql`COALESCE(CAST(NULLIF(regexp_replace(${cardsTable.number}, '[^0-9]', '', 'g'), '') AS INTEGER), 0)`,
           );
           break;
       }
@@ -177,8 +177,8 @@ export const userCardRouter = createTRPCRouter({
         .where(
           and(
             eq(userCardsTable.id, input.id),
-            eq(userCardsTable.user_id, ctx.session.user.id)
-          )
+            eq(userCardsTable.user_id, ctx.session.user.id),
+          ),
         );
 
       return { success: true };
@@ -192,7 +192,7 @@ export const userCardRouter = createTRPCRouter({
         variant: z.enum(variantEnum.enumValues).optional(),
         condition: z.enum(conditionEnum.enumValues).optional(),
         notes: z.string().optional(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const userCard = await ctx.db
@@ -226,8 +226,8 @@ export const userCardRouter = createTRPCRouter({
         .where(
           and(
             eq(userCardsTable.id, input.id),
-            eq(userCardsTable.user_id, ctx.session.user.id)
-          )
+            eq(userCardsTable.user_id, ctx.session.user.id),
+          ),
         );
 
       return { success: true };

@@ -73,7 +73,7 @@ export async function fetchAndStoreCards(setId: string) {
               rawSet!.serie.id,
               setId,
               card.number,
-              "small"
+              "small",
             ),
           imageLarge:
             card.images?.large ??
@@ -82,7 +82,7 @@ export async function fetchAndStoreCards(setId: string) {
               rawSet!.serie.id,
               setId,
               card.number,
-              "large"
+              "large",
             ),
           setId: card.set.id,
         })
@@ -99,7 +99,7 @@ export async function fetchAndStoreCards(setId: string) {
                 rawSet!.serie.id,
                 setId,
                 card.number,
-                "small"
+                "small",
               ),
             imageLarge:
               card.images?.large ??
@@ -108,7 +108,7 @@ export async function fetchAndStoreCards(setId: string) {
                 rawSet!.serie.id,
                 setId,
                 card.number,
-                "large"
+                "large",
               ),
             setId: card.set.id,
           },
@@ -143,7 +143,7 @@ async function run() {
         (answer) => {
           rl.close();
           resolve(answer);
-        }
+        },
       );
     });
 
@@ -154,7 +154,7 @@ async function run() {
   }
 
   console.log(
-    "Starting to seed database with sets and cards from external API..."
+    "Starting to seed database with sets and cards from external API...",
   );
 
   await fetchAndStoreSets();

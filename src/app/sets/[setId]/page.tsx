@@ -41,7 +41,10 @@ export default async function SetIdPage({
         <ol className="list-reset flex text-muted-foreground">
           <li>
             <Link href="/sets" className="hover:underline">
-              {intl.formatMessage({ id: "page.sets.label", defaultMessage: "Sets" })}
+              {intl.formatMessage({
+                id: "page.sets.label",
+                defaultMessage: "Sets",
+              })}
             </Link>
           </li>
           <li className="font-semibold flex">
@@ -73,5 +76,5 @@ export default async function SetIdPage({
 
       <Content set={selectedSet} />
     </TooltipProvider>
-  )
-};
+  );
+}

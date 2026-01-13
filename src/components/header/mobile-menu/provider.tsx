@@ -7,7 +7,9 @@ type MobileMenuContextType = {
   toggle: () => void;
 };
 
-const MobileMenuContext = createContext<MobileMenuContextType | undefined>(undefined);
+const MobileMenuContext = createContext<MobileMenuContextType | undefined>(
+  undefined,
+);
 export function useMobileMenu() {
   const context = useContext(MobileMenuContext);
   if (context === undefined) {

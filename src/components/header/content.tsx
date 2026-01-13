@@ -8,7 +8,9 @@ import { DarkModeToggle } from "../dark-mode-toggle";
 import { LanguageDropdown } from "../language-dropdown";
 import { MobileMenuButton } from "./mobile-menu/button";
 
-export default async function HeaderContent({ session }: {
+export default async function HeaderContent({
+  session,
+}: {
   session: Session | null;
 }) {
   const intl = await getIntl();
@@ -17,10 +19,7 @@ export default async function HeaderContent({ session }: {
     <div className="container mx-auto px-4 py-4 flex justify-between items-center">
       {/* Left section */}
       <div className="flex items-center gap-3">
-        <Link
-          href="/"
-          className="flex items-center text-2xl font-bold gap-2"
-        >
+        <Link href="/" className="flex items-center text-2xl font-bold gap-2">
           <Image
             src="/bulkratte_head_logo.png"
             alt={intl.formatMessage(commonMessages.logoAlt)}
@@ -39,23 +38,48 @@ export default async function HeaderContent({ session }: {
       {/* Desktop navigation */}
       <div className="hidden md:flex items-center gap-4">
         <Link href="/">
-          <Button variant="ghost">{intl.formatMessage({ id: "nav.link.home", defaultMessage: "Home" })}</Button>
+          <Button variant="ghost">
+            {intl.formatMessage({
+              id: "nav.link.home",
+              defaultMessage: "Home",
+            })}
+          </Button>
         </Link>
         <Link href="/sets">
-          <Button variant="ghost">{intl.formatMessage({ id: "nav.link.sets", defaultMessage: "Sets" })}</Button>
+          <Button variant="ghost">
+            {intl.formatMessage({
+              id: "nav.link.sets",
+              defaultMessage: "Sets",
+            })}
+          </Button>
         </Link>
         {session && (
           <Link href="/collection">
-            <Button variant="ghost">{intl.formatMessage({ id: "nav.link.collection", defaultMessage: "My Collection" })}</Button>
+            <Button variant="ghost">
+              {intl.formatMessage({
+                id: "nav.link.collection",
+                defaultMessage: "My Collection",
+              })}
+            </Button>
           </Link>
         )}
         {session ? (
           <Link href="/auth/signout">
-            <Button variant="default">{intl.formatMessage({ id: "nav.action.signout", defaultMessage: "Sign Out" })}</Button>
+            <Button variant="default">
+              {intl.formatMessage({
+                id: "nav.action.signout",
+                defaultMessage: "Sign Out",
+              })}
+            </Button>
           </Link>
         ) : (
           <Link href="/auth/signin">
-            <Button variant="default">{intl.formatMessage({ id: "nav.action.signin", defaultMessage: "Sign In" })}</Button>
+            <Button variant="default">
+              {intl.formatMessage({
+                id: "nav.action.signin",
+                defaultMessage: "Sign In",
+              })}
+            </Button>
           </Link>
         )}
       </div>

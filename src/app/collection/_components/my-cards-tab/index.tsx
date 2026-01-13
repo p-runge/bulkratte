@@ -1,11 +1,8 @@
-"use client"
+"use client";
 
 import { UserCardBrowser } from "@/components/card-browser/user-card-browser";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { TabsContent } from "@/components/ui/tabs";
 import { api } from "@/lib/api/react";
 import { Plus } from "lucide-react";
@@ -23,9 +20,11 @@ export default function MyCardsTab() {
   const userCards = data ?? [];
 
   if (isLoading) {
-    return <div className="flex justify-center">
-      <Loader />
-    </div>;
+    return (
+      <div className="flex justify-center">
+        <Loader />
+      </div>
+    );
   }
 
   return (
@@ -53,8 +52,7 @@ export default function MyCardsTab() {
               <p className="text-muted-foreground mb-6">
                 {intl.formatMessage({
                   id: "page.collection.cards.empty.description",
-                  defaultMessage:
-                    "Start adding cards to your collection!",
+                  defaultMessage: "Start adding cards to your collection!",
                 })}
               </p>
               <Button onClick={() => setIsCreateCardDialogOpen(true)}>
@@ -75,9 +73,11 @@ export default function MyCardsTab() {
         )}
       </TabsContent>
 
-      {isCreateCardDialogOpen && <CreateUserCardDialog
-        onClose={() => setIsCreateCardDialogOpen(false)}
-      />}
+      {isCreateCardDialogOpen && (
+        <CreateUserCardDialog
+          onClose={() => setIsCreateCardDialogOpen(false)}
+        />
+      )}
     </>
   );
 }

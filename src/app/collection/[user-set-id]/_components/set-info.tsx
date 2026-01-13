@@ -19,7 +19,7 @@ export function SetInfo({ userSet, userCards }: SetInfoProps) {
   const { totalCards, placedCards, obtainedCards } = useMemo(() => {
     const totalCards = userSet.cards.length;
     const placedCards = userSet.cards.filter(
-      (card) => card.userCardId !== null
+      (card) => card.userCardId !== null,
     ).length;
 
     // Get unique card IDs from the user set
@@ -29,7 +29,7 @@ export function SetInfo({ userSet, userCards }: SetInfoProps) {
     const obtainedCardIds = new Set(
       userCards
         .filter((userCard) => userSetCardIds.has(userCard.cardId))
-        .map((userCard) => userCard.cardId)
+        .map((userCard) => userCard.cardId),
     );
 
     const obtainedCards = obtainedCardIds.size;

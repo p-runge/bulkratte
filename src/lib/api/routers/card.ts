@@ -32,7 +32,7 @@ export const cardRouter = createTRPCRouter({
             .default("number"),
           sortOrder: z.enum(["asc", "desc"]).optional().default("asc"),
         })
-        .optional()
+        .optional(),
     )
     .query(async ({ input }) => {
       // Build WHERE conditions
@@ -45,7 +45,7 @@ export const cardRouter = createTRPCRouter({
       if (input?.search) {
         const searchCondition = or(
           like(cardsTable.name, `%${input.search}%`),
-          like(cardsTable.number, `%${input.search}%`)
+          like(cardsTable.number, `%${input.search}%`),
         );
         if (searchCondition) {
           conditions.push(searchCondition);
@@ -60,7 +60,7 @@ export const cardRouter = createTRPCRouter({
         const dateConditions = [];
         if (input.releaseDateFrom) {
           dateConditions.push(
-            gte(setsTable.releaseDate, input.releaseDateFrom)
+            gte(setsTable.releaseDate, input.releaseDateFrom),
           );
         }
         if (input.releaseDateTo) {
@@ -96,7 +96,7 @@ export const cardRouter = createTRPCRouter({
           // For card number, we want to sort numerically
           // Handle empty strings by converting to NULL, then default to 0
           orderByClause = orderDirection(
-            sql`COALESCE(CAST(NULLIF(regexp_replace(${cardsTable.number}, '[^0-9]', '', 'g'), '') AS INTEGER), 0)`
+            sql`COALESCE(CAST(NULLIF(regexp_replace(${cardsTable.number}, '[^0-9]', '', 'g'), '') AS INTEGER), 0)`,
           );
           break;
       }
@@ -173,7 +173,7 @@ export const cardRouter = createTRPCRouter({
             ...card,
             price: newPrice ?? existingPrice ?? undefined,
           };
-        })
+        }),
       );
 
       return cardsWithPrices;
@@ -183,7 +183,7 @@ export const cardRouter = createTRPCRouter({
     .input(
       z.object({
         cardId: z.string(),
-      })
+      }),
     )
     .query(async ({ input }) => {
       const card = await db
@@ -207,7 +207,7 @@ export const cardRouter = createTRPCRouter({
     .input(
       z.object({
         cardIds: z.array(z.string()),
-      })
+      }),
     )
     .query(async ({ input }) => {
       if (input.cardIds.length === 0) {

@@ -11,7 +11,7 @@ export async function getLocalizedValue<T extends Record<string, any>>(
   record: T,
   tableName: string,
   columnName: keyof T,
-  locale: Locale
+  locale: Locale,
 ): Promise<string> {
   // Extract language code (e.g., "en" from "en-US")
   const langCode = locale.split("-")[0] as Language;
@@ -24,8 +24,8 @@ export async function getLocalizedValue<T extends Record<string, any>>(
         eq(localizationsTable.table_name, tableName),
         eq(localizationsTable.column_name, columnName as string),
         eq(localizationsTable.record_id, record.id),
-        eq(localizationsTable.language, langCode)
-      )
+        eq(localizationsTable.language, langCode),
+      ),
     )
     .limit(1);
 
@@ -41,7 +41,7 @@ export async function localizeRecord<T extends Record<string, any>>(
   record: T,
   tableName: string,
   columns: (keyof T)[],
-  locale: Locale
+  locale: Locale,
 ): Promise<T> {
   // Extract language code (e.g., "en" from "en-US")
   const langCode = locale.split("-")[0] as Language;
@@ -53,8 +53,8 @@ export async function localizeRecord<T extends Record<string, any>>(
       and(
         eq(localizationsTable.table_name, tableName),
         eq(localizationsTable.record_id, record.id),
-        eq(localizationsTable.language, langCode)
-      )
+        eq(localizationsTable.language, langCode),
+      ),
     );
 
   const localized = { ...record };
@@ -76,7 +76,7 @@ export async function localizeRecords<T extends Record<string, any>>(
   records: T[],
   tableName: string,
   columns: (keyof T)[],
-  locale: Locale
+  locale: Locale,
 ): Promise<T[]> {
   if (records.length === 0) return [];
 
@@ -91,8 +91,8 @@ export async function localizeRecords<T extends Record<string, any>>(
       and(
         eq(localizationsTable.table_name, tableName),
         eq(localizationsTable.language, langCode),
-        inArray(localizationsTable.record_id, recordIds)
-      )
+        inArray(localizationsTable.record_id, recordIds),
+      ),
     );
 
   // Create a map for quick lookups: recordId -> columnName -> value
@@ -131,7 +131,7 @@ export async function upsertLocalization(
   columnName: string,
   recordId: string,
   locale: Locale,
-  value: string
+  value: string,
 ): Promise<void> {
   // Extract language code (e.g., "en" from "en-US")
   const langCode = locale.split("-")[0] as Language;
@@ -144,8 +144,8 @@ export async function upsertLocalization(
         eq(localizationsTable.table_name, tableName),
         eq(localizationsTable.column_name, columnName),
         eq(localizationsTable.record_id, recordId),
-        eq(localizationsTable.language, langCode)
-      )
+        eq(localizationsTable.language, langCode),
+      ),
     )
     .limit(1);
 

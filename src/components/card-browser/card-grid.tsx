@@ -7,7 +7,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import Image from "next/image";
 import { FormattedMessage, useIntl } from "react-intl";
 
-export type CardWithGridId = Card & { price: number | undefined } & { gridId: string };
+export type CardWithGridId = Card & { price: number | undefined } & {
+  gridId: string;
+};
 
 type CardGridProps = {
   cards: CardWithGridId[];
@@ -30,7 +32,8 @@ export function CardGrid({
 }: CardGridProps) {
   const intl = useIntl();
 
-  const allSelected = cards.length > 0 && cards.every((card) => selectedCards.has(card.id));
+  const allSelected =
+    cards.length > 0 && cards.every((card) => selectedCards.has(card.id));
   const someSelected = cards.some((card) => selectedCards.has(card.id));
 
   const handleSelectAllChange = () => {
@@ -51,14 +54,23 @@ export function CardGrid({
   }
 
   return (
-    <div className="space-y-4 overflow-y-auto" style={{
-      maxHeight,
-    }}>
+    <div
+      className="space-y-4 overflow-y-auto"
+      style={{
+        maxHeight,
+      }}
+    >
       {selectionMode === "multi" && onSelectAll && cards.length > 0 && (
         <div className="flex items-center gap-2 pb-2 border-b">
           <Checkbox
             checked={allSelected}
-            data-state={someSelected && !allSelected ? "indeterminate" : allSelected ? "checked" : "unchecked"}
+            data-state={
+              someSelected && !allSelected
+                ? "indeterminate"
+                : allSelected
+                  ? "checked"
+                  : "unchecked"
+            }
             onCheckedChange={handleSelectAllChange}
             id="select-all"
           />
@@ -77,13 +89,16 @@ export function CardGrid({
       <div
         className="gap-4"
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(clamp(120px, 20vw, 245px), 1fr))',
+          display: "grid",
+          gridTemplateColumns:
+            "repeat(auto-fit, minmax(clamp(120px, 20vw, 245px), 1fr))",
         }}
       >
         {cards.map((card, index) => {
           const isSelected = selectedCards.has(card.id);
-          const selectionIndex = isSelected ? Array.from(selectedCards).indexOf(card.id) + 1 : 0;
+          const selectionIndex = isSelected
+            ? Array.from(selectedCards).indexOf(card.id) + 1
+            : 0;
           return (
             <button
               key={card.gridId}
@@ -92,7 +107,7 @@ export function CardGrid({
                 "group relative rounded-lg overflow-hidden transition-all hover:scale-105",
                 "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background",
                 isSelected && "ring-2 ring-primary",
-                "w-full"
+                "w-full",
               )}
             >
               <div className="aspect-245/337 relative">
@@ -109,7 +124,9 @@ export function CardGrid({
                   <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
                     <div className="bg-primary rounded-full border-black border w-10 h-10 flex items-center justify-center">
                       {selectionMode === "multi" ? (
-                        <span className="text-lg font-bold text-primary-foreground">{selectionIndex}</span>
+                        <span className="text-lg font-bold text-primary-foreground">
+                          {selectionIndex}
+                        </span>
                       ) : (
                         <Circle className="h-6 w-6 text-primary-foreground fill-current" />
                       )}
@@ -121,9 +138,10 @@ export function CardGrid({
                 <p className="text-xs text-white font-medium truncate">
                   {card.number} - {card.name}
                 </p>
-                <p className="text-xs text-white/70">{
-                  card.price !== undefined && `${intl.formatNumber(card.price / 100, { style: "currency", currency: "EUR" })} (avg. 7d)`
-                }</p>
+                <p className="text-xs text-white/70">
+                  {card.price !== undefined &&
+                    `${intl.formatNumber(card.price / 100, { style: "currency", currency: "EUR" })} (avg. 7d)`}
+                </p>
               </div>
             </button>
           );

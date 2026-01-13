@@ -1,7 +1,13 @@
-"use client"
+"use client";
 
-import { BROWSER_LANGUAGES, DEFAULT_LOCALE, Locale, LOCALES, messages } from '@/lib/i18n';
-import { IntlProvider } from 'react-intl';
+import {
+  BROWSER_LANGUAGES,
+  DEFAULT_LOCALE,
+  Locale,
+  LOCALES,
+  messages,
+} from "@/lib/i18n";
+import { IntlProvider } from "react-intl";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -17,23 +23,27 @@ export function I18nProvider({
   const locale = serverLocale;
 
   return (
-    <IntlProvider locale={locale} messages={messages[locale]} defaultLocale={DEFAULT_LOCALE} onError={(error) => {
-      if (error.code === 'MISSING_TRANSLATION') {
-        // Suppress missing translation errors
-        return;
-      }
+    <IntlProvider
+      locale={locale}
+      messages={messages[locale]}
+      defaultLocale={DEFAULT_LOCALE}
+      onError={(error) => {
+        if (error.code === "MISSING_TRANSLATION") {
+          // Suppress missing translation errors
+          return;
+        }
 
-      console.error(error);
-    }}>
+        console.error(error);
+      }}
+    >
       {children}
     </IntlProvider>
-  )
+  );
 }
-
 
 function getInitialLocale() {
   // Only access navigator on client
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return DEFAULT_LOCALE;
   }
 
@@ -43,8 +53,7 @@ function getInitialLocale() {
     locale = navigator.language as Locale;
   } else {
     const languageCode = navigator.language.split("-")[0]!;
-    locale =
-      BROWSER_LANGUAGES[languageCode] || DEFAULT_LOCALE;
+    locale = BROWSER_LANGUAGES[languageCode] || DEFAULT_LOCALE;
   }
 
   return locale;
@@ -75,6 +84,6 @@ export const useLanguageStore = create<LanguageState>()(
     }),
     {
       name: "language-storage",
-    }
-  )
+    },
+  ),
 );

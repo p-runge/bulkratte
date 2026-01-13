@@ -53,14 +53,16 @@ export default function Content({ set }: Props) {
       </Card>
 
       {set && (
-        <CardBrowser selectionMode="single" onCardClick={
-          (cardId) => {
+        <CardBrowser
+          selectionMode="single"
+          onCardClick={(cardId) => {
             const card = cards?.find((c) => c.id === cardId);
             if (card) {
               setSelectedCard(card);
             }
-          }
-        } setId={set.id} />
+          }}
+          setId={set.id}
+        />
       )}
 
       {selectedCard && (

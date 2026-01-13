@@ -12,13 +12,16 @@ import { FormattedMessage, useIntl } from "react-intl";
 import { MinimalCardData } from "../../[user-set-id]/_components/edit-set-content";
 import { BinderView } from "../../[user-set-id]/_components/binder-view";
 
-
 export function CreateSetContent() {
   const router = useRouter();
   const intl = useIntl();
   const [name, setName] = useState("");
-  const [cards, setCards] = useState<Array<{ userSetCardId: string | null; cardId: string | null }>>([]);
-  const [cardDataMap, setCardDataMap] = useState<Map<string, MinimalCardData>>(new Map());
+  const [cards, setCards] = useState<
+    Array<{ userSetCardId: string | null; cardId: string | null }>
+  >([]);
+  const [cardDataMap, setCardDataMap] = useState<Map<string, MinimalCardData>>(
+    new Map(),
+  );
   const [cardIdsToFetch, setCardIdsToFetch] = useState<string[]>([]);
   const {
     fileInputRef,
@@ -28,10 +31,11 @@ export function CreateSetContent() {
     handleRemoveImage,
   } = useImageUpload();
 
-  const { mutateAsync: createUserSet, isPending } = api.userSet.create.useMutation();
+  const { mutateAsync: createUserSet, isPending } =
+    api.userSet.create.useMutation();
   const { data: fetchedCards } = api.card.getByIds.useQuery(
     { cardIds: cardIdsToFetch },
-    { enabled: cardIdsToFetch.length > 0 }
+    { enabled: cardIdsToFetch.length > 0 },
   );
 
   // When new cards are fetched, add them to cardDataMap
@@ -54,7 +58,9 @@ export function CreateSetContent() {
     setCardIdsToFetch([]);
   }, [fetchedCards]);
 
-  const handleCardsChange = (newCards: Array<{ userSetCardId: string | null; cardId: string | null }>) => {
+  const handleCardsChange = (
+    newCards: Array<{ userSetCardId: string | null; cardId: string | null }>,
+  ) => {
     // Find card IDs that we don't have in our map yet
     const missingCardIds = newCards
       .map((slot) => slot.cardId)
@@ -106,7 +112,10 @@ export function CreateSetContent() {
         <div className="flex items-end gap-4">
           <div className="flex-1 space-y-2">
             <Label htmlFor="name">
-              <FormattedMessage id="form.field.set_name.label" defaultMessage="Set Name" />
+              <FormattedMessage
+                id="form.field.set_name.label"
+                defaultMessage="Set Name"
+              />
             </Label>
             <Input
               id="name"
@@ -124,7 +133,7 @@ export function CreateSetContent() {
                 id: "page.set.form.cards_selected",
                 defaultMessage: "{count} cards selected",
               },
-              { count: cards.filter(c => c.cardId !== null).length }
+              { count: cards.filter((c) => c.cardId !== null).length },
             )}
           </div>
           <Button
@@ -133,7 +142,10 @@ export function CreateSetContent() {
             size="lg"
           >
             <Save className="h-5 w-5 mr-2" />
-            <FormattedMessage id="page.set.action.create" defaultMessage="Create Set" />
+            <FormattedMessage
+              id="page.set.action.create"
+              defaultMessage="Create Set"
+            />
           </Button>
         </div>
       </div>

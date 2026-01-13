@@ -15,7 +15,13 @@ export default async function HomePage() {
     <main className="min-h-screen flex flex-col justify-center items-center px-4">
       <div className="flex flex-col lg:flex-row lg:gap-12 items-center">
         <div className="max-w-1/2 min-w-75 flex justify-end">
-          <Image src="/bulkratte_logo.png" alt={intl.formatMessage(commonMessages.logoAlt)} width={500} height={500} className="drop-shadow-[0_0_10px] drop-shadow-primary" />
+          <Image
+            src="/bulkratte_logo.png"
+            alt={intl.formatMessage(commonMessages.logoAlt)}
+            width={500}
+            height={500}
+            className="drop-shadow-[0_0_10px] drop-shadow-primary"
+          />
         </div>
         <div className="max-w-2xl">
           <div className="mb-6 flex gap-4">
@@ -23,46 +29,52 @@ export default async function HomePage() {
             <DarkModeToggle />
           </div>
 
-          <h1 className="text-4xl lg:text-6xl font-bold mb-4 text-primary capitalize">{
-            intl.formatMessage({
+          <h1 className="text-4xl lg:text-6xl font-bold mb-4 text-primary capitalize">
+            {intl.formatMessage({
               id: "page.home.title",
               defaultMessage: "Your TCG collection under control",
-            })
-          }</h1>
-          <p className="text-lg text-muted-foreground mb-6"
-          >
-            {intl.formatMessage({
-              id: "page.home.description",
-              defaultMessage:
-                "<i>{siteName}</i> is the easiest way to track your Pokémon card collection. Manage sets in multiple languages, variants, and conditions with ease.",
-            },
+            })}
+          </h1>
+          <p className="text-lg text-muted-foreground mb-6">
+            {intl.formatMessage(
+              {
+                id: "page.home.description",
+                defaultMessage:
+                  "<i>{siteName}</i> is the easiest way to track your Pokémon card collection. Manage sets in multiple languages, variants, and conditions with ease.",
+              },
               {
                 i: (chunks) => <i key="home.description.siteName">{chunks}</i>,
-                siteName: "Bulkratte"
-              }
+                siteName: "Bulkratte",
+              },
             )}
           </p>
 
-          {!session && <>
-            <p className="mb-3 text-sm">
-              {intl.formatMessage({
-                id: "page.home.cta.intro",
-                defaultMessage: "Not a <i>Bulkratte</i> yet? Create an account and start organizing your collection today – 100% for free!",
-              },
-                {
-                  i: (chunks) => <i key="home.ctaIntroduction.siteName">{chunks}</i>,
-                }
-              )}
-            </p>
-            <Link href="/auth/signin" passHref>
-              <Button className="cursor-pointer" variant="default" size="lg">
-                {intl.formatMessage({
-                  id: "page.home.action.signup",
-                  defaultMessage: "Sign Up Now",
-                })}
-              </Button>
-            </Link>
-          </>}
+          {!session && (
+            <>
+              <p className="mb-3 text-sm">
+                {intl.formatMessage(
+                  {
+                    id: "page.home.cta.intro",
+                    defaultMessage:
+                      "Not a <i>Bulkratte</i> yet? Create an account and start organizing your collection today – 100% for free!",
+                  },
+                  {
+                    i: (chunks) => (
+                      <i key="home.ctaIntroduction.siteName">{chunks}</i>
+                    ),
+                  },
+                )}
+              </p>
+              <Link href="/auth/signin" passHref>
+                <Button className="cursor-pointer" variant="default" size="lg">
+                  {intl.formatMessage({
+                    id: "page.home.action.signup",
+                    defaultMessage: "Sign Up Now",
+                  })}
+                </Button>
+              </Link>
+            </>
+          )}
 
           <hr className="my-6" />
 

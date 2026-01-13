@@ -11,7 +11,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Bulkratte",
-  description: "Bulkratte is the easiest way to track your Pokémon card collection. Manage sets in multiple languages, variants, and conditions with ease.",
+  description:
+    "Bulkratte is the easiest way to track your Pokémon card collection. Manage sets in multiple languages, variants, and conditions with ease.",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
@@ -34,7 +35,9 @@ export default async function RootLayout({
               enableSystem
               disableTransitionOnChange
             >
-              <I18nProvider serverLocale={serverLocale}>{children}</I18nProvider>
+              <I18nProvider serverLocale={serverLocale}>
+                {children}
+              </I18nProvider>
             </ThemeProvider>
           </TRPCReactProvider>
         </PlausibleProvider>

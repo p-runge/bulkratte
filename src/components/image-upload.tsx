@@ -50,8 +50,12 @@ function scaleImage(file: File, maxDimension: number = 100): Promise<string> {
  */
 export function useImageUpload(initialImage?: string | null) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(initialImage ?? null);
-  const [image, setImage] = useState<string | undefined>(initialImage || undefined);
+  const [imagePreview, setImagePreview] = useState<string | null>(
+    initialImage ?? null,
+  );
+  const [image, setImage] = useState<string | undefined>(
+    initialImage || undefined,
+  );
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -113,7 +117,10 @@ export function ImageUpload({
           <div className="relative">
             <img
               src={imagePreview}
-              alt={intl.formatMessage({ id: "form.field.image.preview.alt", defaultMessage: "Set preview" })}
+              alt={intl.formatMessage({
+                id: "form.field.image.preview.alt",
+                defaultMessage: "Set preview",
+              })}
               className="w-24 h-24 object-contain rounded border"
             />
             <Button
@@ -154,7 +161,8 @@ export function ImageUpload({
           <p className="text-xs text-muted-foreground mt-1">
             {intl.formatMessage({
               id: "form.field.image.description",
-              defaultMessage: "Images will be automatically scaled to max 100px",
+              defaultMessage:
+                "Images will be automatically scaled to max 100px",
             })}
           </p>
         </div>

@@ -49,7 +49,10 @@ export function CardPicker(props: CardPickerProps) {
           onClick={props.onClose}
           className="px-4 py-2 border rounded-md hover:bg-muted"
         >
-          {intl.formatMessage({ id: "common.button.cancel", defaultMessage: "Cancel" })}
+          {intl.formatMessage({
+            id: "common.button.cancel",
+            defaultMessage: "Cancel",
+          })}
         </button>
         <button
           onClick={handleConfirmSelection}
@@ -57,8 +60,12 @@ export function CardPicker(props: CardPickerProps) {
           disabled={selectedCards.size === 0}
         >
           {intl.formatMessage(
-            { id: "card.picker.button.add", defaultMessage: "Add {count, plural, one {# card} other {# cards}}" },
-            { count: selectedCards.size }
+            {
+              id: "card.picker.button.add",
+              defaultMessage:
+                "Add {count, plural, one {# card} other {# cards}}",
+            },
+            { count: selectedCards.size },
           )}
         </button>
       </div>

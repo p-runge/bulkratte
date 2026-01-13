@@ -1,13 +1,16 @@
-"use client"
+"use client";
 
 import { CardBrowser } from "@/components/card-browser";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { api } from "@/lib/api/react";
 import {
-  conditionEnum,
-  languageEnum, variantEnum
-} from "@/lib/db/enums";
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { api } from "@/lib/api/react";
+import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
 import { RHFForm, useRHFForm } from "@/lib/form/utils";
 import Image from "next/image";
 import { useState } from "react";
@@ -26,9 +29,10 @@ export default function CreateUserCardDialog({
     { cardId: selectedCardId! },
     {
       enabled: !!selectedCardId,
-    }
+    },
   );
-  const { mutateAsync: addCardToCollection } = api.userCard.create.useMutation();
+  const { mutateAsync: addCardToCollection } =
+    api.userCard.create.useMutation();
   const apiUtils = api.useUtils();
 
   const form = useRHFForm(FormSchema, {
@@ -39,7 +43,7 @@ export default function CreateUserCardDialog({
       // notes: "",
       // photos: [],
     },
-  })
+  });
 
   async function handleSubmit(data: z.infer<typeof FormSchema>) {
     if (!card) {
@@ -72,25 +76,28 @@ export default function CreateUserCardDialog({
         </DialogHeader>
         {/* TODO: add default settings here (language, condition, variant, etc.) */}
         <RHFForm form={form} onSubmit={handleSubmit} className="py-4">
-          {!selectedCardId ? <CardBrowser selectionMode="single" onCardClick={(cardId) => setSelectedCardId(cardId)} maxHeightGrid="600px" /> :
-            card ? (
-              <div className="flex gap-6">
-                <Image
-                  src={card.imageSmall}
-                  alt={card.name}
-                  width={240}
-                  height={165}
-                  unoptimized
-                  className="w-auto h-auto object-contain rounded-md"
-                  draggable={false}
-                  priority
-                />
-                <div>
-                  <h2 className="text-2xl font-bold mb-2">
-                    {card.name}
-                  </h2>
-                  {/* TODO: Additional form fields for language, condition, variant, etc. would go here respecting default settings */}
-                  {/* <Controller
+          {!selectedCardId ? (
+            <CardBrowser
+              selectionMode="single"
+              onCardClick={(cardId) => setSelectedCardId(cardId)}
+              maxHeightGrid="600px"
+            />
+          ) : card ? (
+            <div className="flex gap-6">
+              <Image
+                src={card.imageSmall}
+                alt={card.name}
+                width={240}
+                height={165}
+                unoptimized
+                className="w-auto h-auto object-contain rounded-md"
+                draggable={false}
+                priority
+              />
+              <div>
+                <h2 className="text-2xl font-bold mb-2">{card.name}</h2>
+                {/* TODO: Additional form fields for language, condition, variant, etc. would go here respecting default settings */}
+                {/* <Controller
                       name="variant"
                       control={form.control}
                       render={({ field }) => (
@@ -177,27 +184,29 @@ export default function CreateUserCardDialog({
                         </>
                       )}
                     /> */}
-                </div>
               </div>
-            ) : (
-              // loading skeleton
-              <div className="w-60 h-84 bg-muted animate-pulse rounded-md" />
-            )}
+            </div>
+          ) : (
+            // loading skeleton
+            <div className="w-60 h-84 bg-muted animate-pulse rounded-md" />
+          )}
 
-          {selectedCardId && <DialogFooter>
-            <Button variant="ghost" onClick={onClose} disabled={!card}>
-              {intl.formatMessage({
-                id: "common.button.cancel",
-                defaultMessage: "Cancel",
-              })}
-            </Button>
-            <Button type="submit" disabled={!card}>
-              {intl.formatMessage({
-                id: "dialog.create_card.button.add",
-                defaultMessage: "Add Card to Collection",
-              })}
-            </Button>
-          </DialogFooter>}
+          {selectedCardId && (
+            <DialogFooter>
+              <Button variant="ghost" onClick={onClose} disabled={!card}>
+                {intl.formatMessage({
+                  id: "common.button.cancel",
+                  defaultMessage: "Cancel",
+                })}
+              </Button>
+              <Button type="submit" disabled={!card}>
+                {intl.formatMessage({
+                  id: "dialog.create_card.button.add",
+                  defaultMessage: "Add Card to Collection",
+                })}
+              </Button>
+            </DialogFooter>
+          )}
         </RHFForm>
       </DialogContent>
     </Dialog>
@@ -210,4 +219,4 @@ const FormSchema = z.object({
   variant: z.enum(variantEnum.enumValues),
   // notes: z.string(),
   // photos: z.array(z.string().url()),
-})
+});

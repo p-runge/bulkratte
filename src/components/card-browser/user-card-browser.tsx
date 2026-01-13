@@ -21,13 +21,11 @@ export function UserCardBrowser(props: UserCardBrowserProps) {
     sortOrder: "asc",
   });
 
-  const {
-    data,
-    isLoading,
-  } = api.userCard.getList.useQuery({
+  const { data, isLoading } = api.userCard.getList.useQuery({
     setId: filters.setId && filters.setId !== "all" ? filters.setId : undefined,
     search: filters.search || undefined,
-    rarity: filters.rarity && filters.rarity !== "all" ? filters.rarity : undefined,
+    rarity:
+      filters.rarity && filters.rarity !== "all" ? filters.rarity : undefined,
     releaseDateFrom: filters.releaseDateFrom || undefined,
     releaseDateTo: filters.releaseDateTo || undefined,
     sortBy: filters.sortBy as "number" | "name" | "rarity" | "price",

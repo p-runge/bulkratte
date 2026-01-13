@@ -2,21 +2,29 @@
 
 import { CardPicker } from "@/components/card-browser/card-picker";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import ConfirmButton from "@/components/confirm-button";
 import { cn } from "@/lib/utils";
 import { Plus, X, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { MinimalCardData } from "./edit-set-content";
-import { useBinderPagination, CARDS_PER_PAGE } from "../_lib/use-binder-pagination";
-
-
+import {
+  useBinderPagination,
+  CARDS_PER_PAGE,
+} from "../_lib/use-binder-pagination";
 
 interface EditableBinderViewProps {
   cards: Array<{ userSetCardId: string | null; cardId: string | null }>;
   cardDataMap: Map<string, MinimalCardData>;
-  onCardsChange: (cards: Array<{ userSetCardId: string | null; cardId: string | null }>) => void;
+  onCardsChange: (
+    cards: Array<{ userSetCardId: string | null; cardId: string | null }>,
+  ) => void;
 }
 
 interface EditableSlotProps {
@@ -46,7 +54,7 @@ function EditableSlot({
       <div
         className={cn(
           "aspect-[2.5/3.5] bg-muted/30 rounded border-2 border-dashed border-muted-foreground/20",
-          "flex items-center justify-center group hover:border-primary/50 transition-colors"
+          "flex items-center justify-center group hover:border-primary/50 transition-colors",
         )}
         onDragOver={onDragOver}
         onDrop={onDrop}
@@ -71,7 +79,7 @@ function EditableSlot({
       onDrop={onDrop}
       className={cn(
         "aspect-[2.5/3.5] rounded relative group cursor-move",
-        isDragging && "opacity-50"
+        isDragging && "opacity-50",
       )}
     >
       <Image
@@ -94,7 +102,11 @@ function EditableSlot({
   );
 }
 
-export function EditableBinderView({ cards, cardDataMap, onCardsChange }: EditableBinderViewProps) {
+export function EditableBinderView({
+  cards,
+  cardDataMap,
+  onCardsChange,
+}: EditableBinderViewProps) {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [addingAtIndex, setAddingAtIndex] = useState<number | null>(null);
@@ -151,8 +163,14 @@ export function EditableBinderView({ cards, cardDataMap, onCardsChange }: Editab
     const draggedCard = newCards[draggedIndex];
 
     // Swap the cards (swaps both userSetCardId and cardId)
-    newCards[draggedIndex] = newCards[targetIndex] ?? { userSetCardId: null, cardId: null };
-    newCards[targetIndex] = draggedCard ?? { userSetCardId: null, cardId: null };
+    newCards[draggedIndex] = newCards[targetIndex] ?? {
+      userSetCardId: null,
+      cardId: null,
+    };
+    newCards[targetIndex] = draggedCard ?? {
+      userSetCardId: null,
+      cardId: null,
+    };
 
     // Remove trailing empty slots but keep internal empty slots
     const lastNonEmptyIndex = newCards.findLastIndex((c) => c.cardId !== null);
@@ -188,7 +206,10 @@ export function EditableBinderView({ cards, cardDataMap, onCardsChange }: Editab
     let insertIndex = addingAtIndex;
     for (const cardId of cardsToAdd) {
       // Find next available slot or add at end
-      while (insertIndex < newCards.length && newCards[insertIndex]?.cardId !== null) {
+      while (
+        insertIndex < newCards.length &&
+        newCards[insertIndex]?.cardId !== null
+      ) {
         insertIndex++;
       }
 
@@ -210,10 +231,10 @@ export function EditableBinderView({ cards, cardDataMap, onCardsChange }: Editab
   };
 
   // Build pages with cover pages
-  const pages = buildPagesArray(
-    paddedCards,
-    { userSetCardId: null, cardId: null }
-  );
+  const pages = buildPagesArray(paddedCards, {
+    userSetCardId: null,
+    cardId: null,
+  });
   const totalPages = getTotalPages(pages);
   const totalContentPages = Math.ceil(paddedCards.length / CARDS_PER_PAGE);
 
@@ -225,7 +246,7 @@ export function EditableBinderView({ cards, cardDataMap, onCardsChange }: Editab
   const startPageIndex = getStartPageIndex();
 
   // Check if all slots are filled (no empty slots)
-  const hasEmptySlots = paddedCards.some(card => card.cardId === null);
+  const hasEmptySlots = paddedCards.some((card) => card.cardId === null);
 
   const handleAddPage = () => {
     // Add 9 new empty slots (one full page)
@@ -236,7 +257,10 @@ export function EditableBinderView({ cards, cardDataMap, onCardsChange }: Editab
     onCardsChange(newCards);
     // Navigate to the last page group
     const newTotalContentPages = Math.ceil(newCards.length / CARDS_PER_PAGE);
-    const newPages = buildPagesArray(newCards, { userSetCardId: null, cardId: null });
+    const newPages = buildPagesArray(newCards, {
+      userSetCardId: null,
+      cardId: null,
+    });
     const newTotalPages = getTotalPages(newPages);
     const newMaxPageGroup = pagination.getMaxPageGroup(newTotalPages);
     setCurrentPage(newMaxPageGroup);
@@ -250,12 +274,13 @@ export function EditableBinderView({ cards, cardDataMap, onCardsChange }: Editab
     // Remove the page (9 slots)
     const newCards = [
       ...paddedCards.slice(0, pageStartIndex),
-      ...paddedCards.slice(pageEndIndex)
+      ...paddedCards.slice(pageEndIndex),
     ];
 
     // Remove trailing empty slots but keep internal empty slots
     const lastNonEmptyIndex = newCards.findLastIndex((c) => c.cardId !== null);
-    const trimmed = lastNonEmptyIndex >= 0 ? newCards.slice(0, lastNonEmptyIndex + 1) : [];
+    const trimmed =
+      lastNonEmptyIndex >= 0 ? newCards.slice(0, lastNonEmptyIndex + 1) : [];
 
     onCardsChange(trimmed);
 
@@ -265,7 +290,10 @@ export function EditableBinderView({ cards, cardDataMap, onCardsChange }: Editab
     while (newPaddedCards.length < newMinSlots) {
       newPaddedCards.push({ userSetCardId: null, cardId: null });
     }
-    const newPages = buildPagesArray(newPaddedCards, { userSetCardId: null, cardId: null });
+    const newPages = buildPagesArray(newPaddedCards, {
+      userSetCardId: null,
+      cardId: null,
+    });
     const newTotalPages = getTotalPages(newPages);
     const newMaxPageGroup = pagination.getMaxPageGroup(newTotalPages);
     if (pagination.currentPage > newMaxPageGroup) {
@@ -306,30 +334,36 @@ export function EditableBinderView({ cards, cardDataMap, onCardsChange }: Editab
         >
           {visiblePages.map((page, pageIndex) => {
             const actualPageNumber = startPageIndex + pageIndex + 1;
-            const isCurrentCoverPage = isCoverPage(actualPageNumber, totalPages);
+            const isCurrentCoverPage = isCoverPage(
+              actualPageNumber,
+              totalPages,
+            );
 
             return (
               <div
                 key={actualPageNumber}
                 className="bg-card border rounded-lg p-[2%] shadow-lg relative"
-                style={{ width: isMobile ? "min(90vw, 500px)" : "min(45vw, 500px)" }}
+                style={{
+                  width: isMobile ? "min(90vw, 500px)" : "min(45vw, 500px)",
+                }}
               >
                 {/* Delete Page Button - only show on non-cover pages */}
-                {!isCurrentCoverPage && totalContentPages > (isMobile ? 1 : PAGES_VISIBLE) && (
-                  <div className="absolute -top-3 -right-3 z-10">
-                    <ConfirmButton
-                      variant="destructive"
-                      size="icon"
-                      className="h-8 w-8 rounded-full shadow-md"
-                      title="Delete Page"
-                      description={`Are you sure you want to delete page ${getDisplayPageNumber(actualPageNumber)}? All cards on this page will be removed.`}
-                      destructive
-                      onClick={() => handleDeletePage(actualPageNumber)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </ConfirmButton>
-                  </div>
-                )}
+                {!isCurrentCoverPage &&
+                  totalContentPages > (isMobile ? 1 : PAGES_VISIBLE) && (
+                    <div className="absolute -top-3 -right-3 z-10">
+                      <ConfirmButton
+                        variant="destructive"
+                        size="icon"
+                        className="h-8 w-8 rounded-full shadow-md"
+                        title="Delete Page"
+                        description={`Are you sure you want to delete page ${getDisplayPageNumber(actualPageNumber)}? All cards on this page will be removed.`}
+                        destructive
+                        onClick={() => handleDeletePage(actualPageNumber)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </ConfirmButton>
+                    </div>
+                  )}
                 {isCurrentCoverPage ? (
                   // Empty cover page - invisible grid to match height
                   <div className="grid grid-cols-3 gap-2">
@@ -340,8 +374,12 @@ export function EditableBinderView({ cards, cardDataMap, onCardsChange }: Editab
                 ) : (
                   <div className="grid grid-cols-3 gap-2">
                     {page.map((card, slotIndex) => {
-                      const globalIndex = (startPageIndex + pageIndex) * CARDS_PER_PAGE + slotIndex;
-                      const cardData = card?.cardId ? cardDataMap.get(card.cardId) ?? null : null;
+                      const globalIndex =
+                        (startPageIndex + pageIndex) * CARDS_PER_PAGE +
+                        slotIndex;
+                      const cardData = card?.cardId
+                        ? (cardDataMap.get(card.cardId) ?? null)
+                        : null;
                       return (
                         <EditableSlot
                           key={globalIndex}
@@ -389,7 +427,8 @@ export function EditableBinderView({ cards, cardDataMap, onCardsChange }: Editab
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="text-sm text-muted-foreground self-center">
-            {pagination.currentPage + 1} / {pagination.getMaxPageGroup(totalPages) + 1}
+            {pagination.currentPage + 1} /{" "}
+            {pagination.getMaxPageGroup(totalPages) + 1}
           </span>
           <Button
             variant="outline"
@@ -404,11 +443,7 @@ export function EditableBinderView({ cards, cardDataMap, onCardsChange }: Editab
         {/* Add Page Button */}
         {!hasEmptySlots && (
           <div className="flex justify-center mt-4">
-            <Button
-              variant="outline"
-              onClick={handleAddPage}
-              className="gap-2"
-            >
+            <Button variant="outline" onClick={handleAddPage} className="gap-2">
               <Plus className="h-4 w-4" />
               Add Page
             </Button>

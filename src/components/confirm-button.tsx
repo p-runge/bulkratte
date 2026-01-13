@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { FormattedMessage } from 'react-intl'
-import { Button } from '@/components/ui/button'
+import { FormattedMessage } from "react-intl";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -9,15 +9,15 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { ComponentProps, MouseEvent, ReactNode, useState } from 'react'
+} from "@/components/ui/dialog";
+import { ComponentProps, MouseEvent, ReactNode, useState } from "react";
 
 type Props = ComponentProps<typeof Button> & {
-  children: ReactNode
-  title: string
-  description: string
-  destructive?: boolean
-}
+  children: ReactNode;
+  title: string;
+  description: string;
+  destructive?: boolean;
+};
 
 export default function ConfirmButton({
   children,
@@ -27,15 +27,15 @@ export default function ConfirmButton({
   onClick,
   ...buttonProps
 }: Props) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false);
 
   function handleClose() {
-    setOpen(false)
+    setOpen(false);
   }
 
   function handleConfirm(event: MouseEvent<HTMLButtonElement>) {
-    onClick?.(event)
-    handleClose()
+    onClick?.(event);
+    handleClose();
   }
 
   return (
@@ -58,7 +58,7 @@ export default function ConfirmButton({
             </Button>
             <Button
               onClick={handleConfirm}
-              variant={destructive ? 'destructive' : 'default'}
+              variant={destructive ? "destructive" : "default"}
             >
               <FormattedMessage
                 id="common.button.confirm"
@@ -69,5 +69,5 @@ export default function ConfirmButton({
         </DialogContent>
       </Dialog>
     </>
-  )
+  );
 }
