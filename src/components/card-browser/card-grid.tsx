@@ -91,7 +91,7 @@ export function CardGrid({
         style={{
           display: "grid",
           gridTemplateColumns:
-            "repeat(auto-fit, minmax(clamp(120px, 20vw, 245px), 1fr))",
+            "repeat(auto-fill, minmax(clamp(120px, 20vw, 245px), 1fr))",
         }}
       >
         {cards.map((card, index) => {

@@ -35,10 +35,11 @@ export function UserCardBrowser(props: UserCardBrowserProps) {
   // Get unfiltered data for filter options
   const { data: unfilteredData } = api.userCard.getList.useQuery({});
 
-  const cards = data?.map((userCard) => ({
-    gridId: userCard.id,
-    ...userCard.card!,
-  })) as CardWithGridId[];
+  const cards =
+    data?.map((userCard) => ({
+      gridId: userCard.id,
+      ...userCard.card!,
+    })) ?? ([] as CardWithGridId[]);
 
   return (
     <div className="space-y-6">
