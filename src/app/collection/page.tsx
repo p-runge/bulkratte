@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/lib/api/react";
-import { BookHeart, Library, Plus } from "lucide-react";
+import { BookHeart, Heart, Library, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useIntl } from "react-intl";
@@ -16,7 +16,12 @@ export default function CollectionPage() {
 
   const searchParams = useSearchParams();
   const m = searchParams.get("m");
-  const defaultTab = m === "my-cards" ? "my-cards" : "collections";
+  const defaultTab =
+    m === "my-cards"
+      ? "my-cards"
+      : m === "wantlist"
+        ? "wantlist"
+        : "collections";
   console.log("Default Tab:", defaultTab);
 
   function setMQueryParam(tab: string) {
@@ -73,11 +78,57 @@ export default function CollectionPage() {
               })}
             </span>
           </TabsTrigger>
+          <TabsTrigger value="wantlist">
+            <span className="inline-flex items-center gap-2">
+              <Heart className="w-4 h-4" />
+              {intl.formatMessage({
+                id: "page.collection.tab.wantlist",
+                defaultMessage: "Wantlist",
+              })}
+            </span>
+          </TabsTrigger>
         </TabsList>
         <MySetsTab />
         <MyCardsTab />
+        <WantlistTab />
       </Tabs>
     </>
+  );
+}
+
+function WantlistTab() {
+  const intl = useIntl();
+
+  return (
+    <TabsContent value="wantlist">
+      <Card className="text-center py-12">
+        <CardContent>
+          <Heart className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+          <h3 className="text-lg font-semibold mb-2">
+            {intl.formatMessage({
+              id: "page.collection.wantlist.redirect.title",
+              defaultMessage: "View Your Wantlist",
+            })}
+          </h3>
+          <p className="mb-6 text-muted-foreground">
+            {intl.formatMessage({
+              id: "page.collection.wantlist.redirect.description",
+              defaultMessage:
+                "See all the cards you're still missing in your collection.",
+            })}
+          </p>
+          <Link href="/collection/wantlist">
+            <Button>
+              <Heart className="w-4 h-4 mr-2" />
+              {intl.formatMessage({
+                id: "page.collection.wantlist.redirect.button",
+                defaultMessage: "Go to Wantlist",
+              })}
+            </Button>
+          </Link>
+        </CardContent>
+      </Card>
+    </TabsContent>
   );
 }
 

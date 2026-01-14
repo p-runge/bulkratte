@@ -1,4 +1,11 @@
-import { cardsTable, setsTable, userCardsTable } from "@/lib/db";
+import {
+  cardPricesTable,
+  cardsTable,
+  setsTable,
+  userCardsTable,
+  userSetCardsTable,
+  userSetsTable,
+} from "@/lib/db";
 import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
 import { TRPCError } from "@trpc/server";
 import { and, asc, desc, eq, gte, like, lte, or, sql } from "drizzle-orm";
@@ -231,5 +238,158 @@ export const userCardRouter = createTRPCRouter({
         );
 
       return { success: true };
+    }),
+
+  getWantlist: protectedProcedure
+    .input(
+      z
+        .object({
+          setId: z.string().optional(),
+          search: z.string().optional(),
+          rarity: z.string().optional(),
+          releaseDateFrom: z.string().optional(),
+          releaseDateTo: z.string().optional(),
+          sortBy: z
+            .enum(["number", "name", "rarity", "price"])
+            .optional()
+            .default("number"),
+          sortOrder: z.enum(["asc", "desc"]).optional().default("asc"),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      // Build WHERE conditions for filtering cards
+      const conditions = [];
+
+      if (input?.setId) {
+        conditions.push(eq(cardsTable.setId, input.setId));
+      }
+
+      if (input?.search) {
+        const searchCondition = or(
+          like(cardsTable.name, `%${input.search}%`),
+          like(cardsTable.number, `%${input.search}%`),
+        );
+        if (searchCondition) {
+          conditions.push(searchCondition);
+        }
+      }
+
+      if (input?.rarity && input.rarity !== "all") {
+        conditions.push(sql`${cardsTable.rarity} = ${input.rarity}`);
+      }
+
+      if (input?.releaseDateFrom || input?.releaseDateTo) {
+        const dateConditions = [];
+        if (input.releaseDateFrom) {
+          dateConditions.push(
+            gte(setsTable.releaseDate, input.releaseDateFrom),
+          );
+        }
+        if (input.releaseDateTo) {
+          dateConditions.push(lte(setsTable.releaseDate, input.releaseDateTo));
+        }
+        if (dateConditions.length > 0) {
+          const dateCondition = and(...dateConditions);
+          if (dateCondition) {
+            conditions.push(dateCondition);
+          }
+        }
+      }
+
+      // Determine order by clause
+      let orderByClause;
+      const orderDirection = input?.sortOrder === "desc" ? desc : asc;
+
+      switch (input?.sortBy) {
+        case "name":
+          orderByClause = orderDirection(cardsTable.name);
+          break;
+        case "rarity":
+          orderByClause = orderDirection(cardsTable.rarity);
+          break;
+        case "price":
+          orderByClause = orderDirection(cardsTable.created_at); // Fallback to created_at
+          break;
+        case "number":
+        default:
+          // For card number, we want to sort numerically
+          orderByClause = orderDirection(
+            sql`COALESCE(CAST(NULLIF(regexp_replace(${cardsTable.number}, '[^0-9]', '', 'g'), '') AS INTEGER), 0)`,
+          );
+          break;
+      }
+
+      // Get all card IDs that are in user's sets but don't have a user_card_id
+      const missingCardIds = await ctx.db
+        .selectDistinct({ cardId: userSetCardsTable.card_id })
+        .from(userSetCardsTable)
+        .innerJoin(
+          userSetsTable,
+          eq(userSetCardsTable.user_set_id, userSetsTable.id),
+        )
+        .where(
+          and(
+            eq(userSetsTable.user_id, ctx.session.user.id),
+            sql`${userSetCardsTable.user_card_id} IS NULL`,
+          ),
+        )
+        .then((res) => res.map((row) => row.cardId));
+
+      // If no missing cards, return empty array
+      if (missingCardIds.length === 0) {
+        return [];
+      }
+
+      // Build WHERE conditions for filtering cards
+      const cardConditions = [
+        sql`${cardsTable.id} IN (${sql.join(
+          missingCardIds.map((id) => sql`${id}`),
+          sql`, `,
+        )})`,
+      ];
+
+      if (input?.setId) {
+        cardConditions.push(eq(cardsTable.setId, input.setId));
+      }
+
+      if (input?.search) {
+        const searchCondition = or(
+          like(cardsTable.name, `%${input.search}%`),
+          like(cardsTable.number, `%${input.search}%`),
+        );
+        if (searchCondition) {
+          cardConditions.push(searchCondition);
+        }
+      }
+
+      if (input?.rarity && input.rarity !== "all") {
+        cardConditions.push(sql`${cardsTable.rarity} = ${input.rarity}`);
+      }
+
+      const whereClause =
+        cardConditions.length > 0 ? and(...cardConditions) : undefined;
+
+      // Get full card data for missing cards
+      const missingCards = await ctx.db
+        .select({
+          id: cardsTable.id,
+          name: cardsTable.name,
+          number: cardsTable.number,
+          rarity: cardsTable.rarity,
+          imageSmall: cardsTable.imageSmall,
+          imageLarge: cardsTable.imageLarge,
+          setId: cardsTable.setId,
+          created_at: cardsTable.created_at,
+          updated_at: cardsTable.updated_at,
+          price: cardPricesTable.price,
+        })
+        .from(cardsTable)
+        .leftJoin(setsTable, eq(cardsTable.setId, setsTable.id))
+        .leftJoin(cardPricesTable, eq(cardsTable.id, cardPricesTable.card_id))
+        .where(whereClause)
+        .orderBy(orderByClause);
+
+      return missingCards;
     }),
 });
