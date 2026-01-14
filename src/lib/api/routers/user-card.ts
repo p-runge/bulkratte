@@ -105,12 +105,16 @@ export const userCardRouter = createTRPCRouter({
         conditions.length > 0 ? and(...conditions) : undefined;
 
       // Determine order by clause
+      // Note: name sorting will be done after localization
+      const sortBy = input?.sortBy ?? "set-and-number";
+      const sortOrder = input?.sortOrder ?? "asc";
       let orderByClause;
-      const orderDirection = input?.sortOrder === "desc" ? desc : asc;
+      const orderDirection = sortOrder === "desc" ? desc : asc;
 
-      switch (input?.sortBy) {
+      switch (sortBy) {
         case "name":
-          orderByClause = orderDirection(cardsTable.name);
+          // Skip SQL sorting for name - will sort after localization
+          orderByClause = cardsTable.id;
           break;
         case "rarity":
           orderByClause = orderDirection(cardsTable.rarity);
@@ -171,10 +175,20 @@ export const userCardRouter = createTRPCRouter({
       );
 
       // Map localized card data back to user cards
-      return userCards.map((uc, index) => ({
+      const result = userCards.map((uc, index) => ({
         ...uc,
         card: localizedUserCards[index]!,
       }));
+
+      // Apply name sorting after localization if needed
+      if (sortBy === "name") {
+        result.sort((a, b) => {
+          const comparison = a.card.name.localeCompare(b.card.name);
+          return sortOrder === "desc" ? -comparison : comparison;
+        });
+      }
+
+      return result;
     }),
 
   delete: protectedProcedure
@@ -319,12 +333,16 @@ export const userCardRouter = createTRPCRouter({
       }
 
       // Determine order by clause
+      // Note: name sorting will be done after localization
+      const sortBy = input?.sortBy ?? "set-and-number";
+      const sortOrder = input?.sortOrder ?? "asc";
       let orderByClause;
-      const orderDirection = input?.sortOrder === "desc" ? desc : asc;
+      const orderDirection = sortOrder === "desc" ? desc : asc;
 
-      switch (input?.sortBy) {
+      switch (sortBy) {
         case "name":
-          orderByClause = orderDirection(cardsTable.name);
+          // Skip SQL sorting for name - will sort after localization
+          orderByClause = cardsTable.id;
           break;
         case "rarity":
           orderByClause = orderDirection(cardsTable.rarity);
@@ -419,11 +437,21 @@ export const userCardRouter = createTRPCRouter({
         );
 
       // Localize card data
-      return localizeRecords(
+      const localizedCards = await localizeRecords(
         missingCards,
         "cards",
         ["name", "imageSmall", "imageLarge"],
         ctx.language,
       );
+
+      // Apply name sorting after localization if needed
+      if (sortBy === "name") {
+        localizedCards.sort((a, b) => {
+          const comparison = a.name.localeCompare(b.name);
+          return sortOrder === "desc" ? -comparison : comparison;
+        });
+      }
+
+      return localizedCards;
     }),
 });

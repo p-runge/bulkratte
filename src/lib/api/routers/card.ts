@@ -1,7 +1,7 @@
 import { cardPricesTable, cardsTable, db, setsTable } from "@/lib/db";
 import { localizeRecord, localizeRecords } from "@/lib/db/localization";
-import { createTRPCRouter, publicProcedure } from "../trpc";
-import z from "zod";
+import pokemonAPI from "@/lib/pokemon-api";
+import { TRPCError } from "@trpc/server";
 import {
   and,
   asc,
@@ -14,8 +14,8 @@ import {
   or,
   sql,
 } from "drizzle-orm";
-import { TRPCError } from "@trpc/server";
-import pokemonAPI from "@/lib/pokemon-api";
+import z from "zod";
+import { createTRPCRouter, publicProcedure } from "../trpc";
 
 export const cardRouter = createTRPCRouter({
   getList: publicProcedure
@@ -79,12 +79,16 @@ export const cardRouter = createTRPCRouter({
         conditions.length > 0 ? and(...conditions) : undefined;
 
       // Determine order by clause
+      // Note: name sorting will be done after localization
+      const sortBy = input?.sortBy ?? "set-and-number";
+      const sortOrder = input?.sortOrder ?? "asc";
       let orderByClause;
-      const orderDirection = input?.sortOrder === "desc" ? desc : asc;
+      const orderDirection = sortOrder === "desc" ? desc : asc;
 
-      switch (input?.sortBy) {
+      switch (sortBy) {
         case "name":
-          orderByClause = orderDirection(cardsTable.name);
+          // Skip SQL sorting for name - will sort after localization
+          orderByClause = cardsTable.id;
           break;
         case "rarity":
           orderByClause = orderDirection(cardsTable.rarity);
@@ -178,12 +182,22 @@ export const cardRouter = createTRPCRouter({
       );
 
       // Localize the cards
-      return localizeRecords(
+      const localizedCards = await localizeRecords(
         cardsWithPrices,
         "cards",
         ["name", "imageSmall", "imageLarge"],
         ctx.language,
       );
+
+      // Apply name sorting after localization if needed
+      if (sortBy === "name") {
+        localizedCards.sort((a, b) => {
+          const comparison = a.name.localeCompare(b.name);
+          return sortOrder === "desc" ? -comparison : comparison;
+        });
+      }
+
+      return localizedCards;
     }),
 
   getById: publicProcedure

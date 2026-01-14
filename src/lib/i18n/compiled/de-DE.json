@@ -529,6 +529,12 @@
       "value": "Meine Sets"
     }
   ],
+  "page.collection.tab.wantlist": [
+    {
+      "type": 0,
+      "value": "Wunschliste"
+    }
+  ],
   "page.collection.title": [
     {
       "type": 0,

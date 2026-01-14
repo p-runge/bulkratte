@@ -541,12 +541,6 @@
       "value": "My Collection"
     }
   ],
-  "page.collection.wantlist.description": [
-    {
-      "type": 0,
-      "value": "Cards you are still missing in your custom sets"
-    }
-  ],
   "page.collection.wantlist.empty.description": [
     {
       "type": 0,
@@ -557,30 +551,6 @@
     {
       "type": 0,
       "value": "Your wantlist is empty!"
-    }
-  ],
-  "page.collection.wantlist.redirect.button": [
-    {
-      "type": 0,
-      "value": "Go to Wantlist"
-    }
-  ],
-  "page.collection.wantlist.redirect.description": [
-    {
-      "type": 0,
-      "value": "See all the cards you're still missing in your collection."
-    }
-  ],
-  "page.collection.wantlist.redirect.title": [
-    {
-      "type": 0,
-      "value": "View Your Wantlist"
-    }
-  ],
-  "page.collection.wantlist.title": [
-    {
-      "type": 0,
-      "value": "My Wantlist"
     }
   ],
   "page.error.action.home": [

@@ -3,7 +3,7 @@
 import { api } from "@/lib/api/react";
 import { useState } from "react";
 import { CardFilters, type FilterState } from "./card-filters";
-import { CardGrid, CardWithGridId } from "./card-grid";
+import { CardGrid } from "./card-grid";
 
 type UserCardBrowserProps = {
   onCardClick: (cardId: string) => void;
