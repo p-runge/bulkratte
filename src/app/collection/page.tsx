@@ -1,14 +1,13 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { api } from "@/lib/api/react";
-import { BookHeart, Heart, Library, Plus } from "lucide-react";
-import Link from "next/link";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BookHeart, Heart, Library } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { useIntl } from "react-intl";
 import MyCardsTab from "./_components/my-cards-tab";
+import MySetsTab from "./_components/my-sets-tab";
+import WantlistTab from "./_components/wantlist-tab";
 
 export default function CollectionPage() {
   const intl = useIntl();
@@ -22,9 +21,11 @@ export default function CollectionPage() {
       : m === "wantlist"
         ? "wantlist"
         : "collections";
-  console.log("Default Tab:", defaultTab);
+
+  const [activeTab, setActiveTab] = useState(defaultTab);
 
   function setMQueryParam(tab: string) {
+    setActiveTab(tab);
     const searchParams = new URLSearchParams(window.location.search);
     if (tab === "collection") {
       searchParams.delete("m");
@@ -88,132 +89,10 @@ export default function CollectionPage() {
             </span>
           </TabsTrigger>
         </TabsList>
-        <MySetsTab />
-        <MyCardsTab />
-        <WantlistTab />
+        {activeTab === "collections" && <MySetsTab />}
+        {activeTab === "my-cards" && <MyCardsTab />}
+        {activeTab === "wantlist" && <WantlistTab />}
       </Tabs>
     </>
-  );
-}
-
-function WantlistTab() {
-  const intl = useIntl();
-
-  return (
-    <TabsContent value="wantlist">
-      <Card className="text-center py-12">
-        <CardContent>
-          <Heart className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-lg font-semibold mb-2">
-            {intl.formatMessage({
-              id: "page.collection.wantlist.redirect.title",
-              defaultMessage: "View Your Wantlist",
-            })}
-          </h3>
-          <p className="mb-6 text-muted-foreground">
-            {intl.formatMessage({
-              id: "page.collection.wantlist.redirect.description",
-              defaultMessage:
-                "See all the cards you're still missing in your collection.",
-            })}
-          </p>
-          <Link href="/collection/wantlist">
-            <Button>
-              <Heart className="w-4 h-4 mr-2" />
-              {intl.formatMessage({
-                id: "page.collection.wantlist.redirect.button",
-                defaultMessage: "Go to Wantlist",
-              })}
-            </Button>
-          </Link>
-        </CardContent>
-      </Card>
-    </TabsContent>
-  );
-}
-
-function MySetsTab() {
-  const intl = useIntl();
-  const { data: userSets } = api.userSet.getList.useQuery();
-  if (!userSets) {
-    return null;
-  }
-
-  return (
-    <TabsContent value="collections">
-      <div className="mb-6 flex justify-end">
-        <Link href="/collection/new-set">
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            {intl.formatMessage({
-              id: "page.collection.action.add_set",
-              defaultMessage: "Add New Set",
-            })}
-          </Button>
-        </Link>
-      </div>
-      {userSets.length === 0 ? (
-        // No sets
-        <Card className="text-center py-12">
-          <CardContent>
-            <h3 className="text-lg font-semibold mb-2">
-              {intl.formatMessage({
-                id: "page.collection.sets.empty.title",
-                defaultMessage: "No sets added yet",
-              })}
-            </h3>
-            <p className="mb-6 text-muted-foreground">
-              {intl.formatMessage({
-                id: "page.collection.sets.empty.description",
-                defaultMessage: "Add your first set!",
-              })}
-            </p>
-            <Link href="/collection/new-set">
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                {intl.formatMessage({
-                  id: "page.collection.action.add_first_set",
-                  defaultMessage: "Add Your First Set",
-                })}
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      ) : (
-        // List sets in a grid
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {userSets.map((userSet) => (
-            <Link
-              key={userSet.id}
-              href={`/collection/${userSet.id}`}
-              className="block"
-            >
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardContent>
-                  <div className="flex gap-4">
-                    {userSet.image && (
-                      <img
-                        src={userSet.image}
-                        alt={userSet.name}
-                        className="w-24 h-24 sm:w-12 sm:h-12 xl:w-24 xl:h-24 object-contain rounded border shrink-0"
-                      />
-                    )}
-                    <div>
-                      <CardTitle className="text-lg">{userSet.name}</CardTitle>
-                      <p className="text-muted-foreground">
-                        {intl.formatMessage({
-                          id: "page.collection.sets.card.description",
-                          defaultMessage: "View and manage cards in this set.",
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      )}
-    </TabsContent>
   );
 }
