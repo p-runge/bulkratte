@@ -28,7 +28,7 @@ export function UserCardBrowser(props: UserCardBrowserProps) {
       filters.rarity && filters.rarity !== "all" ? filters.rarity : undefined,
     releaseDateFrom: filters.releaseDateFrom || undefined,
     releaseDateTo: filters.releaseDateTo || undefined,
-    sortBy: filters.sortBy as "set-and-number" | "name" | "rarity" | "price",
+    sortBy: filters.sortBy,
     sortOrder: filters.sortOrder,
   });
 
@@ -37,9 +37,10 @@ export function UserCardBrowser(props: UserCardBrowserProps) {
 
   const cards =
     data?.map((userCard) => ({
+      ...userCard.card,
+      price: userCard.card.price ?? undefined,
       gridId: userCard.id,
-      ...userCard.card!,
-    })) ?? ([] as CardWithGridId[]);
+    })) ?? [];
 
   return (
     <div className="space-y-6">
@@ -47,8 +48,8 @@ export function UserCardBrowser(props: UserCardBrowserProps) {
         onFilterChange={setFilters}
         availableCards={
           unfilteredData?.map((userCard) => ({
-            setId: userCard.card!.setId,
-            rarity: userCard.card!.rarity,
+            setId: userCard.card.setId,
+            rarity: userCard.card.rarity,
           })) ?? []
         }
       />

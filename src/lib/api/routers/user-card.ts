@@ -6,6 +6,7 @@ import {
   userSetCardsTable,
   userSetsTable,
 } from "@/lib/db";
+import { localizeRecords } from "@/lib/db/localization";
 import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
 import { TRPCError } from "@trpc/server";
 import { and, asc, desc, eq, gte, like, lte, or, sql } from "drizzle-orm";
@@ -153,7 +154,7 @@ export const userCardRouter = createTRPCRouter({
           },
         })
         .from(userCardsTable)
-        .leftJoin(cardsTable, eq(userCardsTable.card_id, cardsTable.id))
+        .innerJoin(cardsTable, eq(userCardsTable.card_id, cardsTable.id))
         .leftJoin(setsTable, eq(cardsTable.setId, setsTable.id))
         .leftJoin(cardPricesTable, eq(cardsTable.id, cardPricesTable.card_id))
         .where(whereClause)
@@ -161,7 +162,19 @@ export const userCardRouter = createTRPCRouter({
           ...(Array.isArray(orderByClause) ? orderByClause : [orderByClause]),
         );
 
-      return userCards;
+      // Localize card data
+      const localizedUserCards = await localizeRecords(
+        userCards.map((uc) => uc.card),
+        "cards",
+        ["name", "imageSmall", "imageLarge"],
+        ctx.language,
+      );
+
+      // Map localized card data back to user cards
+      return userCards.map((uc, index) => ({
+        ...uc,
+        card: localizedUserCards[index]!,
+      }));
     }),
 
   delete: protectedProcedure
@@ -405,6 +418,12 @@ export const userCardRouter = createTRPCRouter({
           ...(Array.isArray(orderByClause) ? orderByClause : [orderByClause]),
         );
 
-      return missingCards;
+      // Localize card data
+      return localizeRecords(
+        missingCards,
+        "cards",
+        ["name", "imageSmall", "imageLarge"],
+        ctx.language,
+      );
     }),
 });

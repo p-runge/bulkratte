@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { cardsTable, userSetCardsTable, userSetsTable } from "@/lib/db/index";
+import { localizeRecords } from "@/lib/db/localization";
 import { TRPCError } from "@trpc/server";
 import { and, asc, eq, inArray, isNotNull, ne } from "drizzle-orm";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
@@ -108,9 +109,37 @@ export const userSetRouter = createTRPCRouter({
         .where(eq(userSetCardsTable.user_set_id, input.id))
         .orderBy(asc(userSetCardsTable.order), asc(userSetCardsTable.id));
 
+      // Separate cards that exist from those that don't
+      const cardsToLocalize = userSetCards
+        .map((usc) => usc.card)
+        .filter((c): c is NonNullable<typeof c> => c !== null && c.id !== null);
+
+      // Localize card data
+      const localizedCards = await localizeRecords(
+        cardsToLocalize,
+        "cards",
+        ["name", "imageSmall", "imageLarge"],
+        ctx.language,
+      );
+
+      // Create a map of card id to localized card
+      const localizedCardMap = new Map(
+        localizedCards.map((card) => [card.id, card]),
+      );
+
+      // Map localized card data back to user set cards
+      const localizedUserSetCards = userSetCards.map((usc) => {
+        if (!usc.card || !usc.card.id) return usc;
+        const localizedCard = localizedCardMap.get(usc.card.id);
+        return {
+          ...usc,
+          card: localizedCard ?? usc.card,
+        };
+      });
+
       return {
         set: userSet,
-        cards: userSetCards,
+        cards: localizedUserSetCards,
       };
     }),
 

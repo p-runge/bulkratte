@@ -43,7 +43,7 @@ export function CardBrowser(props: CardBrowserProps) {
       filters.rarity && filters.rarity !== "all" ? filters.rarity : undefined,
     releaseDateFrom: filters.releaseDateFrom || undefined,
     releaseDateTo: filters.releaseDateTo || undefined,
-    sortBy: filters.sortBy as "set-and-number" | "name" | "rarity" | "price",
+    sortBy: filters.sortBy,
     sortOrder: filters.sortOrder,
   });
 

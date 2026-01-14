@@ -1,4 +1,5 @@
 import { cardPricesTable, cardsTable, db, setsTable } from "@/lib/db";
+import { localizeRecord, localizeRecords } from "@/lib/db/localization";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import z from "zod";
 import {
@@ -34,7 +35,7 @@ export const cardRouter = createTRPCRouter({
         })
         .optional(),
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       // Build WHERE conditions
       const conditions = [];
 
@@ -176,7 +177,13 @@ export const cardRouter = createTRPCRouter({
         }),
       );
 
-      return cardsWithPrices;
+      // Localize the cards
+      return localizeRecords(
+        cardsWithPrices,
+        "cards",
+        ["name", "imageSmall", "imageLarge"],
+        ctx.language,
+      );
     }),
 
   getById: publicProcedure
@@ -185,7 +192,7 @@ export const cardRouter = createTRPCRouter({
         cardId: z.string(),
       }),
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const card = await db
         .select()
         .from(cardsTable)
@@ -200,7 +207,12 @@ export const cardRouter = createTRPCRouter({
         });
       }
 
-      return card;
+      return localizeRecord(
+        card,
+        "cards",
+        ["name", "imageSmall", "imageLarge"],
+        ctx.language,
+      );
     }),
 
   getByIds: publicProcedure
@@ -209,7 +221,7 @@ export const cardRouter = createTRPCRouter({
         cardIds: z.array(z.string()),
       }),
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       if (input.cardIds.length === 0) {
         return [];
       }
@@ -219,6 +231,11 @@ export const cardRouter = createTRPCRouter({
         .from(cardsTable)
         .where(inArray(cardsTable.id, input.cardIds));
 
-      return cards;
+      return localizeRecords(
+        cards,
+        "cards",
+        ["name", "imageSmall", "imageLarge"],
+        ctx.language,
+      );
     }),
 });

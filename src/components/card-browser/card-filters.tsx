@@ -22,7 +22,7 @@ export type FilterState = {
   search: string;
   releaseDateFrom: string;
   releaseDateTo: string;
-  sortBy: string;
+  sortBy: "set-and-number" | "name" | "rarity" | "price";
   sortOrder: "asc" | "desc";
 };
 const EMPTY_FILTERS: FilterState = {
