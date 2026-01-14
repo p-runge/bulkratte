@@ -179,12 +179,6 @@
       "value": "Card Name"
     }
   ],
-  "card.filter.sort.number": [
-    {
-      "type": 0,
-      "value": "Card Number"
-    }
-  ],
   "card.filter.sort.placeholder": [
     {
       "type": 0,
@@ -201,6 +195,12 @@
     {
       "type": 0,
       "value": "Card Rarity"
+    }
+  ],
+  "card.filter.sort.set-and-number": [
+    {
+      "type": 0,
+      "value": "Set → Number"
     }
   ],
   "card.filter.title": [
@@ -529,10 +529,58 @@
       "value": "My Sets"
     }
   ],
+  "page.collection.tab.wantlist": [
+    {
+      "type": 0,
+      "value": "Wantlist"
+    }
+  ],
   "page.collection.title": [
     {
       "type": 0,
       "value": "My Collection"
+    }
+  ],
+  "page.collection.wantlist.description": [
+    {
+      "type": 0,
+      "value": "Cards you are still missing in your custom sets"
+    }
+  ],
+  "page.collection.wantlist.empty.description": [
+    {
+      "type": 0,
+      "value": "You have all cards in your custom sets!"
+    }
+  ],
+  "page.collection.wantlist.empty.title": [
+    {
+      "type": 0,
+      "value": "Your wantlist is empty!"
+    }
+  ],
+  "page.collection.wantlist.redirect.button": [
+    {
+      "type": 0,
+      "value": "Go to Wantlist"
+    }
+  ],
+  "page.collection.wantlist.redirect.description": [
+    {
+      "type": 0,
+      "value": "See all the cards you're still missing in your collection."
+    }
+  ],
+  "page.collection.wantlist.redirect.title": [
+    {
+      "type": 0,
+      "value": "View Your Wantlist"
+    }
+  ],
+  "page.collection.wantlist.title": [
+    {
+      "type": 0,
+      "value": "My Wantlist"
     }
   ],
   "page.error.action.home": [

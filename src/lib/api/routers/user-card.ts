@@ -53,9 +53,9 @@ export const userCardRouter = createTRPCRouter({
           releaseDateFrom: z.string().optional(),
           releaseDateTo: z.string().optional(),
           sortBy: z
-            .enum(["number", "name", "rarity", "price"])
+            .enum(["set-and-number", "name", "rarity", "price"])
             .optional()
-            .default("number"),
+            .default("set-and-number"),
           sortOrder: z.enum(["asc", "desc"]).optional().default("asc"),
         })
         .optional(),
@@ -115,15 +115,19 @@ export const userCardRouter = createTRPCRouter({
           orderByClause = orderDirection(cardsTable.rarity);
           break;
         case "price":
-          orderByClause = orderDirection(userCardsTable.created_at); // User cards don't have price, fallback to created_at
-          break;
-        case "number":
-        default:
-          // For card number, we want to sort numerically
-          // Handle empty strings by converting to NULL, then default to 0
           orderByClause = orderDirection(
-            sql`COALESCE(CAST(NULLIF(regexp_replace(${cardsTable.number}, '[^0-9]', '', 'g'), '') AS INTEGER), 0)`,
+            sql`COALESCE(${cardPricesTable.price}, 0)`,
           );
+          break;
+        case "set-and-number":
+        default:
+          // Sort by set release date first, then by card number within each set
+          orderByClause = [
+            orderDirection(setsTable.releaseDate),
+            orderDirection(
+              sql`COALESCE(CAST(NULLIF(regexp_replace(${cardsTable.number}, '[^0-9]', '', 'g'), '') AS INTEGER), 0)`,
+            ),
+          ];
           break;
       }
 
@@ -145,13 +149,17 @@ export const userCardRouter = createTRPCRouter({
             imageSmall: cardsTable.imageSmall,
             imageLarge: cardsTable.imageLarge,
             setId: cardsTable.setId,
+            price: cardPricesTable.price,
           },
         })
         .from(userCardsTable)
         .leftJoin(cardsTable, eq(userCardsTable.card_id, cardsTable.id))
         .leftJoin(setsTable, eq(cardsTable.setId, setsTable.id))
+        .leftJoin(cardPricesTable, eq(cardsTable.id, cardPricesTable.card_id))
         .where(whereClause)
-        .orderBy(orderByClause);
+        .orderBy(
+          ...(Array.isArray(orderByClause) ? orderByClause : [orderByClause]),
+        );
 
       return userCards;
     }),
@@ -250,9 +258,9 @@ export const userCardRouter = createTRPCRouter({
           releaseDateFrom: z.string().optional(),
           releaseDateTo: z.string().optional(),
           sortBy: z
-            .enum(["number", "name", "rarity", "price"])
+            .enum(["set-and-number", "name", "rarity", "price"])
             .optional()
-            .default("number"),
+            .default("set-and-number"),
           sortOrder: z.enum(["asc", "desc"]).optional().default("asc"),
         })
         .optional(),
@@ -309,14 +317,19 @@ export const userCardRouter = createTRPCRouter({
           orderByClause = orderDirection(cardsTable.rarity);
           break;
         case "price":
-          orderByClause = orderDirection(cardsTable.created_at); // Fallback to created_at
-          break;
-        case "number":
-        default:
-          // For card number, we want to sort numerically
           orderByClause = orderDirection(
-            sql`COALESCE(CAST(NULLIF(regexp_replace(${cardsTable.number}, '[^0-9]', '', 'g'), '') AS INTEGER), 0)`,
+            sql`COALESCE(${cardPricesTable.price}, 0)`,
           );
+          break;
+        case "set-and-number":
+        default:
+          // Sort by set release date first, then by card number within each set
+          orderByClause = [
+            orderDirection(setsTable.releaseDate),
+            orderDirection(
+              sql`COALESCE(CAST(NULLIF(regexp_replace(${cardsTable.number}, '[^0-9]', '', 'g'), '') AS INTEGER), 0)`,
+            ),
+          ];
           break;
       }
 
@@ -388,7 +401,9 @@ export const userCardRouter = createTRPCRouter({
         .leftJoin(setsTable, eq(cardsTable.setId, setsTable.id))
         .leftJoin(cardPricesTable, eq(cardsTable.id, cardPricesTable.card_id))
         .where(whereClause)
-        .orderBy(orderByClause);
+        .orderBy(
+          ...(Array.isArray(orderByClause) ? orderByClause : [orderByClause]),
+        );
 
       return missingCards;
     }),

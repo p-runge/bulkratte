@@ -27,9 +27,9 @@ export const cardRouter = createTRPCRouter({
           releaseDateFrom: z.string().optional(),
           releaseDateTo: z.string().optional(),
           sortBy: z
-            .enum(["number", "name", "rarity", "price"])
+            .enum(["set-and-number", "name", "rarity", "price"])
             .optional()
-            .default("number"),
+            .default("set-and-number"),
           sortOrder: z.enum(["asc", "desc"]).optional().default("asc"),
         })
         .optional(),
@@ -91,7 +91,7 @@ export const cardRouter = createTRPCRouter({
         case "price":
           orderByClause = orderDirection(cardPricesTable.price);
           break;
-        case "number":
+        case "set-and-number":
         default:
           // For card number, we want to sort numerically
           // Handle empty strings by converting to NULL, then default to 0

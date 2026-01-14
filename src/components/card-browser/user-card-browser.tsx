@@ -17,7 +17,7 @@ export function UserCardBrowser(props: UserCardBrowserProps) {
     search: "",
     releaseDateFrom: "",
     releaseDateTo: "",
-    sortBy: "number",
+    sortBy: "set-and-number",
     sortOrder: "asc",
   });
 
@@ -28,9 +28,13 @@ export function UserCardBrowser(props: UserCardBrowserProps) {
       filters.rarity && filters.rarity !== "all" ? filters.rarity : undefined,
     releaseDateFrom: filters.releaseDateFrom || undefined,
     releaseDateTo: filters.releaseDateTo || undefined,
-    sortBy: filters.sortBy as "number" | "name" | "rarity" | "price",
+    sortBy: filters.sortBy as "set-and-number" | "name" | "rarity" | "price",
     sortOrder: filters.sortOrder,
   });
+
+  // Get unfiltered data for filter options
+  const { data: unfilteredData } = api.userCard.getList.useQuery({});
+
   const cards = data?.map((userCard) => ({
     gridId: userCard.id,
     ...userCard.card!,
@@ -38,7 +42,15 @@ export function UserCardBrowser(props: UserCardBrowserProps) {
 
   return (
     <div className="space-y-6">
-      <CardFilters onFilterChange={setFilters} />
+      <CardFilters
+        onFilterChange={setFilters}
+        availableCards={
+          unfilteredData?.map((userCard) => ({
+            setId: userCard.card!.setId,
+            rarity: userCard.card!.rarity,
+          })) ?? []
+        }
+      />
 
       <CardGrid
         cards={cards}

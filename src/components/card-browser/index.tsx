@@ -30,7 +30,7 @@ export function CardBrowser(props: CardBrowserProps) {
     search: "",
     releaseDateFrom: "",
     releaseDateTo: "",
-    sortBy: "number",
+    sortBy: "set-and-number",
     sortOrder: "asc",
   });
 
@@ -43,8 +43,13 @@ export function CardBrowser(props: CardBrowserProps) {
       filters.rarity && filters.rarity !== "all" ? filters.rarity : undefined,
     releaseDateFrom: filters.releaseDateFrom || undefined,
     releaseDateTo: filters.releaseDateTo || undefined,
-    sortBy: filters.sortBy as "number" | "name" | "rarity" | "price",
+    sortBy: filters.sortBy as "set-and-number" | "name" | "rarity" | "price",
     sortOrder: filters.sortOrder,
+  });
+
+  // Get unfiltered data for filter options
+  const { data: unfilteredData } = api.card.getList.useQuery({
+    setId: props.setId || undefined,
   });
 
   // Map cards to include gridId
@@ -71,6 +76,12 @@ export function CardBrowser(props: CardBrowserProps) {
       <CardFilters
         onFilterChange={setFilters}
         disableSetFilter={!!props.setId}
+        availableCards={
+          unfilteredData?.map((card) => ({
+            setId: card.setId,
+            rarity: card.rarity,
+          })) ?? []
+        }
       />
 
       <CardGrid

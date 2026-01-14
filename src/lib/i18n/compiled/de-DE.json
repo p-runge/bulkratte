@@ -179,12 +179,6 @@
       "value": "Kartenname"
     }
   ],
-  "card.filter.sort.number": [
-    {
-      "type": 0,
-      "value": "Kartennummer"
-    }
-  ],
   "card.filter.sort.placeholder": [
     {
       "type": 0,
@@ -201,6 +195,12 @@
     {
       "type": 0,
       "value": "Kartenseltenheit"
+    }
+  ],
+  "card.filter.sort.set-and-number": [
+    {
+      "type": 0,
+      "value": "Set → Nummer"
     }
   ],
   "card.filter.title": [

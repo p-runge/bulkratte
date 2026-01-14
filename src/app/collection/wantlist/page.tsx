@@ -20,7 +20,7 @@ export default function WantlistPage() {
     search: "",
     releaseDateFrom: "",
     releaseDateTo: "",
-    sortBy: "number",
+    sortBy: "set-and-number",
     sortOrder: "asc",
   });
 
@@ -31,15 +31,21 @@ export default function WantlistPage() {
       filters.rarity && filters.rarity !== "all" ? filters.rarity : undefined,
     releaseDateFrom: filters.releaseDateFrom || undefined,
     releaseDateTo: filters.releaseDateTo || undefined,
-    sortBy: filters.sortBy as "number" | "name" | "rarity" | "price",
+    sortBy: filters.sortBy as "set-and-number" | "name" | "rarity" | "price",
     sortOrder: filters.sortOrder,
   });
+
+  // Get unfiltered data for filter options
+  const { data: unfilteredWantlistData } = api.userCard.getWantlist.useQuery(
+    {},
+  );
 
   // Map cards to include gridId for CardGrid component
   const wantlistCards =
     wantlistData?.map((card) => ({
       ...card,
       gridId: card.id,
+      price: card.price ?? undefined,
     })) ?? [];
 
   return (
@@ -60,7 +66,16 @@ export default function WantlistPage() {
       </div>
 
       <div className="space-y-6">
-        <CardFilters onFilterChange={setFilters} disableSetFilter={false} />
+        <CardFilters
+          onFilterChange={setFilters}
+          disableSetFilter={false}
+          availableCards={
+            unfilteredWantlistData?.map((card) => ({
+              setId: card.setId,
+              rarity: card.rarity,
+            })) ?? []
+          }
+        />
 
         {isLoading ? (
           <div className="flex justify-center py-12">
