@@ -41,7 +41,8 @@ const Progress = React.forwardRef<
             <div
               key={index}
               className={cn(
-                "absolute top-0 left-0 h-full transition-all border-r border-black/20",
+                "absolute top-0 left-0 h-full transition-all",
+                segment.value > 0 && "border-r border-black/20",
                 segment.className || "bg-primary",
               )}
               style={{ width: `${segment.value || 0}%` }}
