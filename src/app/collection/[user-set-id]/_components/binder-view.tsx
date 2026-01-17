@@ -109,7 +109,6 @@ function ViewSlot({ cardData, userCardsByCardId, onCardClick }: ViewSlotProps) {
 // Slot component for edit mode
 interface EditSlotProps {
   card: MinimalCardData | null;
-  index: number;
   onRemove: () => void;
   onAdd: () => void;
   onDragStart: (e: React.DragEvent) => void;
@@ -120,7 +119,6 @@ interface EditSlotProps {
 
 function EditSlot({
   card,
-  index,
   onRemove,
   onAdd,
   onDragStart,
@@ -497,7 +495,6 @@ export function BinderView(props: BinderViewProps) {
                           <EditSlot
                             key={globalIndex}
                             card={cardData}
-                            index={globalIndex}
                             onRemove={() => handleRemove(globalIndex)}
                             onAdd={() => handleAdd(globalIndex)}
                             onDragStart={handleDragStart(globalIndex)}
