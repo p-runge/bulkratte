@@ -48,7 +48,10 @@ export default function BinderPage({
 
   return (
     <>
-      <div className="border border-gray-500 shadow-sm p-4 rounded-lg">
+      <div
+        className="border border-gray-500 shadow-sm p-[2%] rounded-lg flex flex-col flex-1 max-w-full"
+        style={{ aspectRatio: "1", maxHeight: "100%" }}
+      >
         <h3 className="text-sm font-medium text-gray-500 mb-4">
           <FormattedMessage
             id="binder.pageNumber"
@@ -56,12 +59,7 @@ export default function BinderPage({
             values={{ number: pageNumber }}
           />
         </h3>
-        <div
-          className="grid gap-2"
-          style={{
-            gridTemplateColumns: `repeat(${PAGE_DIMENSIONS.columns}, minmax(0, 1fr))`,
-          }}
-        >
+        <div className="grid grid-cols-3 grid-rows-3 gap-2 flex-1 w-full">
           {cards.map((card, index) => (
             <CardSlot
               key={index}
@@ -73,7 +71,7 @@ export default function BinderPage({
       </div>
 
       <Dialog open={currentPosition !== null} onOpenChange={closeDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>
               <FormattedMessage

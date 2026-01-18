@@ -95,8 +95,8 @@ function Content() {
     form.setValue("image", null);
   };
   return (
-    <>
-      <div className="flex items-center gap-4 mb-6">
+    <div className="flex flex-col h-[calc(100vh-200px)] min-h-0">
+      <div className="flex items-center gap-4 mb-6 shrink-0">
         <Link href="/collection">
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
@@ -118,9 +118,9 @@ function Content() {
         </div>
       </div>
 
-      <div className="space-y-6">
+      <div className="flex flex-col gap-6 flex-1 min-h-0">
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="bg-card border rounded-lg p-6">
+          <div className="bg-card border rounded-lg p-6 shrink-0">
             <div className="mb-6">
               <ImageUpload
                 imagePreview={imagePreview}
@@ -176,8 +176,10 @@ function Content() {
           </div>
         </form>
 
-        <Binder />
+        <div className="flex-1 min-h-0 flex flex-col">
+          <Binder />
+        </div>
       </div>
-    </>
+    </div>
   );
 }

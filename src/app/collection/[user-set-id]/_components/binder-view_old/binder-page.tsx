@@ -96,7 +96,15 @@ export function BinderPage({
                 CARDS_PER_PAGE +
               slotIndex;
 
-            if (isEditMode && cardDataMap && onRemove && onAdd && onDragStart && onDragOver && onDrop) {
+            if (
+              isEditMode &&
+              cardDataMap &&
+              onRemove &&
+              onAdd &&
+              onDragStart &&
+              onDragOver &&
+              onDrop
+            ) {
               const cardData = card?.cardId
                 ? (cardDataMap.get(card.cardId) ?? null)
                 : null;

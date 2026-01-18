@@ -17,7 +17,7 @@ export default function CardSlot({
   }
 
   return (
-    <div className="aspect-245/337 border border-gray-400 rounded flex items-center justify-center text-xs font-medium">
+    <div className="w-full max-w-full max-h-full aspect-245/337 border border-gray-400 rounded flex items-center justify-center text-xs font-medium relative overflow-hidden">
       {card ? (
         <Image
           src={card.imageSmall}
@@ -34,7 +34,6 @@ export default function CardSlot({
         variant="destructive"
         size="icon"
         className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-        // onClick={onRemove}
       >
         <X className="h-4 w-4" />
       </Button>
@@ -50,22 +49,19 @@ function EmptyCardSlot({ position }: { position: number }) {
   };
 
   return (
-    <div
-      className={cn(
-        "aspect-245/337 bg-muted/30 rounded border-2 border-dashed border-muted-foreground/20",
-        "flex items-center justify-center group hover:border-primary/50 transition-colors",
-      )}
-      // onDragOver={onDragOver}
-      // onDrop={onDrop}
+    <Button
+      variant="link"
+      onClick={onAdd}
+      className="w-full h-full p-0 flex items-center justify-center"
     >
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onAdd}
-        className="opacity-0 group-hover:opacity-100 transition-opacity"
+      <div
+        className={cn(
+          "w-full max-w-full max-h-full aspect-245/337 bg-muted/30 rounded border-2 border-dashed border-muted-foreground/20",
+          "flex items-center justify-center group hover:border-primary/50 transition-colors",
+        )}
       >
-        <Plus className="h-6 w-6" />
-      </Button>
-    </div>
+        <Plus className="h-6 w-6 opacity-20 group-hover:opacity-100 transition-opacity" />
+      </div>
+    </Button>
   );
 }
