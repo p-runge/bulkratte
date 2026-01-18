@@ -1,6 +1,11 @@
 "use client";
 
 import { Binder } from "@/components/binder";
+import {
+  BinderFormSchema,
+  BinderProvider,
+  useBinderContext,
+} from "@/components/binder/binder-context";
 import { BinderCardData } from "@/components/binder/types";
 import { ImageUpload, useImageUpload } from "@/components/image-upload";
 import { Button } from "@/components/ui/button";
@@ -11,52 +16,51 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { FormattedMessage, useIntl } from "react-intl";
 import z from "zod";
 
-const FormSchema = z.object({
-  name: z.string().min(1, "Set name is required"),
-  image: z.string().optional(),
-  cardData: z.array(
-    z.object({
-      cardId: z.string(),
-      order: z.number(),
-    }),
-  ),
-});
-
 export default function NewSetPage() {
+  return (
+    <BinderProvider
+      initialUserSet={{
+        set: {
+          // TODO: make id and createdAt not required here
+          id: "",
+          createdAt: new Date().toISOString(),
+          name: "",
+          image: null,
+        },
+        cards: [],
+      }}
+    >
+      <Content />
+    </BinderProvider>
+  );
+}
+
+function Content() {
   const router = useRouter();
   const intl = useIntl();
+
+  const { form } = useBinderContext();
 
   const { mutateAsync: createUserSet, isPending } =
     api.userSet.create.useMutation();
 
-  const [cardData, setCardData] = useState<Map<number, BinderCardData>>(
-    new Map(),
-  );
+  const imageValue = form.watch("image");
+  const nameValue = form.watch("name");
+  const cardDataValue = form.watch("cardData");
 
-  const form = useForm({
-    resolver: zodResolver(FormSchema),
-    defaultValues: {
-      name: "",
-      image: undefined,
-      cardData: [],
-    },
-  });
-
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors },
-  } = form;
-  const imageValue = watch("image");
-  const nameValue = watch("name");
-  const cardDataValue = watch("cardData");
+  // const { data: cards } = api.card.getByIds.useQuery({
+  //   cardIds: cardDataValue.map((cd) => cd.cardId),
+  // });
+  // const cardsData =
+  //   cards?.map((card) => ({
+  //     card,
+  //     order: cardDataValue.find((cd) => cd.cardId === card.id)?.order ?? 0,
+  //   })) ?? [];
 
   const {
     imagePreview,
@@ -65,37 +69,22 @@ export default function NewSetPage() {
     handleRemoveImage: onRemoveImage,
   } = useImageUpload(imageValue ?? null);
 
-  async function onSubmit(data: z.infer<typeof FormSchema>) {
+  async function onSubmit(data: z.infer<typeof BinderFormSchema>) {
     await createUserSet({
       name: data.name,
-      image: data.image,
+      image: data.image ?? undefined,
       cardData: data.cardData,
     });
     router.push("/collection");
   }
 
-  const handleCardsChange = (newCardData: Map<number, BinderCardData>) => {
-    setCardData(newCardData);
-
-    // Convert Map to array format for form
-    const cardDataArray = Array.from(newCardData.entries())
-      .filter(([_, card]) => card.card !== null)
-      .map(([order, card]) => ({
-        cardId: card.card.id,
-        order,
-      }));
-
-    setValue("cardData", cardDataArray);
-  };
-
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     onImageChange(e);
-    // Extract the uploaded image URL from the event and set it in the form
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setValue("image", reader.result as string);
+        form.setValue("image", reader.result as string);
       };
       reader.readAsDataURL(file);
     }
@@ -103,9 +92,8 @@ export default function NewSetPage() {
 
   const handleRemoveImage = () => {
     onRemoveImage();
-    setValue("image", undefined);
+    form.setValue("image", null);
   };
-
   return (
     <>
       <div className="flex items-center gap-4 mb-6">
@@ -131,9 +119,8 @@ export default function NewSetPage() {
       </div>
 
       <div className="space-y-6">
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="bg-card border rounded-lg p-6">
-            {/* Image Upload Section */}
             <div className="mb-6">
               <ImageUpload
                 imagePreview={imagePreview}
@@ -153,15 +140,15 @@ export default function NewSetPage() {
                 </Label>
                 <Input
                   id="name"
-                  {...register("name")}
+                  {...form.register("name")}
                   placeholder={intl.formatMessage({
                     id: "form.field.set_name.placeholder",
                     defaultMessage: "Enter set name",
                   })}
                 />
-                {errors.name && (
+                {form.formState.errors.name && (
                   <p className="text-sm text-destructive">
-                    {errors.name.message}
+                    {form.formState.errors.name.message}
                   </p>
                 )}
               </div>
@@ -189,7 +176,7 @@ export default function NewSetPage() {
           </div>
         </form>
 
-        <Binder cardData={Array.from(cardData.values())} />
+        <Binder />
       </div>
     </>
   );

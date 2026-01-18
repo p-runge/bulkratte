@@ -1,44 +1,48 @@
+import { useBinderContext } from "./binder-context";
 import BinderPage from "./binder-page";
 import { BinderCard, BinderCardData } from "./types";
-import { BinderProvider } from "./binder-context";
-
-type BinderViewProps = {
-  cardData: BinderCardData[];
-};
 
 export const PAGE_DIMENSIONS = { columns: 3, rows: 3 };
 const PAGE_SIZE = PAGE_DIMENSIONS.columns * PAGE_DIMENSIONS.rows;
 
-export function Binder({ cardData }: BinderViewProps) {
+export function Binder() {
+  const { cardData } = useBinderContext();
   const orderedCards = generateOrderedCards(cardData);
+
+  // ensure the amount of cards is a multiple of PAGE_SIZE * 2, and is at least PAGE_SIZE * 2
+  const amountOfCards = Math.max(
+    PAGE_SIZE * 2,
+    Math.ceil(orderedCards.length / (PAGE_SIZE * 2)) * (PAGE_SIZE * 2),
+  );
+  while (orderedCards.length < amountOfCards) {
+    orderedCards.push(null);
+  }
 
   const pages = splitIntoPages(orderedCards, PAGE_SIZE);
 
   return (
-    <BinderProvider>
-      <div className="flex flex-col gap-8">
-        {pages.map((pageCards, pageIndex) => (
-          <BinderPage
-            key={pageIndex}
-            cards={pageCards}
-            pageNumber={pageIndex + 1}
-            pageStartIndex={pageIndex * PAGE_SIZE}
-          />
-        ))}
-      </div>
-    </BinderProvider>
+    <div className="flex gap-8 justify-center">
+      {pages.map((pageCards, pageIndex) => (
+        <BinderPage
+          key={pageIndex}
+          cards={pageCards}
+          pageNumber={pageIndex + 1}
+          pageStartIndex={pageIndex * PAGE_SIZE}
+        />
+      ))}
+    </div>
   );
 }
 
 function generateOrderedCards(
   cardData: BinderCardData[],
-): (BinderCard | null)[] {
+): (BinderCard | null | undefined)[] {
   if (cardData.length === 0) return [];
 
   const maxOrder = Math.max(...cardData.map((cd) => cd.order));
-  const orderedCards: (BinderCard | null)[] = new Array(maxOrder + 1).fill(
-    null,
-  );
+  const orderedCards: (BinderCard | null | undefined)[] = new Array(
+    maxOrder + 1,
+  ).fill(null);
 
   cardData.forEach(({ card, order }) => {
     orderedCards[order] = card;

@@ -8,6 +8,7 @@ export type UserCard = Awaited<
 
 export type BinderCard = Pick<Card, "id" | "name" | "imageSmall">;
 export type BinderCardData = {
-  card: BinderCard;
+  // the card prop is potentially undefined during the loading state of the getByIds query
+  card?: BinderCard;
   order: number;
 };

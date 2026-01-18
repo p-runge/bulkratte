@@ -1,12 +1,18 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
-import { BinderCard } from "./types";
+import { api } from "@/lib/api/react";
+import { Card } from "@/lib/db";
+import { useRHFForm } from "@/lib/form/utils";
+import React, { createContext, useContext } from "react";
+import { useForm } from "react-hook-form";
+import z from "zod";
+import { BinderCardData, UserSet } from "./types";
 
 type BinderContextValue = {
-  pickCardsForPosition: (position: number) => void;
-  addCardsToPosition: (position: number, cards: BinderCard[]) => void;
+  form: ReturnType<typeof useForm<z.infer<typeof BinderFormSchema>>>;
+  cardData: BinderCardData[];
   currentPosition: number | null;
+  pickCardsForPosition: (position: number) => void;
   closeCardPicker: () => void;
 };
 
@@ -14,32 +20,52 @@ const BinderContext = createContext<BinderContextValue | undefined>(undefined);
 
 export function BinderProvider({
   children,
-  onAddCards,
+  initialUserSet,
 }: {
   children: React.ReactNode;
-  onAddCards?: (position: number, cards: BinderCard[]) => void;
+  initialUserSet: UserSet;
 }) {
-  const [currentPosition, setCurrentPosition] = useState<number | null>(null);
+  const form = useRHFForm(BinderFormSchema, {
+    defaultValues: {
+      name: initialUserSet.set.name,
+      image: initialUserSet.set.image,
+      cardData: initialUserSet.cards.map((card, index) => ({
+        cardId: card.id,
+        order: index,
+      })),
+    },
+  });
 
-  const pickCardsForPosition = (position: number) => {
-    setCurrentPosition(position);
-  };
+  const formCardData = form.watch("cardData");
+  const { data: cards } = api.card.getByIds.useQuery(
+    {
+      cardIds: formCardData.map((cd) => cd.cardId),
+    },
+    {
+      placeholderData: (previousData) => previousData,
+    },
+  );
 
-  const addCardsToPosition = (position: number, cards: BinderCard[]) => {
-    onAddCards?.(position, cards);
+  const cardData = formCardData.map((cd) => {
+    const card = cards?.find((c) => c.id === cd.cardId);
+    return { card, order: cd.order };
+  });
+
+  const [currentPosition, setCurrentPosition] = React.useState<number | null>(
+    null,
+  );
+
+  function closeCardPicker() {
     setCurrentPosition(null);
-  };
-
-  const closeCardPicker = () => {
-    setCurrentPosition(null);
-  };
+  }
 
   return (
     <BinderContext.Provider
       value={{
+        form,
+        cardData,
         currentPosition,
-        pickCardsForPosition,
-        addCardsToPosition,
+        pickCardsForPosition: setCurrentPosition,
         closeCardPicker,
       }}
     >
@@ -55,3 +81,14 @@ export function useBinderContext() {
   }
   return context;
 }
+
+export const BinderFormSchema = z.object({
+  name: z.string().min(1, "Set name is required"),
+  image: z.string().nullable(),
+  cardData: z.array(
+    z.object({
+      cardId: z.string(),
+      order: z.number(),
+    }),
+  ),
+});

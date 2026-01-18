@@ -2,40 +2,53 @@
 
 import { FormattedMessage } from "react-intl";
 import { PAGE_DIMENSIONS } from ".";
+import { CardPicker } from "../card-browser/card-picker";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import { useBinderContext } from "./binder-context";
 import CardSlot from "./card-slot";
 import { BinderCard } from "./types";
-import { useBinderContext } from "./binder-context";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
-import { CardPicker } from "../card-browser/card-picker";
 
 export default function BinderPage({
   cards,
   pageNumber,
   pageStartIndex,
 }: {
-  cards: (BinderCard | null)[];
+  cards: (BinderCard | null | undefined)[];
   pageNumber: number;
   pageStartIndex: number;
 }) {
   const {
+    form,
     currentPosition,
-    addCardsToPosition,
     closeCardPicker: closeDialog,
   } = useBinderContext();
 
   const handleSelectCards = (selectedCardIds: Set<string>) => {
     if (currentPosition === null) return;
 
-    // Convert card IDs to BinderCard objects
-    // TODO: You'll need to fetch the full card data based on selectedCardIds
-    const cards: any[] = []; // Placeholder
+    const oldCardData = form.getValues("cardData");
 
-    addCardsToPosition(currentPosition, cards);
+    // add selectedCardIds at currentPosition while skipping reserved order positions
+    const newCardData = [...oldCardData];
+    let insertPosition = currentPosition;
+    selectedCardIds.forEach((cardId) => {
+      while (newCardData.some((cd) => cd.order === insertPosition)) {
+        insertPosition++;
+      }
+      newCardData.splice(insertPosition, 0, {
+        cardId,
+        order: insertPosition,
+      });
+      insertPosition++;
+    });
+
+    form.setValue("cardData", newCardData);
+    closeDialog();
   };
 
   return (
     <>
-      <div className="bg-white border border-gray-300 shadow-sm p-4 rounded-lg">
+      <div className="border border-gray-500 shadow-sm p-4 rounded-lg">
         <h3 className="text-sm font-medium text-gray-500 mb-4">
           <FormattedMessage
             id="binder.pageNumber"

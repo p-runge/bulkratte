@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useIntl } from "react-intl";
+import { Button } from "../ui/button";
 import { CardBrowser } from "./index";
 
 type CardPickerProps = {
@@ -45,7 +46,8 @@ export function CardPicker(props: CardPickerProps) {
       />
 
       <div className="flex justify-end gap-2 pt-4 border-t mt-4 bg-background sticky bottom-0">
-        <button
+        <Button
+          variant="ghost"
           onClick={props.onClose}
           className="px-4 py-2 border rounded-md hover:bg-muted"
         >
@@ -53,8 +55,8 @@ export function CardPicker(props: CardPickerProps) {
             id: "common.button.cancel",
             defaultMessage: "Cancel",
           })}
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={handleConfirmSelection}
           className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
           disabled={selectedCards.size === 0}
@@ -67,7 +69,7 @@ export function CardPicker(props: CardPickerProps) {
             },
             { count: selectedCards.size },
           )}
-        </button>
+        </Button>
       </div>
     </>
   );
