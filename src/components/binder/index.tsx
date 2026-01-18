@@ -1,5 +1,6 @@
 import BinderPage from "./binder-page";
 import { BinderCard, BinderCardData } from "./types";
+import { BinderProvider } from "./binder-context";
 
 type BinderViewProps = {
   cardData: BinderCardData[];
@@ -14,15 +15,18 @@ export function Binder({ cardData }: BinderViewProps) {
   const pages = splitIntoPages(orderedCards, PAGE_SIZE);
 
   return (
-    <div className="flex flex-col gap-8">
-      {pages.map((pageCards, pageIndex) => (
-        <BinderPage
-          key={pageIndex}
-          cards={pageCards}
-          pageNumber={pageIndex + 1}
-        />
-      ))}
-    </div>
+    <BinderProvider>
+      <div className="flex flex-col gap-8">
+        {pages.map((pageCards, pageIndex) => (
+          <BinderPage
+            key={pageIndex}
+            cards={pageCards}
+            pageNumber={pageIndex + 1}
+            pageStartIndex={pageIndex * PAGE_SIZE}
+          />
+        ))}
+      </div>
+    </BinderProvider>
   );
 }
 
