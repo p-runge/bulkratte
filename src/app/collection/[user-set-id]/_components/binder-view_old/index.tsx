@@ -213,10 +213,10 @@ function prepareCardData(props: BinderViewProps) {
   } else {
     userCardsByCardId = props.userCards.reduce(
       (acc, userCard) => {
-        if (!acc[userCard.cardId]) {
-          acc[userCard.cardId] = [];
+        if (!acc[userCard.card.id]) {
+          acc[userCard.card.id] = [];
         }
-        acc[userCard.cardId]!.push(userCard);
+        acc[userCard.card.id]!.push(userCard);
         return acc;
       },
       {} as Record<string, UserCard[]>,

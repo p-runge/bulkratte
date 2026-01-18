@@ -175,7 +175,7 @@ export const userCardRouter = createTRPCRouter({
       );
 
       // Map localized card data back to user cards
-      const result = userCards.map((uc, index) => ({
+      const result = userCards.map(({ cardId, ...uc }, index) => ({
         ...uc,
         card: localizedUserCards[index]!,
       }));

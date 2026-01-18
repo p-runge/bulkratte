@@ -6,17 +6,15 @@ import { TRPCError } from "@trpc/server";
 import { and, asc, eq, inArray, isNotNull, ne } from "drizzle-orm";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
-// const userId = "a2136270-6628-418e-b9f5-8892ba5c79f2"; // TODO: Replace with actual user ID from session
-
 export const userSetRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
       z.object({
         name: z.string().min(1),
-        cards: z.array(
+        cardData: z.array(
           z.object({
-            userSetCardId: z.string().uuid().nullable(),
-            cardId: z.string().nullable(),
+            cardId: z.string(),
+            order: z.number(),
           }),
         ),
         image: z.string().optional(),
@@ -27,7 +25,7 @@ export const userSetRouter = createTRPCRouter({
         .insert(userSetsTable)
         .values({
           name: input.name,
-          image: input.image ?? null,
+          image: input.image,
           user_id: ctx.session.user.id,
         })
         .returning({
@@ -35,22 +33,14 @@ export const userSetRouter = createTRPCRouter({
         })
         .then((res) => res[0]!);
 
-      // Filter out null values and create cards with proper order
-      const cardValues = input.cards
-        .map((card, index) =>
-          card.cardId ? { cardId: card.cardId, order: index } : null,
-        )
-        .filter(
-          (item): item is { cardId: string; order: number } => item !== null,
-        )
-        .map(({ cardId, order }) => ({
-          user_set_id: userSet.id,
-          card_id: cardId,
-          order,
-        }));
-
-      if (cardValues.length > 0) {
-        await ctx.db.insert(userSetCardsTable).values(cardValues);
+      if (input.cardData.length > 0) {
+        await ctx.db.insert(userSetCardsTable).values(
+          input.cardData.map((card) => ({
+            user_set_id: userSet.id,
+            card_id: card.cardId,
+            order: card.order,
+          })),
+        );
       }
 
       return userSet.id;
