@@ -3,7 +3,7 @@
 import Loader from "@/components/loader";
 import { api } from "@/lib/api/react";
 import { useState } from "react";
-import { BinderView } from "./binder-view";
+import { BinderView } from "./binder-view_old";
 import { PlaceCardDialog } from "./place-card-dialog";
 
 interface UserSetContentProps {

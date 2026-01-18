@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 import { MinimalCardData } from "../../[user-set-id]/_components/edit-set-content";
-import { BinderView } from "../../[user-set-id]/_components/binder-view";
+import { BinderView } from "../../[user-set-id]/_components/binder-view_old";
 
 export function CreateSetContent() {
   const router = useRouter();

@@ -10,7 +10,7 @@ import { Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
-import { BinderView } from "./binder-view";
+import { BinderView } from "./binder-view_old";
 
 export type MinimalCardData = {
   id: string;
