@@ -52,16 +52,13 @@ function EmptyCardSlot({ position }: { position: number }) {
     <Button
       variant="link"
       onClick={onAdd}
-      className="w-full h-full p-0 flex items-center justify-center"
+      className={cn(
+        "group aspect-245/337 p-0",
+        "bg-muted/30 rounded border-2 border-dashed border-muted-foreground/20",
+        "hover:border-primary/50 transition-colors",
+      )}
     >
-      <div
-        className={cn(
-          "w-full max-w-full max-h-full aspect-245/337 bg-muted/30 rounded border-2 border-dashed border-muted-foreground/20",
-          "flex items-center justify-center group hover:border-primary/50 transition-colors",
-        )}
-      >
-        <Plus className="h-6 w-6 opacity-20 group-hover:opacity-100 transition-opacity" />
-      </div>
+      <Plus className="h-6 w-6 opacity-20 group-hover:opacity-100 transition-opacity" />
     </Button>
   );
 }

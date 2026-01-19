@@ -21,10 +21,7 @@ export function Binder() {
   const pages = splitIntoPages(orderedCards, PAGE_SIZE);
 
   return (
-    <div
-      className="flex gap-2 justify-center items-center flex-1 min-h-0 p-4"
-      style={{ maxHeight: "calc(100vh - 300px)" }}
-    >
+    <div className="flex gap-2 justify-center items-center p-4 h-[90vh] w-auto">
       {pages.map((pageCards, pageIndex) => (
         <BinderPage
           key={pageIndex}

@@ -95,8 +95,8 @@ function Content() {
     form.setValue("image", null);
   };
   return (
-    <div className="flex flex-col h-[calc(100vh-200px)] min-h-0">
-      <div className="flex items-center gap-4 mb-6 shrink-0">
+    <>
+      <div className="flex items-center gap-4 mb-6">
         <Link href="/collection">
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
@@ -118,68 +118,64 @@ function Content() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-6 flex-1 min-h-0">
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="bg-card border rounded-lg p-6 shrink-0">
-            <div className="mb-6">
-              <ImageUpload
-                imagePreview={imagePreview}
-                fileInputRef={fileInputRef}
-                onImageUpload={handleImageUpload}
-                onRemoveImage={handleRemoveImage}
-              />
-            </div>
-
-            <div className="flex items-end gap-4">
-              <div className="flex-1 space-y-2">
-                <Label htmlFor="name">
-                  <FormattedMessage
-                    id="form.field.set_name.label"
-                    defaultMessage="Set Name"
-                  />
-                </Label>
-                <Input
-                  id="name"
-                  {...form.register("name")}
-                  placeholder={intl.formatMessage({
-                    id: "form.field.set_name.placeholder",
-                    defaultMessage: "Enter set name",
-                  })}
-                />
-                {form.formState.errors.name && (
-                  <p className="text-sm text-destructive">
-                    {form.formState.errors.name.message}
-                  </p>
-                )}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {intl.formatMessage(
-                  {
-                    id: "page.set.form.cards_selected",
-                    defaultMessage: "{count} cards selected",
-                  },
-                  { count: cardDataValue.length },
-                )}
-              </div>
-              <Button
-                type="submit"
-                disabled={!nameValue.trim() || isPending}
-                size="lg"
-              >
-                <Save className="h-5 w-5 mr-2" />
-                <FormattedMessage
-                  id="page.set.action.create"
-                  defaultMessage="Create Set"
-                />
-              </Button>
-            </div>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="mb-6">
+        <div className="bg-card border rounded-lg p-6 shrink-0">
+          <div className="mb-6">
+            <ImageUpload
+              imagePreview={imagePreview}
+              fileInputRef={fileInputRef}
+              onImageUpload={handleImageUpload}
+              onRemoveImage={handleRemoveImage}
+            />
           </div>
-        </form>
 
-        <div className="flex-1 min-h-0 flex flex-col">
-          <Binder />
+          <div className="flex items-end gap-4">
+            <div className="flex-1 space-y-2">
+              <Label htmlFor="name">
+                <FormattedMessage
+                  id="form.field.set_name.label"
+                  defaultMessage="Set Name"
+                />
+              </Label>
+              <Input
+                id="name"
+                {...form.register("name")}
+                placeholder={intl.formatMessage({
+                  id: "form.field.set_name.placeholder",
+                  defaultMessage: "Enter set name",
+                })}
+              />
+              {form.formState.errors.name && (
+                <p className="text-sm text-destructive">
+                  {form.formState.errors.name.message}
+                </p>
+              )}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {intl.formatMessage(
+                {
+                  id: "page.set.form.cards_selected",
+                  defaultMessage: "{count} cards selected",
+                },
+                { count: cardDataValue.length },
+              )}
+            </div>
+            <Button
+              type="submit"
+              disabled={!nameValue.trim() || isPending}
+              size="lg"
+            >
+              <Save className="h-5 w-5 mr-2" />
+              <FormattedMessage
+                id="page.set.action.create"
+                defaultMessage="Create Set"
+              />
+            </Button>
+          </div>
         </div>
-      </div>
-    </div>
+      </form>
+
+      <Binder />
+    </>
   );
 }
