@@ -17,7 +17,7 @@ export default function CardSlot({
   }
 
   return (
-    <div className="w-full max-w-full max-h-full aspect-245/337 border border-gray-400 rounded flex items-center justify-center text-xs font-medium relative overflow-hidden">
+    <div className="w-full h-full aspect-245/337 border border-gray-400 rounded flex items-center justify-center text-xs font-medium relative overflow-hidden">
       {card ? (
         <Image
           src={card.imageSmall}
@@ -53,7 +53,7 @@ function EmptyCardSlot({ position }: { position: number }) {
       variant="link"
       onClick={onAdd}
       className={cn(
-        "group aspect-245/337 p-0",
+        "group w-full h-full aspect-245/337 p-0",
         "bg-muted/30 rounded border-2 border-dashed border-muted-foreground/20",
         "hover:border-primary/50 transition-colors",
       )}

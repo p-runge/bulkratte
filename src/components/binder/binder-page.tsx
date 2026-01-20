@@ -48,10 +48,7 @@ export default function BinderPage({
 
   return (
     <>
-      <div
-        className="border border-gray-500 shadow-sm p-[2%] rounded-lg flex-1 h-full max-w-1/2"
-        style={{ aspectRatio: "1", maxHeight: "100%" }}
-      >
+      <div className="aspect-10/14 border border-gray-500 shadow-sm p-[2%] rounded-lg flex-1 h-full self-stretch max-h-full">
         <h3 className="text-sm font-medium text-gray-500 mb-4">
           <FormattedMessage
             id="binder.pageNumber"
@@ -59,7 +56,7 @@ export default function BinderPage({
             values={{ number: pageNumber }}
           />
         </h3>
-        <div className="grid grid-cols-3 grid-rows-3 gap-2 h-full">
+        <div className="grid grid-cols-3 grid-rows-3 gap-2 flex-1">
           {cards.map((card, index) => (
             <CardSlot
               key={index}

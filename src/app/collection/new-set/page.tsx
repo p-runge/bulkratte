@@ -6,18 +6,15 @@ import {
   BinderProvider,
   useBinderContext,
 } from "@/components/binder/binder-context";
-import { BinderCardData } from "@/components/binder/types";
 import { ImageUpload, useImageUpload } from "@/components/image-upload";
+import { TcgBinder } from "@/components/test";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api/react";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
 import { FormattedMessage, useIntl } from "react-intl";
 import z from "zod";
 
