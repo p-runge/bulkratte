@@ -29,8 +29,8 @@ export function SetInfo({ userSet, userCards }: SetInfoProps) {
       // Count how many of these cards the user has in their collection
       const obtainedCardIds = new Set(
         userCards
-          .filter((userCard) => userSetCardIds.has(userCard.cardId))
-          .map((userCard) => userCard.cardId),
+          .filter((userCard) => userSetCardIds.has(userCard.card.id))
+          .map((userCard) => userCard.card.id),
       );
 
       const obtainedCards = obtainedCardIds.size;

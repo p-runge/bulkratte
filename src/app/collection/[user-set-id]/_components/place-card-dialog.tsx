@@ -85,7 +85,7 @@ export function PlaceCardDialog({
 
   // Filter user cards to only show those matching this cardId and not already placed elsewhere
   const matchingUserCards = userCards
-    .filter((uc) => uc.cardId === cardId)
+    .filter((uc) => uc.card.id === cardId)
     .map((uc) => {
       const placement = placedCardsMap.get(uc.id);
       const isPlacedElsewhere = placement && placement.userSetId !== userSetId;
