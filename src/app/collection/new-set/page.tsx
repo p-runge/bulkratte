@@ -7,7 +7,6 @@ import {
   useBinderContext,
 } from "@/components/binder/binder-context";
 import { ImageUpload, useImageUpload } from "@/components/image-upload";
-import { TcgBinder } from "@/components/test";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

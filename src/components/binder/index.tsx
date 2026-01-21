@@ -21,18 +21,16 @@ export function Binder() {
   const pages = splitIntoPages(orderedCards, PAGE_SIZE);
 
   return (
-    <div className="flex justify-center w-full h-[75vh]">
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="h-full max-w-full flex">
-          {pages.map((pageCards, pageIndex) => (
-            <BinderPage
-              key={pageIndex}
-              cards={pageCards}
-              pageNumber={pageIndex + 1}
-              pageStartIndex={pageIndex * PAGE_SIZE}
-            />
-          ))}
-        </div>
+    <div className="flex justify-center">
+      <div className="flex max-w-5xl w-full">
+        {pages.map((pageCards, pageIndex) => (
+          <BinderPage
+            key={pageIndex}
+            cards={pageCards}
+            pageNumber={pageIndex + 1}
+            pageStartIndex={pageIndex * PAGE_SIZE}
+          />
+        ))}
       </div>
     </div>
   );
