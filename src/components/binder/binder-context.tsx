@@ -8,12 +8,17 @@ import { useForm } from "react-hook-form";
 import z from "zod";
 import { BinderCardData, UserSet } from "./types";
 
+export const PAGE_DIMENSIONS = { columns: 3, rows: 3 };
+export const PAGE_SIZE = PAGE_DIMENSIONS.columns * PAGE_DIMENSIONS.rows;
+
 type BinderContextValue = {
   form: ReturnType<typeof useForm<z.infer<typeof BinderFormSchema>>>;
   cardData: BinderCardData[];
   currentPosition: number | null;
   pickCardsForPosition: (position: number) => void;
   closeCardPicker: () => void;
+  pagesCount: number;
+  addPage: () => void;
 };
 
 const BinderContext = createContext<BinderContextValue | undefined>(undefined);
@@ -59,6 +64,14 @@ export function BinderProvider({
     setCurrentPosition(null);
   }
 
+  const [pagesCount, setPagesCount] = React.useState(
+    Math.ceil(cardData.length / PAGE_SIZE),
+  );
+
+  function addPage() {
+    setPagesCount((prev) => prev + 1);
+  }
+
   return (
     <BinderContext.Provider
       value={{
@@ -67,6 +80,8 @@ export function BinderProvider({
         currentPosition,
         pickCardsForPosition: setCurrentPosition,
         closeCardPicker,
+        pagesCount,
+        addPage,
       }}
     >
       {children}

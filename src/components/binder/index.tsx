@@ -1,16 +1,16 @@
 import { DndContext, DragEndEvent, DragOverlay } from "@dnd-kit/core";
+import { Button } from "../ui/button";
 import Image from "next/image";
 import { useState } from "react";
-import { useBinderContext } from "./binder-context";
+import { PAGE_SIZE, useBinderContext } from "./binder-context";
 import BinderPage from "./binder-page";
 import { BinderCard, BinderCardData } from "./types";
-
-export const PAGE_DIMENSIONS = { columns: 3, rows: 3 };
-const PAGE_SIZE = PAGE_DIMENSIONS.columns * PAGE_DIMENSIONS.rows;
+import { Plus } from "lucide-react";
 
 export function Binder() {
-  const { cardData } = useBinderContext();
-  const orderedCards = generateOrderedCards(cardData);
+  const { cardData, pagesCount, addPage } = useBinderContext();
+  const orderedCards = generateOrderedCards(cardData, pagesCount * PAGE_SIZE);
+  console.log("Ordered Cards:", orderedCards, pagesCount);
 
   // ensure the amount of cards is a multiple of PAGE_SIZE * 2, and is at least PAGE_SIZE * 2
   const amountOfCards = Math.max(
@@ -91,7 +91,7 @@ export function Binder() {
   };
 
   return (
-    <div className="flex justify-center">
+    <div className="flex flex-col items-center justify-center gap-4">
       <div className="flex max-w-5xl w-full">
         <DndContext onDragEnd={handleDragEnd} onDragStart={handleDragStart}>
           <DragOverlay>
@@ -121,18 +121,21 @@ export function Binder() {
           ))}
         </DndContext>
       </div>
+      <Button onClick={addPage} variant="secondary" className="mt-4">
+        <Plus /> Add Page
+      </Button>
     </div>
   );
 }
 
 function generateOrderedCards(
   cardData: BinderCardData[],
+  cardCount: number,
 ): (BinderCard | null | undefined)[] {
   if (cardData.length === 0) return [];
 
-  const maxOrder = Math.max(...cardData.map((cd) => cd.order));
   const orderedCards: (BinderCard | null | undefined)[] = new Array(
-    maxOrder + 1,
+    cardCount,
   ).fill(null);
 
   cardData.forEach(({ card, order }) => {
