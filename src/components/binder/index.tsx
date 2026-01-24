@@ -6,8 +6,11 @@ import { PAGE_SIZE, useBinderContext } from "./binder-context";
 import BinderPage from "./binder-page";
 import { BinderCard, BinderCardData } from "./types";
 import { ArrowLeft, ArrowRight, Plus } from "lucide-react";
+import { FormattedMessage, useIntl } from "react-intl";
 
 export function Binder() {
+  const intl = useIntl();
+
   const { cardData, pagesCount, addPage } = useBinderContext();
 
   // Pagination state: which double-page spread is visible
@@ -17,7 +20,7 @@ export function Binder() {
 
   const pages = splitIntoPages(orderedCards, PAGE_SIZE);
   // Calculate the visible double-page spread
-  const maxSpread = Math.max(0, Math.ceil(pages.length / 2) - 1);
+  const maxSpread = Math.max(0, Math.ceil(pages.length / 2));
   let visiblePages: ((typeof pages)[number] | null)[] = [];
   if (currentSpread === 0) {
     // First spread: left is blank, right is first page
@@ -119,6 +122,18 @@ export function Binder() {
     setDraggingCard(null);
   };
 
+  const currentPagesString = (() => {
+    if (currentSpread === 0) {
+      return "1";
+    } else if (currentSpread === maxSpread) {
+      return `${pages.length}`;
+    } else {
+      const left = currentSpread * 2 - 1 + 1;
+      const right = currentSpread * 2 - 1 + 2;
+      return `${left}-${right}`;
+    }
+  })();
+
   return (
     <div className="flex flex-col items-center justify-center gap-4">
       <div className="flex max-w-5xl w-full">
@@ -174,11 +189,15 @@ export function Binder() {
           <ArrowLeft />
         </Button>
         <span className="text-sm">
-          Pages{" "}
-          {currentSpread === 0
-            ? 1
-            : `${(currentSpread - 1) * 2 + 2}${visiblePages.length === 2 ? `-${(currentSpread - 1) * 2 + 3}` : ""}`}
-          {` / ${pages.length}`}
+          <FormattedMessage
+            id="binder.pagination"
+            defaultMessage="{singlePage, select, true {Page {currentPages}} other {Pages {currentPages}}} of {totalPages}"
+            values={{
+              currentPages: currentPagesString,
+              singlePage: currentPagesString.includes("-") ? false : true,
+              totalPages: pages.length,
+            }}
+          />
         </span>
         <Button
           onClick={handleNextPage}
