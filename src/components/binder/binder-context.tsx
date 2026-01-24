@@ -65,7 +65,7 @@ export function BinderProvider({
   }
 
   const [pagesCount, setPagesCount] = React.useState(
-    Math.ceil(cardData.length / PAGE_SIZE),
+    Math.max(Math.ceil(cardData.length / PAGE_SIZE), 2),
   );
 
   function addPage() {
