@@ -5,12 +5,15 @@ import { useState } from "react";
 import { PAGE_SIZE, useBinderContext } from "./binder-context";
 import BinderPage from "./binder-page";
 import { BinderCard, BinderCardData } from "./types";
-import { Plus } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plus } from "lucide-react";
 
 export function Binder() {
   const { cardData, pagesCount, addPage } = useBinderContext();
+
+  // Pagination state: which double-page spread is visible
+  const [currentSpread, setCurrentSpread] = useState(0);
+
   const orderedCards = generateOrderedCards(cardData, pagesCount * PAGE_SIZE);
-  console.log("Ordered Cards:", orderedCards, pagesCount);
 
   // ensure the amount of cards is a multiple of PAGE_SIZE * 2, and is at least PAGE_SIZE * 2
   const amountOfCards = Math.max(
@@ -22,6 +25,9 @@ export function Binder() {
   }
 
   const pages = splitIntoPages(orderedCards, PAGE_SIZE);
+  // Calculate the visible double-page spread
+  const maxSpread = Math.max(0, Math.ceil(pages.length / 2) - 1);
+  const visiblePages = pages.slice(currentSpread * 2, currentSpread * 2 + 2);
 
   const { form, closeCardPicker: closeDialog } = useBinderContext();
 
@@ -111,17 +117,38 @@ export function Binder() {
             ) : null}
           </DragOverlay>
 
-          {pages.map((pageCards, pageIndex) => (
+          {visiblePages.map((pageCards, pageIndex) => (
             <BinderPage
               key={pageIndex}
               cards={pageCards}
-              pageNumber={pageIndex + 1}
-              pageStartIndex={pageIndex * PAGE_SIZE}
+              pageNumber={currentSpread * 2 + pageIndex + 1}
+              pageStartIndex={(currentSpread * 2 + pageIndex) * PAGE_SIZE}
             />
           ))}
         </DndContext>
       </div>
-      <Button onClick={addPage} variant="secondary" className="mt-4">
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 mt-2">
+        <Button
+          onClick={() => setCurrentSpread((s) => Math.max(0, s - 1))}
+          disabled={currentSpread === 0}
+          variant="outline"
+        >
+          <ArrowLeft />
+        </Button>
+        <span className="text-sm">
+          Pages {currentSpread * 2 + 1}
+          {visiblePages.length === 2 ? `-${currentSpread * 2 + 2}` : ""} /{" "}
+          {pages.length}
+        </span>
+        <Button
+          onClick={() => setCurrentSpread((s) => Math.min(maxSpread, s + 1))}
+          disabled={currentSpread === maxSpread}
+          variant="outline"
+        >
+          <ArrowRight />
+        </Button>
+      </div>
+      <Button onClick={addPage}>
         <Plus /> Add Page
       </Button>
     </div>
