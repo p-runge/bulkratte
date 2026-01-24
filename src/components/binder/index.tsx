@@ -1,7 +1,7 @@
 import { DndContext, DragEndEvent, DragOverlay } from "@dnd-kit/core";
 import { Button } from "../ui/button";
 import Image from "next/image";
-import { useState } from "react";
+import React, { useState } from "react";
 import { PAGE_SIZE, useBinderContext } from "./binder-context";
 import BinderPage from "./binder-page";
 import { BinderCard, BinderCardData } from "./types";
@@ -28,6 +28,27 @@ export function Binder() {
   // Calculate the visible double-page spread
   const maxSpread = Math.max(0, Math.ceil(pages.length / 2) - 1);
   const visiblePages = pages.slice(currentSpread * 2, currentSpread * 2 + 2);
+
+  const handlePreviousPage = React.useCallback(() => {
+    setCurrentSpread((s) => Math.max(0, s - 1));
+  }, []);
+
+  const handleNextPage = React.useCallback(() => {
+    setCurrentSpread((s) => Math.min(maxSpread, s + 1));
+  }, [maxSpread]);
+
+  // Keyboard navigation for previous/next
+  React.useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "ArrowLeft") {
+        handlePreviousPage();
+      } else if (e.key === "ArrowRight") {
+        handleNextPage();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [maxSpread]);
 
   const { form, closeCardPicker: closeDialog } = useBinderContext();
 
@@ -129,9 +150,10 @@ export function Binder() {
       </div>
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 mt-2">
         <Button
-          onClick={() => setCurrentSpread((s) => Math.max(0, s - 1))}
+          onClick={handlePreviousPage}
           disabled={currentSpread === 0}
           variant="outline"
+          aria-label="Previous pages"
         >
           <ArrowLeft />
         </Button>
@@ -141,9 +163,10 @@ export function Binder() {
           {pages.length}
         </span>
         <Button
-          onClick={() => setCurrentSpread((s) => Math.min(maxSpread, s + 1))}
+          onClick={handleNextPage}
           disabled={currentSpread === maxSpread}
           variant="outline"
+          aria-label="Next pages"
         >
           <ArrowRight />
         </Button>
