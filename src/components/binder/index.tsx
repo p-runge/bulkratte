@@ -15,19 +15,21 @@ export function Binder() {
 
   const orderedCards = generateOrderedCards(cardData, pagesCount * PAGE_SIZE);
 
-  // ensure the amount of cards is a multiple of PAGE_SIZE * 2, and is at least PAGE_SIZE * 2
-  const amountOfCards = Math.max(
-    PAGE_SIZE * 2,
-    Math.ceil(orderedCards.length / PAGE_SIZE) * PAGE_SIZE,
-  );
-  while (orderedCards.length < amountOfCards) {
-    orderedCards.push(null);
-  }
-
   const pages = splitIntoPages(orderedCards, PAGE_SIZE);
   // Calculate the visible double-page spread
   const maxSpread = Math.max(0, Math.ceil(pages.length / 2) - 1);
-  const visiblePages = pages.slice(currentSpread * 2, currentSpread * 2 + 2);
+  let visiblePages: ((typeof pages)[number] | null)[] = [];
+  if (currentSpread === 0) {
+    // First spread: left is blank, right is first page
+    visiblePages = [null, pages[0] ?? null];
+  } else if (currentSpread === maxSpread) {
+    // Last spread: left is last page, right is blank
+    visiblePages = [pages[pages.length - 1] ?? null, null];
+  } else {
+    // Middle spreads: show two real pages
+    const leftPageIdx = currentSpread * 2 - 1;
+    visiblePages = [pages[leftPageIdx] ?? null, pages[leftPageIdx + 1] ?? null];
+  }
 
   const handlePreviousPage = React.useCallback(() => {
     setCurrentSpread((s) => Math.max(0, s - 1));
@@ -138,14 +140,28 @@ export function Binder() {
             ) : null}
           </DragOverlay>
 
-          {visiblePages.map((pageCards, pageIndex) => (
-            <BinderPage
-              key={pageIndex}
-              cards={pageCards}
-              pageNumber={currentSpread * 2 + pageIndex + 1}
-              pageStartIndex={(currentSpread * 2 + pageIndex) * PAGE_SIZE}
-            />
-          ))}
+          {visiblePages.map((page, pageIndex) => {
+            if (page === null) {
+              return (
+                <div
+                  key={pageIndex}
+                  className="border border-gray-500 shadow-sm p-[2%] rounded-lg flex-1 self-stretch w-full"
+                  aria-label="Blank binder page"
+                />
+              );
+            }
+
+            return (
+              <BinderPage
+                key={pageIndex}
+                cards={page}
+                pageNumber={(currentSpread - 1) * 2 + 2 + pageIndex}
+                pageStartIndex={
+                  ((currentSpread - 1) * 2 + 1 + pageIndex) * PAGE_SIZE
+                }
+              />
+            );
+          })}
         </DndContext>
       </div>
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 mt-2">
@@ -158,9 +174,11 @@ export function Binder() {
           <ArrowLeft />
         </Button>
         <span className="text-sm">
-          Pages {currentSpread * 2 + 1}
-          {visiblePages.length === 2 ? `-${currentSpread * 2 + 2}` : ""} /{" "}
-          {pages.length}
+          Pages{" "}
+          {currentSpread === 0
+            ? 1
+            : `${(currentSpread - 1) * 2 + 2}${visiblePages.length === 2 ? `-${(currentSpread - 1) * 2 + 3}` : ""}`}
+          {` / ${pages.length}`}
         </span>
         <Button
           onClick={handleNextPage}

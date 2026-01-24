@@ -64,12 +64,13 @@ export function BinderProvider({
     setCurrentPosition(null);
   }
 
+  // Always keep pagesCount even and at least 2
   const [pagesCount, setPagesCount] = React.useState(
     Math.max(Math.ceil(cardData.length / PAGE_SIZE), 2),
   );
 
   function addPage() {
-    setPagesCount((prev) => prev + 1);
+    setPagesCount((prev) => Math.max(2, prev + 2 - (prev % 2)));
   }
 
   return (
