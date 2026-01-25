@@ -3,7 +3,7 @@
 import { api } from "@/lib/api/react";
 import { Card } from "@/lib/db";
 import { useRHFForm } from "@/lib/form/utils";
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
 import { BinderCardData, UserSet } from "./types";
@@ -72,6 +72,14 @@ export function BinderProvider({
   function addPage() {
     setPagesCount((prev) => Math.max(2, prev + 2 - (prev % 2)));
   }
+
+  // Update pagesCount when cardData length changes
+  useEffect(() => {
+    const neededPages = Math.ceil(cardData.length / PAGE_SIZE);
+    if (neededPages > pagesCount) {
+      setPagesCount((prev) => Math.max(neededPages, 2));
+    }
+  }, [cardData.length, pagesCount]);
 
   return (
     <BinderContext.Provider
