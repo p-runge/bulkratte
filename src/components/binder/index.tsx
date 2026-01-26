@@ -1,4 +1,4 @@
-import { DndContext, DragEndEvent, DragOverlay } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, DragOverlay, useDroppable } from "@dnd-kit/core";
 import { Button } from "../ui/button";
 import Image from "next/image";
 import React, { useState } from "react";
@@ -11,10 +11,7 @@ import { FormattedMessage, useIntl } from "react-intl";
 export function Binder() {
   const intl = useIntl();
 
-  const { cardData, pagesCount, addPage } = useBinderContext();
-
-  // Pagination state: which double-page spread is visible
-  const [currentSpread, setCurrentSpread] = useState(0);
+  const { cardData, pagesCount, addPage, currentSpread, setCurrentSpread } = useBinderContext();
 
   const orderedCards = generateOrderedCards(cardData, pagesCount * PAGE_SIZE);
 
@@ -59,10 +56,12 @@ export function Binder() {
 
   // State for drag overlay
   const [draggingCard, setDraggingCard] = useState<BinderCard | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Handle drag start to set overlay
   function handleDragStart(event: any) {
     const { active } = event;
+    setIsDragging(true);
     const fromPosition = active?.data?.current?.position;
     if (typeof fromPosition === "number") {
       const cardData = form.getValues("cardData");
@@ -78,7 +77,11 @@ export function Binder() {
   // Handle drag end for slot move/swap
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    if (!active || !over) return;
+    setIsDragging(false);
+    if (!active || !over) {
+      setDraggingCard(null);
+      return;
+    }
     const fromPosition = active.data.current?.position;
     const toPosition = over.data.current?.position;
     if (
@@ -136,7 +139,7 @@ export function Binder() {
 
   return (
     <div className="flex flex-col items-center justify-center gap-4">
-      <div className="flex max-w-5xl w-full">
+      <div className="flex max-w-5xl w-full gap-4 items-stretch">
         <DndContext onDragEnd={handleDragEnd} onDragStart={handleDragStart}>
           <DragOverlay>
             {draggingCard ? (
@@ -155,7 +158,15 @@ export function Binder() {
             ) : null}
           </DragOverlay>
 
-          {visiblePages.map((page, pageIndex) => {
+          <NavigationZone
+            direction="left"
+            disabled={currentSpread === 0}
+            isDragging={isDragging}
+            onNavigate={handlePreviousPage}
+          />
+
+          <div className="flex gap-4 flex-1">
+            {visiblePages.map((page, pageIndex) => {
             if (page === null) {
               return (
                 <div
@@ -177,6 +188,14 @@ export function Binder() {
               />
             );
           })}
+          </div>
+
+          <NavigationZone
+            direction="right"
+            disabled={currentSpread === maxSpread}
+            isDragging={isDragging}
+            onNavigate={handleNextPage}
+          />
         </DndContext>
       </div>
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 mt-2">
@@ -236,4 +255,66 @@ function splitIntoPages<T>(items: T[], pageSize: number): T[][] {
     pages.push(items.slice(i, i + pageSize));
   }
   return pages;
+}
+
+function NavigationZone({
+  direction,
+  disabled,
+  isDragging,
+  onNavigate,
+}: {
+  direction: "left" | "right";
+  disabled: boolean;
+  isDragging: boolean;
+  onNavigate: () => void;
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `navigation-zone-${direction}`,
+    data: { navigation: direction },
+    disabled,
+  });
+
+  // Auto-navigate when hovering over the zone while dragging
+  React.useEffect(() => {
+    if (isOver && !disabled) {
+      const timeout = setTimeout(() => {
+        onNavigate();
+      }, 500); // Half second delay before navigating
+      return () => clearTimeout(timeout);
+    }
+  }, [isOver, disabled, onNavigate]);
+
+  const showZone = isDragging && !disabled;
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`
+        transition-all duration-300 ease-in-out
+        ${showZone ? "w-20 opacity-100" : "w-0 opacity-0"}
+        ${isOver ? "bg-primary/20" : "bg-primary/10"}
+        border-2 border-dashed
+        ${isOver ? "border-primary" : "border-primary/30"}
+        rounded-lg
+        flex items-center justify-center
+        ${disabled ? "cursor-not-allowed" : "cursor-pointer"}
+      `}
+      style={{
+        overflow: showZone ? "visible" : "hidden",
+      }}
+    >
+      {showZone && (
+        <div className="flex flex-col items-center justify-center gap-2 text-primary">
+          {direction === "left" ? (
+            <ArrowLeft className="h-8 w-8" />
+          ) : (
+            <ArrowRight className="h-8 w-8" />
+          )}
+          <span className="text-xs font-medium whitespace-nowrap">
+            {direction === "left" ? "Previous" : "Next"}
+          </span>
+        </div>
+      )}
+    </div>
+  );
 }

@@ -19,6 +19,8 @@ type BinderContextValue = {
   closeCardPicker: () => void;
   pagesCount: number;
   addPage: () => void;
+  currentSpread: number;
+  setCurrentSpread: React.Dispatch<React.SetStateAction<number>>;
 };
 
 const BinderContext = createContext<BinderContextValue | undefined>(undefined);
@@ -30,6 +32,8 @@ export function BinderProvider({
   children: React.ReactNode;
   initialUserSet: UserSet;
 }) {
+  const [currentSpread, setCurrentSpread] = React.useState(0);
+
   const form = useRHFForm(BinderFormSchema, {
     defaultValues: {
       name: initialUserSet.set.name,
@@ -91,6 +95,8 @@ export function BinderProvider({
         closeCardPicker,
         pagesCount,
         addPage,
+        currentSpread,
+        setCurrentSpread,
       }}
     >
       {children}
