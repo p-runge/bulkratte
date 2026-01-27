@@ -1,4 +1,10 @@
 {
+  "binder.addCards.title": [
+    {
+      "type": 0,
+      "value": "Karten hinzufügen"
+    }
+  ],
   "binder.info.created.at": [
     {
       "type": 0,
@@ -43,6 +49,46 @@
     {
       "type": 1,
       "value": "pageNumber"
+    }
+  ],
+  "binder.pagination": [
+    {
+      "options": {
+        "other": {
+          "value": [
+            {
+              "type": 0,
+              "value": "Seiten "
+            },
+            {
+              "type": 1,
+              "value": "currentPages"
+            }
+          ]
+        },
+        "true": {
+          "value": [
+            {
+              "type": 0,
+              "value": "Seite "
+            },
+            {
+              "type": 1,
+              "value": "currentPages"
+            }
+          ]
+        }
+      },
+      "type": 5,
+      "value": "singlePage"
+    },
+    {
+      "type": 0,
+      "value": " von "
+    },
+    {
+      "type": 1,
+      "value": "totalPages"
     }
   ],
   "card.browser.empty": [
@@ -539,6 +585,18 @@
     {
       "type": 0,
       "value": "Meine Sammlung"
+    }
+  ],
+  "page.collection.wantlist.empty.description": [
+    {
+      "type": 0,
+      "value": "Du hast alle Karten in deinen benutzerdefinierten Sets!"
+    }
+  ],
+  "page.collection.wantlist.empty.title": [
+    {
+      "type": 0,
+      "value": "Deine Wunschliste ist leer!"
     }
   ],
   "page.error.action.home": [

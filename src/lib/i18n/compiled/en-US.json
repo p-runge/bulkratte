@@ -1,4 +1,10 @@
 {
+  "binder.addCards.title": [
+    {
+      "type": 0,
+      "value": "Add Cards"
+    }
+  ],
   "binder.info.created.at": [
     {
       "type": 0,
@@ -43,6 +49,46 @@
     {
       "type": 1,
       "value": "pageNumber"
+    }
+  ],
+  "binder.pagination": [
+    {
+      "options": {
+        "other": {
+          "value": [
+            {
+              "type": 0,
+              "value": "Pages "
+            },
+            {
+              "type": 1,
+              "value": "currentPages"
+            }
+          ]
+        },
+        "true": {
+          "value": [
+            {
+              "type": 0,
+              "value": "Page "
+            },
+            {
+              "type": 1,
+              "value": "currentPages"
+            }
+          ]
+        }
+      },
+      "type": 5,
+      "value": "singlePage"
+    },
+    {
+      "type": 0,
+      "value": " of "
+    },
+    {
+      "type": 1,
+      "value": "totalPages"
     }
   ],
   "card.browser.empty": [

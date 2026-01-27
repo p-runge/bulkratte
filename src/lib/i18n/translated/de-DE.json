@@ -1,4 +1,5 @@
 {
+  "binder.addCards.title": "Karten hinzufügen",
   "binder.info.created.at": "Erstellt am:",
   "binder.info.progress.obtained": "Im Besitz aber nicht platziert",
   "binder.info.progress.placed": "Im Binder platziert",
@@ -6,6 +7,7 @@
   "binder.info.title": "Set-Informationen",
   "binder.info.total.cards": "Kartenanzahl:",
   "binder.page.number": "Seite {pageNumber}",
+  "binder.pagination": "{singlePage, select, true {Seite {currentPages}} other {Seiten {currentPages}}} von {totalPages}",
   "card.browser.empty": "Keine Karten gefunden, die deinen Suchkriterien entsprechen.",
   "card.browser.selectAll": "Alle auswählen ({count})",
   "card.filter.button.clear": "Auswahl aufheben",
@@ -81,6 +83,8 @@
   "page.collection.tab.sets": "Meine Sets",
   "page.collection.tab.wantlist": "Wunschliste",
   "page.collection.title": "Meine Sammlung",
+  "page.collection.wantlist.empty.description": "Du hast alle Karten in deinen benutzerdefinierten Sets!",
+  "page.collection.wantlist.empty.title": "Deine Wunschliste ist leer!",
   "page.error.action.home": "Zurück zur Startseite",
   "page.error.action.retry": "Erneut versuchen",
   "page.error.description": "Sieht so aus, als hätte die Bulkratte an etwas geknabbert, an dem sie es besser nicht hätte tun sollen. Aber keine Sorge, deine Sammlung ist sicher!",
