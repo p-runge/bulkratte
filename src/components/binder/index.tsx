@@ -310,12 +310,13 @@ function NavigationZone({
       ref={setNodeRef}
       className={`
         absolute ${direction === "left" ? "right-full" : "left-full"} top-0 bottom-0
-        w-20 transition-opacity duration-300 ease-in-out
+        w-3 xl:w-20
+        transition-opacity duration-300 ease-in-out
         ${showZone ? "opacity-100" : "opacity-0 pointer-events-none"}
         ${isOver ? "bg-primary/20" : "bg-primary/10"}
         border-2 border-dashed
         ${isOver ? "border-primary" : "border-primary/30"}
-        rounded-lg
+        rounded xl:rounded-lg
         flex items-center justify-center
         ${disabled ? "cursor-not-allowed" : "cursor-pointer"}
       `}
@@ -323,11 +324,11 @@ function NavigationZone({
       {showZone && (
         <div className="flex flex-col items-center justify-center gap-2 text-primary">
           {direction === "left" ? (
-            <ArrowLeft className="h-8 w-8" />
+            <ArrowLeft className="h-3 w-3 xl:h-8 xl:w-8" />
           ) : (
-            <ArrowRight className="h-8 w-8" />
+            <ArrowRight className="h-3 w-3 xl:h-8 xl:w-8" />
           )}
-          <span className="text-xs font-medium whitespace-nowrap">
+          <span className="hidden xl:inline text-xs font-medium whitespace-nowrap">
             {direction === "left" ? "Previous" : "Next"}
           </span>
         </div>
