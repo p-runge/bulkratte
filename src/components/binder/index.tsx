@@ -177,7 +177,7 @@ export function Binder() {
             ) : null}
           </DragOverlay>
 
-          <div className="flex gap-4 flex-1">
+          <div className="flex flex-1">
             {visiblePages.map((page, pageIndex) => {
               if (page === null) {
                 return (

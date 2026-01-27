@@ -48,13 +48,6 @@ export default function BinderPage({
   return (
     <>
       <div className="border border-gray-500 shadow-sm p-[2%] rounded-lg flex-1 self-stretch w-full">
-        <h3 className="text-sm font-medium text-gray-500 mb-4">
-          <FormattedMessage
-            id="binder.pageNumber"
-            defaultMessage="Page {number}"
-            values={{ number: pageNumber }}
-          />
-        </h3>
         <div className="grid grid-cols-3 grid-rows-3 gap-2 flex-1">
           {cards.map((card, index) => (
             <CardSlot
