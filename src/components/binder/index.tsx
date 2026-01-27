@@ -1,4 +1,9 @@
-import { DndContext, DragEndEvent, DragOverlay, useDroppable } from "@dnd-kit/core";
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  useDroppable,
+} from "@dnd-kit/core";
 import { Button } from "../ui/button";
 import Image from "next/image";
 import React, { useState } from "react";
@@ -11,7 +16,8 @@ import { FormattedMessage, useIntl } from "react-intl";
 export function Binder() {
   const intl = useIntl();
 
-  const { cardData, pagesCount, addPage, currentSpread, setCurrentSpread } = useBinderContext();
+  const { cardData, pagesCount, addPage, currentSpread, setCurrentSpread } =
+    useBinderContext();
 
   const orderedCards = generateOrderedCards(cardData, pagesCount * PAGE_SIZE);
 
@@ -57,6 +63,9 @@ export function Binder() {
   // State for drag overlay
   const [draggingCard, setDraggingCard] = useState<BinderCard | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [dragStartPosition, setDragStartPosition] = useState<number | null>(
+    null,
+  );
 
   // Handle drag start to set overlay
   function handleDragStart(event: any) {
@@ -64,6 +73,7 @@ export function Binder() {
     setIsDragging(true);
     const fromPosition = active?.data?.current?.position;
     if (typeof fromPosition === "number") {
+      setDragStartPosition(fromPosition);
       const cardData = form.getValues("cardData");
       const cardEntry = cardData.find((cd) => cd.order === fromPosition);
       if (cardEntry && cardEntry.cardId) {
@@ -78,11 +88,19 @@ export function Binder() {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setIsDragging(false);
-    if (!active || !over) {
-      setDraggingCard(null);
+
+    // If dropped on navigation zone, don't complete the drop
+    if (over?.data?.current?.navigation) {
+      // Keep the drag state but don't reset anything
       return;
     }
-    const fromPosition = active.data.current?.position;
+
+    if (!active || !over) {
+      setDraggingCard(null);
+      setDragStartPosition(null);
+      return;
+    }
+    const fromPosition = dragStartPosition ?? active.data.current?.position;
     const toPosition = over.data.current?.position;
     if (
       typeof fromPosition !== "number" ||
@@ -123,6 +141,7 @@ export function Binder() {
       setDraggingCard(null);
     }
     setDraggingCard(null);
+    setDragStartPosition(null);
   };
 
   const currentPagesString = (() => {
@@ -167,27 +186,27 @@ export function Binder() {
 
           <div className="flex gap-4 flex-1">
             {visiblePages.map((page, pageIndex) => {
-            if (page === null) {
+              if (page === null) {
+                return (
+                  <div
+                    key={pageIndex}
+                    className="border border-gray-500 shadow-sm p-[2%] rounded-lg flex-1 self-stretch w-full"
+                    aria-label="Blank binder page"
+                  />
+                );
+              }
+
               return (
-                <div
+                <BinderPage
                   key={pageIndex}
-                  className="border border-gray-500 shadow-sm p-[2%] rounded-lg flex-1 self-stretch w-full"
-                  aria-label="Blank binder page"
+                  cards={page}
+                  pageNumber={(currentSpread - 1) * 2 + 2 + pageIndex}
+                  pageStartIndex={
+                    ((currentSpread - 1) * 2 + 1 + pageIndex) * PAGE_SIZE
+                  }
                 />
               );
-            }
-
-            return (
-              <BinderPage
-                key={pageIndex}
-                cards={page}
-                pageNumber={(currentSpread - 1) * 2 + 2 + pageIndex}
-                pageStartIndex={
-                  ((currentSpread - 1) * 2 + 1 + pageIndex) * PAGE_SIZE
-                }
-              />
-            );
-          })}
+            })}
           </div>
 
           <NavigationZone
