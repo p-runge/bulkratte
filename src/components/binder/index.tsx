@@ -158,7 +158,7 @@ export function Binder() {
 
   return (
     <div className="flex flex-col items-center justify-center gap-4">
-      <div className="flex max-w-5xl w-full gap-4 items-stretch">
+      <div className="relative flex max-w-5xl w-full">
         <DndContext onDragEnd={handleDragEnd} onDragStart={handleDragStart}>
           <DragOverlay>
             {draggingCard ? (
@@ -176,13 +176,6 @@ export function Binder() {
               </div>
             ) : null}
           </DragOverlay>
-
-          <NavigationZone
-            direction="left"
-            disabled={currentSpread === 0}
-            isDragging={isDragging}
-            onNavigate={handlePreviousPage}
-          />
 
           <div className="flex gap-4 flex-1">
             {visiblePages.map((page, pageIndex) => {
@@ -208,6 +201,13 @@ export function Binder() {
               );
             })}
           </div>
+
+          <NavigationZone
+            direction="left"
+            disabled={currentSpread === 0}
+            isDragging={isDragging}
+            onNavigate={handlePreviousPage}
+          />
 
           <NavigationZone
             direction="right"
@@ -309,8 +309,9 @@ function NavigationZone({
     <div
       ref={setNodeRef}
       className={`
-        transition-all duration-300 ease-in-out
-        ${showZone ? "w-20 opacity-100" : "w-0 opacity-0"}
+        absolute ${direction === "left" ? "right-full" : "left-full"} top-0 bottom-0
+        w-20 transition-opacity duration-300 ease-in-out
+        ${showZone ? "opacity-100" : "opacity-0 pointer-events-none"}
         ${isOver ? "bg-primary/20" : "bg-primary/10"}
         border-2 border-dashed
         ${isOver ? "border-primary" : "border-primary/30"}
@@ -318,9 +319,6 @@ function NavigationZone({
         flex items-center justify-center
         ${disabled ? "cursor-not-allowed" : "cursor-pointer"}
       `}
-      style={{
-        overflow: showZone ? "visible" : "hidden",
-      }}
     >
       {showZone && (
         <div className="flex flex-col items-center justify-center gap-2 text-primary">
