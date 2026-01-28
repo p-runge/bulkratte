@@ -1,6 +1,5 @@
 "use client";
 
-import { FormattedMessage } from "react-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,15 +10,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ComponentProps, MouseEvent, ReactNode, useState } from "react";
+import { FormattedMessage } from "react-intl";
 
 type Props = ComponentProps<typeof Button> & {
   children: ReactNode;
-  title?: string;
-  description?: string;
-  titleId?: string;
-  titleDefault?: string;
-  descriptionId?: string;
-  descriptionDefault?: string;
+  title: string;
+  description: string;
+  cancelLabel?: string;
+  confirmLabel?: string;
   destructive?: boolean;
 };
 
@@ -27,10 +25,8 @@ export default function ConfirmButton({
   children,
   title,
   description,
-  titleId,
-  titleDefault,
-  descriptionId,
-  descriptionDefault,
+  cancelLabel,
+  confirmLabel,
   destructive,
   onClick,
   ...buttonProps
@@ -54,39 +50,28 @@ export default function ConfirmButton({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {titleId && titleDefault ? (
-                <FormattedMessage id={titleId} defaultMessage={titleDefault} />
-              ) : (
-                title
-              )}
-            </DialogTitle>
-            <DialogDescription>
-              {descriptionId && descriptionDefault ? (
-                <FormattedMessage
-                  id={descriptionId}
-                  defaultMessage={descriptionDefault}
-                />
-              ) : (
-                description
-              )}
-            </DialogDescription>
+            <DialogTitle>{title}</DialogTitle>
+            <DialogDescription>{description}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button onClick={handleClose} variant="outline">
-              <FormattedMessage
-                id="common.button.cancel"
-                defaultMessage="Cancel"
-              />
+              {cancelLabel ?? (
+                <FormattedMessage
+                  id="confirm.button.cancel.label"
+                  defaultMessage="Cancel"
+                />
+              )}
             </Button>
             <Button
               onClick={handleConfirm}
               variant={destructive ? "destructive" : "default"}
             >
-              <FormattedMessage
-                id="common.button.confirm"
-                defaultMessage="Confirm"
-              />
+              {confirmLabel ?? (
+                <FormattedMessage
+                  id="confirm.button.confirm.label"
+                  defaultMessage="Confirm"
+                />
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

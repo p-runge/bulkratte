@@ -1,2 +1,1000 @@
 {
+  "binder.addCards.title": [
+    {
+      "type": 0,
+      "value": "Add Cards"
+    }
+  ],
+  "binder.info.created.at": [
+    {
+      "type": 0,
+      "value": "Created on:"
+    }
+  ],
+  "binder.info.progress.obtained": [
+    {
+      "type": 0,
+      "value": "Obtained but not placed"
+    }
+  ],
+  "binder.info.progress.placed": [
+    {
+      "type": 0,
+      "value": "Placed in Binder"
+    }
+  ],
+  "binder.info.progress.title": [
+    {
+      "type": 0,
+      "value": "Collection Progress"
+    }
+  ],
+  "binder.info.title": [
+    {
+      "type": 0,
+      "value": "Set Information"
+    }
+  ],
+  "binder.info.total.cards": [
+    {
+      "type": 0,
+      "value": "Total Cards:"
+    }
+  ],
+  "binder.mode.browse": [
+    {
+      "type": 0,
+      "value": "Browse Mode"
+    }
+  ],
+  "binder.mode.manage": [
+    {
+      "type": 0,
+      "value": "Manage Sheets"
+    }
+  ],
+  "binder.navigation.next": [
+    {
+      "type": 0,
+      "value": "Next"
+    }
+  ],
+  "binder.navigation.previous": [
+    {
+      "type": 0,
+      "value": "Previous"
+    }
+  ],
+  "binder.page.aria.blank": [
+    {
+      "type": 0,
+      "value": "Blank binder page"
+    }
+  ],
+  "binder.page.aria.next": [
+    {
+      "type": 0,
+      "value": "Next pages"
+    }
+  ],
+  "binder.page.aria.previous": [
+    {
+      "type": 0,
+      "value": "Previous pages"
+    }
+  ],
+  "binder.page.number": [
+    {
+      "type": 0,
+      "value": "Page "
+    },
+    {
+      "type": 1,
+      "value": "pageNumber"
+    }
+  ],
+  "binder.pagination": [
+    {
+      "options": {
+        "other": {
+          "value": [
+            {
+              "type": 0,
+              "value": "Pages "
+            },
+            {
+              "type": 1,
+              "value": "currentPages"
+            }
+          ]
+        },
+        "true": {
+          "value": [
+            {
+              "type": 0,
+              "value": "Page "
+            },
+            {
+              "type": 1,
+              "value": "currentPages"
+            }
+          ]
+        }
+      },
+      "type": 5,
+      "value": "singlePage"
+    },
+    {
+      "type": 0,
+      "value": " of "
+    },
+    {
+      "type": 1,
+      "value": "totalPages"
+    }
+  ],
+  "binder.pagination.next.label": [
+    {
+      "type": 0,
+      "value": "Next"
+    }
+  ],
+  "binder.pagination.previous.label": [
+    {
+      "type": 0,
+      "value": "Previous"
+    }
+  ],
+  "binder.sheet.action.insert": [
+    {
+      "type": 0,
+      "value": "Insert Sheet Here"
+    }
+  ],
+  "binder.sheet.label.back": [
+    {
+      "type": 0,
+      "value": "Back Site"
+    }
+  ],
+  "binder.sheet.label.front": [
+    {
+      "type": 0,
+      "value": "Front Site"
+    }
+  ],
+  "binder.sheet.management.description": [
+    {
+      "type": 0,
+      "value": "Add, remove, or reorder sheets in your binder"
+    }
+  ],
+  "binder.sheet.management.stats": [
+    {
+      "type": 0,
+      "value": "This binder currently has "
+    },
+    {
+      "type": 1,
+      "value": "sheetCount"
+    },
+    {
+      "type": 0,
+      "value": " sheets ("
+    },
+    {
+      "type": 1,
+      "value": "pageCount"
+    },
+    {
+      "type": 0,
+      "value": " pages) holding a potential total of "
+    },
+    {
+      "type": 1,
+      "value": "maxCardCount"
+    },
+    {
+      "type": 0,
+      "value": " cards."
+    }
+  ],
+  "binder.sheet.management.title": [
+    {
+      "type": 0,
+      "value": "Manage Sheets"
+    }
+  ],
+  "card.browser.empty": [
+    {
+      "type": 0,
+      "value": "No cards found. Try adjusting your filters."
+    }
+  ],
+  "card.browser.selectAll": [
+    {
+      "type": 0,
+      "value": "Select all ("
+    },
+    {
+      "type": 1,
+      "value": "count"
+    },
+    {
+      "type": 0,
+      "value": ")"
+    }
+  ],
+  "card.filter.button.clear": [
+    {
+      "type": 0,
+      "value": "Clear"
+    }
+  ],
+  "card.filter.date.from": [
+    {
+      "type": 0,
+      "value": "Release From"
+    }
+  ],
+  "card.filter.date.placeholder.from": [
+    {
+      "type": 0,
+      "value": "From"
+    }
+  ],
+  "card.filter.date.placeholder.to": [
+    {
+      "type": 0,
+      "value": "To"
+    }
+  ],
+  "card.filter.date.to": [
+    {
+      "type": 0,
+      "value": "Release To"
+    }
+  ],
+  "card.filter.order.asc": [
+    {
+      "type": 0,
+      "value": "Ascending"
+    }
+  ],
+  "card.filter.order.desc": [
+    {
+      "type": 0,
+      "value": "Descending"
+    }
+  ],
+  "card.filter.order.label": [
+    {
+      "type": 0,
+      "value": "Sort Order"
+    }
+  ],
+  "card.filter.order.placeholder": [
+    {
+      "type": 0,
+      "value": "Sort order"
+    }
+  ],
+  "card.filter.rarity.all": [
+    {
+      "type": 0,
+      "value": "All rarities"
+    }
+  ],
+  "card.filter.rarity.label": [
+    {
+      "type": 0,
+      "value": "Rarity"
+    }
+  ],
+  "card.filter.rarity.placeholder": [
+    {
+      "type": 0,
+      "value": "All rarities"
+    }
+  ],
+  "card.filter.search.label": [
+    {
+      "type": 0,
+      "value": "Search"
+    }
+  ],
+  "card.filter.search.placeholder": [
+    {
+      "type": 0,
+      "value": "Card name or number..."
+    }
+  ],
+  "card.filter.set.all": [
+    {
+      "type": 0,
+      "value": "All sets"
+    }
+  ],
+  "card.filter.set.label": [
+    {
+      "type": 0,
+      "value": "Set"
+    }
+  ],
+  "card.filter.set.placeholder": [
+    {
+      "type": 0,
+      "value": "All sets"
+    }
+  ],
+  "card.filter.sort.label": [
+    {
+      "type": 0,
+      "value": "Sort By"
+    }
+  ],
+  "card.filter.sort.name": [
+    {
+      "type": 0,
+      "value": "Card Name"
+    }
+  ],
+  "card.filter.sort.placeholder": [
+    {
+      "type": 0,
+      "value": "Sort by"
+    }
+  ],
+  "card.filter.sort.price": [
+    {
+      "type": 0,
+      "value": "Card Price"
+    }
+  ],
+  "card.filter.sort.rarity": [
+    {
+      "type": 0,
+      "value": "Card Rarity"
+    }
+  ],
+  "card.filter.sort.set-and-number": [
+    {
+      "type": 0,
+      "value": "Set → Number"
+    }
+  ],
+  "card.filter.title": [
+    {
+      "type": 0,
+      "value": "Filter Cards"
+    }
+  ],
+  "card.picker.button.add": [
+    {
+      "type": 0,
+      "value": "Add "
+    },
+    {
+      "offset": 0,
+      "options": {
+        "one": {
+          "value": [
+            {
+              "type": 7
+            },
+            {
+              "type": 0,
+              "value": " card"
+            }
+          ]
+        },
+        "other": {
+          "value": [
+            {
+              "type": 7
+            },
+            {
+              "type": 0,
+              "value": " cards"
+            }
+          ]
+        }
+      },
+      "pluralType": "cardinal",
+      "type": 6,
+      "value": "count"
+    }
+  ],
+  "common.breadcrumb.label": [
+    {
+      "type": 0,
+      "value": "Breadcrumb"
+    }
+  ],
+  "common.button.cancel": [
+    {
+      "type": 0,
+      "value": "Cancel"
+    }
+  ],
+  "common.button.saving": [
+    {
+      "type": 0,
+      "value": "Saving..."
+    }
+  ],
+  "confirm.button.cancel.label": [
+    {
+      "type": 0,
+      "value": "Cancel"
+    }
+  ],
+  "confirm.button.confirm.label": [
+    {
+      "type": 0,
+      "value": "Confirm"
+    }
+  ],
+  "dialog.create_card.button.add": [
+    {
+      "type": 0,
+      "value": "Add Card to Collection"
+    }
+  ],
+  "dialog.create_card.title": [
+    {
+      "type": 0,
+      "value": "Add New Card"
+    }
+  ],
+  "dialog.delete_set.description": [
+    {
+      "type": 0,
+      "value": "Are you sure you want to delete this set? This action cannot be undone."
+    }
+  ],
+  "dialog.delete_set.title": [
+    {
+      "type": 0,
+      "value": "Delete Set"
+    }
+  ],
+  "dialog.place_card.action.add_and_place": [
+    {
+      "type": 0,
+      "value": "Add New Card to Collection & Place It"
+    }
+  ],
+  "dialog.place_card.action.unplace": [
+    {
+      "type": 0,
+      "value": "Unplace"
+    }
+  ],
+  "dialog.place_card.currently_placed": [
+    {
+      "type": 0,
+      "value": "Currently Placed"
+    }
+  ],
+  "dialog.place_card.filter.hide_other_sets": [
+    {
+      "type": 0,
+      "value": "Hide cards from other sets"
+    }
+  ],
+  "dialog.place_card.filter.show_other_sets": [
+    {
+      "type": 0,
+      "value": "Show cards from other sets"
+    }
+  ],
+  "dialog.place_card.label.currently_placed": [
+    {
+      "type": 0,
+      "value": "(Currently Placed)"
+    }
+  ],
+  "dialog.place_card.label.placed_elsewhere": [
+    {
+      "type": 0,
+      "value": "(In \""
+    },
+    {
+      "type": 1,
+      "value": "setName"
+    },
+    {
+      "type": 0,
+      "value": "\")"
+    }
+  ],
+  "dialog.place_card.mode.add_new": [
+    {
+      "type": 0,
+      "value": "Add New"
+    }
+  ],
+  "dialog.place_card.mode.select_existing": [
+    {
+      "type": 0,
+      "value": "Select from Collection"
+    }
+  ],
+  "dialog.place_card.title.change": [
+    {
+      "type": 0,
+      "value": "Change Placed Card"
+    }
+  ],
+  "dialog.place_card.title.place": [
+    {
+      "type": 0,
+      "value": "Place Card in Binder"
+    }
+  ],
+  "form.field.condition.label": [
+    {
+      "type": 0,
+      "value": "Condition"
+    }
+  ],
+  "form.field.image.description": [
+    {
+      "type": 0,
+      "value": "Images will be automatically scaled to max 100px"
+    }
+  ],
+  "form.field.image.label": [
+    {
+      "type": 0,
+      "value": "Set Image (optional)"
+    }
+  ],
+  "form.field.image.preview.alt": [
+    {
+      "type": 0,
+      "value": "Set preview"
+    }
+  ],
+  "form.field.image.upload": [
+    {
+      "type": 0,
+      "value": "Upload Image"
+    }
+  ],
+  "form.field.language.label": [
+    {
+      "type": 0,
+      "value": "Language"
+    }
+  ],
+  "form.field.set_name.label": [
+    {
+      "type": 0,
+      "value": "Set Name"
+    }
+  ],
+  "form.field.set_name.placeholder": [
+    {
+      "type": 0,
+      "value": "Enter set name"
+    }
+  ],
+  "form.field.variant.label": [
+    {
+      "type": 0,
+      "value": "Variant"
+    }
+  ],
+  "form.validation.unsaved_changes": [
+    {
+      "type": 0,
+      "value": "You have unsaved changes. Are you sure you want to close?"
+    }
+  ],
+  "nav.action.signin": [
+    {
+      "type": 0,
+      "value": "Sign In"
+    }
+  ],
+  "nav.action.signout": [
+    {
+      "type": 0,
+      "value": "Sign Out"
+    }
+  ],
+  "nav.link.collection": [
+    {
+      "type": 0,
+      "value": "My Collection"
+    }
+  ],
+  "nav.link.home": [
+    {
+      "type": 0,
+      "value": "Home"
+    }
+  ],
+  "nav.link.sets": [
+    {
+      "type": 0,
+      "value": "Sets"
+    }
+  ],
+  "page.collection.action.add_card": [
+    {
+      "type": 0,
+      "value": "Add New Card"
+    }
+  ],
+  "page.collection.action.add_first_card": [
+    {
+      "type": 0,
+      "value": "Add Your First Card"
+    }
+  ],
+  "page.collection.action.add_first_set": [
+    {
+      "type": 0,
+      "value": "Add Your First Set"
+    }
+  ],
+  "page.collection.action.add_set": [
+    {
+      "type": 0,
+      "value": "Add New Set"
+    }
+  ],
+  "page.collection.cards.empty.description": [
+    {
+      "type": 0,
+      "value": "Start adding cards to your collection!"
+    }
+  ],
+  "page.collection.cards.empty.title": [
+    {
+      "type": 0,
+      "value": "No cards in your collection yet"
+    }
+  ],
+  "page.collection.description": [
+    {
+      "type": 0,
+      "value": "Track and manage your Pokémon card collection"
+    }
+  ],
+  "page.collection.sets.card.description": [
+    {
+      "type": 0,
+      "value": "View and manage cards in this set."
+    }
+  ],
+  "page.collection.sets.empty.description": [
+    {
+      "type": 0,
+      "value": "Add your first set!"
+    }
+  ],
+  "page.collection.sets.empty.title": [
+    {
+      "type": 0,
+      "value": "No sets added yet"
+    }
+  ],
+  "page.collection.tab.cards": [
+    {
+      "type": 0,
+      "value": "My Cards"
+    }
+  ],
+  "page.collection.tab.sets": [
+    {
+      "type": 0,
+      "value": "My Sets"
+    }
+  ],
+  "page.collection.tab.wantlist": [
+    {
+      "type": 0,
+      "value": "Wantlist"
+    }
+  ],
+  "page.collection.title": [
+    {
+      "type": 0,
+      "value": "My Collection"
+    }
+  ],
+  "page.collection.wantlist.empty.description": [
+    {
+      "type": 0,
+      "value": "You have all cards in your custom sets!"
+    }
+  ],
+  "page.collection.wantlist.empty.title": [
+    {
+      "type": 0,
+      "value": "Your wantlist is empty!"
+    }
+  ],
+  "page.error.action.home": [
+    {
+      "type": 0,
+      "value": "Head Back Home"
+    }
+  ],
+  "page.error.action.retry": [
+    {
+      "type": 0,
+      "value": "Try Again"
+    }
+  ],
+  "page.error.description": [
+    {
+      "type": 0,
+      "value": "Looks like the Bulkratte nibbled on something it better shouldn't have. But don't worry, your collection is safe!"
+    }
+  ],
+  "page.error.heading": [
+    {
+      "type": 0,
+      "value": "Unknown Error"
+    }
+  ],
+  "page.error.title": [
+    {
+      "type": 0,
+      "value": "Something went wrong!"
+    }
+  ],
+  "page.home.action.browse_sets": [
+    {
+      "type": 0,
+      "value": "Browse Card Sets"
+    }
+  ],
+  "page.home.action.signup": [
+    {
+      "type": 0,
+      "value": "Sign Up Now"
+    }
+  ],
+  "page.home.action.view_collection": [
+    {
+      "type": 0,
+      "value": "My Collection"
+    }
+  ],
+  "page.home.cta.intro": [
+    {
+      "type": 0,
+      "value": "Not a "
+    },
+    {
+      "children": [
+        {
+          "type": 0,
+          "value": "Bulkratte"
+        }
+      ],
+      "type": 8,
+      "value": "i"
+    },
+    {
+      "type": 0,
+      "value": " yet? Create an account and start organizing your collection today – 100% for free!"
+    }
+  ],
+  "page.home.description": [
+    {
+      "children": [
+        {
+          "type": 1,
+          "value": "siteName"
+        }
+      ],
+      "type": 8,
+      "value": "i"
+    },
+    {
+      "type": 0,
+      "value": " is the easiest way to track your Pokémon card collection. Manage sets in multiple languages, variants, and conditions with ease."
+    }
+  ],
+  "page.home.title": [
+    {
+      "type": 0,
+      "value": "Your TCG collection under control"
+    }
+  ],
+  "page.not_found.action.home": [
+    {
+      "type": 0,
+      "value": "Head Back Home"
+    }
+  ],
+  "page.not_found.description": [
+    {
+      "type": 0,
+      "value": "Oops! This page still seems to be missing from your collection."
+    }
+  ],
+  "page.not_found.title": [
+    {
+      "type": 0,
+      "value": "Page Not Found"
+    }
+  ],
+  "page.set.action.create": [
+    {
+      "type": 0,
+      "value": "Create Set"
+    }
+  ],
+  "page.set.action.delete": [
+    {
+      "type": 0,
+      "value": "Delete Set"
+    }
+  ],
+  "page.set.action.edit": [
+    {
+      "type": 0,
+      "value": "Edit Set"
+    }
+  ],
+  "page.set.action.save": [
+    {
+      "type": 0,
+      "value": "Save Changes"
+    }
+  ],
+  "page.set.detail.description": [
+    {
+      "type": 0,
+      "value": "Place your cards into this set"
+    }
+  ],
+  "page.set.edit.description": [
+    {
+      "type": 0,
+      "value": "Name your set and select cards to add"
+    }
+  ],
+  "page.set.edit.title": [
+    {
+      "type": 0,
+      "value": "Edit Set"
+    }
+  ],
+  "page.set.error.not_found": [
+    {
+      "type": 0,
+      "value": "Set not found"
+    }
+  ],
+  "page.set.form.cards_selected": [
+    {
+      "type": 1,
+      "value": "count"
+    },
+    {
+      "type": 0,
+      "value": " cards selected"
+    }
+  ],
+  "page.set.new.description": [
+    {
+      "type": 0,
+      "value": "Name your set and select cards to add"
+    }
+  ],
+  "page.set.new.title": [
+    {
+      "type": 0,
+      "value": "Create New Set"
+    }
+  ],
+  "page.sets.description": [
+    {
+      "type": 0,
+      "value": "Browse all available Pokémon card sets. Click on a set to view its cards or mark sets you're actively collecting."
+    }
+  ],
+  "page.sets.label": [
+    {
+      "type": 0,
+      "value": "Sets"
+    }
+  ],
+  "page.sets.search.placeholder": [
+    {
+      "type": 0,
+      "value": "Search set names..."
+    }
+  ],
+  "page.sets.title": [
+    {
+      "type": 0,
+      "value": "Browse Sets"
+    }
+  ],
+  "page.user_set.private.back": [
+    {
+      "type": 0,
+      "value": "Back to My Collection"
+    }
+  ],
+  "page.user_set.private.description": [
+    {
+      "type": 0,
+      "value": "This collection set is private and can only be viewed by its owner."
+    }
+  ],
+  "page.user_set.private.title": [
+    {
+      "type": 0,
+      "value": "This Set is Private"
+    }
+  ],
+  "set.cards.count": [
+    {
+      "type": 1,
+      "value": "total"
+    },
+    {
+      "type": 0,
+      "value": " cards"
+    }
+  ],
+  "set.cards.count_with_extras": [
+    {
+      "type": 1,
+      "value": "total"
+    },
+    {
+      "type": 0,
+      "value": " (+"
+    },
+    {
+      "type": 1,
+      "value": "extras"
+    },
+    {
+      "type": 0,
+      "value": ") cards"
+    }
+  ],
+  "set.logo.alt": [
+    {
+      "type": 1,
+      "value": "setName"
+    },
+    {
+      "type": 0,
+      "value": " logo"
+    }
+  ],
+  "set.series.logo.alt": [
+    {
+      "type": 1,
+      "value": "series"
+    },
+    {
+      "type": 0,
+      "value": " logo"
+    }
+  ],
+  "set.symbol.alt": [
+    {
+      "type": 1,
+      "value": "setName"
+    },
+    {
+      "type": 0,
+      "value": " symbol"
+    }
+  ]
 }

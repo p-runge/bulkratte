@@ -21,8 +21,8 @@ import { BetweenHorizonalStart, GripVertical, Trash2 } from "lucide-react";
 import Image from "next/image";
 import React, { useState } from "react";
 import { FormattedMessage } from "react-intl";
-import { Button } from "../../ui/button";
 import ConfirmButton from "../../confirm-button";
+import { Button } from "../../ui/button";
 import { PAGE_SIZE, useBinderContext } from "../binder-context";
 import { BinderCard, BinderCardData } from "../types";
 
@@ -249,10 +249,8 @@ function SheetPreview({
             onClick={() => deleteSheet(sheetIndex)}
             className="shrink-0"
             disabled={sheetCount <= 1}
-            titleId="binder.sheet.delete.title"
-            titleDefault="Delete Sheet with Cards"
-            descriptionId="binder.sheet.delete.description"
-            descriptionDefault="This sheet contains cards. Are you sure you want to delete it? The cards will be removed from this binder (but not from your collection)."
+            title="Delete Sheet with Cards"
+            description="This sheet contains cards. Are you sure you want to delete it? The cards will be removed from this binder (but not from your collection)."
             destructive
           >
             <Trash2 className="h-6 w-6" />
