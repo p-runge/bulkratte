@@ -21,6 +21,7 @@ import { BetweenHorizonalStart, GripVertical, Trash2 } from "lucide-react";
 import Image from "next/image";
 import React, { useState } from "react";
 import { Button } from "../../ui/button";
+import ConfirmButton from "../../confirm-button";
 import { PAGE_SIZE, useBinderContext } from "../binder-context";
 import { BinderCard, BinderCardData } from "../types";
 
@@ -183,6 +184,8 @@ function SheetPreview({
   const frontCards = getFrontPageCards();
   const backCards = getBackPageCards();
 
+  const hasCards = [...frontCards, ...backCards].some(Boolean);
+
   return (
     <div
       className={`border rounded-lg p-4 bg-card ${
@@ -217,15 +220,30 @@ function SheetPreview({
           </div>
         </div>
 
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={() => deleteSheet(sheetIndex)}
-          className="shrink-0"
-          disabled={sheetCount <= 1}
-        >
-          <Trash2 className="h-6 w-6" />
-        </Button>
+        {hasCards ? (
+          <ConfirmButton
+            variant="destructive"
+            size="sm"
+            onClick={() => deleteSheet(sheetIndex)}
+            className="shrink-0"
+            disabled={sheetCount <= 1}
+            title="Delete Sheet with Cards"
+            description="This sheet contains cards. Are you sure you want to delete it? The cards will be removed from this binder (but not from your collection)."
+            destructive
+          >
+            <Trash2 className="h-6 w-6" />
+          </ConfirmButton>
+        ) : (
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => deleteSheet(sheetIndex)}
+            className="shrink-0"
+            disabled={sheetCount <= 1}
+          >
+            <Trash2 className="h-6 w-6" />
+          </Button>
+        )}
       </div>
     </div>
   );
