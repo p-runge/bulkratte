@@ -20,6 +20,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { BetweenHorizonalStart, GripVertical, Trash2 } from "lucide-react";
 import Image from "next/image";
 import React, { useState } from "react";
+import { FormattedMessage } from "react-intl";
 import { Button } from "../../ui/button";
 import ConfirmButton from "../../confirm-button";
 import { PAGE_SIZE, useBinderContext } from "../binder-context";
@@ -63,16 +64,31 @@ export function SheetManagement() {
   return (
     <div className="flex flex-col items-center gap-4 max-w-4xl mx-auto p-4">
       <div className="text-center">
-        <h2 className="text-2xl font-semibold mb-2">Manage Sheets</h2>
+        <h2 className="text-2xl font-semibold mb-2">
+          <FormattedMessage
+            id="binder.sheet.management.title"
+            defaultMessage="Manage Sheets"
+          />
+        </h2>
         <p className="text-muted-foreground text-sm">
-          Add, remove, or reorder sheets in your binder
+          <FormattedMessage
+            id="binder.sheet.management.description"
+            defaultMessage="Add, remove, or reorder sheets in your binder"
+          />
         </p>
       </div>
 
       <div className="text-center mb-4">
         <p className="text-sm text-muted-foreground">
-          This binder currently has {sheetCount} sheets ({sheetCount * 2} pages)
-          holding a total of {cardData.length} cards.
+          <FormattedMessage
+            id="binder.sheet.management.stats"
+            defaultMessage="This binder currently has {sheetCount} sheets ({pageCount} pages) holding a total of {cardCount} cards."
+            values={{
+              sheetCount,
+              pageCount: sheetCount * 2,
+              cardCount: cardData.length,
+            }}
+          />
         </p>
       </div>
 
@@ -207,14 +223,20 @@ function SheetPreview({
         <div className="flex gap-4">
           <div className="flex-1">
             <div className="text-xs text-center text-muted-foreground mb-1 whitespace-nowrap">
-              Front Site
+              <FormattedMessage
+                id="binder.sheet.label.front"
+                defaultMessage="Front Site"
+              />
             </div>
             <MiniPage cards={frontCards} />
           </div>
 
           <div className="flex-1">
             <div className="text-xs text-center text-muted-foreground mb-1 whitespace-nowrap">
-              Back Site
+              <FormattedMessage
+                id="binder.sheet.label.back"
+                defaultMessage="Back Site"
+              />
             </div>
             <MiniPage cards={backCards} />
           </div>
@@ -227,8 +249,10 @@ function SheetPreview({
             onClick={() => deleteSheet(sheetIndex)}
             className="shrink-0"
             disabled={sheetCount <= 1}
-            title="Delete Sheet with Cards"
-            description="This sheet contains cards. Are you sure you want to delete it? The cards will be removed from this binder (but not from your collection)."
+            titleId="binder.sheet.delete.title"
+            titleDefault="Delete Sheet with Cards"
+            descriptionId="binder.sheet.delete.description"
+            descriptionDefault="This sheet contains cards. Are you sure you want to delete it? The cards will be removed from this binder (but not from your collection)."
             destructive
           >
             <Trash2 className="h-6 w-6" />
@@ -288,7 +312,12 @@ function InsertSheetButton({ position }: { position: number }) {
         className="gap-2"
       >
         <BetweenHorizonalStart className="h-3 w-3" />
-        <span className="">Insert Sheet Here</span>
+        <span className="">
+          <FormattedMessage
+            id="binder.sheet.action.insert"
+            defaultMessage="Insert Sheet Here"
+          />
+        </span>
       </Button>
     </div>
   );

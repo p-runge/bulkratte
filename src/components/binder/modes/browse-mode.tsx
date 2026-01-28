@@ -9,13 +9,15 @@ import {
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import React, { useState } from "react";
-import { FormattedMessage } from "react-intl";
+import { FormattedMessage, useIntl } from "react-intl";
 import { Button } from "../../ui/button";
 import { PAGE_SIZE, useBinderContext } from "../binder-context";
 import BinderPage from "../binder-page";
 import { BinderCard, BinderCardData } from "../types";
+import { id } from "zod/v4/locales";
 
 export function BrowseMode() {
+  const intl = useIntl();
   const { cardData, sheetCount, currentSpread, setCurrentSpread, form } =
     useBinderContext();
 
@@ -183,7 +185,10 @@ export function BrowseMode() {
                   <div
                     key={pageIndex}
                     className="border border-gray-500 shadow-sm p-[2%] rounded-lg flex-1 self-stretch w-full"
-                    aria-label="Blank binder page"
+                    aria-label={intl.formatMessage({
+                      id: "binder.page.aria.blank",
+                      defaultMessage: "Blank binder page",
+                    })}
                   />
                 );
               }
@@ -221,7 +226,10 @@ export function BrowseMode() {
           onClick={handlePreviousPage}
           disabled={currentSpread === 0}
           variant="outline"
-          aria-label="Previous pages"
+          aria-label={intl.formatMessage({
+            id: "binder.page.aria.previous",
+            defaultMessage: "Previous pages",
+          })}
         >
           <ArrowLeft />
         </Button>
@@ -240,7 +248,10 @@ export function BrowseMode() {
           onClick={handleNextPage}
           disabled={currentSpread === maxSpread}
           variant="outline"
-          aria-label="Next pages"
+          aria-label={intl.formatMessage({
+            id: "binder.page.aria.next",
+            defaultMessage: "Next pages",
+          })}
         >
           <ArrowRight />
         </Button>
@@ -325,7 +336,17 @@ function NavigationZone({
             <ArrowRight className="h-3 w-3 xl:h-8 xl:w-8" />
           )}
           <span className="hidden xl:inline text-xs font-medium whitespace-nowrap">
-            {direction === "left" ? "Previous" : "Next"}
+            {direction === "left" ? (
+              <FormattedMessage
+                id="binder.navigation.previous"
+                defaultMessage="Previous"
+              />
+            ) : (
+              <FormattedMessage
+                id="binder.navigation.next"
+                defaultMessage="Next"
+              />
+            )}
           </span>
         </div>
       )}

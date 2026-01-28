@@ -71,7 +71,7 @@ async function translate(locale: string, data: string) {
     "\nCopy the prompt below and use GitHub Copilot Chat to translate it:",
   );
   console.log(
-    `\n\`\`\`\nTake a look at the files in src/lib/i18n/translated and check if have all the keys that are also defined in src/lib/i18n/extracted. If there are missing keys, translate them now and update the files accordingly. Make sure to keep the same keys and their order as in the extracted file. Make sure the translations match the tone and context of the application, which is a tool for managing trading card collections.\n\`\`\``,
+    `\n\`\`\`\nTake a look at the files in src/lib/i18n/translated and check if the keys defined in them are all in sync with the keys that are also defined in the source file within src/lib/i18n/extracted. Remove ones that are not present in the extracted file. If there are missing keys, translate them now and update the translated files accordingly. Make sure to keep the same keys and their order as in the extracted file. Make sure the translations match the tone and context of the application, which is a tool for managing trading card collections.\n\`\`\``,
   );
   console.log("\n=== END OF REQUEST ===\n");
 

@@ -14,8 +14,12 @@ import { ComponentProps, MouseEvent, ReactNode, useState } from "react";
 
 type Props = ComponentProps<typeof Button> & {
   children: ReactNode;
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
+  titleId?: string;
+  titleDefault?: string;
+  descriptionId?: string;
+  descriptionDefault?: string;
   destructive?: boolean;
 };
 
@@ -23,6 +27,10 @@ export default function ConfirmButton({
   children,
   title,
   description,
+  titleId,
+  titleDefault,
+  descriptionId,
+  descriptionDefault,
   destructive,
   onClick,
   ...buttonProps
@@ -46,8 +54,23 @@ export default function ConfirmButton({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{title}</DialogTitle>
-            <DialogDescription>{description}</DialogDescription>
+            <DialogTitle>
+              {titleId && titleDefault ? (
+                <FormattedMessage id={titleId} defaultMessage={titleDefault} />
+              ) : (
+                title
+              )}
+            </DialogTitle>
+            <DialogDescription>
+              {descriptionId && descriptionDefault ? (
+                <FormattedMessage
+                  id={descriptionId}
+                  defaultMessage={descriptionDefault}
+                />
+              ) : (
+                description
+              )}
+            </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button onClick={handleClose} variant="outline">
