@@ -82,11 +82,11 @@ export function SheetManagement() {
         <p className="text-sm text-muted-foreground">
           <FormattedMessage
             id="binder.sheet.management.stats"
-            defaultMessage="This binder currently has {sheetCount} sheets ({pageCount} pages) holding a total of {cardCount} cards."
+            defaultMessage="This binder currently has {sheetCount} sheets ({pageCount} pages) holding a potential total of {maxCardCount} cards."
             values={{
               sheetCount,
               pageCount: sheetCount * 2,
-              cardCount: cardData.length,
+              maxCardCount: sheetCount * 2 * PAGE_SIZE,
             }}
           />
         </p>
