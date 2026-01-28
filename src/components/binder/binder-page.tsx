@@ -9,11 +9,9 @@ import { BinderCard } from "./types";
 
 export default function BinderPage({
   cards,
-  pageNumber,
   pageStartIndex,
 }: {
   cards: (BinderCard | null | undefined)[];
-  pageNumber: number;
   pageStartIndex: number;
 }) {
   const {

@@ -201,7 +201,6 @@ export function BrowseMode() {
                 <BinderPage
                   key={pageIndex}
                   cards={page}
-                  pageNumber={(currentSpread - 1) * 2 + 2 + pageIndex}
                   pageStartIndex={
                     ((currentSpread - 1) * 2 + 1 + pageIndex) * PAGE_SIZE
                   }

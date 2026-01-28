@@ -17,12 +17,16 @@ type BinderContextValue = {
   currentPosition: number | null;
   pickCardsForPosition: (position: number) => void;
   closeCardPicker: () => void;
+  removeCardAtPosition: (position: number) => void;
   sheetCount: number;
   insertSheet: (position: number) => void;
   deleteSheet: (sheetIndex: number) => void;
   reorderSheet: (fromIndex: number, toIndex: number) => void;
   currentSpread: number;
   setCurrentSpread: React.Dispatch<React.SetStateAction<number>>;
+  // "remove" is a mode that is only selectable on mobile, where hovering is not possible
+  mode: "browse" | "remove";
+  setMode: React.Dispatch<React.SetStateAction<"browse" | "remove">>;
 };
 
 const BinderContext = createContext<BinderContextValue | undefined>(undefined);
@@ -35,6 +39,7 @@ export function BinderProvider({
   initialUserSet: UserSet;
 }) {
   const [currentSpread, setCurrentSpread] = React.useState(0);
+  const [mode, setMode] = React.useState<"browse" | "remove">("browse");
 
   const form = useRHFForm(BinderFormSchema, {
     defaultValues: {
@@ -68,6 +73,12 @@ export function BinderProvider({
 
   function closeCardPicker() {
     setCurrentPosition(null);
+  }
+
+  function removeCardAtPosition(position: number) {
+    const currentCardData = form.getValues("cardData");
+    const newCardData = currentCardData.filter((cd) => cd.order !== position);
+    form.setValue("cardData", newCardData);
   }
 
   // Always keep sheetCount at least 1
@@ -208,12 +219,15 @@ export function BinderProvider({
         currentPosition,
         pickCardsForPosition: setCurrentPosition,
         closeCardPicker,
+        removeCardAtPosition,
         sheetCount,
         insertSheet,
         deleteSheet,
         reorderSheet,
         currentSpread,
         setCurrentSpread,
+        mode,
+        setMode,
       }}
     >
       {children}

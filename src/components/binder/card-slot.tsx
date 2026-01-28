@@ -4,7 +4,7 @@ import Image from "next/image";
 import { Button } from "../ui/button";
 import { useBinderContext } from "./binder-context";
 import { BinderCard } from "./types";
-import React from "react";
+import React, { useState } from "react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 
 export function CardSlot({
@@ -14,7 +14,10 @@ export function CardSlot({
   card: BinderCard | null | undefined;
   position: number;
 }) {
-  // DnD Kit hooks
+  const { removeCardAtPosition, mode } = useBinderContext();
+  const [showRemove, setShowRemove] = useState(false);
+
+  // DnD Kit hooks - disable dragging in remove mode
   const {
     setNodeRef: setDraggableRef,
     attributes,
@@ -23,7 +26,7 @@ export function CardSlot({
   } = useDraggable({
     id: `binder-slot-${position}`,
     data: { position },
-    disabled: !card,
+    disabled: !card || mode === "remove",
   });
   const { setNodeRef: setDroppableRef, isOver } = useDroppable({
     id: `binder-slot-${position}`,
@@ -42,6 +45,47 @@ export function CardSlot({
     );
   }
 
+  const handleRemoveClick = () => {
+    removeCardAtPosition(position);
+  };
+
+  // In remove mode, the card renders as a remove button and is fully clickable
+  if (mode === "remove") {
+    return (
+      <div
+        onClick={handleRemoveClick}
+        className={cn(
+          "w-full h-full aspect-245/337 border border-gray-400 rounded flex items-center justify-center text-xs font-medium relative overflow-hidden",
+          "cursor-pointer",
+        )}
+      >
+        {card ? (
+          <Image
+            src={card.imageSmall}
+            alt={card.name}
+            width={245}
+            height={337}
+            unoptimized
+            className="w-full h-full object-contain rounded"
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-200 animate-pulse rounded" />
+        )}
+        {/* Remove button in top-right corner, always visible */}
+        <div className="absolute inset-0 flex justify-center items-center">
+          <Button
+            variant="destructive"
+            size="icon"
+            className={cn("h-7 w-7 rounded-lg")}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // In browse mode, show remove button on hover (desktop only)
   return (
     <div
       ref={(node) => {
@@ -51,10 +95,12 @@ export function CardSlot({
       {...attributes}
       {...listeners}
       className={cn(
-        "w-full h-full aspect-245/337 border border-gray-400 rounded flex items-center justify-center text-xs font-medium relative overflow-hidden",
+        "group w-full h-full aspect-245/337 border border-gray-400 rounded flex items-center justify-center text-xs font-medium relative overflow-hidden",
         isDragging && "opacity-50",
         isOver && "ring-2 ring-primary",
       )}
+      onMouseEnter={() => setShowRemove(true)}
+      onMouseLeave={() => setShowRemove(false)}
     >
       {card ? (
         <Image
@@ -68,13 +114,23 @@ export function CardSlot({
       ) : (
         <div className="w-full h-full bg-gray-200 animate-pulse rounded" />
       )}
-      <Button
-        variant="destructive"
-        size="icon"
-        className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-      >
-        <X className="h-4 w-4" />
-      </Button>
+
+      {showRemove && (
+        <Button
+          variant="destructive"
+          size="icon"
+          className="absolute top-1 right-1 h-7 w-7 z-10 shadow-lg"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleRemoveClick();
+          }}
+          onMouseDown={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      )}
     </div>
   );
 }

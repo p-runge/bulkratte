@@ -47,10 +47,28 @@
       "value": "Ansichtsmodus"
     }
   ],
+  "binder.mode.browse.short": [
+    {
+      "type": 0,
+      "value": "Ansicht"
+    }
+  ],
   "binder.mode.manage": [
     {
       "type": 0,
       "value": "Blätter verwalten"
+    }
+  ],
+  "binder.mode.manage.short": [
+    {
+      "type": 0,
+      "value": "Verwalten"
+    }
+  ],
+  "binder.mode.remove": [
+    {
+      "type": 0,
+      "value": "Entfernen"
     }
   ],
   "binder.navigation.next": [

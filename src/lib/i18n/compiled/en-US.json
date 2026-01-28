@@ -47,10 +47,28 @@
       "value": "Browse Mode"
     }
   ],
+  "binder.mode.browse.short": [
+    {
+      "type": 0,
+      "value": "Browse"
+    }
+  ],
   "binder.mode.manage": [
     {
       "type": 0,
       "value": "Manage Sheets"
+    }
+  ],
+  "binder.mode.manage.short": [
+    {
+      "type": 0,
+      "value": "Manage"
+    }
+  ],
+  "binder.mode.remove": [
+    {
+      "type": 0,
+      "value": "Remove"
     }
   ],
   "binder.navigation.next": [
