@@ -49,15 +49,6 @@ function Content() {
   const nameValue = form.watch("name");
   const cardDataValue = form.watch("cardData");
 
-  // const { data: cards } = api.card.getByIds.useQuery({
-  //   cardIds: cardDataValue.map((cd) => cd.cardId),
-  // });
-  // const cardsData =
-  //   cards?.map((card) => ({
-  //     card,
-  //     order: cardDataValue.find((cd) => cd.cardId === card.id)?.order ?? 0,
-  //   })) ?? [];
-
   const {
     imagePreview,
     fileInputRef,
