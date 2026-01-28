@@ -1,11 +1,12 @@
 "use client";
 
+import { Checkbox } from "@/components/ui/checkbox";
 import type { Card } from "@/lib/db";
 import { cn } from "@/lib/utils";
-import { Check, Circle } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Circle } from "lucide-react";
 import Image from "next/image";
 import { FormattedMessage, useIntl } from "react-intl";
+import Loader from "../loader";
 
 export type CardWithGridId = Card & { price: number | undefined } & {
   gridId: string;
@@ -42,7 +43,15 @@ export function CardGrid({
     }
   };
 
-  if (cards.length === 0 && !isLoading) {
+  if (isLoading) {
+    return (
+      <div className="flex justify-center">
+        <Loader />
+      </div>
+    );
+  }
+
+  if (cards.length === 0) {
     return (
       <div className="flex items-center justify-center h-64 text-muted-foreground">
         <FormattedMessage
