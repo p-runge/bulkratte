@@ -1,5 +1,6 @@
 "use client";
 
+import KeyboardKey from "@/components/keyboard-key";
 import {
   DndContext,
   DragEndEvent,
@@ -11,10 +12,10 @@ import Image from "next/image";
 import React, { useState } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 import { Button } from "../../ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../../ui/tooltip";
 import { PAGE_SIZE, useBinderContext } from "../binder-context";
 import BinderPage from "../binder-page";
 import { BinderCard, BinderCardData } from "../types";
-import { id } from "zod/v4/locales";
 
 export function BrowseMode() {
   const intl = useIntl();
@@ -49,11 +50,14 @@ export function BrowseMode() {
   }, [maxSpread, setCurrentSpread]);
 
   // Keyboard navigation for previous/next (only in browse mode)
+  // Use comma (,) for previous and period (.) for next
   React.useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "ArrowLeft") {
+      if (e.key === ",") {
+        e.preventDefault();
         handlePreviousPage();
-      } else if (e.key === "ArrowRight") {
+      } else if (e.key === ".") {
+        e.preventDefault();
         handleNextPage();
       }
     }
@@ -222,17 +226,30 @@ export function BrowseMode() {
         </DndContext>
       </div>
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 mt-2">
-        <Button
-          onClick={handlePreviousPage}
-          disabled={currentSpread === 0}
-          variant="outline"
-          aria-label={intl.formatMessage({
-            id: "binder.page.aria.previous",
-            defaultMessage: "Previous pages",
-          })}
-        >
-          <ArrowLeft />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              onClick={handlePreviousPage}
+              disabled={currentSpread === 0}
+              variant="outline"
+              aria-label={intl.formatMessage({
+                id: "binder.page.aria.previous",
+                defaultMessage: "Previous pages",
+              })}
+            >
+              <ArrowLeft />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <span className="flex items-center gap-1.5">
+              <FormattedMessage
+                id="binder.pagination.previous.label"
+                defaultMessage="Previous"
+              />
+              <KeyboardKey>,</KeyboardKey>
+            </span>
+          </TooltipContent>
+        </Tooltip>
         <span className="text-sm">
           <FormattedMessage
             id="binder.pagination"
@@ -244,17 +261,30 @@ export function BrowseMode() {
             }}
           />
         </span>
-        <Button
-          onClick={handleNextPage}
-          disabled={currentSpread === maxSpread}
-          variant="outline"
-          aria-label={intl.formatMessage({
-            id: "binder.page.aria.next",
-            defaultMessage: "Next pages",
-          })}
-        >
-          <ArrowRight />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              onClick={handleNextPage}
+              disabled={currentSpread === maxSpread}
+              variant="outline"
+              aria-label={intl.formatMessage({
+                id: "binder.page.aria.next",
+                defaultMessage: "Next pages",
+              })}
+            >
+              <ArrowRight />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <span className="flex items-center gap-1.5">
+              <FormattedMessage
+                id="binder.pagination.next.label"
+                defaultMessage="Next"
+              />
+              <KeyboardKey>.</KeyboardKey>
+            </span>
+          </TooltipContent>
+        </Tooltip>
       </div>
     </div>
   );
