@@ -1,4 +1,5 @@
 import { TRPCReactProvider } from "@/lib/api/react";
+import { DeviceSync } from "@/lib/hooks";
 import { I18nProvider } from "@/lib/i18n/client";
 import { getServerLocale } from "@/lib/i18n/server";
 import { ThemeProvider } from "@/providers/theme-provider";
@@ -27,6 +28,7 @@ export default async function RootLayout({
   return (
     <html lang={lang} suppressHydrationWarning>
       <body>
+        <DeviceSync />
         <PlausibleProvider domain="bulkratte.de">
           <TRPCReactProvider>
             <ThemeProvider

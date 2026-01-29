@@ -3,6 +3,7 @@
 import { BookOpen, LayoutGrid, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FormattedMessage } from "react-intl";
+import { useDevice } from "@/lib/hooks";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { useBinderContext } from "./binder-context";
 import { BrowseMode } from "./modes/browse-mode";
@@ -11,25 +12,15 @@ import { SheetManagement } from "./modes/sheet-management";
 export function Binder() {
   const { mode, interactionMode, setInteractionMode } = useBinderContext();
   const [activeTab, setActiveTab] = useState("browse");
+  const isTouch = useDevice((state) => state.isTouch);
 
-  // Auto-switch from remove to browse mode when screen size changes to desktop
+  // Auto-switch from remove to browse mode on non-touch devices (desktop with mouse)
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(min-width: 768px)"); // md breakpoint
-
-    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
-      if (e.matches && interactionMode === "remove") {
-        setInteractionMode("browse");
-        setActiveTab("browse");
-      }
-    };
-
-    // Check initial state
-    handleChange(mediaQuery);
-
-    // Listen for changes
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
-  }, [interactionMode, setInteractionMode]);
+    if (!isTouch && interactionMode === "remove") {
+      setInteractionMode("browse");
+      setActiveTab("browse");
+    }
+  }, [isTouch, interactionMode, setInteractionMode]);
 
   // In place mode, we only show browse (no tabs needed)
   if (mode === "place") {
@@ -64,10 +55,15 @@ export function Binder() {
               />
             </span>
           </TabsTrigger>
-          <TabsTrigger value="remove" className="gap-2 md:hidden">
-            <Trash2 className="h-4 w-4" />
-            <FormattedMessage id="binder.mode.remove" defaultMessage="Remove" />
-          </TabsTrigger>
+          {isTouch && (
+            <TabsTrigger value="remove" className="gap-2">
+              <Trash2 className="h-4 w-4" />
+              <FormattedMessage
+                id="binder.mode.remove"
+                defaultMessage="Remove"
+              />
+            </TabsTrigger>
+          )}
           <TabsTrigger value="manage" className="gap-2">
             <LayoutGrid className="h-4 w-4" />
             <span className="hidden sm:inline">
