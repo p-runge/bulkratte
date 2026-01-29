@@ -6,10 +6,10 @@ import {
   userSetCardsTable,
   userSetsTable,
 } from "@/lib/db";
-import { localizeRecords } from "@/lib/db/localization";
 import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
+import { localizeRecords } from "@/lib/db/localization";
 import { TRPCError } from "@trpc/server";
-import { and, asc, desc, eq, gte, like, lte, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, ilike, lte, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -71,8 +71,8 @@ export const userCardRouter = createTRPCRouter({
 
       if (input?.search) {
         const searchCondition = or(
-          like(cardsTable.name, `%${input.search}%`),
-          like(cardsTable.number, `%${input.search}%`),
+          ilike(cardsTable.name, `%${input.search}%`),
+          ilike(cardsTable.number, `%${input.search}%`),
         );
         if (searchCondition) {
           conditions.push(searchCondition);
@@ -302,8 +302,8 @@ export const userCardRouter = createTRPCRouter({
 
       if (input?.search) {
         const searchCondition = or(
-          like(cardsTable.name, `%${input.search}%`),
-          like(cardsTable.number, `%${input.search}%`),
+          ilike(cardsTable.name, `%${input.search}%`),
+          ilike(cardsTable.number, `%${input.search}%`),
         );
         if (searchCondition) {
           conditions.push(searchCondition);
@@ -399,8 +399,8 @@ export const userCardRouter = createTRPCRouter({
 
       if (input?.search) {
         const searchCondition = or(
-          like(cardsTable.name, `%${input.search}%`),
-          like(cardsTable.number, `%${input.search}%`),
+          ilike(cardsTable.name, `%${input.search}%`),
+          ilike(cardsTable.number, `%${input.search}%`),
         );
         if (searchCondition) {
           cardConditions.push(searchCondition);

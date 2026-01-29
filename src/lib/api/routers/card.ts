@@ -8,8 +8,8 @@ import {
   desc,
   eq,
   gte,
+  ilike,
   inArray,
-  like,
   lte,
   or,
   sql,
@@ -45,8 +45,8 @@ export const cardRouter = createTRPCRouter({
 
       if (input?.search) {
         const searchCondition = or(
-          like(cardsTable.name, `%${input.search}%`),
-          like(cardsTable.number, `%${input.search}%`),
+          ilike(cardsTable.name, `%${input.search}%`),
+          ilike(cardsTable.number, `%${input.search}%`),
         );
         if (searchCondition) {
           conditions.push(searchCondition);
