@@ -71,7 +71,6 @@ export function UserSetContent({
       <SetInfo userSet={userSet} userCards={userCards} />
 
       <BinderProvider
-        key={`${userSet.set.id}-${userSet.cards.length}-${userSet.cards.filter((c) => c.userCardId).length}`}
         mode="place"
         initialUserSet={userSet}
         userSetId={userSet.set.id}

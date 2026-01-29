@@ -237,6 +237,20 @@ export function BinderProvider({
     form.setValue("cardData", newCardData);
   }
 
+  // Update form when initialUserSet changes (e.g., after refetch)
+  useEffect(() => {
+    form.reset({
+      name: initialUserSet.set.name,
+      image: initialUserSet.set.image,
+      cardData: initialUserSet.cards
+        .filter((card) => card.cardId !== null && card.order !== null)
+        .map((card) => ({
+          cardId: card.cardId!,
+          order: card.order!,
+        })),
+    });
+  }, [initialUserSet, form]);
+
   // Update sheetCount when cardData length changes
   useEffect(() => {
     const neededSheets = Math.ceil(cardData.length / PAGE_SIZE / 2);
