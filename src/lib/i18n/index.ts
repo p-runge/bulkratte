@@ -1,3 +1,4 @@
+import { languageEnum, type Language } from "@/lib/db/enums";
 import german from "@/lib/i18n/compiled/de-DE.json";
 import english from "@/lib/i18n/compiled/en-US.json";
 import { ComponentProps } from "react";
@@ -19,3 +20,19 @@ export const messages: Record<
   "de-DE": german,
   "en-US": english,
 };
+
+/**
+ * Extract language code from user's locale (e.g., "en" from "en-US")
+ * and map it to the languages of the cards in the db.
+ */
+export function getLanguageFromLocale(locale: Locale): Language {
+  const langCode = locale.split("-")[0];
+
+  if (!languageEnum.enumValues.includes(langCode as Language)) {
+    throw new Error(
+      `Invalid language code "${langCode}" extracted from locale "${locale}"`,
+    );
+  }
+
+  return langCode as Language;
+}

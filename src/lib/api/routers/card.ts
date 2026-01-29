@@ -1,5 +1,12 @@
-import { cardPricesTable, cardsTable, db, setsTable } from "@/lib/db";
+import {
+  cardPricesTable,
+  cardsTable,
+  db,
+  localizationsTable,
+  setsTable,
+} from "@/lib/db";
 import { localizeRecord, localizeRecords } from "@/lib/db/localization";
+import { getLanguageFromLocale } from "@/lib/i18n";
 import pokemonAPI from "@/lib/pokemon-api";
 import { TRPCError } from "@trpc/server";
 import {
@@ -43,15 +50,7 @@ export const cardRouter = createTRPCRouter({
         conditions.push(eq(cardsTable.setId, input.setId));
       }
 
-      if (input?.search) {
-        const searchCondition = or(
-          ilike(cardsTable.name, `%${input.search}%`),
-          ilike(cardsTable.number, `%${input.search}%`),
-        );
-        if (searchCondition) {
-          conditions.push(searchCondition);
-        }
-      }
+      const langCode = getLanguageFromLocale(ctx.language);
 
       if (input?.rarity && input.rarity !== "all") {
         conditions.push(sql`${cardsTable.rarity} = ${input.rarity}`);
@@ -116,7 +115,29 @@ export const cardRouter = createTRPCRouter({
         .from(cardsTable)
         .innerJoin(setsTable, eq(cardsTable.setId, setsTable.id))
         .leftJoin(cardPricesTable, eq(cardsTable.id, cardPricesTable.card_id))
-        .where(whereClause)
+        .leftJoin(
+          localizationsTable,
+          and(
+            eq(localizationsTable.table_name, "cards"),
+            eq(localizationsTable.column_name, "name"),
+            eq(localizationsTable.record_id, cardsTable.id),
+            eq(localizationsTable.language, langCode),
+          ),
+        )
+        .where(
+          input?.search
+            ? and(
+                ...conditions,
+                or(
+                  ilike(cardsTable.name, `%${input.search}%`),
+                  ilike(cardsTable.number, `%${input.search}%`),
+                  ilike(localizationsTable.value, `%${input.search}%`),
+                ),
+              )
+            : conditions.length > 0
+              ? and(...conditions)
+              : undefined,
+        )
         .orderBy(orderByClause)
         .limit(input?.setId ? -1 : 100);
 

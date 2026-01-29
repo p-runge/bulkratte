@@ -1,6 +1,7 @@
 import {
   cardPricesTable,
   cardsTable,
+  localizationsTable,
   setsTable,
   userCardsTable,
   userSetCardsTable,
@@ -8,6 +9,7 @@ import {
 } from "@/lib/db";
 import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
 import { localizeRecords } from "@/lib/db/localization";
+import { getLanguageFromLocale } from "@/lib/i18n";
 import { TRPCError } from "@trpc/server";
 import { and, asc, desc, eq, gte, ilike, lte, or, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -68,6 +70,8 @@ export const userCardRouter = createTRPCRouter({
       if (input?.setId) {
         conditions.push(eq(cardsTable.setId, input.setId));
       }
+
+      const langCode = getLanguageFromLocale(ctx.language);
 
       if (input?.search) {
         const searchCondition = or(
@@ -156,12 +160,33 @@ export const userCardRouter = createTRPCRouter({
             setId: cardsTable.setId,
             price: cardPricesTable.price,
           },
+          localizedName: localizationsTable.value,
         })
         .from(userCardsTable)
         .innerJoin(cardsTable, eq(userCardsTable.card_id, cardsTable.id))
         .leftJoin(setsTable, eq(cardsTable.setId, setsTable.id))
         .leftJoin(cardPricesTable, eq(cardsTable.id, cardPricesTable.card_id))
-        .where(whereClause)
+        .leftJoin(
+          localizationsTable,
+          and(
+            eq(localizationsTable.table_name, "cards"),
+            eq(localizationsTable.column_name, "name"),
+            eq(localizationsTable.record_id, cardsTable.id),
+            eq(localizationsTable.language, langCode),
+          ),
+        )
+        .where(
+          input?.search
+            ? and(
+                ...conditions,
+                or(
+                  ilike(cardsTable.name, `%${input.search}%`),
+                  ilike(cardsTable.number, `%${input.search}%`),
+                  ilike(localizationsTable.value, `%${input.search}%`),
+                ),
+              )
+            : and(...conditions),
+        )
         .orderBy(
           ...(Array.isArray(orderByClause) ? orderByClause : [orderByClause]),
         );
@@ -300,15 +325,7 @@ export const userCardRouter = createTRPCRouter({
         conditions.push(eq(cardsTable.setId, input.setId));
       }
 
-      if (input?.search) {
-        const searchCondition = or(
-          ilike(cardsTable.name, `%${input.search}%`),
-          ilike(cardsTable.number, `%${input.search}%`),
-        );
-        if (searchCondition) {
-          conditions.push(searchCondition);
-        }
-      }
+      const langCode = getLanguageFromLocale(ctx.language);
 
       if (input?.rarity && input.rarity !== "all") {
         conditions.push(sql`${cardsTable.rarity} = ${input.rarity}`);
@@ -397,16 +414,6 @@ export const userCardRouter = createTRPCRouter({
         cardConditions.push(eq(cardsTable.setId, input.setId));
       }
 
-      if (input?.search) {
-        const searchCondition = or(
-          ilike(cardsTable.name, `%${input.search}%`),
-          ilike(cardsTable.number, `%${input.search}%`),
-        );
-        if (searchCondition) {
-          cardConditions.push(searchCondition);
-        }
-      }
-
       if (input?.rarity && input.rarity !== "all") {
         cardConditions.push(sql`${cardsTable.rarity} = ${input.rarity}`);
       }
@@ -431,7 +438,27 @@ export const userCardRouter = createTRPCRouter({
         .from(cardsTable)
         .leftJoin(setsTable, eq(cardsTable.setId, setsTable.id))
         .leftJoin(cardPricesTable, eq(cardsTable.id, cardPricesTable.card_id))
-        .where(whereClause)
+        .leftJoin(
+          localizationsTable,
+          and(
+            eq(localizationsTable.table_name, "cards"),
+            eq(localizationsTable.column_name, "name"),
+            eq(localizationsTable.record_id, cardsTable.id),
+            eq(localizationsTable.language, langCode),
+          ),
+        )
+        .where(
+          input?.search
+            ? and(
+                whereClause!,
+                or(
+                  ilike(cardsTable.name, `%${input.search}%`),
+                  ilike(cardsTable.number, `%${input.search}%`),
+                  ilike(localizationsTable.value, `%${input.search}%`),
+                ),
+              )
+            : whereClause,
+        )
         .orderBy(
           ...(Array.isArray(orderByClause) ? orderByClause : [orderByClause]),
         );
