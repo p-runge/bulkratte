@@ -9,7 +9,7 @@ import { BrowseMode } from "./modes/browse-mode";
 import { SheetManagement } from "./modes/sheet-management";
 
 export function Binder() {
-  const { mode, setMode } = useBinderContext();
+  const { mode, interactionMode, setInteractionMode } = useBinderContext();
   const [activeTab, setActiveTab] = useState("browse");
 
   // Auto-switch from remove to browse mode when screen size changes to desktop
@@ -17,8 +17,8 @@ export function Binder() {
     const mediaQuery = window.matchMedia("(min-width: 768px)"); // md breakpoint
 
     const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
-      if (e.matches && mode === "remove") {
-        setMode("browse");
+      if (e.matches && interactionMode === "remove") {
+        setInteractionMode("browse");
         setActiveTab("browse");
       }
     };
@@ -29,7 +29,12 @@ export function Binder() {
     // Listen for changes
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
-  }, [mode, setMode]);
+  }, [interactionMode, setInteractionMode]);
+
+  // In place mode, we only show browse (no tabs needed)
+  if (mode === "place") {
+    return <BrowseMode />;
+  }
 
   return (
     <Tabs
@@ -38,7 +43,7 @@ export function Binder() {
       onValueChange={(value) => {
         setActiveTab(value);
         if (value === "browse" || value === "remove") {
-          setMode(value);
+          setInteractionMode(value);
         }
       }}
     >

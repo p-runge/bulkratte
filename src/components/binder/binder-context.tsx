@@ -24,9 +24,23 @@ type BinderContextValue = {
   reorderSheet: (fromIndex: number, toIndex: number) => void;
   currentSpread: number;
   setCurrentSpread: React.Dispatch<React.SetStateAction<number>>;
-  // "remove" is a mode that is only selectable on mobile, where hovering is not possible
-  mode: "browse" | "remove";
-  setMode: React.Dispatch<React.SetStateAction<"browse" | "remove">>;
+  // mode: create (new set), edit (modify structure), place (add user cards to slots)
+  mode: "create" | "edit" | "place";
+  interactionMode: "browse" | "remove"; // browse/remove for mobile compatibility
+  setInteractionMode: React.Dispatch<React.SetStateAction<"browse" | "remove">>;
+  userSetId: string | null; // Required for place mode
+  // Place mode specific data
+  userCards: any[] | null; // User's card collection for place mode
+  onCardClick:
+    | ((
+        userSetCardId: string,
+        cardId: string,
+        hasUserCard: boolean,
+        isPlaced: boolean,
+        currentUserCardId: string | null,
+      ) => void)
+    | null;
+  initialUserSet: UserSet; // Store original user set data for place mode
 };
 
 const BinderContext = createContext<BinderContextValue | undefined>(undefined);
@@ -34,21 +48,41 @@ const BinderContext = createContext<BinderContextValue | undefined>(undefined);
 export function BinderProvider({
   children,
   initialUserSet,
+  mode,
+  userSetId = null,
+  userCards = null,
+  onCardClick = null,
 }: {
   children: React.ReactNode;
   initialUserSet: UserSet;
+  mode: "create" | "edit" | "place";
+  userSetId?: string | null;
+  userCards?: any[] | null;
+  onCardClick?:
+    | ((
+        userSetCardId: string,
+        cardId: string,
+        hasUserCard: boolean,
+        isPlaced: boolean,
+        currentUserCardId: string | null,
+      ) => void)
+    | null;
 }) {
   const [currentSpread, setCurrentSpread] = React.useState(0);
-  const [mode, setMode] = React.useState<"browse" | "remove">("browse");
+  const [interactionMode, setInteractionMode] = React.useState<
+    "browse" | "remove"
+  >("browse");
 
   const form = useRHFForm(BinderFormSchema, {
     defaultValues: {
       name: initialUserSet.set.name,
       image: initialUserSet.set.image,
-      cardData: initialUserSet.cards.map((card, index) => ({
-        cardId: card.id,
-        order: index,
-      })),
+      cardData: initialUserSet.cards
+        .filter((card) => card.cardId !== null && card.order !== null)
+        .map((card) => ({
+          cardId: card.cardId!,
+          order: card.order!,
+        })),
     },
   });
 
@@ -227,7 +261,12 @@ export function BinderProvider({
         currentSpread,
         setCurrentSpread,
         mode,
-        setMode,
+        interactionMode,
+        setInteractionMode,
+        userSetId,
+        userCards,
+        onCardClick,
+        initialUserSet,
       }}
     >
       {children}

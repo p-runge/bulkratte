@@ -14,7 +14,14 @@ export function CardSlot({
   card: BinderCard | null | undefined;
   position: number;
 }) {
-  const { removeCardAtPosition, mode } = useBinderContext();
+  const {
+    removeCardAtPosition,
+    interactionMode,
+    mode,
+    userCards,
+    onCardClick,
+    initialUserSet,
+  } = useBinderContext();
   const [showRemove, setShowRemove] = useState(false);
 
   // DnD Kit hooks - disable dragging in remove mode
@@ -26,7 +33,7 @@ export function CardSlot({
   } = useDraggable({
     id: `binder-slot-${position}`,
     data: { position },
-    disabled: !card || mode === "remove",
+    disabled: !card || interactionMode === "remove" || mode === "place",
   });
   const { setNodeRef: setDroppableRef, isOver } = useDroppable({
     id: `binder-slot-${position}`,
@@ -49,8 +56,68 @@ export function CardSlot({
     removeCardAtPosition(position);
   };
 
+  // Place mode - different rendering for view-only with user card status
+  if (mode === "place") {
+    if (!card) {
+      return (
+        <div className="aspect-245/337 bg-muted/30 rounded border-2 border-dashed border-muted-foreground/20" />
+      );
+    }
+
+    // Find the original card data at this position from initialUserSet
+    const originalCard = initialUserSet.cards.find((c) => c.order === position);
+    const userSetCardId = originalCard?.id || "";
+    const cardId = card.id;
+    const isPlaced = !!originalCard?.userCardId;
+    const currentUserCardId = originalCard?.userCardId || null;
+
+    // Check if user has this card in their collection
+    const hasUserCard =
+      userCards?.some((uc: any) => uc.card.id === cardId) ?? false;
+
+    const handleClick = () => {
+      if (onCardClick && cardId && userSetCardId) {
+        onCardClick(
+          userSetCardId,
+          cardId,
+          hasUserCard,
+          isPlaced,
+          currentUserCardId,
+        );
+      }
+    };
+
+    return (
+      <button
+        onClick={handleClick}
+        className={cn(
+          "cursor-pointer aspect-245/337 rounded relative overflow-hidden",
+          "transition-all hover:scale-105",
+          hasUserCard && !isPlaced && "border-4 border-yellow-500",
+        )}
+      >
+        <div
+          className={cn(
+            "focus:outline-none focus:ring-4 focus:ring-ring focus:ring-offset-2",
+            !isPlaced && "opacity-40 grayscale",
+            hasUserCard && !isPlaced && "-m-1",
+          )}
+        >
+          <Image
+            src={card.imageSmall}
+            alt={card.name}
+            width={245}
+            height={337}
+            unoptimized
+            className="w-full h-full object-contain rounded"
+          />
+        </div>
+      </button>
+    );
+  }
+
   // In remove mode, the card renders as a remove button and is fully clickable
-  if (mode === "remove") {
+  if (interactionMode === "remove") {
     return (
       <div
         onClick={handleRemoveClick}
@@ -144,7 +211,14 @@ function EmptyCardSlot({
   setDroppableRef: (node: HTMLElement | null) => void;
   isOver: boolean;
 }) {
-  const { pickCardsForPosition } = useBinderContext();
+  const { pickCardsForPosition, mode } = useBinderContext();
+
+  // In place mode, empty slots are just visual - not interactive
+  if (mode === "place") {
+    return (
+      <div className="aspect-245/337 bg-muted/30 rounded border-2 border-dashed border-muted-foreground/20" />
+    );
+  }
 
   const onAdd = () => {
     pickCardsForPosition(position);

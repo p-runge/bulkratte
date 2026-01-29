@@ -20,6 +20,7 @@ import z from "zod";
 export default function NewSetPage() {
   return (
     <BinderProvider
+      mode="create"
       initialUserSet={{
         set: {
           // TODO: make id and createdAt not required here

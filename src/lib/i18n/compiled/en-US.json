@@ -101,16 +101,6 @@
       "value": "Previous pages"
     }
   ],
-  "binder.page.number": [
-    {
-      "type": 0,
-      "value": "Page "
-    },
-    {
-      "type": 1,
-      "value": "pageNumber"
-    }
-  ],
   "binder.pagination": [
     {
       "options": {

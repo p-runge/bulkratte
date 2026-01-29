@@ -1,20 +1,28 @@
 "use client";
 
+import { Binder } from "@/components/binder";
+import { BinderProvider } from "@/components/binder/binder-context";
+import { UserSet } from "@/components/binder/types";
 import Loader from "@/components/loader";
 import { api } from "@/lib/api/react";
 import { useState } from "react";
-import { BinderView } from "./binder-view_old";
 import { PlaceCardDialog } from "./place-card-dialog";
+import { SetInfo } from "./set-info";
 
 interface UserSetContentProps {
-  userSetId: string;
+  userSet: UserSet;
 }
 
-export function UserSetContent({ userSetId }: UserSetContentProps) {
-  const { data: userSet, isLoading: isLoadingUserSet } =
-    api.userSet.getById.useQuery({ id: userSetId });
-  const { data: userCards, isLoading: isLoadingUserCards } =
-    api.userCard.getList.useQuery();
+export function UserSetContent({
+  userSet: initialUserSet,
+}: UserSetContentProps) {
+  const { data: userSet } = api.userSet.getById.useQuery(
+    { id: initialUserSet.set.id },
+    {
+      initialData: initialUserSet,
+    },
+  );
+  const { data: userCards, isLoading } = api.userCard.getList.useQuery();
 
   const [dialogState, setDialogState] = useState<{
     open: boolean;
@@ -46,7 +54,7 @@ export function UserSetContent({ userSetId }: UserSetContentProps) {
     setDialogState(null);
   };
 
-  if (isLoadingUserSet || isLoadingUserCards) {
+  if (isLoading) {
     return (
       <div className="flex justify-center py-12">
         <Loader />
@@ -54,18 +62,24 @@ export function UserSetContent({ userSetId }: UserSetContentProps) {
     );
   }
 
-  if (!userSet || !userCards) {
+  if (!userCards) {
     return null;
   }
 
   return (
     <>
-      <BinderView
-        mode="view"
-        userSet={userSet}
+      <SetInfo userSet={userSet} userCards={userCards} />
+
+      <BinderProvider
+        key={`${userSet.set.id}-${userSet.cards.length}-${userSet.cards.filter((c) => c.userCardId).length}`}
+        mode="place"
+        initialUserSet={userSet}
+        userSetId={userSet.set.id}
         userCards={userCards}
         onCardClick={handleCardClick}
-      />
+      >
+        <Binder />
+      </BinderProvider>
 
       {dialogState && (
         <PlaceCardDialog

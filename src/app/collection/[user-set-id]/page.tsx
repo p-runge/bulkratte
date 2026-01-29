@@ -75,7 +75,7 @@ export default async function UserSetPage({
         </div>
       </div>
 
-      <UserSetContent userSetId={userSetId} />
+      <UserSetContent userSet={userSet} />
     </>
   );
 }

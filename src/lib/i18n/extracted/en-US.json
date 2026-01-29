@@ -16,7 +16,6 @@
   "binder.page.aria.blank": "Blank binder page",
   "binder.page.aria.next": "Next pages",
   "binder.page.aria.previous": "Previous pages",
-  "binder.page.number": "Page {pageNumber}",
   "binder.pagination": "{singlePage, select, true {Page {currentPages}} other {Pages {currentPages}}} of {totalPages}",
   "binder.pagination.next.label": "Next",
   "binder.pagination.previous.label": "Previous",
