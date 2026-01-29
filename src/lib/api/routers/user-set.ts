@@ -142,6 +142,7 @@ export const userSetRouter = createTRPCRouter({
           z.object({
             userSetCardId: z.string().uuid().nullable(), // null for new cards
             cardId: z.string().nullable(),
+            order: z.number(),
           }),
         ),
         image: z.string().optional(),
@@ -234,8 +235,8 @@ export const userSetRouter = createTRPCRouter({
       }
 
       // Now update with final order and cardId
-      for (let order = 0; order < input.cards.length; order++) {
-        const card = input.cards[order];
+      for (let i = 0; i < input.cards.length; i++) {
+        const card = input.cards[i];
         if (!card || !card.cardId) continue;
 
         if (card.userSetCardId) {
@@ -243,7 +244,7 @@ export const userSetRouter = createTRPCRouter({
           await ctx.db
             .update(userSetCardsTable)
             .set({
-              order,
+              order: card.order,
               card_id: card.cardId,
             })
             .where(eq(userSetCardsTable.id, card.userSetCardId));
@@ -252,7 +253,7 @@ export const userSetRouter = createTRPCRouter({
           await ctx.db.insert(userSetCardsTable).values({
             user_set_id: input.id,
             card_id: card.cardId,
-            order,
+            order: card.order,
           });
         }
       }

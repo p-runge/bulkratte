@@ -60,6 +60,7 @@ function Content({ userSet }: { userSet: UserSet }) {
     const cards = data.cardData.map((cd) => ({
       userSetCardId: existingCardMap.get(cd.order) ?? null,
       cardId: cd.cardId,
+      order: cd.order,
     }));
 
     await updateUserSet({
