@@ -1,6 +1,7 @@
 import {
   cardPricesTable,
   cardsTable,
+  db as database,
   localizationsTable,
   setsTable,
   userCardsTable,
@@ -9,11 +10,206 @@ import {
 } from "@/lib/db";
 import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
 import { localizeRecords } from "@/lib/db/localization";
-import { getLanguageFromLocale } from "@/lib/i18n";
+import { getLanguageFromLocale, Locale } from "@/lib/i18n";
 import { TRPCError } from "@trpc/server";
 import { and, asc, desc, eq, gte, ilike, lte, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+
+type WantlistFilters = {
+  setId?: string;
+  search?: string;
+  rarity?: string;
+  releaseDateFrom?: string;
+  releaseDateTo?: string;
+  sortBy?: "set-and-number" | "name" | "rarity" | "price";
+  sortOrder?: "asc" | "desc";
+};
+
+async function getWantlistForUser(
+  userId: string,
+  filters: WantlistFilters,
+  locale: Locale,
+  db: typeof database,
+) {
+  // Build WHERE conditions for filtering cards
+  const conditions = [];
+
+  if (filters.setId) {
+    conditions.push(eq(cardsTable.setId, filters.setId));
+  }
+
+  const langCode = getLanguageFromLocale(locale);
+
+  if (filters.rarity && filters.rarity !== "all") {
+    conditions.push(sql`${cardsTable.rarity} = ${filters.rarity}`);
+  }
+
+  if (filters.releaseDateFrom || filters.releaseDateTo) {
+    const dateConditions = [];
+    if (filters.releaseDateFrom) {
+      dateConditions.push(gte(setsTable.releaseDate, filters.releaseDateFrom));
+    }
+    if (filters.releaseDateTo) {
+      dateConditions.push(lte(setsTable.releaseDate, filters.releaseDateTo));
+    }
+    if (dateConditions.length > 0) {
+      const dateCondition = and(...dateConditions);
+      if (dateCondition) {
+        conditions.push(dateCondition);
+      }
+    }
+  }
+
+  // Determine order by clause
+  // Note: name sorting will be done after localization
+  const sortBy = filters.sortBy ?? "set-and-number";
+  const sortOrder = filters.sortOrder ?? "asc";
+  let orderByClause;
+  const orderDirection = sortOrder === "desc" ? desc : asc;
+
+  switch (sortBy) {
+    case "name":
+      // Skip SQL sorting for name - will sort after localization
+      orderByClause = cardsTable.id;
+      break;
+    case "rarity":
+      orderByClause = orderDirection(cardsTable.rarity);
+      break;
+    case "price":
+      orderByClause = orderDirection(
+        sql`COALESCE(${cardPricesTable.price}, 0)`,
+      );
+      break;
+    case "set-and-number":
+    default:
+      // Sort by set release date first, then by card number within each set
+      orderByClause = [
+        orderDirection(setsTable.releaseDate),
+        orderDirection(
+          sql`COALESCE(CAST(NULLIF(regexp_replace(${cardsTable.number}, '[^0-9]', '', 'g'), '') AS INTEGER), 0)`,
+        ),
+      ];
+      break;
+  }
+
+  // Get all card IDs that are in user's sets but don't have a user_card_id
+  const missingCardIds = await db
+    .selectDistinct({ cardId: userSetCardsTable.card_id })
+    .from(userSetCardsTable)
+    .innerJoin(
+      userSetsTable,
+      eq(userSetCardsTable.user_set_id, userSetsTable.id),
+    )
+    .where(
+      and(
+        eq(userSetsTable.user_id, userId),
+        sql`${userSetCardsTable.user_card_id} IS NULL`,
+      ),
+    )
+    .then((res) => res.map((row) => row.cardId));
+
+  // If no missing cards, return empty array
+  if (missingCardIds.length === 0) {
+    return [];
+  }
+
+  // Get card IDs that are already in the user's collection
+  const userCardIds = await db
+    .select({ cardId: userCardsTable.card_id })
+    .from(userCardsTable)
+    .where(eq(userCardsTable.user_id, userId))
+    .then((res) => res.map((row) => row.cardId));
+
+  // Filter out cards that are already in the user's collection
+  const wantlistCardIds = missingCardIds.filter(
+    (cardId) => !userCardIds.includes(cardId),
+  );
+
+  // If all missing cards are already in collection, return empty array
+  if (wantlistCardIds.length === 0) {
+    return [];
+  }
+
+  // Build WHERE conditions for filtering cards
+  const cardConditions = [
+    sql`${cardsTable.id} IN (${sql.join(
+      wantlistCardIds.map((id) => sql`${id}`),
+      sql`, `,
+    )})`,
+  ];
+
+  if (filters.setId) {
+    cardConditions.push(eq(cardsTable.setId, filters.setId));
+  }
+
+  if (filters.rarity && filters.rarity !== "all") {
+    cardConditions.push(sql`${cardsTable.rarity} = ${filters.rarity}`);
+  }
+
+  const whereClause =
+    cardConditions.length > 0 ? and(...cardConditions) : undefined;
+
+  // Get full card data for wantlist cards
+  const wantlistCards = await db
+    .select({
+      id: cardsTable.id,
+      name: cardsTable.name,
+      number: cardsTable.number,
+      rarity: cardsTable.rarity,
+      imageSmall: cardsTable.imageSmall,
+      imageLarge: cardsTable.imageLarge,
+      setId: cardsTable.setId,
+      created_at: cardsTable.created_at,
+      updated_at: cardsTable.updated_at,
+      price: cardPricesTable.price,
+    })
+    .from(cardsTable)
+    .leftJoin(setsTable, eq(cardsTable.setId, setsTable.id))
+    .leftJoin(cardPricesTable, eq(cardsTable.id, cardPricesTable.card_id))
+    .leftJoin(
+      localizationsTable,
+      and(
+        eq(localizationsTable.table_name, "cards"),
+        eq(localizationsTable.column_name, "name"),
+        eq(localizationsTable.record_id, cardsTable.id),
+        eq(localizationsTable.language, langCode),
+      ),
+    )
+    .where(
+      filters.search
+        ? and(
+            whereClause!,
+            or(
+              ilike(cardsTable.name, `%${filters.search}%`),
+              ilike(cardsTable.number, `%${filters.search}%`),
+              ilike(localizationsTable.value, `%${filters.search}%`),
+            ),
+          )
+        : whereClause,
+    )
+    .orderBy(
+      ...(Array.isArray(orderByClause) ? orderByClause : [orderByClause]),
+    );
+
+  // Localize card data
+  const localizedCards = await localizeRecords(
+    wantlistCards,
+    "cards",
+    ["name", "imageSmall", "imageLarge"],
+    locale,
+  );
+
+  // Apply name sorting after localization if needed
+  if (sortBy === "name") {
+    localizedCards.sort((a, b) => {
+      const comparison = a.name.localeCompare(b.name);
+      return sortOrder === "desc" ? -comparison : comparison;
+    });
+  }
+
+  return localizedCards;
+}
 
 export const userCardRouter = createTRPCRouter({
   create: protectedProcedure
@@ -318,168 +514,12 @@ export const userCardRouter = createTRPCRouter({
         .optional(),
     )
     .query(async ({ ctx, input }) => {
-      // Build WHERE conditions for filtering cards
-      const conditions = [];
-
-      if (input?.setId) {
-        conditions.push(eq(cardsTable.setId, input.setId));
-      }
-
-      const langCode = getLanguageFromLocale(ctx.language);
-
-      if (input?.rarity && input.rarity !== "all") {
-        conditions.push(sql`${cardsTable.rarity} = ${input.rarity}`);
-      }
-
-      if (input?.releaseDateFrom || input?.releaseDateTo) {
-        const dateConditions = [];
-        if (input.releaseDateFrom) {
-          dateConditions.push(
-            gte(setsTable.releaseDate, input.releaseDateFrom),
-          );
-        }
-        if (input.releaseDateTo) {
-          dateConditions.push(lte(setsTable.releaseDate, input.releaseDateTo));
-        }
-        if (dateConditions.length > 0) {
-          const dateCondition = and(...dateConditions);
-          if (dateCondition) {
-            conditions.push(dateCondition);
-          }
-        }
-      }
-
-      // Determine order by clause
-      // Note: name sorting will be done after localization
-      const sortBy = input?.sortBy ?? "set-and-number";
-      const sortOrder = input?.sortOrder ?? "asc";
-      let orderByClause;
-      const orderDirection = sortOrder === "desc" ? desc : asc;
-
-      switch (sortBy) {
-        case "name":
-          // Skip SQL sorting for name - will sort after localization
-          orderByClause = cardsTable.id;
-          break;
-        case "rarity":
-          orderByClause = orderDirection(cardsTable.rarity);
-          break;
-        case "price":
-          orderByClause = orderDirection(
-            sql`COALESCE(${cardPricesTable.price}, 0)`,
-          );
-          break;
-        case "set-and-number":
-        default:
-          // Sort by set release date first, then by card number within each set
-          orderByClause = [
-            orderDirection(setsTable.releaseDate),
-            orderDirection(
-              sql`COALESCE(CAST(NULLIF(regexp_replace(${cardsTable.number}, '[^0-9]', '', 'g'), '') AS INTEGER), 0)`,
-            ),
-          ];
-          break;
-      }
-
-      // Get all card IDs that are in user's sets but don't have a user_card_id
-      const missingCardIds = await ctx.db
-        .selectDistinct({ cardId: userSetCardsTable.card_id })
-        .from(userSetCardsTable)
-        .innerJoin(
-          userSetsTable,
-          eq(userSetCardsTable.user_set_id, userSetsTable.id),
-        )
-        .where(
-          and(
-            eq(userSetsTable.user_id, ctx.session.user.id),
-            sql`${userSetCardsTable.user_card_id} IS NULL`,
-          ),
-        )
-        .then((res) => res.map((row) => row.cardId));
-
-      // If no missing cards, return empty array
-      if (missingCardIds.length === 0) {
-        return [];
-      }
-
-      // Build WHERE conditions for filtering cards
-      const cardConditions = [
-        sql`${cardsTable.id} IN (${sql.join(
-          missingCardIds.map((id) => sql`${id}`),
-          sql`, `,
-        )})`,
-      ];
-
-      if (input?.setId) {
-        cardConditions.push(eq(cardsTable.setId, input.setId));
-      }
-
-      if (input?.rarity && input.rarity !== "all") {
-        cardConditions.push(sql`${cardsTable.rarity} = ${input.rarity}`);
-      }
-
-      const whereClause =
-        cardConditions.length > 0 ? and(...cardConditions) : undefined;
-
-      // Get full card data for missing cards
-      const missingCards = await ctx.db
-        .select({
-          id: cardsTable.id,
-          name: cardsTable.name,
-          number: cardsTable.number,
-          rarity: cardsTable.rarity,
-          imageSmall: cardsTable.imageSmall,
-          imageLarge: cardsTable.imageLarge,
-          setId: cardsTable.setId,
-          created_at: cardsTable.created_at,
-          updated_at: cardsTable.updated_at,
-          price: cardPricesTable.price,
-        })
-        .from(cardsTable)
-        .leftJoin(setsTable, eq(cardsTable.setId, setsTable.id))
-        .leftJoin(cardPricesTable, eq(cardsTable.id, cardPricesTable.card_id))
-        .leftJoin(
-          localizationsTable,
-          and(
-            eq(localizationsTable.table_name, "cards"),
-            eq(localizationsTable.column_name, "name"),
-            eq(localizationsTable.record_id, cardsTable.id),
-            eq(localizationsTable.language, langCode),
-          ),
-        )
-        .where(
-          input?.search
-            ? and(
-                whereClause!,
-                or(
-                  ilike(cardsTable.name, `%${input.search}%`),
-                  ilike(cardsTable.number, `%${input.search}%`),
-                  ilike(localizationsTable.value, `%${input.search}%`),
-                ),
-              )
-            : whereClause,
-        )
-        .orderBy(
-          ...(Array.isArray(orderByClause) ? orderByClause : [orderByClause]),
-        );
-
-      // Localize card data
-      const localizedCards = await localizeRecords(
-        missingCards,
-        "cards",
-        ["name", "imageSmall", "imageLarge"],
+      return getWantlistForUser(
+        ctx.session.user.id,
+        input ?? {},
         ctx.language,
+        ctx.db,
       );
-
-      // Apply name sorting after localization if needed
-      if (sortBy === "name") {
-        localizedCards.sort((a, b) => {
-          const comparison = a.name.localeCompare(b.name);
-          return sortOrder === "desc" ? -comparison : comparison;
-        });
-      }
-
-      return localizedCards;
     }),
 
   getPublicWantlist: publicProcedure
@@ -499,166 +539,7 @@ export const userCardRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      // Build WHERE conditions for filtering cards
-      const conditions = [];
-
-      if (input.setId) {
-        conditions.push(eq(cardsTable.setId, input.setId));
-      }
-
-      const langCode = getLanguageFromLocale(ctx.language);
-
-      if (input.rarity && input.rarity !== "all") {
-        conditions.push(sql`${cardsTable.rarity} = ${input.rarity}`);
-      }
-
-      if (input.releaseDateFrom || input.releaseDateTo) {
-        const dateConditions = [];
-        if (input.releaseDateFrom) {
-          dateConditions.push(
-            gte(setsTable.releaseDate, input.releaseDateFrom),
-          );
-        }
-        if (input.releaseDateTo) {
-          dateConditions.push(lte(setsTable.releaseDate, input.releaseDateTo));
-        }
-        if (dateConditions.length > 0) {
-          const dateCondition = and(...dateConditions);
-          if (dateCondition) {
-            conditions.push(dateCondition);
-          }
-        }
-      }
-
-      // Determine order by clause
-      const sortBy = input.sortBy ?? "set-and-number";
-      const sortOrder = input.sortOrder ?? "asc";
-      let orderByClause;
-      const orderDirection = sortOrder === "desc" ? desc : asc;
-
-      switch (sortBy) {
-        case "name":
-          // Skip SQL sorting for name - will sort after localization
-          orderByClause = cardsTable.id;
-          break;
-        case "rarity":
-          orderByClause = orderDirection(cardsTable.rarity);
-          break;
-        case "price":
-          orderByClause = orderDirection(
-            sql`COALESCE(${cardPricesTable.price}, 0)`,
-          );
-          break;
-        case "set-and-number":
-        default:
-          // Sort by set release date first, then by card number within each set
-          orderByClause = [
-            orderDirection(setsTable.releaseDate),
-            orderDirection(
-              sql`COALESCE(CAST(NULLIF(regexp_replace(${cardsTable.number}, '[^0-9]', '', 'g'), '') AS INTEGER), 0)`,
-            ),
-          ];
-          break;
-      }
-
-      // Get all card IDs that are in the specified user's sets but don't have a user_card_id
-      const missingCardIds = await ctx.db
-        .selectDistinct({ cardId: userSetCardsTable.card_id })
-        .from(userSetCardsTable)
-        .innerJoin(
-          userSetsTable,
-          eq(userSetCardsTable.user_set_id, userSetsTable.id),
-        )
-        .where(
-          and(
-            eq(userSetsTable.user_id, input.userId),
-            sql`${userSetCardsTable.user_card_id} IS NULL`,
-          ),
-        )
-        .then((res) => res.map((row) => row.cardId));
-
-      // If no missing cards, return empty array
-      if (missingCardIds.length === 0) {
-        return [];
-      }
-
-      // Build WHERE conditions for filtering cards
-      const cardConditions = [
-        sql`${cardsTable.id} IN (${sql.join(
-          missingCardIds.map((id) => sql`${id}`),
-          sql`, `,
-        )})`,
-      ];
-
-      if (input.setId) {
-        cardConditions.push(eq(cardsTable.setId, input.setId));
-      }
-
-      if (input.rarity && input.rarity !== "all") {
-        cardConditions.push(sql`${cardsTable.rarity} = ${input.rarity}`);
-      }
-
-      const whereClause =
-        cardConditions.length > 0 ? and(...cardConditions) : undefined;
-
-      // Get full card data for missing cards
-      const missingCards = await ctx.db
-        .select({
-          id: cardsTable.id,
-          name: cardsTable.name,
-          number: cardsTable.number,
-          rarity: cardsTable.rarity,
-          imageSmall: cardsTable.imageSmall,
-          imageLarge: cardsTable.imageLarge,
-          setId: cardsTable.setId,
-          created_at: cardsTable.created_at,
-          updated_at: cardsTable.updated_at,
-          price: cardPricesTable.price,
-        })
-        .from(cardsTable)
-        .leftJoin(setsTable, eq(cardsTable.setId, setsTable.id))
-        .leftJoin(cardPricesTable, eq(cardsTable.id, cardPricesTable.card_id))
-        .leftJoin(
-          localizationsTable,
-          and(
-            eq(localizationsTable.table_name, "cards"),
-            eq(localizationsTable.column_name, "name"),
-            eq(localizationsTable.record_id, cardsTable.id),
-            eq(localizationsTable.language, langCode),
-          ),
-        )
-        .where(
-          input.search
-            ? and(
-                whereClause!,
-                or(
-                  ilike(cardsTable.name, `%${input.search}%`),
-                  ilike(cardsTable.number, `%${input.search}%`),
-                  ilike(localizationsTable.value, `%${input.search}%`),
-                ),
-              )
-            : whereClause,
-        )
-        .orderBy(
-          ...(Array.isArray(orderByClause) ? orderByClause : [orderByClause]),
-        );
-
-      // Localize card data
-      const localizedCards = await localizeRecords(
-        missingCards,
-        "cards",
-        ["name", "imageSmall", "imageLarge"],
-        ctx.language,
-      );
-
-      // Apply name sorting after localization if needed
-      if (sortBy === "name") {
-        localizedCards.sort((a, b) => {
-          const comparison = a.name.localeCompare(b.name);
-          return sortOrder === "desc" ? -comparison : comparison;
-        });
-      }
-
-      return localizedCards;
+      const { userId, ...filters } = input;
+      return getWantlistForUser(userId, filters, ctx.language, ctx.db);
     }),
 });
