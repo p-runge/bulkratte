@@ -727,6 +727,18 @@
       "value": "Deine Wunschliste ist leer!"
     }
   ],
+  "page.collection.wantlist.share": [
+    {
+      "type": 0,
+      "value": "Wunschliste teilen"
+    }
+  ],
+  "page.collection.wantlist.share.copied": [
+    {
+      "type": 0,
+      "value": "Kopiert!"
+    }
+  ],
   "page.error.action.home": [
     {
       "type": 0,
@@ -927,6 +939,30 @@
     {
       "type": 0,
       "value": "Sets durchsuchen"
+    }
+  ],
+  "page.user.wantlist.description": [
+    {
+      "type": 0,
+      "value": "Karten, die dieser Benutzer sucht"
+    }
+  ],
+  "page.user.wantlist.empty.description": [
+    {
+      "type": 0,
+      "value": "Dieser Benutzer hat alle Karten in seinen eigenen Sets!"
+    }
+  ],
+  "page.user.wantlist.empty.title": [
+    {
+      "type": 0,
+      "value": "Die Wunschliste dieses Benutzers ist leer!"
+    }
+  ],
+  "page.user.wantlist.title": [
+    {
+      "type": 0,
+      "value": "Benutzer-Wunschliste"
     }
   ],
   "page.user_set.private.back": [

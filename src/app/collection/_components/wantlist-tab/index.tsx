@@ -1,18 +1,18 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
-import { TabsContent } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { api } from "@/lib/api/react";
-import { useState } from "react";
-import { useIntl } from "react-intl";
-import { Share2, Check } from "lucide-react";
 import {
   CardFilters,
   type FilterState,
 } from "@/components/card-browser/card-filters";
 import { CardGrid } from "@/components/card-browser/card-grid";
 import Loader from "@/components/loader";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { TabsContent } from "@/components/ui/tabs";
+import { api } from "@/lib/api/react";
+import { Check, Share2 } from "lucide-react";
+import { useState } from "react";
+import { useIntl } from "react-intl";
 
 export default function WantlistTab() {
   const intl = useIntl();
@@ -88,7 +88,7 @@ export default function WantlistTab() {
             onClick={handleShare}
             variant="outline"
             size="default"
-            className="flex-shrink-0"
+            className="shrink-0"
           >
             {copied ? (
               <>

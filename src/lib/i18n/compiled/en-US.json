@@ -727,6 +727,18 @@
       "value": "Your wantlist is empty!"
     }
   ],
+  "page.collection.wantlist.share": [
+    {
+      "type": 0,
+      "value": "Share Wantlist"
+    }
+  ],
+  "page.collection.wantlist.share.copied": [
+    {
+      "type": 0,
+      "value": "Copied!"
+    }
+  ],
   "page.error.action.home": [
     {
       "type": 0,
@@ -927,6 +939,30 @@
     {
       "type": 0,
       "value": "Browse Sets"
+    }
+  ],
+  "page.user.wantlist.description": [
+    {
+      "type": 0,
+      "value": "Cards this user is looking for"
+    }
+  ],
+  "page.user.wantlist.empty.description": [
+    {
+      "type": 0,
+      "value": "This user has all cards in their custom sets!"
+    }
+  ],
+  "page.user.wantlist.empty.title": [
+    {
+      "type": 0,
+      "value": "This user's wantlist is empty!"
+    }
+  ],
+  "page.user.wantlist.title": [
+    {
+      "type": 0,
+      "value": "User Wantlist"
     }
   ],
   "page.user_set.private.back": [

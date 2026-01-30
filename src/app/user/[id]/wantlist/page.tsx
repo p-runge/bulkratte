@@ -1,15 +1,15 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
-import { api } from "@/lib/api/react";
-import { use, useState } from "react";
-import { useIntl } from "react-intl";
 import {
   CardFilters,
   type FilterState,
 } from "@/components/card-browser/card-filters";
 import { CardGrid } from "@/components/card-browser/card-grid";
 import Loader from "@/components/loader";
+import { Card, CardContent } from "@/components/ui/card";
+import { api } from "@/lib/api/react";
+import { use, useState } from "react";
+import { useIntl } from "react-intl";
 
 export default function UserWantlistPage({
   params,
