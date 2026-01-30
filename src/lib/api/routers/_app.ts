@@ -1,4 +1,8 @@
-import { createCallerFactory, createTRPCRouter } from "@/lib/api/trpc";
+import {
+  createCallerFactory,
+  createTRPCRouter,
+  protectedProcedure,
+} from "@/lib/api/trpc";
 import { cardRouter } from "./card";
 import { setRouter } from "./set";
 import { userCardRouter } from "./user-card";
@@ -14,6 +18,9 @@ export const appRouter = createTRPCRouter({
   set: setRouter,
   userCard: userCardRouter,
   userSet: userSetRouter,
+  getCurrentUser: protectedProcedure.query(async ({ ctx }) => {
+    return ctx.session.user;
+  }),
 });
 
 // export type definition of API
