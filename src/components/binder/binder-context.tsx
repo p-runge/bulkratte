@@ -31,6 +31,11 @@ type BinderContextValue = {
   userSetId: string | null; // Required for place mode
   // Place mode specific data
   userCards: any[] | null; // User's card collection for place mode
+  placedUserCards: Array<{
+    userCardId: string;
+    userSetId: string;
+    setName: string;
+  }> | null; // Cards placed in any user set
   onCardClick:
     | ((
         userSetCardId: string,
@@ -51,6 +56,7 @@ export function BinderProvider({
   mode,
   userSetId = null,
   userCards = null,
+  placedUserCards = null,
   onCardClick = null,
 }: {
   children: React.ReactNode;
@@ -58,6 +64,11 @@ export function BinderProvider({
   mode: "create" | "edit" | "place";
   userSetId?: string | null;
   userCards?: any[] | null;
+  placedUserCards?: Array<{
+    userCardId: string;
+    userSetId: string;
+    setName: string;
+  }> | null;
   onCardClick?:
     | ((
         userSetCardId: string,
@@ -279,6 +290,7 @@ export function BinderProvider({
         setInteractionMode,
         userSetId,
         userCards,
+        placedUserCards,
         onCardClick,
         initialUserSet,
       }}

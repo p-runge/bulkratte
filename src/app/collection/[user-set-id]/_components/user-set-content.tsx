@@ -23,6 +23,7 @@ export function UserSetContent({
     },
   );
   const { data: userCards, isLoading } = api.userCard.getList.useQuery();
+  const { data: placedUserCards } = api.userSet.getPlacedUserCardIds.useQuery();
 
   const [dialogState, setDialogState] = useState<{
     open: boolean;
@@ -75,6 +76,7 @@ export function UserSetContent({
         initialUserSet={userSet}
         userSetId={userSet.set.id}
         userCards={userCards}
+        placedUserCards={placedUserCards ?? null}
         onCardClick={handleCardClick}
       >
         <Binder />

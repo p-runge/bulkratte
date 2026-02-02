@@ -19,8 +19,10 @@ export function CardSlot({
     interactionMode,
     mode,
     userCards,
+    placedUserCards,
     onCardClick,
     initialUserSet,
+    userSetId,
   } = useBinderContext();
   const [showRemove, setShowRemove] = useState(false);
 
@@ -87,13 +89,45 @@ export function CardSlot({
       }
     };
 
+    // Determine border color based on card availability
+    let borderColor = "";
+    if (hasUserCard && !isPlaced) {
+      // User has the card but it's not placed here
+      // Check if ALL user's cards of this type are in other sets
+      const matchingUserCards =
+        userCards?.filter((uc: any) => uc.card.id === cardId) ?? [];
+
+      if (placedUserCards && matchingUserCards.length > 0) {
+        // Create a map of user card IDs placed in other sets
+        const placedInOtherSets = new Set(
+          placedUserCards
+            .filter((pc) => pc.userSetId !== userSetId)
+            .map((pc) => pc.userCardId),
+        );
+
+        // Check if ALL matching user cards are placed in other sets
+        const allCardsInOtherSets = matchingUserCards.every((uc: any) =>
+          placedInOtherSets.has(uc.id),
+        );
+
+        if (allCardsInOtherSets) {
+          borderColor = "border-4 border-orange-500";
+        } else {
+          borderColor = "border-4 border-yellow-500";
+        }
+      } else {
+        // Default to yellow if we don't have placement data
+        borderColor = "border-4 border-yellow-500";
+      }
+    }
+
     return (
       <button
         onClick={handleClick}
         className={cn(
           "cursor-pointer aspect-245/337 rounded relative overflow-hidden",
           "transition-all hover:scale-105",
-          hasUserCard && !isPlaced && "border-4 border-yellow-500",
+          borderColor,
         )}
       >
         <div
