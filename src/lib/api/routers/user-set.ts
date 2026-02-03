@@ -399,6 +399,7 @@ export const userSetRouter = createTRPCRouter({
       .select({
         userCardId: userSetCardsTable.user_card_id,
         userSetId: userSetCardsTable.user_set_id,
+        userSetCardId: userSetCardsTable.id,
         setName: userSetsTable.name,
       })
       .from(userSetCardsTable)

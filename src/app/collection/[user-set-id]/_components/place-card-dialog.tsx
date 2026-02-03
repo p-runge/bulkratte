@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import ConfirmButton from "@/components/confirm-button";
 import {
   Dialog,
   DialogContent,
@@ -79,7 +80,11 @@ export function PlaceCardDialog({
   const placedCardsMap = new Map(
     (placedUserCards ?? []).map((pc) => [
       pc.userCardId,
-      { userSetId: pc.userSetId, setName: pc.setName },
+      {
+        userSetId: pc.userSetId,
+        userSetCardId: pc.userSetCardId,
+        setName: pc.setName,
+      },
     ]),
   );
 
@@ -103,6 +108,15 @@ export function PlaceCardDialog({
 
   const handleSelectUserCard = async (userCardId: string) => {
     try {
+      // Check if this card is already placed elsewhere
+      const placement = placedCardsMap.get(userCardId);
+      if (placement && placement.userSetId !== userSetId) {
+        // Unplace it from the old set first
+        await unplaceCard({ userSetCardId: placement.userSetCardId });
+        // Invalidate the old set's cache
+        await apiUtils.userSet.getById.invalidate({ id: placement.userSetId });
+      }
+
       await placeCard({ userSetCardId, userCardId });
       await apiUtils.userSet.getById.invalidate({ id: userSetId });
       await apiUtils.userSet.getPlacedUserCardIds.invalidate();
@@ -264,22 +278,17 @@ export function PlaceCardDialog({
                     .map((userCard) => {
                       const isCurrentlyPlaced =
                         userCard.id === currentUserCardId;
+
                       return (
-                        <button
+                        <div
                           key={userCard.id}
-                          onClick={() => handleSelectUserCard(userCard.id)}
-                          disabled={
-                            isPlacing ||
-                            isCurrentlyPlaced ||
-                            userCard.isPlacedElsewhere
-                          }
                           className={cn(
-                            "w-full p-3 rounded border text-left transition-colors",
+                            "w-full p-3 rounded border",
                             isCurrentlyPlaced
-                              ? "bg-primary/10 border-primary cursor-not-allowed"
+                              ? "bg-primary/10 border-primary"
                               : userCard.isPlacedElsewhere
-                                ? "opacity-50 cursor-not-allowed bg-muted"
-                                : "hover:bg-accent disabled:opacity-50",
+                                ? "border-destructive"
+                                : "",
                           )}
                         >
                           <div className="flex items-center gap-3">
@@ -322,8 +331,58 @@ export function PlaceCardDialog({
                                 {userCard.condition}
                               </div>
                             </div>
+                            {!isCurrentlyPlaced &&
+                              (userCard.isPlacedElsewhere ? (
+                                <ConfirmButton
+                                  variant="destructive"
+                                  size="sm"
+                                  title={intl.formatMessage({
+                                    id: "dialog.place_card.confirm.title",
+                                    defaultMessage:
+                                      "Move Card from Another Set?",
+                                  })}
+                                  description={intl.formatMessage(
+                                    {
+                                      id: "dialog.place_card.confirm.description",
+                                      defaultMessage:
+                                        'This card is currently placed in "{setName}". Moving it here will remove it from that set. Do you want to continue?',
+                                    },
+                                    {
+                                      setName: userCard.placementInfo?.setName,
+                                    },
+                                  )}
+                                  confirmLabel={intl.formatMessage({
+                                    id: "dialog.place_card.confirm.confirm_label",
+                                    defaultMessage: "Move Card",
+                                  })}
+                                  destructive
+                                  onClick={() =>
+                                    handleSelectUserCard(userCard.id)
+                                  }
+                                  disabled={isPlacing}
+                                >
+                                  {intl.formatMessage({
+                                    id: "dialog.place_card.action.place",
+                                    defaultMessage: "Place",
+                                  })}
+                                </ConfirmButton>
+                              ) : (
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  onClick={() =>
+                                    handleSelectUserCard(userCard.id)
+                                  }
+                                  disabled={isPlacing}
+                                >
+                                  {intl.formatMessage({
+                                    id: "dialog.place_card.action.place",
+                                    defaultMessage: "Place",
+                                  })}
+                                </Button>
+                              ))}
                           </div>
-                        </button>
+                        </div>
                       );
                     })}
                 </div>
