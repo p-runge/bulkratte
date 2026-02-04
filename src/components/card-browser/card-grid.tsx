@@ -8,12 +8,10 @@ import Image from "next/image";
 import { FormattedMessage, useIntl } from "react-intl";
 import Loader from "../loader";
 
-export type CardWithGridId = Card & { price: number | undefined } & {
-  gridId: string;
-};
+export type CardWithPrice = Card & { price: number | undefined };
 
 type CardGridProps = {
-  cards: CardWithGridId[];
+  cards: CardWithPrice[];
   selectionMode: "single" | "multi";
   selectedCards: Set<string>;
   onCardClick: (cardId: string) => void;
@@ -110,7 +108,7 @@ export function CardGrid({
             : 0;
           return (
             <button
-              key={card.gridId}
+              key={card.id}
               onClick={() => onCardClick(card.id)}
               className={cn(
                 "group relative rounded-lg overflow-hidden transition-all hover:scale-105",

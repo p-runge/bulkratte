@@ -151,46 +151,51 @@ async function getWantlistForUser(
     cardConditions.length > 0 ? and(...cardConditions) : undefined;
 
   // Get full card data for wantlist cards
-  const wantlistCards = await db
-    .select({
-      id: cardsTable.id,
-      name: cardsTable.name,
-      number: cardsTable.number,
-      rarity: cardsTable.rarity,
-      imageSmall: cardsTable.imageSmall,
-      imageLarge: cardsTable.imageLarge,
-      setId: cardsTable.setId,
-      created_at: cardsTable.created_at,
-      updated_at: cardsTable.updated_at,
-      price: cardPricesTable.price,
-    })
-    .from(cardsTable)
-    .leftJoin(setsTable, eq(cardsTable.setId, setsTable.id))
-    .leftJoin(cardPricesTable, eq(cardsTable.id, cardPricesTable.card_id))
-    .leftJoin(
-      localizationsTable,
-      and(
-        eq(localizationsTable.table_name, "cards"),
-        eq(localizationsTable.column_name, "name"),
-        eq(localizationsTable.record_id, cardsTable.id),
-        eq(localizationsTable.language, langCode),
-      ),
-    )
-    .where(
-      filters.search
-        ? and(
-            whereClause!,
-            or(
-              ilike(cardsTable.name, `%${filters.search}%`),
-              ilike(cardsTable.number, `%${filters.search}%`),
-              ilike(localizationsTable.value, `%${filters.search}%`),
-            ),
-          )
-        : whereClause,
-    )
-    .orderBy(
-      ...(Array.isArray(orderByClause) ? orderByClause : [orderByClause]),
-    );
+  const wantlistCards = (
+    await db
+      .select({
+        id: cardsTable.id,
+        name: cardsTable.name,
+        number: cardsTable.number,
+        rarity: cardsTable.rarity,
+        imageSmall: cardsTable.imageSmall,
+        imageLarge: cardsTable.imageLarge,
+        setId: cardsTable.setId,
+        created_at: cardsTable.created_at,
+        updated_at: cardsTable.updated_at,
+        price: cardPricesTable.price,
+      })
+      .from(cardsTable)
+      .leftJoin(setsTable, eq(cardsTable.setId, setsTable.id))
+      .leftJoin(cardPricesTable, eq(cardsTable.id, cardPricesTable.card_id))
+      .leftJoin(
+        localizationsTable,
+        and(
+          eq(localizationsTable.table_name, "cards"),
+          eq(localizationsTable.column_name, "name"),
+          eq(localizationsTable.record_id, cardsTable.id),
+          eq(localizationsTable.language, langCode),
+        ),
+      )
+      .where(
+        filters.search
+          ? and(
+              whereClause!,
+              or(
+                ilike(cardsTable.name, `%${filters.search}%`),
+                ilike(cardsTable.number, `%${filters.search}%`),
+                ilike(localizationsTable.value, `%${filters.search}%`),
+              ),
+            )
+          : whereClause,
+      )
+      .orderBy(
+        ...(Array.isArray(orderByClause) ? orderByClause : [orderByClause]),
+      )
+  ).map((card) => ({
+    ...card,
+    price: card.price ?? undefined,
+  }));
 
   // Localize card data
   const localizedCards = await localizeRecords(
@@ -301,9 +306,6 @@ export const userCardRouter = createTRPCRouter({
         }
       }
 
-      const whereClause =
-        conditions.length > 0 ? and(...conditions) : undefined;
-
       // Determine order by clause
       // Note: name sorting will be done after localization
       const sortBy = input?.sortBy ?? "set-and-number";
@@ -336,56 +338,64 @@ export const userCardRouter = createTRPCRouter({
           break;
       }
 
-      const userCards = await ctx.db
-        .select({
-          id: userCardsTable.id,
-          cardId: userCardsTable.card_id,
-          language: userCardsTable.language,
-          variant: userCardsTable.variant,
-          condition: userCardsTable.condition,
-          notes: userCardsTable.notes,
-          card: {
-            created_at: userCardsTable.created_at,
-            updated_at: userCardsTable.updated_at,
-            id: cardsTable.id,
-            name: cardsTable.name,
-            number: cardsTable.number,
-            rarity: cardsTable.rarity,
-            imageSmall: cardsTable.imageSmall,
-            imageLarge: cardsTable.imageLarge,
-            setId: cardsTable.setId,
-            price: cardPricesTable.price,
-          },
-          localizedName: localizationsTable.value,
-        })
-        .from(userCardsTable)
-        .innerJoin(cardsTable, eq(userCardsTable.card_id, cardsTable.id))
-        .leftJoin(setsTable, eq(cardsTable.setId, setsTable.id))
-        .leftJoin(cardPricesTable, eq(cardsTable.id, cardPricesTable.card_id))
-        .leftJoin(
-          localizationsTable,
-          and(
-            eq(localizationsTable.table_name, "cards"),
-            eq(localizationsTable.column_name, "name"),
-            eq(localizationsTable.record_id, cardsTable.id),
-            eq(localizationsTable.language, langCode),
-          ),
-        )
-        .where(
-          input?.search
-            ? and(
-                ...conditions,
-                or(
-                  ilike(cardsTable.name, `%${input.search}%`),
-                  ilike(cardsTable.number, `%${input.search}%`),
-                  ilike(localizationsTable.value, `%${input.search}%`),
-                ),
-              )
-            : and(...conditions),
-        )
-        .orderBy(
-          ...(Array.isArray(orderByClause) ? orderByClause : [orderByClause]),
-        );
+      const userCards = (
+        await ctx.db
+          .select({
+            id: userCardsTable.id,
+            cardId: userCardsTable.card_id,
+            language: userCardsTable.language,
+            variant: userCardsTable.variant,
+            condition: userCardsTable.condition,
+            notes: userCardsTable.notes,
+            card: {
+              created_at: userCardsTable.created_at,
+              updated_at: userCardsTable.updated_at,
+              id: cardsTable.id,
+              name: cardsTable.name,
+              number: cardsTable.number,
+              rarity: cardsTable.rarity,
+              imageSmall: cardsTable.imageSmall,
+              imageLarge: cardsTable.imageLarge,
+              setId: cardsTable.setId,
+              price: cardPricesTable.price,
+            },
+            localizedName: localizationsTable.value,
+          })
+          .from(userCardsTable)
+          .innerJoin(cardsTable, eq(userCardsTable.card_id, cardsTable.id))
+          .leftJoin(setsTable, eq(cardsTable.setId, setsTable.id))
+          .leftJoin(cardPricesTable, eq(cardsTable.id, cardPricesTable.card_id))
+          .leftJoin(
+            localizationsTable,
+            and(
+              eq(localizationsTable.table_name, "cards"),
+              eq(localizationsTable.column_name, "name"),
+              eq(localizationsTable.record_id, cardsTable.id),
+              eq(localizationsTable.language, langCode),
+            ),
+          )
+          .where(
+            input?.search
+              ? and(
+                  ...conditions,
+                  or(
+                    ilike(cardsTable.name, `%${input.search}%`),
+                    ilike(cardsTable.number, `%${input.search}%`),
+                    ilike(localizationsTable.value, `%${input.search}%`),
+                  ),
+                )
+              : and(...conditions),
+          )
+          .orderBy(
+            ...(Array.isArray(orderByClause) ? orderByClause : [orderByClause]),
+          )
+      ).map((row) => ({
+        ...row,
+        card: {
+          ...row.card,
+          price: row.card.price ?? undefined,
+        },
+      }));
 
       // Localize card data
       const localizedUserCards = await localizeRecords(

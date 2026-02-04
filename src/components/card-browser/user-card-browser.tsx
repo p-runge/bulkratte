@@ -21,7 +21,7 @@ export function UserCardBrowser(props: UserCardBrowserProps) {
     sortOrder: "asc",
   });
 
-  const { data, isLoading } = api.userCard.getList.useQuery({
+  const { data: cardListData, isLoading } = api.userCard.getList.useQuery({
     setId: filters.setId && filters.setId !== "all" ? filters.setId : undefined,
     search: filters.search || undefined,
     rarity:
@@ -35,12 +35,7 @@ export function UserCardBrowser(props: UserCardBrowserProps) {
   // Get unfiltered data for filter options
   const { data: unfilteredData } = api.userCard.getList.useQuery({});
 
-  const cards =
-    data?.map((userCard) => ({
-      ...userCard.card,
-      price: userCard.card.price ?? undefined,
-      gridId: userCard.id,
-    })) ?? [];
+  const cards = cardListData?.map((userCard) => userCard.card) ?? [];
 
   return (
     <div className="space-y-6">

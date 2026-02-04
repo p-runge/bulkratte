@@ -56,19 +56,12 @@ export default function WantlistTab() {
     sortBy: filters.sortBy as "set-and-number" | "name" | "rarity" | "price",
     sortOrder: filters.sortOrder,
   });
+  const wantlistCards = wantlistData ?? [];
 
   // Get unfiltered data for filter options
   const { data: unfilteredWantlistData } = api.userCard.getWantlist.useQuery(
     {},
   );
-
-  // Map cards to include gridId for CardGrid component
-  const wantlistCards =
-    wantlistData?.map((card) => ({
-      ...card,
-      gridId: card.id,
-      price: card.price ?? undefined,
-    })) ?? [];
 
   return (
     <TabsContent value="wantlist">

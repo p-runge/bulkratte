@@ -49,13 +49,7 @@ export default function UserWantlistPage({
       userId: id,
     });
 
-  // Map cards to include gridId for CardGrid component
-  const wantlistCards =
-    wantlistData?.map((card) => ({
-      ...card,
-      gridId: card.id,
-      price: card.price ?? undefined,
-    })) ?? [];
+  const wantlistCards = wantlistData ?? [];
 
   return (
     <div className="container mx-auto py-8">

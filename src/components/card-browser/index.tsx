@@ -46,18 +46,12 @@ export function CardBrowser(props: CardBrowserProps) {
     sortBy: filters.sortBy,
     sortOrder: filters.sortOrder,
   });
+  const cards = cardListData || [];
 
   // Get unfiltered data for filter options
   const { data: unfilteredData } = api.card.getList.useQuery({
     setId: props.setId || undefined,
   });
-
-  // Map cards to include gridId
-  const cards =
-    cardListData?.map((card) => ({
-      ...card,
-      gridId: card.id,
-    })) ?? [];
 
   const handleSelectAll = (selectAll: boolean) => {
     if (props.selectionMode !== "multi" || !props.onSelectAll) return;
