@@ -38,13 +38,16 @@ const EMPTY_FILTERS: FilterState = {
 type CardFiltersProps = {
   onFilterChange: (filters: FilterState) => void;
   disableSetFilter?: boolean;
-  availableCards?: Array<{ setId: string; rarity: string | null }>;
+  filterOptions?: {
+    setIds: string[];
+    rarities: string[];
+  };
 };
 
 export function CardFilters({
   onFilterChange,
   disableSetFilter = false,
-  availableCards = [],
+  filterOptions,
 }: CardFiltersProps) {
   const intl = useIntl();
 
@@ -55,21 +58,15 @@ export function CardFilters({
   });
   const allSets = setListData || [];
 
-  // Compute available sets and rarities from the card data
-  const availableSetIds = new Set(availableCards.map((card) => card.setId));
-  const availableRarities = new Set(
-    availableCards
-      .map((card) => card.rarity)
-      .filter((r): r is string => r !== null),
-  );
+  // Get available sets and rarities from filter options
+  const availableSetIds = new Set(filterOptions?.setIds ?? []);
+  const availableRarities = filterOptions?.rarities ?? [];
 
   // Filter sets to only show those with cards
   const sets = allSets.filter((set) => availableSetIds.has(set.id));
 
-  // Filter rarities to only show those that exist in the data
-  const rarities = rarityEnum.enumValues.filter((rarity) =>
-    availableRarities.has(rarity),
-  );
+  // Use the rarities from filter options (already filtered)
+  const rarities = availableRarities;
 
   const updateFilter = (key: keyof FilterState, value: string) => {
     const newFilters = { ...filters, [key]: value };

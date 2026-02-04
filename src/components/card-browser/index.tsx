@@ -47,9 +47,10 @@ export function CardBrowser(props: CardBrowserProps) {
     sortOrder: filters.sortOrder,
   });
   const cards = cardListData || [];
+  console.log("data:", cardListData);
 
-  // Get unfiltered data for filter options
-  const { data: unfilteredData } = api.card.getList.useQuery({
+  // Get filter options efficiently
+  const { data: filterOptions } = api.card.getFilterOptions.useQuery({
     setId: props.setId || undefined,
   });
 
@@ -70,12 +71,7 @@ export function CardBrowser(props: CardBrowserProps) {
       <CardFilters
         onFilterChange={setFilters}
         disableSetFilter={!!props.setId}
-        availableCards={
-          unfilteredData?.map((card) => ({
-            setId: card.setId,
-            rarity: card.rarity,
-          })) ?? []
-        }
+        filterOptions={filterOptions}
       />
 
       <CardGrid

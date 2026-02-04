@@ -81,27 +81,32 @@ export const cardRouter = createTRPCRouter({
       // Note: name sorting will be done after localization
       const sortBy = input?.sortBy ?? "set-and-number";
       const sortOrder = input?.sortOrder ?? "asc";
-      let orderByClause;
       const orderDirection = sortOrder === "desc" ? desc : asc;
+
+      let orderByClauses;
 
       switch (sortBy) {
         case "name":
           // Skip SQL sorting for name - will sort after localization
-          orderByClause = cardsTable.id;
+          orderByClauses = [cardsTable.id];
           break;
         case "rarity":
-          orderByClause = orderDirection(cardsTable.rarity);
+          orderByClauses = [orderDirection(cardsTable.rarity)];
           break;
         case "price":
-          orderByClause = orderDirection(cardPricesTable.price);
+          orderByClauses = [orderDirection(cardPricesTable.price)];
           break;
         case "set-and-number":
         default:
-          // For card number, we want to sort numerically
-          // Handle empty strings by converting to NULL, then default to 0
-          orderByClause = orderDirection(
-            sql`COALESCE(CAST(NULLIF(regexp_replace(${cardsTable.number}, '[^0-9]', '', 'g'), '') AS INTEGER), 0)`,
-          );
+          // Sort by set release date first, then by card number
+          // Card number is sorted numerically (extracting digits) then by the full string (for suffixes like "75a", "75b")
+          orderByClauses = [
+            orderDirection(setsTable.releaseDate),
+            orderDirection(
+              sql`COALESCE(CAST(NULLIF(regexp_replace(${cardsTable.number}, '[^0-9]', '', 'g'), '') AS INTEGER), 0)`,
+            ),
+            orderDirection(cardsTable.number),
+          ];
           break;
       }
 
@@ -138,7 +143,7 @@ export const cardRouter = createTRPCRouter({
               ? and(...conditions)
               : undefined,
         )
-        .orderBy(orderByClause)
+        .orderBy(...orderByClauses)
         .limit(input?.setId ? -1 : 100);
 
       const results = await query;
@@ -219,6 +224,46 @@ export const cardRouter = createTRPCRouter({
       }
 
       return localizedCards;
+    }),
+
+  getFilterOptions: publicProcedure
+    .input(
+      z
+        .object({
+          setId: z.string().optional(),
+        })
+        .optional(),
+    )
+    .query(async ({ input }) => {
+      // Build WHERE conditions
+      const conditions = [];
+
+      if (input?.setId) {
+        conditions.push(eq(cardsTable.setId, input.setId));
+      }
+
+      const whereClause =
+        conditions.length > 0 ? and(...conditions) : undefined;
+
+      // Query for distinct setIds and rarities
+      const results = await db
+        .selectDistinct({
+          setId: cardsTable.setId,
+          rarity: cardsTable.rarity,
+        })
+        .from(cardsTable)
+        .where(whereClause);
+
+      // Extract unique values
+      const setIds = [...new Set(results.map((r) => r.setId))];
+      const rarities = [
+        ...new Set(results.map((r) => r.rarity).filter((r) => r !== null)),
+      ];
+
+      return {
+        setIds,
+        rarities: rarities as string[],
+      };
     }),
 
   getById: publicProcedure
