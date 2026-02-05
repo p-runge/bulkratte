@@ -403,7 +403,7 @@ export const userSetRouter = createTRPCRouter({
         setName: userSetsTable.name,
       })
       .from(userSetCardsTable)
-      .leftJoin(
+      .innerJoin(
         userSetsTable,
         eq(userSetCardsTable.user_set_id, userSetsTable.id),
       )
@@ -414,7 +414,13 @@ export const userSetRouter = createTRPCRouter({
         ),
       );
 
-    return placedCards;
+    // Type assertion: we know userCardId and setName are non-null due to WHERE clause and innerJoin
+    return placedCards as Array<{
+      userCardId: string;
+      userSetId: string;
+      userSetCardId: string;
+      setName: string;
+    }>;
   }),
 
   deleteById: protectedProcedure

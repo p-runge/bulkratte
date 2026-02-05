@@ -76,7 +76,7 @@ export function UserSetContent({
         initialUserSet={userSet}
         userSetId={userSet.set.id}
         userCards={userCards}
-        placedUserCards={placedUserCards ?? null}
+        placedUserCards={placedUserCards}
         onCardClick={handleCardClick}
       >
         <Binder />

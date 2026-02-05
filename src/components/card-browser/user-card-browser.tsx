@@ -32,22 +32,13 @@ export function UserCardBrowser(props: UserCardBrowserProps) {
     sortOrder: filters.sortOrder,
   });
 
-  // Get unfiltered data for filter options
-  const { data: unfilteredData } = api.userCard.getList.useQuery({});
+  const { data: filterOptions } = api.card.getFilterOptions.useQuery();
 
   const cards = cardListData?.map((userCard) => userCard.card) ?? [];
 
   return (
     <div className="space-y-6">
-      <CardFilters
-        onFilterChange={setFilters}
-        availableCards={
-          unfilteredData?.map((userCard) => ({
-            setId: userCard.card.setId,
-            rarity: userCard.card.rarity,
-          })) ?? []
-        }
-      />
+      <CardFilters onFilterChange={setFilters} filterOptions={filterOptions} />
 
       <CardGrid
         cards={cards}

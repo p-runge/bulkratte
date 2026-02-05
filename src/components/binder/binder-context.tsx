@@ -34,6 +34,7 @@ type BinderContextValue = {
   placedUserCards: Array<{
     userCardId: string;
     userSetId: string;
+    userSetCardId: string;
     setName: string;
   }> | null; // Cards placed in any user set
   onCardClick:
@@ -67,6 +68,7 @@ export function BinderProvider({
   placedUserCards?: Array<{
     userCardId: string;
     userSetId: string;
+    userSetCardId: string;
     setName: string;
   }> | null;
   onCardClick?:

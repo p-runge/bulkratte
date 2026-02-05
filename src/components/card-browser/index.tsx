@@ -47,9 +47,7 @@ export function CardBrowser(props: CardBrowserProps) {
     sortOrder: filters.sortOrder,
   });
   const cards = cardListData || [];
-  console.log("data:", cardListData);
 
-  // Get filter options efficiently
   const { data: filterOptions } = api.card.getFilterOptions.useQuery({
     setId: props.setId || undefined,
   });

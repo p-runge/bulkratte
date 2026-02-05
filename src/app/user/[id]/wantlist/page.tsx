@@ -43,11 +43,7 @@ export default function UserWantlistPage({
       sortOrder: filters.sortOrder,
     });
 
-  // Get unfiltered data for filter options
-  const { data: unfilteredWantlistData } =
-    api.userCard.getPublicWantlist.useQuery({
-      userId: id,
-    });
+  const { data: filterOptions } = api.card.getFilterOptions.useQuery();
 
   const wantlistCards = wantlistData ?? [];
 
@@ -72,12 +68,7 @@ export default function UserWantlistPage({
         <CardFilters
           onFilterChange={setFilters}
           disableSetFilter={false}
-          availableCards={
-            unfilteredWantlistData?.map((card) => ({
-              setId: card.setId,
-              rarity: card.rarity,
-            })) ?? []
-          }
+          filterOptions={filterOptions}
         />
 
         {isLoading ? (

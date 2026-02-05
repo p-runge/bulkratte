@@ -65,9 +65,6 @@ export function CardFilters({
   // Filter sets to only show those with cards
   const sets = allSets.filter((set) => availableSetIds.has(set.id));
 
-  // Use the rarities from filter options (already filtered)
-  const rarities = availableRarities;
-
   const updateFilter = (key: keyof FilterState, value: string) => {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
@@ -191,7 +188,7 @@ export function CardFilters({
                   defaultMessage: "All rarities",
                 })}
               </SelectItem>
-              {rarities.map((rarity) => (
+              {availableRarities.map((rarity) => (
                 <SelectItem key={rarity} value={rarity}>
                   {rarity}
                 </SelectItem>

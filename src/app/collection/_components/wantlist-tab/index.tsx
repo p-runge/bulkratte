@@ -58,10 +58,7 @@ export default function WantlistTab() {
   });
   const wantlistCards = wantlistData ?? [];
 
-  // Get unfiltered data for filter options
-  const { data: unfilteredWantlistData } = api.userCard.getWantlist.useQuery(
-    {},
-  );
+  const { data: filterOptions } = api.card.getFilterOptions.useQuery();
 
   return (
     <TabsContent value="wantlist">
@@ -70,12 +67,7 @@ export default function WantlistTab() {
           <CardFilters
             onFilterChange={setFilters}
             disableSetFilter={false}
-            availableCards={
-              unfilteredWantlistData?.map((card) => ({
-                setId: card.setId,
-                rarity: card.rarity,
-              })) ?? []
-            }
+            filterOptions={filterOptions}
           />
           <Button
             onClick={handleShare}
