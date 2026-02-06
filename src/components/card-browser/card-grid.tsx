@@ -3,6 +3,7 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Card } from "@/lib/db";
 import { cn } from "@/lib/utils";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Circle } from "lucide-react";
 import Image from "next/image";
 import { FormattedMessage, useIntl } from "react-intl";
@@ -30,6 +31,7 @@ export function CardGrid({
   maxHeight,
 }: CardGridProps) {
   const intl = useIntl();
+  const [parent] = useAutoAnimate();
 
   const allSelected =
     cards.length > 0 && cards.every((card) => selectedCards.has(card.id));
@@ -94,6 +96,7 @@ export function CardGrid({
         </div>
       )}
       <div
+        ref={parent}
         className="gap-4"
         style={{
           display: "grid",

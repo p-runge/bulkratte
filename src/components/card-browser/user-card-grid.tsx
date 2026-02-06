@@ -1,14 +1,15 @@
 "use client";
 
+import type { UserCard } from "@/components/binder/types";
+import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import pokemonAPI from "@/lib/pokemon-api";
 import { cn } from "@/lib/utils";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Circle } from "lucide-react";
 import Image from "next/image";
 import { FormattedMessage, useIntl } from "react-intl";
 import Loader from "../loader";
-import type { UserCard } from "@/components/binder/types";
-import { Badge } from "@/components/ui/badge";
-import pokemonAPI from "@/lib/pokemon-api";
 
 type UserCardGridProps = {
   userCards: UserCard[];
@@ -30,6 +31,7 @@ export function UserCardGrid({
   maxHeight,
 }: UserCardGridProps) {
   const intl = useIntl();
+  const [parent] = useAutoAnimate();
 
   const allSelected =
     userCards.length > 0 &&
@@ -97,6 +99,7 @@ export function UserCardGrid({
         </div>
       )}
       <div
+        ref={parent}
         className="gap-4"
         style={{
           display: "grid",

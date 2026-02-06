@@ -22,16 +22,26 @@ export function UserCardBrowser(props: UserCardBrowserProps) {
     sortOrder: "asc",
   });
 
-  const { data: userCards, isLoading } = api.userCard.getList.useQuery({
-    setId: filters.setId && filters.setId !== "all" ? filters.setId : undefined,
-    search: filters.search || undefined,
-    rarity:
-      filters.rarity && filters.rarity !== "all" ? filters.rarity : undefined,
-    releaseDateFrom: filters.releaseDateFrom || undefined,
-    releaseDateTo: filters.releaseDateTo || undefined,
-    sortBy: filters.sortBy,
-    sortOrder: filters.sortOrder,
-  });
+  const {
+    data: userCards,
+    isLoading,
+    isFetching,
+  } = api.userCard.getList.useQuery(
+    {
+      setId:
+        filters.setId && filters.setId !== "all" ? filters.setId : undefined,
+      search: filters.search || undefined,
+      rarity:
+        filters.rarity && filters.rarity !== "all" ? filters.rarity : undefined,
+      releaseDateFrom: filters.releaseDateFrom || undefined,
+      releaseDateTo: filters.releaseDateTo || undefined,
+      sortBy: filters.sortBy,
+      sortOrder: filters.sortOrder,
+    },
+    {
+      placeholderData: (previousData) => previousData,
+    },
+  );
 
   const { data: filterOptions } = api.card.getFilterOptions.useQuery();
 
@@ -39,14 +49,19 @@ export function UserCardBrowser(props: UserCardBrowserProps) {
     <div className="space-y-6">
       <CardFilters onFilterChange={setFilters} filterOptions={filterOptions} />
 
-      <UserCardGrid
-        userCards={userCards ?? []}
-        selectionMode="single"
-        selectedUserCardIds={new Set()}
-        onUserCardClick={props.onCardClick}
-        isLoading={isLoading}
-        maxHeight={props.maxHeightGrid}
-      />
+      <div className="relative">
+        {isFetching && (
+          <div className="absolute inset-0 z-10 bg-background/50 backdrop-blur-[1px] pointer-events-auto cursor-wait" />
+        )}
+        <UserCardGrid
+          userCards={userCards ?? []}
+          selectionMode="single"
+          selectedUserCardIds={new Set()}
+          onUserCardClick={props.onCardClick}
+          isLoading={isLoading}
+          maxHeight={props.maxHeightGrid}
+        />
+      </div>
     </div>
   );
 }
