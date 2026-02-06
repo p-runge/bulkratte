@@ -94,7 +94,9 @@ export const cardRouter = createTRPCRouter({
           orderByClauses = [orderDirection(cardsTable.rarity)];
           break;
         case "price":
-          orderByClauses = [orderDirection(cardPricesTable.price)];
+          orderByClauses = [
+            orderDirection(sql`COALESCE(${cardPricesTable.price}, 0)`),
+          ];
           break;
         case "set-and-number":
         default:

@@ -274,16 +274,6 @@ export const userCardRouter = createTRPCRouter({
 
       const langCode = getLanguageFromLocale(ctx.language);
 
-      if (input?.search) {
-        const searchCondition = or(
-          ilike(cardsTable.name, `%${input.search}%`),
-          ilike(cardsTable.number, `%${input.search}%`),
-        );
-        if (searchCondition) {
-          conditions.push(searchCondition);
-        }
-      }
-
       if (input?.rarity && input.rarity !== "all") {
         conditions.push(sql`${cardsTable.rarity} = ${input.rarity}`);
       }
@@ -310,30 +300,33 @@ export const userCardRouter = createTRPCRouter({
       // Note: name sorting will be done after localization
       const sortBy = input?.sortBy ?? "set-and-number";
       const sortOrder = input?.sortOrder ?? "asc";
-      let orderByClause;
       const orderDirection = sortOrder === "desc" ? desc : asc;
+
+      let orderByClauses;
 
       switch (sortBy) {
         case "name":
           // Skip SQL sorting for name - will sort after localization
-          orderByClause = cardsTable.id;
+          orderByClauses = [cardsTable.id];
           break;
         case "rarity":
-          orderByClause = orderDirection(cardsTable.rarity);
+          orderByClauses = [orderDirection(cardsTable.rarity)];
           break;
         case "price":
-          orderByClause = orderDirection(
-            sql`COALESCE(${cardPricesTable.price}, 0)`,
-          );
+          orderByClauses = [
+            orderDirection(sql`COALESCE(${cardPricesTable.price}, 0)`),
+          ];
           break;
         case "set-and-number":
         default:
-          // Sort by set release date first, then by card number within each set
-          orderByClause = [
+          // Sort by set release date first, then by card number
+          // Card number is sorted numerically (extracting digits) then by the full string (for suffixes like "75a", "75b")
+          orderByClauses = [
             orderDirection(setsTable.releaseDate),
             orderDirection(
               sql`COALESCE(CAST(NULLIF(regexp_replace(${cardsTable.number}, '[^0-9]', '', 'g'), '') AS INTEGER), 0)`,
             ),
+            orderDirection(cardsTable.number),
           ];
           break;
       }
@@ -386,9 +379,7 @@ export const userCardRouter = createTRPCRouter({
                 )
               : and(...conditions),
           )
-          .orderBy(
-            ...(Array.isArray(orderByClause) ? orderByClause : [orderByClause]),
-          )
+          .orderBy(...orderByClauses)
       ).map((row) => ({
         ...row,
         card: {
