@@ -46,3 +46,6 @@ next-env.d.ts
 
 # i18n compiled files (regenerated on build)
 src/lib/i18n/compiled/
+
+# ai
+.github/copilot-instructions.md

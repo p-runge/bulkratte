@@ -1,6 +1,7 @@
 "use client";
 
 import { CardBrowser } from "@/components/card-browser";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,11 +10,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { api } from "@/lib/api/react";
 import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
 import { RHFForm, useRHFForm } from "@/lib/form/utils";
+import pokemonAPI from "@/lib/pokemon-api";
 import Image from "next/image";
 import { useState } from "react";
+import { Controller } from "react-hook-form";
 import { useIntl } from "react-intl";
 import z from "zod";
 
@@ -94,96 +99,114 @@ export default function CreateUserCardDialog({
                 draggable={false}
                 priority
               />
-              <div>
-                <h2 className="text-2xl font-bold mb-2">{card.name}</h2>
-                {/* TODO: Additional form fields for language, condition, variant, etc. would go here respecting default settings */}
-                {/* <Controller
-                      name="variant"
-                      control={form.control}
-                      render={({ field }) => (
-                        <>
-                          <Label className="mb-2 block font-medium">
-                            {intl.formatMessage({
-                              id: "form.field.variant.label",
-                              defaultMessage: "Variant",
-                            })}
-                          </Label>
-                          <Select value={field.value} onValueChange={field.onChange}>
-                            <SelectTrigger className="mb-4 w-60">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {variantEnum.enumValues.map((variant) => (
-                                <SelectItem key={variant} value={variant}>
-                                  {variant}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <p className="text-sm text-red-600 mt-1">
-                            {form.formState.errors.variant?.message ?? "\u00A0"}
-                          </p>
-                        </>
-                      )}
-                    />
-                    <Controller
-                      name="condition"
-                      control={form.control}
-                      render={({ field }) => (
-                        <>
-                          <Label className="mb-2 block font-medium">
-                            {intl.formatMessage({
-                              id: "form.field.condition.label",
-                              defaultMessage: "Condition",
-                            })}
-                          </Label>
-                          <Select value={field.value} onValueChange={field.onChange}>
-                            <SelectTrigger className="mb-4 w-60">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {conditionEnum.enumValues.map((condition) => (
-                                <SelectItem key={condition} value={condition}>
-                                  {condition}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <p className="text-sm text-red-600 mt-1">
-                            {form.formState.errors.condition?.message ?? "\u00A0"}
-                          </p>
-                        </>
-                      )}
-                    />
-                    <Controller
-                      name="language"
-                      control={form.control}
-                      render={({ field }) => (
-                        <>
-                          <Label className="mb-2 block font-medium">
-                            {intl.formatMessage({
-                              id: "form.field.language.label",
-                              defaultMessage: "Language",
-                            })}
-                          </Label>
-                          <Select value={field.value} onValueChange={field.onChange}>
-                            <SelectTrigger className="mb-4 w-60">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {languageEnum.enumValues.map((language) => (
-                                <SelectItem key={language} value={language}>
-                                  {language}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <p className="text-sm text-red-600 mt-1">
-                            {form.formState.errors.language?.message ?? "\u00A0"}
-                          </p>
-                        </>
-                      )}
-                    /> */}
+              <div className="flex-1 space-y-6">
+                <h2 className="text-2xl font-bold mb-4">{card.name}</h2>
+
+                {/* Variant Field */}
+                <div className="space-y-2">
+                  <Label>
+                    {intl.formatMessage({
+                      id: "form.field.variant.label",
+                      defaultMessage: "Variant",
+                    })}
+                  </Label>
+                  <Controller
+                    control={form.control}
+                    name="variant"
+                    render={({ field }) => (
+                      <ToggleGroup
+                        type="single"
+                        value={field.value}
+                        onValueChange={(value) => {
+                          if (value) field.onChange(value);
+                        }}
+                      >
+                        {pokemonAPI.getVariants("").map((variant) => (
+                          <ToggleGroupItem
+                            key={variant}
+                            value={variant}
+                            variant="outline"
+                            className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                          >
+                            {variant}
+                          </ToggleGroupItem>
+                        ))}
+                      </ToggleGroup>
+                    )}
+                  />
+                </div>
+
+                {/* Condition Field */}
+                <div className="space-y-2">
+                  <Label>
+                    {intl.formatMessage({
+                      id: "form.field.condition.label",
+                      defaultMessage: "Condition",
+                    })}
+                  </Label>
+                  <Controller
+                    control={form.control}
+                    name="condition"
+                    render={({ field }) => (
+                      <ToggleGroup
+                        type="single"
+                        value={field.value}
+                        onValueChange={(value) => {
+                          if (value) field.onChange(value);
+                        }}
+                      >
+                        {pokemonAPI.conditions.map((condition) => (
+                          <ToggleGroupItem
+                            key={condition.value}
+                            value={condition.value}
+                            variant="outline"
+                            className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                            title={condition.value}
+                          >
+                            <Badge className={`${condition.color} border`}>
+                              {condition.short}
+                            </Badge>
+                          </ToggleGroupItem>
+                        ))}
+                      </ToggleGroup>
+                    )}
+                  />
+                </div>
+
+                {/* Language Field */}
+                <div className="space-y-2">
+                  <Label>
+                    {intl.formatMessage({
+                      id: "form.field.language.label",
+                      defaultMessage: "Language",
+                    })}
+                  </Label>
+                  <Controller
+                    control={form.control}
+                    name="language"
+                    render={({ field }) => (
+                      <ToggleGroup
+                        type="single"
+                        value={field.value}
+                        onValueChange={(value) => {
+                          if (value) field.onChange(value);
+                        }}
+                      >
+                        {pokemonAPI.cardLanguages.map((language) => (
+                          <ToggleGroupItem
+                            key={language.code}
+                            value={language.code}
+                            variant="outline"
+                            className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground text-2xl"
+                            title={language.name}
+                          >
+                            {language.flag}
+                          </ToggleGroupItem>
+                        ))}
+                      </ToggleGroup>
+                    )}
+                  />
+                </div>
               </div>
             </div>
           ) : (

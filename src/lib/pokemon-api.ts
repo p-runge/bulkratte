@@ -47,39 +47,39 @@ function getCardLanguageInfo(languageCode: SupportedLanguages) {
 // Card conditions with colors for quick visual identification
 const conditions = [
   {
-    value: "M",
-    label: "Mint",
-    color: "bg-green-100 text-green-800 border-green-200",
+    value: "Mint",
+    short: "M",
+    color: "bg-blue-500 text-white border-blue-600",
   },
   {
-    value: "NM",
-    label: "Near Mint",
-    color: "bg-blue-100 text-blue-800 border-blue-200",
+    value: "Near Mint",
+    short: "NM",
+    color: "bg-green-500 text-white border-green-600",
   },
   {
-    value: "EX",
-    label: "Excellent",
-    color: "bg-cyan-100 text-cyan-800 border-cyan-200",
+    value: "Excellent",
+    short: "EX",
+    color: "bg-lime-500 text-white border-lime-600",
   },
   {
-    value: "LP",
-    label: "Light Played",
-    color: "bg-yellow-100 text-yellow-800 border-yellow-200",
+    value: "Good",
+    short: "G",
+    color: "bg-yellow-500 text-white border-yellow-600",
   },
   {
-    value: "MP",
-    label: "Moderately Played",
-    color: "bg-orange-100 text-orange-800 border-orange-200",
+    value: "Light Played",
+    short: "LP",
+    color: "bg-orange-500 text-white border-orange-600",
   },
   {
-    value: "HP",
-    label: "Heavily Played",
-    color: "bg-red-100 text-red-800 border-red-200",
+    value: "Played",
+    short: "P",
+    color: "bg-red-600 text-white border-red-700",
   },
   {
-    value: "D",
-    label: "Damaged",
-    color: "bg-gray-100 text-gray-800 border-gray-200",
+    value: "Poor",
+    short: "PR",
+    color: "bg-red-400 text-white border-red-500",
   },
 ];
 
@@ -136,7 +136,7 @@ const rarities = [
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getVariants(_setId: string): string[] {
   // TODO: add map for setId to variants
-  return ["Normal", "1st Edition", "Shadowless", "Reverse Holo"];
+  return ["Unlimited", "1st Edition", "Shadowless", "Reverse Holo"];
 }
 
 async function fetchPokemonSets(): Promise<PokemonSet[]> {
