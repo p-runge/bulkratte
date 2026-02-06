@@ -445,6 +445,13 @@ export const userCardRouter = createTRPCRouter({
         });
       }
 
+      // First, unplace the card from any user sets by setting user_card_id to null
+      await ctx.db
+        .update(userSetCardsTable)
+        .set({ user_card_id: null })
+        .where(eq(userSetCardsTable.user_card_id, input.id));
+
+      // Now delete the user card
       await ctx.db
         .delete(userCardsTable)
         .where(

@@ -19,6 +19,7 @@ type Props = ComponentProps<typeof Button> & {
   cancelLabel?: string;
   confirmLabel?: string;
   destructive?: boolean;
+  extraContent?: ReactNode;
 };
 
 export default function ConfirmButton({
@@ -28,6 +29,7 @@ export default function ConfirmButton({
   cancelLabel,
   confirmLabel,
   destructive,
+  extraContent,
   onClick,
   ...buttonProps
 }: Props) {
@@ -53,6 +55,7 @@ export default function ConfirmButton({
             <DialogTitle>{title}</DialogTitle>
             <DialogDescription>{description}</DialogDescription>
           </DialogHeader>
+          {extraContent && <div className="py-4">{extraContent}</div>}
           <DialogFooter>
             <Button onClick={handleClose} variant="outline">
               {cancelLabel ?? (

@@ -1,6 +1,7 @@
 "use client";
 
 import { CardBrowser } from "@/components/card-browser";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +22,7 @@ import { useState } from "react";
 import { Controller } from "react-hook-form";
 import { useIntl } from "react-intl";
 import z from "zod";
-import { Trash2 } from "lucide-react";
+import { Info, Trash2 } from "lucide-react";
 import type { UserCard } from "@/components/binder/types";
 import ConfirmButton from "@/components/confirm-button";
 
@@ -54,6 +55,16 @@ export default function UserCardDialog({
   const { mutateAsync: updateUserCard } = api.userCard.update.useMutation();
   const { mutateAsync: deleteUserCard } = api.userCard.delete.useMutation();
   const apiUtils = api.useUtils();
+
+  // Get placement status for edit mode
+  const { data: placedCards } = api.userSet.getPlacedUserCardIds.useQuery(
+    undefined,
+    {
+      enabled: mode === "edit" && !!userCard,
+    },
+  );
+
+  const placement = placedCards?.find((p) => p.userCardId === userCard?.id);
 
   const form = useRHFForm(FormSchema, {
     defaultValues:
@@ -141,6 +152,28 @@ export default function UserCardDialog({
               <div className="flex-1 space-y-6">
                 <h2 className="text-2xl font-bold mb-4">{card.name}</h2>
 
+                {mode === "edit" && placement && (
+                  <Alert>
+                    <Info />
+                    <AlertTitle>
+                      {intl.formatMessage({
+                        id: "dialog.edit_card.placed_in_set",
+                        defaultMessage: "Placed in Set",
+                      })}
+                    </AlertTitle>
+                    <AlertDescription>
+                      {intl.formatMessage(
+                        {
+                          id: "dialog.edit_card.placed_in_set.description",
+                          defaultMessage:
+                            'This card is currently placed in "{setName}"',
+                        },
+                        { setName: placement.setName },
+                      )}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 {/* Variant Field */}
                 <div className="space-y-2">
                   <Label>
@@ -156,9 +189,11 @@ export default function UserCardDialog({
                       <ToggleGroup
                         type="single"
                         value={field.value}
-                        onValueChange={(value) => {
-                          if (value) field.onChange(value);
-                        }}
+                        onValueChange={(value) =>
+                          value &&
+                          value !== field.value &&
+                          field.onChange(value)
+                        }
                       >
                         {pokemonAPI.getVariants("").map((variant) => (
                           <ToggleGroupItem
@@ -190,9 +225,11 @@ export default function UserCardDialog({
                       <ToggleGroup
                         type="single"
                         value={field.value}
-                        onValueChange={(value) => {
-                          if (value) field.onChange(value);
-                        }}
+                        onValueChange={(value) =>
+                          value &&
+                          value !== field.value &&
+                          field.onChange(value)
+                        }
                       >
                         {pokemonAPI.conditions.map((condition) => (
                           <ToggleGroupItem
@@ -227,9 +264,11 @@ export default function UserCardDialog({
                       <ToggleGroup
                         type="single"
                         value={field.value}
-                        onValueChange={(value) => {
-                          if (value) field.onChange(value);
-                        }}
+                        onValueChange={(value) =>
+                          value &&
+                          value !== field.value &&
+                          field.onChange(value)
+                        }
                       >
                         {pokemonAPI.cardLanguages.map((language) => (
                           <ToggleGroupItem
@@ -272,6 +311,29 @@ export default function UserCardDialog({
                       defaultMessage:
                         "Are you sure you want to delete this card from your collection?",
                     })}
+                    extraContent={
+                      placement && (
+                        <Alert>
+                          <Info />
+                          <AlertTitle>
+                            {intl.formatMessage({
+                              id: "dialog.edit_card.confirm_delete.unplace_warning.title",
+                              defaultMessage: "Card is Placed in Set",
+                            })}
+                          </AlertTitle>
+                          <AlertDescription>
+                            {intl.formatMessage(
+                              {
+                                id: "dialog.edit_card.confirm_delete.unplace_warning",
+                                defaultMessage:
+                                  'This card will be removed from "{setName}".',
+                              },
+                              { setName: placement.setName },
+                            )}
+                          </AlertDescription>
+                        </Alert>
+                      )
+                    }
                     confirmLabel={intl.formatMessage({
                       id: "common.button.delete",
                       defaultMessage: "Delete",
