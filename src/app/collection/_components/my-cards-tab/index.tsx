@@ -8,13 +8,15 @@ import { api } from "@/lib/api/react";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { useIntl } from "react-intl";
-import CreateUserCardDialog from "./create-user-card-dialog";
 import Loader from "@/components/loader";
+import UserCardDialog from "./user-card-dialog";
+import type { UserCard } from "@/components/binder/types";
 
 export default function MyCardsTab() {
   const intl = useIntl();
 
   const [isCreateCardDialogOpen, setIsCreateCardDialogOpen] = useState(false);
+  const [editingUserCard, setEditingUserCard] = useState<UserCard | null>(null);
 
   const { data, isLoading } = api.userCard.getList.useQuery();
   const userCards = data ?? [];
@@ -66,16 +68,25 @@ export default function MyCardsTab() {
           </Card>
         ) : (
           <UserCardBrowser
-            onCardClick={(cardId) => {
-              console.log(cardId);
+            onCardClick={(userCard) => {
+              setEditingUserCard(userCard);
             }}
           />
         )}
       </TabsContent>
 
       {isCreateCardDialogOpen && (
-        <CreateUserCardDialog
+        <UserCardDialog
+          mode="create"
           onClose={() => setIsCreateCardDialogOpen(false)}
+        />
+      )}
+
+      {editingUserCard && (
+        <UserCardDialog
+          mode="edit"
+          userCard={editingUserCard}
+          onClose={() => setEditingUserCard(null)}
         />
       )}
     </>

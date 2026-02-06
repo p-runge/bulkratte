@@ -14,7 +14,7 @@ type UserCardGridProps = {
   userCards: UserCard[];
   selectionMode: "single" | "multi";
   selectedUserCardIds: Set<string>;
-  onUserCardClick: (userCardId: string) => void;
+  onUserCardClick: (userCard: UserCard) => void;
   onSelectAll?: (selectAll: boolean) => void;
   isLoading: boolean;
   maxHeight?: string;
@@ -112,7 +112,7 @@ export function UserCardGrid({
           return (
             <button
               key={userCard.id}
-              onClick={() => onUserCardClick(userCard.id)}
+              onClick={() => onUserCardClick(userCard)}
               className={cn(
                 "group relative rounded-lg overflow-hidden transition-all hover:scale-105",
                 "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background",

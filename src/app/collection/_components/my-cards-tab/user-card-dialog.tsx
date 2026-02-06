@@ -21,33 +21,53 @@ import { useState } from "react";
 import { Controller } from "react-hook-form";
 import { useIntl } from "react-intl";
 import z from "zod";
+import { Trash2 } from "lucide-react";
+import type { UserCard } from "@/components/binder/types";
+import ConfirmButton from "@/components/confirm-button";
 
-export default function CreateUserCardDialog({
-  onClose,
-}: {
+type UserCardDialogProps = {
+  mode: "create" | "edit";
+  userCard?: UserCard;
   onClose: () => void;
-}) {
+};
+
+export default function UserCardDialog({
+  mode,
+  userCard,
+  onClose,
+}: UserCardDialogProps) {
   const intl = useIntl();
 
-  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  // For create mode, we need to select a card first
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(
+    mode === "edit" && userCard ? userCard.card.id : null,
+  );
+
   const { data: card } = api.card.getById.useQuery(
     { cardId: selectedCardId! },
     {
       enabled: !!selectedCardId,
     },
   );
-  const { mutateAsync: addCardToCollection } =
-    api.userCard.create.useMutation();
+
+  const { mutateAsync: createUserCard } = api.userCard.create.useMutation();
+  const { mutateAsync: updateUserCard } = api.userCard.update.useMutation();
+  const { mutateAsync: deleteUserCard } = api.userCard.delete.useMutation();
   const apiUtils = api.useUtils();
 
   const form = useRHFForm(FormSchema, {
-    defaultValues: {
-      condition: "Near Mint",
-      language: "en",
-      variant: "Unlimited",
-      // notes: "",
-      // photos: [],
-    },
+    defaultValues:
+      mode === "edit" && userCard
+        ? {
+            condition: userCard.condition ?? "Near Mint",
+            language: userCard.language ?? "en",
+            variant: userCard.variant ?? "Unlimited",
+          }
+        : {
+            condition: "Near Mint",
+            language: "en",
+            variant: "Unlimited",
+          },
   });
 
   async function handleSubmit(data: z.infer<typeof FormSchema>) {
@@ -55,16 +75,31 @@ export default function CreateUserCardDialog({
       return;
     }
 
-    await addCardToCollection({
-      cardId: card.id,
-      condition: data.condition,
-      language: data.language,
-      variant: data.variant,
-      // notes: data.notes,
-      // photos: data.photos,
-    });
-    await apiUtils.userCard.getList.invalidate();
+    if (mode === "create") {
+      await createUserCard({
+        cardId: card.id,
+        condition: data.condition,
+        language: data.language,
+        variant: data.variant,
+      });
+    } else if (mode === "edit" && userCard) {
+      await updateUserCard({
+        id: userCard.id,
+        condition: data.condition,
+        language: data.language,
+        variant: data.variant,
+      });
+    }
 
+    await apiUtils.userCard.getList.invalidate();
+    onClose();
+  }
+
+  async function handleDelete() {
+    if (!userCard) return;
+
+    await deleteUserCard({ id: userCard.id });
+    await apiUtils.userCard.getList.invalidate();
     onClose();
   }
 
@@ -73,15 +108,19 @@ export default function CreateUserCardDialog({
       <DialogContent className="max-h-[90vh] w-5xl sm:max-w-screen">
         <DialogHeader>
           <DialogTitle>
-            {intl.formatMessage({
-              id: "dialog.create_card.title",
-              defaultMessage: "Add New Card",
-            })}
+            {mode === "create"
+              ? intl.formatMessage({
+                  id: "dialog.create_card.title",
+                  defaultMessage: "Add New Card",
+                })
+              : intl.formatMessage({
+                  id: "dialog.edit_card.title",
+                  defaultMessage: "Edit Card",
+                })}
           </DialogTitle>
         </DialogHeader>
-        {/* TODO: add default settings here (language, condition, variant, etc.) */}
         <RHFForm form={form} onSubmit={handleSubmit} className="py-4">
-          {!selectedCardId ? (
+          {!selectedCardId && mode === "create" ? (
             <CardBrowser
               selectionMode="single"
               onCardClick={(cardId) => setSelectedCardId(cardId)}
@@ -214,20 +253,57 @@ export default function CreateUserCardDialog({
             <div className="w-60 h-84 bg-muted animate-pulse rounded-md" />
           )}
 
-          {selectedCardId && (
-            <DialogFooter>
-              <Button variant="ghost" onClick={onClose} disabled={!card}>
-                {intl.formatMessage({
-                  id: "common.button.cancel",
-                  defaultMessage: "Cancel",
-                })}
-              </Button>
-              <Button type="submit" disabled={!card}>
-                {intl.formatMessage({
-                  id: "dialog.create_card.button.add",
-                  defaultMessage: "Add Card to Collection",
-                })}
-              </Button>
+          {(selectedCardId || mode === "edit") && (
+            <DialogFooter className="flex justify-between items-center">
+              <div>
+                {mode === "edit" && (
+                  <ConfirmButton
+                    type="button"
+                    variant="destructive"
+                    onClick={handleDelete}
+                    disabled={!card}
+                    destructive
+                    title={intl.formatMessage({
+                      id: "dialog.edit_card.confirm_delete.title",
+                      defaultMessage: "Delete Card",
+                    })}
+                    description={intl.formatMessage({
+                      id: "dialog.edit_card.confirm_delete",
+                      defaultMessage:
+                        "Are you sure you want to delete this card from your collection?",
+                    })}
+                    confirmLabel={intl.formatMessage({
+                      id: "common.button.delete",
+                      defaultMessage: "Delete",
+                    })}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    {intl.formatMessage({
+                      id: "common.button.delete",
+                      defaultMessage: "Delete",
+                    })}
+                  </ConfirmButton>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button variant="ghost" onClick={onClose} disabled={!card}>
+                  {intl.formatMessage({
+                    id: "common.button.cancel",
+                    defaultMessage: "Cancel",
+                  })}
+                </Button>
+                <Button type="submit" disabled={!card}>
+                  {mode === "create"
+                    ? intl.formatMessage({
+                        id: "dialog.create_card.button.add",
+                        defaultMessage: "Add Card to Collection",
+                      })
+                    : intl.formatMessage({
+                        id: "dialog.edit_card.button.save",
+                        defaultMessage: "Save Changes",
+                      })}
+                </Button>
+              </div>
             </DialogFooter>
           )}
         </RHFForm>

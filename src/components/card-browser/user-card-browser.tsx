@@ -4,9 +4,10 @@ import { api } from "@/lib/api/react";
 import { useState } from "react";
 import { CardFilters, type FilterState } from "./card-filters";
 import { UserCardGrid } from "./user-card-grid";
+import type { UserCard } from "@/components/binder/types";
 
 type UserCardBrowserProps = {
-  onCardClick: (userCardId: string) => void;
+  onCardClick: (userCard: UserCard) => void;
   maxHeightGrid?: string;
 };
 
