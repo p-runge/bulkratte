@@ -13,9 +13,18 @@ type UserCard = Awaited<ReturnType<AppRouter["userCard"]["getList"]>>[number];
 interface SetInfoProps {
   userSet: UserSet;
   userCards: UserCard[];
+  considerPreferredLanguage?: boolean;
+  considerPreferredVariant?: boolean;
+  considerPreferredCondition?: boolean;
 }
 
-export function SetInfo({ userSet, userCards }: SetInfoProps) {
+export function SetInfo({
+  userSet,
+  userCards,
+  considerPreferredLanguage = false,
+  considerPreferredVariant = false,
+  considerPreferredCondition = false,
+}: SetInfoProps) {
   const { totalCards, placedCards, obtainedCards, obtainedButNotPlaced } =
     useMemo(() => {
       const totalCards = userSet.cards.length;
@@ -26,10 +35,36 @@ export function SetInfo({ userSet, userCards }: SetInfoProps) {
       // Get unique card IDs from the user set
       const userSetCardIds = new Set(userSet.cards.map((card) => card.cardId));
 
+      // Get preferred properties from user set
+      const preferredLanguage = userSet.set.preferredLanguage;
+      const preferredVariant = userSet.set.preferredVariant;
+      const preferredCondition = userSet.set.preferredCondition;
+
       // Count how many of these cards the user has in their collection
+      // Considering preferred properties if toggles are on
       const obtainedCardIds = new Set(
         userCards
-          .filter((userCard) => userSetCardIds.has(userCard.card.id))
+          .filter((userCard) => {
+            // Must match card ID
+            if (!userSetCardIds.has(userCard.card.id)) return false;
+
+            // Check preferred language if toggle is on
+            if (considerPreferredLanguage && preferredLanguage) {
+              if (userCard.language !== preferredLanguage) return false;
+            }
+
+            // Check preferred variant if toggle is on
+            if (considerPreferredVariant && preferredVariant) {
+              if (userCard.variant !== preferredVariant) return false;
+            }
+
+            // Check preferred condition if toggle is on
+            if (considerPreferredCondition && preferredCondition) {
+              if (userCard.condition !== preferredCondition) return false;
+            }
+
+            return true;
+          })
           .map((userCard) => userCard.card.id),
       );
 
@@ -37,7 +72,13 @@ export function SetInfo({ userSet, userCards }: SetInfoProps) {
       const obtainedButNotPlaced = obtainedCards - placedCards;
 
       return { totalCards, placedCards, obtainedCards, obtainedButNotPlaced };
-    }, [userSet, userCards]);
+    }, [
+      userSet,
+      userCards,
+      considerPreferredLanguage,
+      considerPreferredVariant,
+      considerPreferredCondition,
+    ]);
 
   const placedPercentage =
     totalCards > 0 ? (placedCards / totalCards) * 100 : 0;

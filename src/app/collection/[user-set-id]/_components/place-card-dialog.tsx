@@ -22,9 +22,11 @@ import { useIntl } from "react-intl";
 import z from "zod";
 
 type UserCard = Awaited<ReturnType<AppRouter["userCard"]["getList"]>>[number];
+type UserSet = Awaited<ReturnType<AppRouter["userSet"]["getById"]>>;
 
 interface PlaceCardDialogProps {
   userSetId: string;
+  userSet: UserSet;
   cardId: string;
   userSetCardId: string;
   hasUserCard: boolean;
@@ -43,6 +45,7 @@ const FormSchema = z.object({
 
 export function PlaceCardDialog({
   userSetId,
+  userSet,
   cardId,
   userSetCardId,
   hasUserCard,
@@ -70,9 +73,9 @@ export function PlaceCardDialog({
 
   const form = useRHFForm(FormSchema, {
     defaultValues: {
-      condition: "Near Mint",
-      language: "en",
-      variant: "Unlimited",
+      condition: userSet.set.preferredCondition ?? "Near Mint",
+      language: userSet.set.preferredLanguage ?? "en",
+      variant: userSet.set.preferredVariant ?? "Unlimited",
     },
   });
 

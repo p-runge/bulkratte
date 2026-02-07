@@ -33,9 +33,10 @@ const cardLanguages = [
   { code: "de", name: "German", flag: "🇩🇪" },
   { code: "it", name: "Italian", flag: "🇮🇹" },
   { code: "pt", name: "Portuguese", flag: "🇵🇹" },
-  { code: "ja", name: "Japanese", flag: "🇯🇵" },
+  { code: "jp", name: "Japanese", flag: "🇯🇵" },
   { code: "ko", name: "Korean", flag: "🇰🇷" },
   { code: "zh", name: "Chinese", flag: "🇨🇳" },
+  { code: "ru", name: "Russian", flag: "🇷🇺" },
 ];
 
 function getCardLanguageInfo(languageCode: SupportedLanguages) {
@@ -48,7 +49,7 @@ function getCardLanguageInfo(languageCode: SupportedLanguages) {
 const conditions = [
   {
     value: "Mint",
-    short: "M",
+    short: "MT",
     color: "bg-blue-500 text-white border-blue-600",
   },
   {
@@ -63,7 +64,7 @@ const conditions = [
   },
   {
     value: "Good",
-    short: "G",
+    short: "GD",
     color: "bg-yellow-500 text-white border-yellow-600",
   },
   {
@@ -73,12 +74,12 @@ const conditions = [
   },
   {
     value: "Played",
-    short: "P",
+    short: "PL",
     color: "bg-red-600 text-white border-red-700",
   },
   {
     value: "Poor",
-    short: "PR",
+    short: "PO",
     color: "bg-red-400 text-white border-red-500",
   },
 ];

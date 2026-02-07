@@ -23,6 +23,10 @@ export function CardSlot({
     onCardClick,
     initialUserSet,
     userSetId,
+    form,
+    considerPreferredLanguage = false,
+    considerPreferredVariant = false,
+    considerPreferredCondition = false,
   } = useBinderContext();
   const [showRemove, setShowRemove] = useState(false);
 
@@ -74,8 +78,35 @@ export function CardSlot({
     const currentUserCardId = originalCard?.userCardId || null;
 
     // Check if user has this card in their collection
-    const hasUserCard =
-      userCards?.some((uc: any) => uc.card.id === cardId) ?? false;
+    // If we're in place mode with toggles, we need to match against preferred properties
+    const preferredLanguage = form?.watch("preferredLanguage");
+    const preferredVariant = form?.watch("preferredVariant");
+    const preferredCondition = form?.watch("preferredCondition");
+
+    const matchingUserCards =
+      userCards?.filter((uc: any) => {
+        // Must match card ID
+        if (uc.card.id !== cardId) return false;
+
+        // Check preferred language if toggle is on
+        if (considerPreferredLanguage && preferredLanguage) {
+          if (uc.language !== preferredLanguage) return false;
+        }
+
+        // Check preferred variant if toggle is on
+        if (considerPreferredVariant && preferredVariant) {
+          if (uc.variant !== preferredVariant) return false;
+        }
+
+        // Check preferred condition if toggle is on
+        if (considerPreferredCondition && preferredCondition) {
+          if (uc.condition !== preferredCondition) return false;
+        }
+
+        return true;
+      }) ?? [];
+
+    const hasUserCard = matchingUserCards.length > 0;
 
     const handleClick = () => {
       if (onCardClick && cardId && userSetCardId) {
@@ -94,8 +125,6 @@ export function CardSlot({
     if (hasUserCard && !isPlaced) {
       // User has the card but it's not placed here
       // Check if ALL user's cards of this type are in other sets
-      const matchingUserCards =
-        userCards?.filter((uc: any) => uc.card.id === cardId) ?? [];
 
       if (placedUserCards && matchingUserCards.length > 0) {
         // Create a map of user card IDs placed in other sets

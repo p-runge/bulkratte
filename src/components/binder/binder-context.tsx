@@ -1,7 +1,7 @@
 "use client";
 
 import { api } from "@/lib/api/react";
-import { Card } from "@/lib/db";
+import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
 import { useRHFForm } from "@/lib/form/utils";
 import React, { createContext, useContext, useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -47,6 +47,10 @@ type BinderContextValue = {
       ) => void)
     | null;
   initialUserSet: UserSet; // Store original user set data for place mode
+  // Place mode filter toggles (only for place mode)
+  considerPreferredLanguage?: boolean;
+  considerPreferredVariant?: boolean;
+  considerPreferredCondition?: boolean;
 };
 
 const BinderContext = createContext<BinderContextValue | undefined>(undefined);
@@ -59,6 +63,9 @@ export function BinderProvider({
   userCards = null,
   placedUserCards = null,
   onCardClick = null,
+  considerPreferredLanguage = true,
+  considerPreferredVariant = true,
+  considerPreferredCondition = true,
 }: {
   children: React.ReactNode;
   initialUserSet: UserSet;
@@ -80,6 +87,9 @@ export function BinderProvider({
         currentUserCardId: string | null,
       ) => void)
     | null;
+  considerPreferredLanguage?: boolean;
+  considerPreferredVariant?: boolean;
+  considerPreferredCondition?: boolean;
 }) {
   const [currentSpread, setCurrentSpread] = React.useState(0);
   const [interactionMode, setInteractionMode] = React.useState<
@@ -96,6 +106,9 @@ export function BinderProvider({
           cardId: card.cardId!,
           order: card.order!,
         })),
+      preferredLanguage: initialUserSet.set.preferredLanguage ?? null,
+      preferredVariant: initialUserSet.set.preferredVariant ?? null,
+      preferredCondition: initialUserSet.set.preferredCondition ?? null,
     },
   });
 
@@ -261,6 +274,9 @@ export function BinderProvider({
           cardId: card.cardId!,
           order: card.order!,
         })),
+      preferredLanguage: initialUserSet.set.preferredLanguage ?? null,
+      preferredVariant: initialUserSet.set.preferredVariant ?? null,
+      preferredCondition: initialUserSet.set.preferredCondition ?? null,
     });
   }, [initialUserSet, form]);
 
@@ -295,6 +311,9 @@ export function BinderProvider({
         placedUserCards,
         onCardClick,
         initialUserSet,
+        considerPreferredLanguage,
+        considerPreferredVariant,
+        considerPreferredCondition,
       }}
     >
       {children}
@@ -319,4 +338,7 @@ export const BinderFormSchema = z.object({
       order: z.number(),
     }),
   ),
+  preferredLanguage: z.enum(languageEnum.enumValues).nullable(),
+  preferredVariant: z.enum(variantEnum.enumValues).nullable(),
+  preferredCondition: z.enum(conditionEnum.enumValues).nullable(),
 });

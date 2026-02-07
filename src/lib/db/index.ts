@@ -247,6 +247,9 @@ export const userSetsTable = pgTable("user_sets", {
   user_id: uuid("user_id")
     .notNull()
     .references(() => usersTable.id),
+  preferred_language: languageEnum(),
+  preferred_variant: variantEnum(),
+  preferred_condition: conditionEnum(),
 });
 
 export const userSetCardsTable = pgTable(

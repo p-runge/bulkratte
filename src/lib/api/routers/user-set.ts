@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { cardsTable, userSetCardsTable, userSetsTable } from "@/lib/db/index";
+import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
 import { localizeRecords } from "@/lib/db/localization";
 import { TRPCError } from "@trpc/server";
 import { and, asc, eq, inArray, isNotNull, ne } from "drizzle-orm";
@@ -18,6 +19,9 @@ export const userSetRouter = createTRPCRouter({
           }),
         ),
         image: z.string().optional(),
+        preferredLanguage: z.enum(languageEnum.enumValues).nullish(),
+        preferredVariant: z.enum(variantEnum.enumValues).nullish(),
+        preferredCondition: z.enum(conditionEnum.enumValues).nullish(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -27,6 +31,9 @@ export const userSetRouter = createTRPCRouter({
           name: input.name,
           image: input.image,
           user_id: ctx.session.user.id,
+          preferred_language: input.preferredLanguage,
+          preferred_variant: input.preferredVariant,
+          preferred_condition: input.preferredCondition,
         })
         .returning({
           id: userSetsTable.id,
@@ -56,6 +63,9 @@ export const userSetRouter = createTRPCRouter({
           image: userSetsTable.image,
           userId: userSetsTable.user_id,
           createdAt: userSetsTable.created_at,
+          preferredLanguage: userSetsTable.preferred_language,
+          preferredVariant: userSetsTable.preferred_variant,
+          preferredCondition: userSetsTable.preferred_condition,
         })
         .from(userSetsTable)
         .where(eq(userSetsTable.id, input.id))
@@ -146,6 +156,9 @@ export const userSetRouter = createTRPCRouter({
           }),
         ),
         image: z.string().optional(),
+        preferredLanguage: z.enum(languageEnum.enumValues).nullish(),
+        preferredVariant: z.enum(variantEnum.enumValues).nullish(),
+        preferredCondition: z.enum(conditionEnum.enumValues).nullish(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -174,7 +187,13 @@ export const userSetRouter = createTRPCRouter({
 
       await ctx.db
         .update(userSetsTable)
-        .set({ name: input.name, image: input.image ?? null })
+        .set({
+          name: input.name,
+          image: input.image ?? null,
+          preferred_language: input.preferredLanguage,
+          preferred_variant: input.preferredVariant,
+          preferred_condition: input.preferredCondition,
+        })
         .where(
           and(
             eq(userSetsTable.id, input.id),
