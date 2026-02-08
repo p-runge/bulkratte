@@ -1,9 +1,10 @@
 "use client";
 
+import type { UserCard } from "@/components/binder/types";
 import { CardBrowser } from "@/components/card-browser";
 import { ConditionToggleGroup } from "@/components/condition-toggle-group";
+import ConfirmButton from "@/components/confirm-button";
 import { LanguageToggleGroup } from "@/components/language-toggle-group";
-import { VariantToggleGroup } from "@/components/variant-toggle-group";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,17 +15,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { VariantToggleGroup } from "@/components/variant-toggle-group";
 import { api } from "@/lib/api/react";
 import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
 import { RHFForm, useRHFForm } from "@/lib/form/utils";
+import { Info, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { Controller } from "react-hook-form";
 import { useIntl } from "react-intl";
 import z from "zod";
-import { Info, Trash2 } from "lucide-react";
-import type { UserCard } from "@/components/binder/types";
-import ConfirmButton from "@/components/confirm-button";
 
 type UserCardDialogProps = {
   mode: "create" | "edit";
@@ -70,14 +70,14 @@ export default function UserCardDialog({
     defaultValues:
       mode === "edit" && userCard
         ? {
-            condition: userCard.condition ?? null,
             language: userCard.language ?? null,
             variant: userCard.variant ?? null,
+            condition: userCard.condition ?? null,
           }
         : {
-            condition: null,
             language: null,
             variant: null,
+            condition: null,
           },
   });
 
@@ -89,16 +89,16 @@ export default function UserCardDialog({
     if (mode === "create") {
       await createUserCard({
         cardId: card.id,
-        condition: data.condition ?? undefined,
         language: data.language ?? undefined,
         variant: data.variant ?? undefined,
+        condition: data.condition ?? undefined,
       });
     } else if (mode === "edit" && userCard) {
       await updateUserCard({
         id: userCard.id,
-        condition: data.condition,
         language: data.language,
         variant: data.variant,
+        condition: data.condition,
       });
     }
 
@@ -174,6 +174,27 @@ export default function UserCardDialog({
                   </Alert>
                 )}
 
+                {/* Language Field */}
+                <div className="space-y-2">
+                  <Label>
+                    {intl.formatMessage({
+                      id: "form.field.language.label",
+                      defaultMessage: "Language",
+                    })}
+                  </Label>
+                  <Controller
+                    control={form.control}
+                    name="language"
+                    render={({ field }) => (
+                      <LanguageToggleGroup
+                        value={field.value ?? null}
+                        onValueChange={field.onChange}
+                        includeNone
+                      />
+                    )}
+                  />
+                </div>
+
                 {/* Variant Field */}
                 <div className="space-y-2">
                   <Label>
@@ -208,27 +229,6 @@ export default function UserCardDialog({
                     name="condition"
                     render={({ field }) => (
                       <ConditionToggleGroup
-                        value={field.value ?? null}
-                        onValueChange={field.onChange}
-                        includeNone
-                      />
-                    )}
-                  />
-                </div>
-
-                {/* Language Field */}
-                <div className="space-y-2">
-                  <Label>
-                    {intl.formatMessage({
-                      id: "form.field.language.label",
-                      defaultMessage: "Language",
-                    })}
-                  </Label>
-                  <Controller
-                    control={form.control}
-                    name="language"
-                    render={({ field }) => (
-                      <LanguageToggleGroup
                         value={field.value ?? null}
                         onValueChange={field.onChange}
                         includeNone
@@ -326,9 +326,9 @@ export default function UserCardDialog({
 }
 
 const FormSchema = z.object({
-  condition: z.enum(conditionEnum.enumValues).nullable(),
   language: z.enum(languageEnum.enumValues).nullable(),
   variant: z.enum(variantEnum.enumValues).nullable(),
+  condition: z.enum(conditionEnum.enumValues).nullable(),
   // notes: z.string().optional(),
   // photos: z.array(z.string().url()).optional(),
 });

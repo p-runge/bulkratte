@@ -149,11 +149,6 @@ export function UserCardGrid({
               </div>
               {/* User card details overlay */}
               <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
-                {userCard.variant && (
-                  <Badge className="text-xs bg-black/70 text-white border-none">
-                    {userCard.variant}
-                  </Badge>
-                )}
                 {userCard.language && (
                   <Badge
                     className="text-lg bg-black/70 text-white border-none px-1.5 py-0.5"
@@ -166,6 +161,11 @@ export function UserCardGrid({
                     {pokemonAPI.cardLanguages.find(
                       (l) => l.code === userCard.language,
                     )?.flag || userCard.language.toUpperCase()}
+                  </Badge>
+                )}
+                {userCard.variant && (
+                  <Badge className="text-xs bg-black/70 text-white border-none">
+                    {userCard.variant}
                   </Badge>
                 )}
                 {userCard.condition && (

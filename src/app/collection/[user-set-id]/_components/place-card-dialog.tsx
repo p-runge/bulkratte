@@ -46,9 +46,9 @@ interface PlaceCardDialogProps {
 }
 
 const FormSchema = z.object({
-  condition: z.enum(conditionEnum.enumValues).nullable(),
   language: z.enum(languageEnum.enumValues).nullable(),
   variant: z.enum(variantEnum.enumValues).nullable(),
+  condition: z.enum(conditionEnum.enumValues).nullable(),
 });
 
 export function PlaceCardDialog({
@@ -459,6 +459,27 @@ export function PlaceCardDialog({
                     #{card.number} · {card.rarity}
                   </p>
 
+                  {/* Language Field */}
+                  <div className="space-y-2">
+                    <Label>
+                      {intl.formatMessage({
+                        id: "form.field.language.label",
+                        defaultMessage: "Language",
+                      })}
+                    </Label>
+                    <Controller
+                      control={form.control}
+                      name="language"
+                      render={({ field }) => (
+                        <LanguageToggleGroup
+                          value={field.value ?? null}
+                          onValueChange={field.onChange}
+                          includeNone
+                        />
+                      )}
+                    />
+                  </div>
+
                   {/* Variant Field */}
                   <div className="space-y-2">
                     <Label>
@@ -493,27 +514,6 @@ export function PlaceCardDialog({
                       name="condition"
                       render={({ field }) => (
                         <ConditionToggleGroup
-                          value={field.value ?? null}
-                          onValueChange={field.onChange}
-                          includeNone
-                        />
-                      )}
-                    />
-                  </div>
-
-                  {/* Language Field */}
-                  <div className="space-y-2">
-                    <Label>
-                      {intl.formatMessage({
-                        id: "form.field.language.label",
-                        defaultMessage: "Language",
-                      })}
-                    </Label>
-                    <Controller
-                      control={form.control}
-                      name="language"
-                      render={({ field }) => (
-                        <LanguageToggleGroup
                           value={field.value ?? null}
                           onValueChange={field.onChange}
                           includeNone

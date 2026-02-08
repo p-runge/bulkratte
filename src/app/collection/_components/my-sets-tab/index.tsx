@@ -101,7 +101,7 @@ export default function MySetsTab() {
                   </div>
 
                   {/* Badge stack in top right corner */}
-                  <div className="absolute -top-3 -right-3 flex flex-row-reverse items-center gap-1">
+                  <div className="absolute -top-3 -right-3 flex flex-row items-center gap-1">
                     {userSet.preferredLanguage && (
                       <Badge variant="outline" className="h-5.5 bg-background">
                         <LanguageBadge
