@@ -3,42 +3,55 @@
 import { AppRouter } from "@/lib/api/routers/_app";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { CalendarIcon, LayoutGridIcon } from "lucide-react";
 import { FormattedMessage, FormattedDate } from "react-intl";
 import { useMemo } from "react";
+import { useBinderContext } from "@/components/binder/binder-context";
+import pokemonAPI from "@/lib/pokemon-api";
 
-type UserSet = Awaited<ReturnType<AppRouter["userSet"]["getById"]>>;
 type UserCard = Awaited<ReturnType<AppRouter["userCard"]["getList"]>>[number];
 
 interface SetInfoProps {
-  userSet: UserSet;
   userCards: UserCard[];
-  considerPreferredLanguage?: boolean;
-  considerPreferredVariant?: boolean;
-  considerPreferredCondition?: boolean;
 }
 
-export function SetInfo({
-  userSet,
-  userCards,
-  considerPreferredLanguage = false,
-  considerPreferredVariant = false,
-  considerPreferredCondition = false,
-}: SetInfoProps) {
+export function SetInfo({ userCards }: SetInfoProps) {
+  const {
+    form,
+    initialUserSet,
+    considerPreferredLanguage = true,
+    considerPreferredVariant = true,
+    considerPreferredCondition = true,
+    setConsiderPreferredLanguage,
+    setConsiderPreferredVariant,
+    setConsiderPreferredCondition,
+  } = useBinderContext();
+
+  const preferredLanguage = form.watch("preferredLanguage");
+  const preferredVariant = form.watch("preferredVariant");
+  const preferredCondition = form.watch("preferredCondition");
+
+  const hasAnyPreferred =
+    preferredLanguage || preferredVariant || preferredCondition;
   const { totalCards, placedCards, obtainedCards, obtainedButNotPlaced } =
     useMemo(() => {
-      const totalCards = userSet.cards.length;
-      const placedCards = userSet.cards.filter(
+      const totalCards = initialUserSet.cards.length;
+      const placedCards = initialUserSet.cards.filter(
         (card) => card.userCardId !== null,
       ).length;
 
       // Get unique card IDs from the user set
-      const userSetCardIds = new Set(userSet.cards.map((card) => card.cardId));
+      const userSetCardIds = new Set(
+        initialUserSet.cards.map((card) => card.cardId),
+      );
 
       // Get preferred properties from user set
-      const preferredLanguage = userSet.set.preferredLanguage;
-      const preferredVariant = userSet.set.preferredVariant;
-      const preferredCondition = userSet.set.preferredCondition;
+      const preferredLanguage = initialUserSet.set.preferredLanguage;
+      const preferredVariant = initialUserSet.set.preferredVariant;
+      const preferredCondition = initialUserSet.set.preferredCondition;
 
       // Count how many of these cards the user has in their collection
       // Considering preferred properties if toggles are on
@@ -73,7 +86,7 @@ export function SetInfo({
 
       return { totalCards, placedCards, obtainedCards, obtainedButNotPlaced };
     }, [
-      userSet,
+      initialUserSet,
       userCards,
       considerPreferredLanguage,
       considerPreferredVariant,
@@ -120,7 +133,7 @@ export function SetInfo({
             </span>
             <span className="font-medium">
               <FormattedDate
-                value={new Date(userSet.set.createdAt)}
+                value={new Date(initialUserSet.set.createdAt)}
                 year="numeric"
                 month="numeric"
                 day="numeric"
@@ -180,6 +193,89 @@ export function SetInfo({
             </div>
           </div>
         </div>
+
+        {/* Preferences */}
+        {hasAnyPreferred && (
+          <div className="space-y-4 md:col-span-2">
+            <h3 className="text-lg font-semibold mb-3">
+              <FormattedMessage
+                id="binder.info.preferences.title"
+                defaultMessage="Preferences"
+              />
+            </h3>
+            <div className="flex items-center gap-3">
+              {preferredLanguage && setConsiderPreferredLanguage && (
+                <div className="flex items-center gap-2 px-3 py-1.5 border rounded-md bg-muted/30">
+                  <Checkbox
+                    id="considerPreferredLanguage"
+                    checked={considerPreferredLanguage}
+                    onCheckedChange={(checked) =>
+                      setConsiderPreferredLanguage(!!checked)
+                    }
+                  />
+                  <Label
+                    htmlFor="considerPreferredLanguage"
+                    className="font-normal cursor-pointer flex items-center gap-1.5 text-lg"
+                  >
+                    {
+                      pokemonAPI.cardLanguages.find(
+                        (l) => l.code === preferredLanguage,
+                      )?.flag
+                    }
+                  </Label>
+                </div>
+              )}
+
+              {preferredVariant && setConsiderPreferredVariant && (
+                <div className="flex items-center gap-2 px-3 py-1.5 border rounded-md bg-muted/30">
+                  <Checkbox
+                    id="considerPreferredVariant"
+                    checked={considerPreferredVariant}
+                    onCheckedChange={(checked) =>
+                      setConsiderPreferredVariant(!!checked)
+                    }
+                  />
+                  <Label
+                    htmlFor="considerPreferredVariant"
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    <Badge variant="outline" className="text-xs font-medium">
+                      {preferredVariant}
+                    </Badge>
+                  </Label>
+                </div>
+              )}
+
+              {preferredCondition && setConsiderPreferredCondition && (
+                <div className="flex items-center gap-2 px-3 py-1.5 border rounded-md bg-muted/30">
+                  <Checkbox
+                    id="considerPreferredCondition"
+                    checked={considerPreferredCondition}
+                    onCheckedChange={(checked) =>
+                      setConsiderPreferredCondition(!!checked)
+                    }
+                  />
+                  <Label
+                    htmlFor="considerPreferredCondition"
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    <Badge
+                      className={`${
+                        pokemonAPI.conditions.find(
+                          (c) => c.value === preferredCondition,
+                        )?.color || "bg-gray-500"
+                      } border text-xs font-medium`}
+                    >
+                      {pokemonAPI.conditions.find(
+                        (c) => c.value === preferredCondition,
+                      )?.short || preferredCondition}
+                    </Badge>
+                  </Label>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </Card>
   );

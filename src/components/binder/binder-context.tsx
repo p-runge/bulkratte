@@ -51,6 +51,9 @@ type BinderContextValue = {
   considerPreferredLanguage?: boolean;
   considerPreferredVariant?: boolean;
   considerPreferredCondition?: boolean;
+  setConsiderPreferredLanguage?: (value: boolean) => void;
+  setConsiderPreferredVariant?: (value: boolean) => void;
+  setConsiderPreferredCondition?: (value: boolean) => void;
 };
 
 const BinderContext = createContext<BinderContextValue | undefined>(undefined);
@@ -63,9 +66,6 @@ export function BinderProvider({
   userCards = null,
   placedUserCards = null,
   onCardClick = null,
-  considerPreferredLanguage = true,
-  considerPreferredVariant = true,
-  considerPreferredCondition = true,
 }: {
   children: React.ReactNode;
   initialUserSet: UserSet;
@@ -87,14 +87,18 @@ export function BinderProvider({
         currentUserCardId: string | null,
       ) => void)
     | null;
-  considerPreferredLanguage?: boolean;
-  considerPreferredVariant?: boolean;
-  considerPreferredCondition?: boolean;
 }) {
   const [currentSpread, setCurrentSpread] = React.useState(0);
   const [interactionMode, setInteractionMode] = React.useState<
     "browse" | "remove"
   >("browse");
+
+  const [considerPreferredLanguage, setConsiderPreferredLanguage] =
+    React.useState(true);
+  const [considerPreferredVariant, setConsiderPreferredVariant] =
+    React.useState(true);
+  const [considerPreferredCondition, setConsiderPreferredCondition] =
+    React.useState(true);
 
   const form = useRHFForm(BinderFormSchema, {
     defaultValues: {
@@ -314,6 +318,9 @@ export function BinderProvider({
         considerPreferredLanguage,
         considerPreferredVariant,
         considerPreferredCondition,
+        setConsiderPreferredLanguage,
+        setConsiderPreferredVariant,
+        setConsiderPreferredCondition,
       }}
     >
       {children}
