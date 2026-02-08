@@ -70,9 +70,9 @@ export const languageEnum = pgEnum("language", [
   "it",
   "es",
   "pt",
-  "jp",
-  "ko",
-  "zh",
-  "ru",
+  // "jp",
+  // "ko",
+  // "zh",
+  // "ru",
 ]);
 export type Language = (typeof languageEnum.enumValues)[number];

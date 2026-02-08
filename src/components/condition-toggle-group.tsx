@@ -1,8 +1,8 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import pokemonAPI from "@/lib/pokemon-api";
+import { ConditionBadge } from "./condition-badge";
 
 interface ConditionToggleGroupProps {
   value: string | null;
@@ -46,11 +46,7 @@ export function ConditionToggleGroup({
           className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
           title={condition.value}
         >
-          <Badge
-            className={`${condition.color} border text-xs pointer-events-none`}
-          >
-            {condition.short}
-          </Badge>
+          <ConditionBadge condition={condition.value} />
         </ToggleGroupItem>
       ))}
     </ToggleGroup>

@@ -404,12 +404,39 @@ export const userSetRouter = createTRPCRouter({
         id: userSetsTable.id,
         name: userSetsTable.name,
         image: userSetsTable.image,
+        preferredLanguage: userSetsTable.preferred_language,
+        preferredVariant: userSetsTable.preferred_variant,
+        preferredCondition: userSetsTable.preferred_condition,
       })
       .from(userSetsTable)
       .where(eq(userSetsTable.user_id, ctx.session.user.id))
       .orderBy(userSetsTable.created_at);
 
-    return userSets ?? null;
+    // Get card counts for each user set
+    const userSetsWithCounts = await Promise.all(
+      userSets.map(async (userSet) => {
+        const cards = await ctx.db
+          .select({
+            id: userSetCardsTable.id,
+            userCardId: userSetCardsTable.user_card_id,
+          })
+          .from(userSetCardsTable)
+          .where(eq(userSetCardsTable.user_set_id, userSet.id));
+
+        const totalCards = cards.length;
+        const placedCards = cards.filter(
+          (card) => card.userCardId !== null,
+        ).length;
+
+        return {
+          ...userSet,
+          totalCards,
+          placedCards,
+        };
+      }),
+    );
+
+    return userSetsWithCounts;
   }),
 
   getPlacedUserCardIds: protectedProcedure.query(async ({ ctx }) => {

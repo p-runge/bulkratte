@@ -2,6 +2,7 @@
 
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import pokemonAPI from "@/lib/pokemon-api";
+import { LanguageBadge } from "./language-badge";
 
 interface LanguageToggleGroupProps {
   value: string | null;
@@ -45,7 +46,7 @@ export function LanguageToggleGroup({
           className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground text-2xl"
           title={language.name}
         >
-          {language.flag}
+          <LanguageBadge code={language.code} />
         </ToggleGroupItem>
       ))}
     </ToggleGroup>

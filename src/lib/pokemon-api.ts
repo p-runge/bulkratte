@@ -33,11 +33,13 @@ const cardLanguages = [
   { code: "de", name: "German", flag: "🇩🇪" },
   { code: "it", name: "Italian", flag: "🇮🇹" },
   { code: "pt", name: "Portuguese", flag: "🇵🇹" },
-  { code: "jp", name: "Japanese", flag: "🇯🇵" },
-  { code: "ko", name: "Korean", flag: "🇰🇷" },
-  { code: "zh", name: "Chinese", flag: "🇨🇳" },
-  { code: "ru", name: "Russian", flag: "🇷🇺" },
-];
+  // { code: "jp", name: "Japanese", flag: "🇯🇵" },
+  // { code: "ko", name: "Korean", flag: "🇰🇷" },
+  // { code: "zh", name: "Chinese", flag: "🇨🇳" },
+  // { code: "ru", name: "Russian", flag: "🇷🇺" },
+] as const;
+
+export type CardLanguage = (typeof cardLanguages)[number];
 
 function getCardLanguageInfo(languageCode: SupportedLanguages) {
   return (
@@ -82,7 +84,9 @@ const conditions = [
     short: "PO",
     color: "bg-red-400 text-white border-red-500",
   },
-];
+] as const;
+
+export type Condition = (typeof conditions)[number];
 
 function getConditionInfo(condition: string) {
   return conditions.find((c) => c.value === condition) || conditions[1]!;
