@@ -2,6 +2,7 @@
 
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import pokemonAPI from "@/lib/pokemon-api";
+import { FormattedMessage } from "react-intl";
 
 interface VariantToggleGroupProps {
   value: string | null;
@@ -34,7 +35,10 @@ export function VariantToggleGroup({
           variant="outline"
           className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
         >
-          None
+          <FormattedMessage
+            id="toggle-group-option.none"
+            defaultMessage="None"
+          />
         </ToggleGroupItem>
       )}
       {pokemonAPI.getVariants("").map((variant) => (

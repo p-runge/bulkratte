@@ -19,6 +19,8 @@
   "binder.pagination.next.label": "Next",
   "binder.pagination.previous.label": "Previous",
   "binder.sheet.action.insert": "Insert Sheet Here",
+  "binder.sheet.delete.confirm.description": "This sheet contains cards. Are you sure you want to delete it? The cards will be removed from this binder (but not from your collection).",
+  "binder.sheet.delete.confirm.title": "Delete Sheet with Cards",
   "binder.sheet.label.back": "Back Site",
   "binder.sheet.label.front": "Front Site",
   "binder.sheet.management.description": "Add, remove, or reorder sheets in your binder",
@@ -93,6 +95,7 @@
   "form.field.set_name.label": "Set Name",
   "form.field.set_name.placeholder": "Enter set name",
   "form.field.variant.label": "Variant",
+  "form.validation.set_name_required": "Set name is required",
   "form.validation.unsaved_changes": "You have unsaved changes. Are you sure you want to close?",
   "nav.action.signin": "Sign In",
   "nav.action.signout": "Sign Out",
@@ -106,7 +109,6 @@
   "page.collection.cards.empty.description": "Start adding cards to your collection!",
   "page.collection.cards.empty.title": "No cards in your collection yet",
   "page.collection.description": "Track and manage your Pokémon card collection",
-  "page.collection.sets.card.description": "View and manage cards in this set.",
   "page.collection.sets.empty.description": "Add your first set!",
   "page.collection.sets.empty.title": "No sets added yet",
   "page.collection.tab.cards": "My Cards",
@@ -152,9 +154,11 @@
   "page.user_set.private.back": "Back to My Collection",
   "page.user_set.private.description": "This collection set is private and can only be viewed by its owner.",
   "page.user_set.private.title": "This Set is Private",
+  "preferred_properties.label": "Preferences",
   "set.cards.count": "{total} cards",
   "set.cards.count_with_extras": "{total} (+{extras}) cards",
   "set.logo.alt": "{setName} logo",
   "set.series.logo.alt": "{series} logo",
-  "set.symbol.alt": "{setName} symbol"
+  "set.symbol.alt": "{setName} symbol",
+  "toggle-group-option.none": "None"
 }

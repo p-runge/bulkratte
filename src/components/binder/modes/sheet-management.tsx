@@ -20,7 +20,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { BetweenHorizonalStart, GripVertical, Trash2 } from "lucide-react";
 import Image from "next/image";
 import React, { useState } from "react";
-import { FormattedMessage } from "react-intl";
+import { FormattedMessage, useIntl } from "react-intl";
 import ConfirmButton from "../../confirm-button";
 import { Button } from "../../ui/button";
 import { PAGE_SIZE, useBinderContext } from "../binder-context";
@@ -170,6 +170,7 @@ function SheetPreview({
   dragHandleProps?: any;
   isDragging?: boolean;
 }) {
+  const intl = useIntl();
   const { sheetCount, deleteSheet } = useBinderContext();
 
   // Calculate page indices for this sheet
@@ -249,8 +250,15 @@ function SheetPreview({
             onClick={() => deleteSheet(sheetIndex)}
             className="shrink-0"
             disabled={sheetCount <= 1}
-            title="Delete Sheet with Cards"
-            description="This sheet contains cards. Are you sure you want to delete it? The cards will be removed from this binder (but not from your collection)."
+            title={intl.formatMessage({
+              id: "binder.sheet.delete.confirm.title",
+              defaultMessage: "Delete Sheet with Cards",
+            })}
+            description={intl.formatMessage({
+              id: "binder.sheet.delete.confirm.description",
+              defaultMessage:
+                "This sheet contains cards. Are you sure you want to delete it? The cards will be removed from this binder (but not from your collection).",
+            })}
             destructive
           >
             <Trash2 className="h-6 w-6" />

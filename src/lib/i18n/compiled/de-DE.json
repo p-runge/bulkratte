@@ -153,6 +153,18 @@
       "value": "Blatt hier einfügen"
     }
   ],
+  "binder.sheet.delete.confirm.description": [
+    {
+      "type": 0,
+      "value": "Dieses Blatt enthält Karten. Bist du sicher, dass du es löschen möchtest? Die Karten werden aus diesem Binder entfernt (aber nicht aus deiner Sammlung)."
+    }
+  ],
+  "binder.sheet.delete.confirm.title": [
+    {
+      "type": 0,
+      "value": "Blatt mit Karten löschen"
+    }
+  ],
   "binder.sheet.label.back": [
     {
       "type": 0,
@@ -691,6 +703,12 @@
       "value": "Variante"
     }
   ],
+  "form.validation.set_name_required": [
+    {
+      "type": 0,
+      "value": "Set-Name ist erforderlich"
+    }
+  ],
   "form.validation.unsaved_changes": [
     {
       "type": 0,
@@ -767,12 +785,6 @@
     {
       "type": 0,
       "value": "Verwalte und verfolge deine Pokémon-Kartensammlung"
-    }
-  ],
-  "page.collection.sets.card.description": [
-    {
-      "type": 0,
-      "value": "Karten in diesem Set anzeigen und verwalten."
     }
   ],
   "page.collection.sets.empty.description": [
@@ -1073,6 +1085,12 @@
       "value": "Dieses Set ist privat"
     }
   ],
+  "preferred_properties.label": [
+    {
+      "type": 0,
+      "value": "Präferenzen"
+    }
+  ],
   "set.cards.count": [
     {
       "type": 1,
@@ -1129,6 +1147,12 @@
     {
       "type": 0,
       "value": " Symbol"
+    }
+  ],
+  "toggle-group-option.none": [
+    {
+      "type": 0,
+      "value": "Keine"
     }
   ]
 }

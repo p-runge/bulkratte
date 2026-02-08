@@ -6,6 +6,7 @@ import { LanguageToggleGroup } from "@/components/language-toggle-group";
 import { VariantToggleGroup } from "@/components/variant-toggle-group";
 import { Label } from "@/components/ui/label";
 import { Controller } from "react-hook-form";
+import { FormattedMessage } from "react-intl";
 
 export function PreferredProperties() {
   const { form } = useBinderContext();
@@ -13,9 +14,13 @@ export function PreferredProperties() {
   return (
     <>
       <div className="space-y-2">
-        <Label className="text-sm font-medium">Preferences</Label>
+        <Label className="text-sm font-medium">
+          <FormattedMessage
+            id="preferred_properties.label"
+            defaultMessage="Preferences"
+          />
+        </Label>
 
-        {/* Language Selector */}
         <Controller
           control={form.control}
           name="preferredLanguage"
@@ -28,7 +33,6 @@ export function PreferredProperties() {
           )}
         />
 
-        {/* Variant Selector */}
         <Controller
           control={form.control}
           name="preferredVariant"
@@ -41,7 +45,6 @@ export function PreferredProperties() {
           )}
         />
 
-        {/* Condition Selector */}
         <Controller
           control={form.control}
           name="preferredCondition"

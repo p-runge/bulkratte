@@ -5,6 +5,7 @@ import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
 import { useRHFForm } from "@/lib/form/utils";
 import React, { createContext, useContext, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { IntlShape, useIntl } from "react-intl";
 import z from "zod";
 import { BinderCardData, UserSet } from "./types";
 
@@ -88,6 +89,7 @@ export function BinderProvider({
       ) => void)
     | null;
 }) {
+  const intl = useIntl();
   const [currentSpread, setCurrentSpread] = React.useState(0);
   const [interactionMode, setInteractionMode] = React.useState<
     "browse" | "remove"
@@ -100,7 +102,7 @@ export function BinderProvider({
   const [considerPreferredCondition, setConsiderPreferredCondition] =
     React.useState(true);
 
-  const form = useRHFForm(BinderFormSchema, {
+  const form = useRHFForm(getBinderFormSchema(intl), {
     defaultValues: {
       name: initialUserSet.set.name,
       image: initialUserSet.set.image,
@@ -336,6 +338,29 @@ export function useBinderContext() {
   return context;
 }
 
+export function getBinderFormSchema(intl: IntlShape) {
+  return z.object({
+    name: z.string().min(
+      1,
+      intl.formatMessage({
+        id: "form.validation.set_name_required",
+        defaultMessage: "Set name is required",
+      }),
+    ),
+    image: z.string().nullable(),
+    cardData: z.array(
+      z.object({
+        cardId: z.string(),
+        order: z.number(),
+      }),
+    ),
+    preferredLanguage: z.enum(languageEnum.enumValues).nullable(),
+    preferredVariant: z.enum(variantEnum.enumValues).nullable(),
+    preferredCondition: z.enum(conditionEnum.enumValues).nullable(),
+  });
+}
+
+// For backwards compatibility
 export const BinderFormSchema = z.object({
   name: z.string().min(1, "Set name is required"),
   image: z.string().nullable(),

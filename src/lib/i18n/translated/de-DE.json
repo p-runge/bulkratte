@@ -19,6 +19,8 @@
   "binder.pagination.next.label": "Weiter",
   "binder.pagination.previous.label": "Zurück",
   "binder.sheet.action.insert": "Blatt hier einfügen",
+  "binder.sheet.delete.confirm.description": "Dieses Blatt enthält Karten. Bist du sicher, dass du es löschen möchtest? Die Karten werden aus diesem Binder entfernt (aber nicht aus deiner Sammlung).",
+  "binder.sheet.delete.confirm.title": "Blatt mit Karten löschen",
   "binder.sheet.label.back": "Rückseite",
   "binder.sheet.label.front": "Vorderseite",
   "binder.sheet.management.description": "Blätter in deinem Binder hinzufügen, entfernen oder neu anordnen",
@@ -93,6 +95,7 @@
   "form.field.set_name.label": "Set-Name",
   "form.field.set_name.placeholder": "Set-Namen eingeben",
   "form.field.variant.label": "Variante",
+  "form.validation.set_name_required": "Set-Name ist erforderlich",
   "form.validation.unsaved_changes": "Du hast ungespeicherte Änderungen. Bist du sicher, dass du schließen möchtest?",
   "nav.action.signin": "Anmelden",
   "nav.action.signout": "Abmelden",
@@ -106,7 +109,6 @@
   "page.collection.cards.empty.description": "Füge Karten zu deiner Sammlung hinzu!",
   "page.collection.cards.empty.title": "Noch keine Karten in deiner Sammlung",
   "page.collection.description": "Verwalte und verfolge deine Pokémon-Kartensammlung",
-  "page.collection.sets.card.description": "Karten in diesem Set anzeigen und verwalten.",
   "page.collection.sets.empty.description": "Füge dein erstes Set hinzu!",
   "page.collection.sets.empty.title": "Noch keine Sets vorhanden",
   "page.collection.tab.cards": "Meine Karten",
@@ -152,9 +154,11 @@
   "page.user_set.private.back": "Zurück zu meiner Sammlung",
   "page.user_set.private.description": "Dieses Sammlungsset ist privat und kann nur vom Besitzer eingesehen werden.",
   "page.user_set.private.title": "Dieses Set ist privat",
+  "preferred_properties.label": "Präferenzen",
   "set.cards.count": "{total} Karten",
   "set.cards.count_with_extras": "{total} (+{extras}) Karten",
   "set.logo.alt": "{setName}-Logo",
   "set.series.logo.alt": "{series}-Logo",
-  "set.symbol.alt": "{setName} Symbol"
+  "set.symbol.alt": "{setName} Symbol",
+  "toggle-group-option.none": "Keine"
 }

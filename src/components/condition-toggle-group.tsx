@@ -2,6 +2,7 @@
 
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import pokemonAPI from "@/lib/pokemon-api";
+import { FormattedMessage } from "react-intl";
 import { ConditionBadge } from "./condition-badge";
 
 interface ConditionToggleGroupProps {
@@ -35,7 +36,10 @@ export function ConditionToggleGroup({
           variant="outline"
           className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
         >
-          None
+          <FormattedMessage
+            id="toggle-group-option.none"
+            defaultMessage="None"
+          />
         </ToggleGroupItem>
       )}
       {pokemonAPI.conditions.map((condition) => (
