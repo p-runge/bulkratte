@@ -121,7 +121,7 @@ export function ImageUpload({
                 id: "form.field.image.preview.alt",
                 defaultMessage: "Set preview",
               })}
-              className="w-24 h-24 object-contain rounded border"
+              className="w-16 h-16 object-contain rounded border"
             />
             <Button
               type="button"
@@ -134,8 +134,8 @@ export function ImageUpload({
             </Button>
           </div>
         ) : (
-          <div className="w-24 h-24 border-2 border-dashed rounded flex items-center justify-center text-muted-foreground">
-            <Upload className="h-8 w-8" />
+          <div className="w-16 h-16 border-2 border-dashed rounded flex items-center justify-center text-muted-foreground">
+            <Upload className="h-6 w-6" />
           </div>
         )}
         <div className="flex-1">

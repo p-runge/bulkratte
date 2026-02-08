@@ -61,8 +61,9 @@ export default async function EditUserSetPage({
             </h1>
             <p className="text-muted-foreground mt-1">
               {intl.formatMessage({
-                id: "page.set.edit.description",
-                defaultMessage: "Name your set and select cards to add",
+                id: "page.set.description",
+                defaultMessage:
+                  "Define what cards you would like this set to contain once it is finished.",
               })}
             </p>
           </div>

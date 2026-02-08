@@ -5,10 +5,10 @@
       "value": "Karten hinzufügen"
     }
   ],
-  "binder.info.created.at": [
+  "binder.info.preferences.title": [
     {
       "type": 0,
-      "value": "Erstellt am:"
+      "value": "Präferenzen"
     }
   ],
   "binder.info.progress.obtained": [
@@ -33,12 +33,6 @@
     {
       "type": 0,
       "value": "Set-Informationen"
-    }
-  ],
-  "binder.info.total.cards": [
-    {
-      "type": 0,
-      "value": "Kartenanzahl:"
     }
   ],
   "binder.mode.browse": [
@@ -216,7 +210,7 @@
   "card.browser.empty": [
     {
       "type": 0,
-      "value": "Keine Karten gefunden, die deinen Suchkriterien entsprechen."
+      "value": "Keine Karten gefunden. Versuche, deine Filter anzupassen."
     }
   ],
   "card.browser.selectAll": [
@@ -236,7 +230,7 @@
   "card.filter.button.clear": [
     {
       "type": 0,
-      "value": "Auswahl aufheben"
+      "value": "Zurücksetzen"
     }
   ],
   "card.filter.date.from": [
@@ -425,6 +419,12 @@
       "value": "Abbrechen"
     }
   ],
+  "common.button.delete": [
+    {
+      "type": 0,
+      "value": "Löschen"
+    }
+  ],
   "common.button.saving": [
     {
       "type": 0,
@@ -467,16 +467,112 @@
       "value": "Set löschen"
     }
   ],
+  "dialog.edit_card.button.save": [
+    {
+      "type": 0,
+      "value": "Änderungen speichern"
+    }
+  ],
+  "dialog.edit_card.confirm_delete": [
+    {
+      "type": 0,
+      "value": "Bist du sicher, dass du diese Karte aus deiner Sammlung löschen möchtest?"
+    }
+  ],
+  "dialog.edit_card.confirm_delete.title": [
+    {
+      "type": 0,
+      "value": "Karte löschen"
+    }
+  ],
+  "dialog.edit_card.confirm_delete.unplace_warning": [
+    {
+      "type": 0,
+      "value": "Diese Karte wird aus \""
+    },
+    {
+      "type": 1,
+      "value": "setName"
+    },
+    {
+      "type": 0,
+      "value": "\" entfernt."
+    }
+  ],
+  "dialog.edit_card.confirm_delete.unplace_warning.title": [
+    {
+      "type": 0,
+      "value": "Karte ist in Set platziert"
+    }
+  ],
+  "dialog.edit_card.placed_in_set": [
+    {
+      "type": 0,
+      "value": "In Set platziert"
+    }
+  ],
+  "dialog.edit_card.placed_in_set.description": [
+    {
+      "type": 0,
+      "value": "Diese Karte ist derzeit in \""
+    },
+    {
+      "type": 1,
+      "value": "setName"
+    },
+    {
+      "type": 0,
+      "value": "\" platziert"
+    }
+  ],
+  "dialog.edit_card.title": [
+    {
+      "type": 0,
+      "value": "Karte bearbeiten"
+    }
+  ],
   "dialog.place_card.action.add_and_place": [
     {
       "type": 0,
       "value": "Neue Karte zur Sammlung hinzufügen & platzieren"
     }
   ],
+  "dialog.place_card.action.place": [
+    {
+      "type": 0,
+      "value": "Platzieren"
+    }
+  ],
   "dialog.place_card.action.unplace": [
     {
       "type": 0,
       "value": "Entfernen"
+    }
+  ],
+  "dialog.place_card.confirm.confirm_label": [
+    {
+      "type": 0,
+      "value": "Karte verschieben"
+    }
+  ],
+  "dialog.place_card.confirm.description": [
+    {
+      "type": 0,
+      "value": "Diese Karte ist derzeit in \""
+    },
+    {
+      "type": 1,
+      "value": "setName"
+    },
+    {
+      "type": 0,
+      "value": "\" platziert. Wenn du sie hierher verschiebst, wird sie aus diesem Set entfernt. Möchtest du fortfahren?"
+    }
+  ],
+  "dialog.place_card.confirm.title": [
+    {
+      "type": 0,
+      "value": "Karte aus anderem Set verschieben?"
     }
   ],
   "dialog.place_card.currently_placed": [
@@ -538,7 +634,7 @@
   "dialog.place_card.title.place": [
     {
       "type": 0,
-      "value": "Karte im Ordner platzieren"
+      "value": "Karte im Binder platzieren"
     }
   ],
   "form.field.condition.label": [
@@ -550,7 +646,7 @@
   "form.field.image.description": [
     {
       "type": 0,
-      "value": "Bilder werden automatisch auf 100px herunterskaliert"
+      "value": "Bilder werden automatisch auf max. 100px skaliert"
     }
   ],
   "form.field.image.label": [
@@ -871,16 +967,16 @@
       "value": "Änderungen speichern"
     }
   ],
+  "page.set.description": [
+    {
+      "type": 0,
+      "value": "Definiere, welche Karten dieses Set enthalten soll, wenn es fertiggestellt ist."
+    }
+  ],
   "page.set.detail.description": [
     {
       "type": 0,
       "value": "Platziere deine Karten in diesem Set"
-    }
-  ],
-  "page.set.edit.description": [
-    {
-      "type": 0,
-      "value": "Benenne dein Set und wähle Karten zum Hinzufügen aus"
     }
   ],
   "page.set.edit.title": [
@@ -905,12 +1001,6 @@
       "value": " Karten ausgewählt"
     }
   ],
-  "page.set.new.description": [
-    {
-      "type": 0,
-      "value": "Benenne dein Set und wähle Karten zum Hinzufügen aus"
-    }
-  ],
   "page.set.new.title": [
     {
       "type": 0,
@@ -926,7 +1016,7 @@
   "page.sets.label": [
     {
       "type": 0,
-      "value": "Kartensets"
+      "value": "Sets"
     }
   ],
   "page.sets.search.placeholder": [

@@ -100,17 +100,8 @@ function Content({ userSet }: { userSet: UserSet }) {
   return (
     <>
       <form onSubmit={form.handleSubmit(onSubmit)} className="mb-6">
-        <div className="bg-card border rounded-lg p-6 shrink-0">
-          <div className="mb-6">
-            <ImageUpload
-              imagePreview={imagePreview}
-              fileInputRef={fileInputRef}
-              onImageUpload={handleImageUpload}
-              onRemoveImage={handleRemoveImage}
-            />
-          </div>
-
-          <div className="flex items-end gap-4">
+        <div className="bg-card border rounded-lg p-4 sm:p-6 shrink-0 space-y-4">
+          <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1 space-y-2">
               <Label htmlFor="name">
                 <FormattedMessage
@@ -132,6 +123,19 @@ function Content({ userSet }: { userSet: UserSet }) {
                 </p>
               )}
             </div>
+            <div className="lg:w-80">
+              <ImageUpload
+                imagePreview={imagePreview}
+                fileInputRef={fileInputRef}
+                onImageUpload={handleImageUpload}
+                onRemoveImage={handleRemoveImage}
+              />
+            </div>
+          </div>
+
+          <PreferredProperties />
+
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 pt-2">
             <div className="text-sm text-muted-foreground">
               {intl.formatMessage(
                 {
@@ -144,18 +148,14 @@ function Content({ userSet }: { userSet: UserSet }) {
             <Button
               type="submit"
               disabled={!nameValue.trim() || isPending}
-              size="lg"
+              className="whitespace-nowrap w-full sm:w-auto"
             >
-              <Save className="h-5 w-5 mr-2" />
+              <Save className="h-4 w-4 mr-2" />
               <FormattedMessage
                 id="page.set.action.save"
                 defaultMessage="Save Changes"
               />
             </Button>
-          </div>
-
-          <div className="mt-6">
-            <PreferredProperties />
           </div>
         </div>
       </form>

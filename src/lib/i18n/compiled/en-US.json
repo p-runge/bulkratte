@@ -5,10 +5,10 @@
       "value": "Add Cards"
     }
   ],
-  "binder.info.created.at": [
+  "binder.info.preferences.title": [
     {
       "type": 0,
-      "value": "Created on:"
+      "value": "Preferences"
     }
   ],
   "binder.info.progress.obtained": [
@@ -33,12 +33,6 @@
     {
       "type": 0,
       "value": "Set Information"
-    }
-  ],
-  "binder.info.total.cards": [
-    {
-      "type": 0,
-      "value": "Total Cards:"
     }
   ],
   "binder.mode.browse": [
@@ -973,16 +967,16 @@
       "value": "Save Changes"
     }
   ],
+  "page.set.description": [
+    {
+      "type": 0,
+      "value": "Define what cards you would like this set to contain once it is finished."
+    }
+  ],
   "page.set.detail.description": [
     {
       "type": 0,
       "value": "Place your cards into this set"
-    }
-  ],
-  "page.set.edit.description": [
-    {
-      "type": 0,
-      "value": "Name your set and select cards to add"
     }
   ],
   "page.set.edit.title": [
@@ -1005,12 +999,6 @@
     {
       "type": 0,
       "value": " cards selected"
-    }
-  ],
-  "page.set.new.description": [
-    {
-      "type": 0,
-      "value": "Name your set and select cards to add"
     }
   ],
   "page.set.new.title": [
