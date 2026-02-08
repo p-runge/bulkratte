@@ -94,8 +94,14 @@ async function getWantlistForUser(
   }
 
   // Get all card IDs that are in user's sets but don't have a user_card_id
-  const missingCardIds = await db
-    .selectDistinct({ cardId: userSetCardsTable.card_id })
+  // Also get the preferred properties from the user set
+  const missingCardsWithPrefs = await db
+    .selectDistinct({
+      cardId: userSetCardsTable.card_id,
+      preferredLanguage: userSetsTable.preferred_language,
+      preferredVariant: userSetsTable.preferred_variant,
+      preferredCondition: userSetsTable.preferred_condition,
+    })
     .from(userSetCardsTable)
     .innerJoin(
       userSetsTable,
@@ -106,8 +112,9 @@ async function getWantlistForUser(
         eq(userSetsTable.user_id, userId),
         sql`${userSetCardsTable.user_card_id} IS NULL`,
       ),
-    )
-    .then((res) => res.map((row) => row.cardId));
+    );
+
+  const missingCardIds = missingCardsWithPrefs.map((row) => row.cardId);
 
   // If no missing cards, return empty array
   if (missingCardIds.length === 0) {
@@ -164,6 +171,7 @@ async function getWantlistForUser(
         created_at: cardsTable.created_at,
         updated_at: cardsTable.updated_at,
         price: cardPricesTable.price,
+        localizedName: localizationsTable.value,
       })
       .from(cardsTable)
       .leftJoin(setsTable, eq(cardsTable.setId, setsTable.id))
@@ -213,7 +221,43 @@ async function getWantlistForUser(
     });
   }
 
-  return localizedCards;
+  // Create UserCard-like objects with preferred properties from user sets
+  // For cards that appear in multiple sets, pick the first set's preferences
+  const cardPrefsMap = new Map<
+    string,
+    (typeof missingCardsWithPrefs)[number]
+  >();
+
+  for (const row of missingCardsWithPrefs) {
+    if (!cardPrefsMap.has(row.cardId)) {
+      cardPrefsMap.set(row.cardId, row);
+    }
+  }
+
+  return localizedCards.map((card) => {
+    const prefs = cardPrefsMap.get(card.id);
+    return {
+      id: `wantlist-${card.id}`, // Virtual ID for the wantlist item
+      cardId: card.id,
+      language: prefs?.preferredLanguage ?? null,
+      variant: prefs?.preferredVariant ?? null,
+      condition: prefs?.preferredCondition ?? null,
+      notes: null,
+      card: {
+        created_at: card.created_at,
+        updated_at: card.updated_at,
+        id: card.id,
+        name: card.name,
+        number: card.number,
+        rarity: card.rarity,
+        imageSmall: card.imageSmall,
+        imageLarge: card.imageLarge,
+        setId: card.setId,
+        price: card.price,
+      },
+      localizedName: card.localizedName,
+    };
+  }) as any; // Type will be inferred by tRPC based on the actual query result
 }
 
 export const userCardRouter = createTRPCRouter({

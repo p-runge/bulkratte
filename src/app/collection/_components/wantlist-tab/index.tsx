@@ -4,7 +4,7 @@ import {
   CardFilters,
   type FilterState,
 } from "@/components/card-browser/card-filters";
-import { CardGrid } from "@/components/card-browser/card-grid";
+import { UserCardGrid } from "@/components/card-browser/user-card-grid";
 import Loader from "@/components/loader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -66,15 +66,9 @@ export default function WantlistTab() {
         <div className="flex justify-between items-start gap-4">
           <CardFilters
             onFilterChange={setFilters}
-            disableSetFilter={false}
             filterOptions={filterOptions}
           />
-          <Button
-            onClick={handleShare}
-            variant="outline"
-            size="default"
-            className="shrink-0"
-          >
+          <Button onClick={handleShare} size="default" className="shrink-0">
             {copied ? (
               <>
                 <Check className="h-4 w-4 mr-2" />
@@ -117,12 +111,12 @@ export default function WantlistTab() {
             </CardContent>
           </Card>
         ) : (
-          <CardGrid
-            cards={wantlistCards}
+          <UserCardGrid
+            userCards={wantlistCards}
             selectionMode="single"
-            selectedCards={new Set()}
-            onCardClick={(cardId) => {
-              console.log("Card clicked:", cardId);
+            selectedUserCardIds={new Set()}
+            onUserCardClick={(userCard) => {
+              console.log("Card clicked:", userCard.id);
             }}
             isLoading={isLoading}
           />

@@ -4,7 +4,7 @@ import {
   CardFilters,
   type FilterState,
 } from "@/components/card-browser/card-filters";
-import { CardGrid } from "@/components/card-browser/card-grid";
+import { UserCardGrid } from "@/components/card-browser/user-card-grid";
 import Loader from "@/components/loader";
 import { Card, CardContent } from "@/components/ui/card";
 import { api } from "@/lib/api/react";
@@ -67,7 +67,6 @@ export default function UserWantlistPage({
       <div className="space-y-6">
         <CardFilters
           onFilterChange={setFilters}
-          disableSetFilter={false}
           filterOptions={filterOptions}
         />
 
@@ -94,12 +93,12 @@ export default function UserWantlistPage({
             </CardContent>
           </Card>
         ) : (
-          <CardGrid
-            cards={wantlistCards}
+          <UserCardGrid
+            userCards={wantlistCards}
             selectionMode="single"
-            selectedCards={new Set()}
-            onCardClick={(cardId) => {
-              console.log("Card clicked:", cardId);
+            selectedUserCardIds={new Set()}
+            onUserCardClick={(userCard) => {
+              console.log("Card clicked:", userCard.id);
             }}
             isLoading={isLoading}
           />
