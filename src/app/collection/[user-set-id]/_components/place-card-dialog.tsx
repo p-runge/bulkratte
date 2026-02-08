@@ -1,7 +1,12 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { ConditionBadge } from "@/components/condition-badge";
+import { ConditionToggleGroup } from "@/components/condition-toggle-group";
 import ConfirmButton from "@/components/confirm-button";
+import { LanguageBadge } from "@/components/language-badge";
+import { LanguageToggleGroup } from "@/components/language-toggle-group";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +14,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { VariantToggleGroup } from "@/components/variant-toggle-group";
 import { api } from "@/lib/api/react";
 import { AppRouter } from "@/lib/api/routers/_app";
 import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
@@ -18,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
+import { Controller } from "react-hook-form";
 import { useIntl } from "react-intl";
 import z from "zod";
 
@@ -165,7 +173,11 @@ export function PlaceCardDialog({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent
+        className={
+          mode === "select" ? "max-w-2xl" : "max-h-[90vh] w-5xl sm:max-w-screen"
+        }
+      >
         <DialogHeader>
           <DialogTitle>
             {isPlaced
@@ -181,23 +193,6 @@ export function PlaceCardDialog({
         </DialogHeader>
 
         <div className="py-4">
-          <div className="flex gap-4 mb-6">
-            <Image
-              src={card.imageSmall}
-              alt={card.name}
-              width={128}
-              height={179}
-              unoptimized
-              className="w-32 h-auto object-contain rounded"
-            />
-            <div>
-              <h3 className="text-xl font-bold">{card.name}</h3>
-              <p className="text-sm text-muted-foreground">
-                #{card.number} · {card.rarity}
-              </p>
-            </div>
-          </div>
-
           {isPlaced && currentlyPlacedCard && (
             <div className="mb-6 p-4 border rounded-lg bg-muted/30">
               <div className="flex items-center justify-between mb-3">
@@ -232,10 +227,25 @@ export function PlaceCardDialog({
                   <div className="font-medium">
                     {currentlyPlacedCard.card.name}
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    {currentlyPlacedCard.language} ·{" "}
-                    {currentlyPlacedCard.variant} ·{" "}
-                    {currentlyPlacedCard.condition}
+                  <div className="flex items-center gap-1.5 mt-1">
+                    {currentlyPlacedCard.language && (
+                      <Badge variant="outline" className="h-5.5">
+                        <LanguageBadge
+                          code={currentlyPlacedCard.language}
+                          className="text-sm"
+                        />
+                      </Badge>
+                    )}
+                    {currentlyPlacedCard.variant && (
+                      <Badge variant="outline" className="text-xs">
+                        {currentlyPlacedCard.variant}
+                      </Badge>
+                    )}
+                    {currentlyPlacedCard.condition && (
+                      <ConditionBadge
+                        condition={currentlyPlacedCard.condition}
+                      />
+                    )}
                   </div>
                 </div>
               </div>
@@ -329,9 +339,25 @@ export function PlaceCardDialog({
                                   </span>
                                 )}
                               </div>
-                              <div className="text-sm text-muted-foreground">
-                                {userCard.language} · {userCard.variant} ·{" "}
-                                {userCard.condition}
+                              <div className="flex items-center gap-1.5 mt-1">
+                                {userCard.language && (
+                                  <Badge variant="outline" className="h-5.5">
+                                    <LanguageBadge
+                                      code={userCard.language}
+                                      className="text-sm"
+                                    />
+                                  </Badge>
+                                )}
+                                {userCard.variant && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {userCard.variant}
+                                  </Badge>
+                                )}
+                                {userCard.condition && (
+                                  <ConditionBadge
+                                    condition={userCard.condition}
+                                  />
+                                )}
                               </div>
                             </div>
                             {!isCurrentlyPlaced &&
@@ -416,86 +442,85 @@ export function PlaceCardDialog({
             </>
           ) : (
             <RHFForm form={form} onSubmit={handleCreateAndPlace}>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    {intl.formatMessage({
-                      id: "form.field.language.label",
-                      defaultMessage: "Language",
-                    })}
-                  </label>
-                  <select
-                    {...form.register("language", {
-                      setValueAs: (v) => (v === "" ? null : v),
-                    })}
-                    className="w-full p-2 rounded border bg-background"
-                  >
-                    <option value="">
-                      {intl.formatMessage({
-                        id: "toggle-group-option.none",
-                        defaultMessage: "None",
-                      })}
-                    </option>
-                    {languageEnum.enumValues.map((lang) => (
-                      <option key={lang} value={lang}>
-                        {lang}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <div className="flex gap-6">
+                <Image
+                  src={card.imageSmall}
+                  alt={card.name}
+                  width={240}
+                  height={165}
+                  unoptimized
+                  className="w-auto h-auto object-contain rounded-md"
+                  draggable={false}
+                  priority
+                />
+                <div className="flex-1 space-y-6">
+                  <h3 className="text-2xl font-bold">{card.name}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    #{card.number} · {card.rarity}
+                  </p>
 
-                <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    {intl.formatMessage({
-                      id: "form.field.variant.label",
-                      defaultMessage: "Variant",
-                    })}
-                  </label>
-                  <select
-                    {...form.register("variant", {
-                      setValueAs: (v) => (v === "" ? null : v),
-                    })}
-                    className="w-full p-2 rounded border bg-background"
-                  >
-                    <option value="">
+                  {/* Variant Field */}
+                  <div className="space-y-2">
+                    <Label>
                       {intl.formatMessage({
-                        id: "toggle-group-option.none",
-                        defaultMessage: "None",
+                        id: "form.field.variant.label",
+                        defaultMessage: "Variant",
                       })}
-                    </option>
-                    {variantEnum.enumValues.map((variant) => (
-                      <option key={variant} value={variant}>
-                        {variant}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                    </Label>
+                    <Controller
+                      control={form.control}
+                      name="variant"
+                      render={({ field }) => (
+                        <VariantToggleGroup
+                          value={field.value ?? null}
+                          onValueChange={field.onChange}
+                          includeNone
+                        />
+                      )}
+                    />
+                  </div>
 
-                <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    {intl.formatMessage({
-                      id: "form.field.condition.label",
-                      defaultMessage: "Condition",
-                    })}
-                  </label>
-                  <select
-                    {...form.register("condition", {
-                      setValueAs: (v) => (v === "" ? null : v),
-                    })}
-                    className="w-full p-2 rounded border bg-background"
-                  >
-                    <option value="">
+                  {/* Condition Field */}
+                  <div className="space-y-2">
+                    <Label>
                       {intl.formatMessage({
-                        id: "toggle-group-option.none",
-                        defaultMessage: "None",
+                        id: "form.field.condition.label",
+                        defaultMessage: "Condition",
                       })}
-                    </option>
-                    {conditionEnum.enumValues.map((condition) => (
-                      <option key={condition} value={condition}>
-                        {condition}
-                      </option>
-                    ))}
-                  </select>
+                    </Label>
+                    <Controller
+                      control={form.control}
+                      name="condition"
+                      render={({ field }) => (
+                        <ConditionToggleGroup
+                          value={field.value ?? null}
+                          onValueChange={field.onChange}
+                          includeNone
+                        />
+                      )}
+                    />
+                  </div>
+
+                  {/* Language Field */}
+                  <div className="space-y-2">
+                    <Label>
+                      {intl.formatMessage({
+                        id: "form.field.language.label",
+                        defaultMessage: "Language",
+                      })}
+                    </Label>
+                    <Controller
+                      control={form.control}
+                      name="language"
+                      render={({ field }) => (
+                        <LanguageToggleGroup
+                          value={field.value ?? null}
+                          onValueChange={field.onChange}
+                          includeNone
+                        />
+                      )}
+                    />
+                  </div>
                 </div>
               </div>
 
