@@ -1,8 +1,10 @@
 "use client";
 
 import { CardBrowser } from "@/components/card-browser";
+import { ConditionToggleGroup } from "@/components/condition-toggle-group";
+import { LanguageToggleGroup } from "@/components/language-toggle-group";
+import { VariantToggleGroup } from "@/components/variant-toggle-group";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,11 +14,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { api } from "@/lib/api/react";
 import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
 import { RHFForm, useRHFForm } from "@/lib/form/utils";
-import pokemonAPI from "@/lib/pokemon-api";
 import Image from "next/image";
 import { useState } from "react";
 import { Controller } from "react-hook-form";
@@ -186,26 +186,10 @@ export default function UserCardDialog({
                     control={form.control}
                     name="variant"
                     render={({ field }) => (
-                      <ToggleGroup
-                        type="single"
+                      <VariantToggleGroup
                         value={field.value}
-                        onValueChange={(value) =>
-                          value &&
-                          value !== field.value &&
-                          field.onChange(value)
-                        }
-                      >
-                        {pokemonAPI.getVariants("").map((variant) => (
-                          <ToggleGroupItem
-                            key={variant}
-                            value={variant}
-                            variant="outline"
-                            className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-                          >
-                            {variant}
-                          </ToggleGroupItem>
-                        ))}
-                      </ToggleGroup>
+                        onValueChange={field.onChange}
+                      />
                     )}
                   />
                 </div>
@@ -222,29 +206,10 @@ export default function UserCardDialog({
                     control={form.control}
                     name="condition"
                     render={({ field }) => (
-                      <ToggleGroup
-                        type="single"
+                      <ConditionToggleGroup
                         value={field.value}
-                        onValueChange={(value) =>
-                          value &&
-                          value !== field.value &&
-                          field.onChange(value)
-                        }
-                      >
-                        {pokemonAPI.conditions.map((condition) => (
-                          <ToggleGroupItem
-                            key={condition.value}
-                            value={condition.value}
-                            variant="outline"
-                            className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-                            title={condition.value}
-                          >
-                            <Badge className={`${condition.color} border`}>
-                              {condition.short}
-                            </Badge>
-                          </ToggleGroupItem>
-                        ))}
-                      </ToggleGroup>
+                        onValueChange={field.onChange}
+                      />
                     )}
                   />
                 </div>
@@ -261,27 +226,10 @@ export default function UserCardDialog({
                     control={form.control}
                     name="language"
                     render={({ field }) => (
-                      <ToggleGroup
-                        type="single"
+                      <LanguageToggleGroup
                         value={field.value}
-                        onValueChange={(value) =>
-                          value &&
-                          value !== field.value &&
-                          field.onChange(value)
-                        }
-                      >
-                        {pokemonAPI.cardLanguages.map((language) => (
-                          <ToggleGroupItem
-                            key={language.code}
-                            value={language.code}
-                            variant="outline"
-                            className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground text-2xl"
-                            title={language.name}
-                          >
-                            {language.flag}
-                          </ToggleGroupItem>
-                        ))}
-                      </ToggleGroup>
+                        onValueChange={field.onChange}
+                      />
                     )}
                   />
                 </div>
