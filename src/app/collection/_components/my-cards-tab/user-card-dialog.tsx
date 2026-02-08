@@ -70,14 +70,14 @@ export default function UserCardDialog({
     defaultValues:
       mode === "edit" && userCard
         ? {
-            condition: userCard.condition ?? "Near Mint",
-            language: userCard.language ?? "en",
-            variant: userCard.variant ?? "Unlimited",
+            condition: userCard.condition ?? null,
+            language: userCard.language ?? null,
+            variant: userCard.variant ?? null,
           }
         : {
-            condition: "Near Mint",
-            language: "en",
-            variant: "Unlimited",
+            condition: null,
+            language: null,
+            variant: null,
           },
   });
 
@@ -89,9 +89,9 @@ export default function UserCardDialog({
     if (mode === "create") {
       await createUserCard({
         cardId: card.id,
-        condition: data.condition,
-        language: data.language,
-        variant: data.variant,
+        condition: data.condition ?? undefined,
+        language: data.language ?? undefined,
+        variant: data.variant ?? undefined,
       });
     } else if (mode === "edit" && userCard) {
       await updateUserCard({
@@ -187,8 +187,9 @@ export default function UserCardDialog({
                     name="variant"
                     render={({ field }) => (
                       <VariantToggleGroup
-                        value={field.value}
+                        value={field.value ?? null}
                         onValueChange={field.onChange}
+                        includeNone
                       />
                     )}
                   />
@@ -207,8 +208,9 @@ export default function UserCardDialog({
                     name="condition"
                     render={({ field }) => (
                       <ConditionToggleGroup
-                        value={field.value}
+                        value={field.value ?? null}
                         onValueChange={field.onChange}
+                        includeNone
                       />
                     )}
                   />
@@ -227,8 +229,9 @@ export default function UserCardDialog({
                     name="language"
                     render={({ field }) => (
                       <LanguageToggleGroup
-                        value={field.value}
+                        value={field.value ?? null}
                         onValueChange={field.onChange}
+                        includeNone
                       />
                     )}
                   />
@@ -323,9 +326,9 @@ export default function UserCardDialog({
 }
 
 const FormSchema = z.object({
-  condition: z.enum(conditionEnum.enumValues),
-  language: z.enum(languageEnum.enumValues),
-  variant: z.enum(variantEnum.enumValues),
-  // notes: z.string(),
-  // photos: z.array(z.string().url()),
+  condition: z.enum(conditionEnum.enumValues).nullable(),
+  language: z.enum(languageEnum.enumValues).nullable(),
+  variant: z.enum(variantEnum.enumValues).nullable(),
+  // notes: z.string().optional(),
+  // photos: z.array(z.string().url()).optional(),
 });

@@ -221,9 +221,9 @@ export const userCardRouter = createTRPCRouter({
     .input(
       z.object({
         cardId: z.string(),
-        language: z.enum(languageEnum.enumValues),
-        variant: z.enum(variantEnum.enumValues),
-        condition: z.enum(conditionEnum.enumValues),
+        language: z.enum(languageEnum.enumValues).nullable().optional(),
+        variant: z.enum(variantEnum.enumValues).nullable().optional(),
+        condition: z.enum(conditionEnum.enumValues).nullable().optional(),
         notes: z.string().optional(),
         photos: z.array(z.string()).optional(),
       }),
@@ -459,9 +459,9 @@ export const userCardRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string().uuid(),
-        language: z.enum(languageEnum.enumValues).optional(),
-        variant: z.enum(variantEnum.enumValues).optional(),
-        condition: z.enum(conditionEnum.enumValues).optional(),
+        language: z.enum(languageEnum.enumValues).nullable().optional(),
+        variant: z.enum(variantEnum.enumValues).nullable().optional(),
+        condition: z.enum(conditionEnum.enumValues).nullable().optional(),
         notes: z.string().optional(),
       }),
     )

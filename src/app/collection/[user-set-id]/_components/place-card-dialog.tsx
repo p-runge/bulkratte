@@ -38,9 +38,9 @@ interface PlaceCardDialogProps {
 }
 
 const FormSchema = z.object({
-  condition: z.enum(conditionEnum.enumValues),
-  language: z.enum(languageEnum.enumValues),
-  variant: z.enum(variantEnum.enumValues),
+  condition: z.enum(conditionEnum.enumValues).nullable(),
+  language: z.enum(languageEnum.enumValues).nullable(),
+  variant: z.enum(variantEnum.enumValues).nullable(),
 });
 
 export function PlaceCardDialog({
@@ -73,9 +73,9 @@ export function PlaceCardDialog({
 
   const form = useRHFForm(FormSchema, {
     defaultValues: {
-      condition: userSet.set.preferredCondition ?? "Near Mint",
-      language: userSet.set.preferredLanguage ?? "en",
-      variant: userSet.set.preferredVariant ?? "Unlimited",
+      condition: userSet.set.preferredCondition ?? null,
+      language: userSet.set.preferredLanguage ?? null,
+      variant: userSet.set.preferredVariant ?? null,
     },
   });
 
@@ -140,9 +140,9 @@ export function PlaceCardDialog({
   const handleCreateAndPlace = async (data: z.infer<typeof FormSchema>) => {
     const newUserCard = await createUserCard({
       cardId,
-      condition: data.condition,
-      language: data.language,
-      variant: data.variant,
+      condition: data.condition ?? undefined,
+      language: data.language ?? undefined,
+      variant: data.variant ?? undefined,
     });
 
     try {
@@ -425,9 +425,17 @@ export function PlaceCardDialog({
                     })}
                   </label>
                   <select
-                    {...form.register("language")}
+                    {...form.register("language", {
+                      setValueAs: (v) => (v === "" ? null : v),
+                    })}
                     className="w-full p-2 rounded border bg-background"
                   >
+                    <option value="">
+                      {intl.formatMessage({
+                        id: "toggle-group-option.none",
+                        defaultMessage: "None",
+                      })}
+                    </option>
                     {languageEnum.enumValues.map((lang) => (
                       <option key={lang} value={lang}>
                         {lang}
@@ -444,9 +452,17 @@ export function PlaceCardDialog({
                     })}
                   </label>
                   <select
-                    {...form.register("variant")}
+                    {...form.register("variant", {
+                      setValueAs: (v) => (v === "" ? null : v),
+                    })}
                     className="w-full p-2 rounded border bg-background"
                   >
+                    <option value="">
+                      {intl.formatMessage({
+                        id: "toggle-group-option.none",
+                        defaultMessage: "None",
+                      })}
+                    </option>
                     {variantEnum.enumValues.map((variant) => (
                       <option key={variant} value={variant}>
                         {variant}
@@ -463,9 +479,17 @@ export function PlaceCardDialog({
                     })}
                   </label>
                   <select
-                    {...form.register("condition")}
+                    {...form.register("condition", {
+                      setValueAs: (v) => (v === "" ? null : v),
+                    })}
                     className="w-full p-2 rounded border bg-background"
                   >
+                    <option value="">
+                      {intl.formatMessage({
+                        id: "toggle-group-option.none",
+                        defaultMessage: "None",
+                      })}
+                    </option>
                     {conditionEnum.enumValues.map((condition) => (
                       <option key={condition} value={condition}>
                         {condition}
