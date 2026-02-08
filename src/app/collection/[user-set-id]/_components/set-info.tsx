@@ -71,9 +71,16 @@ export function SetInfo({ userCards }: SetInfoProps) {
               if (userCard.variant !== preferredVariant) return false;
             }
 
-            // Check preferred condition if toggle is on
+            // Check preferred condition if toggle is on (as minimum condition)
             if (considerPreferredCondition && preferredCondition) {
-              if (userCard.condition !== preferredCondition) return false;
+              if (
+                !pokemonAPI.meetsMinimumCondition(
+                  userCard.condition,
+                  preferredCondition,
+                )
+              ) {
+                return false;
+              }
             }
 
             return true;

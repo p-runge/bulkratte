@@ -6,6 +6,7 @@ import { useBinderContext } from "./binder-context";
 import { BinderCard } from "./types";
 import React, { useState } from "react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
+import pokemonAPI from "@/lib/pokemon-api";
 
 export function CardSlot({
   card,
@@ -84,7 +85,7 @@ export function CardSlot({
     const preferredCondition = form?.watch("preferredCondition");
 
     const matchingUserCards =
-      userCards?.filter((uc: any) => {
+      userCards?.filter((uc) => {
         // Must match card ID
         if (uc.card.id !== cardId) return false;
 
@@ -98,9 +99,13 @@ export function CardSlot({
           if (uc.variant !== preferredVariant) return false;
         }
 
-        // Check preferred condition if toggle is on
+        // Check preferred condition if toggle is on (as minimum condition)
         if (considerPreferredCondition && preferredCondition) {
-          if (uc.condition !== preferredCondition) return false;
+          if (
+            !pokemonAPI.meetsMinimumCondition(uc.condition, preferredCondition)
+          ) {
+            return false;
+          }
         }
 
         return true;

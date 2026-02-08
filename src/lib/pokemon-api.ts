@@ -93,6 +93,35 @@ function getConditionInfo(condition: string) {
 }
 
 /**
+ * Checks if a card's condition meets the minimum preferred condition requirement.
+ * Conditions are ordered from best (Mint=0) to worst (Poor=6).
+ * Returns true if cardCondition is equal to or better than minCondition.
+ */
+function meetsMinimumCondition(
+  cardCondition: string | null | undefined,
+  minCondition: string | null | undefined,
+): boolean {
+  // If no minimum condition is set, accept all cards
+  if (!minCondition) return true;
+
+  // If card has no condition, reject it
+  if (!cardCondition) return false;
+
+  const cardConditionIndex = conditions.findIndex(
+    (c) => c.value === cardCondition,
+  );
+  const minConditionIndex = conditions.findIndex(
+    (c) => c.value === minCondition,
+  );
+
+  // If either condition is not found, reject
+  if (cardConditionIndex === -1 || minConditionIndex === -1) return false;
+
+  // Lower index = better condition, so accept if card index <= min index
+  return cardConditionIndex <= minConditionIndex;
+}
+
+/**
  * This would require a top-level await which is not possible in this env.
  * Instead we are using a static snapshot of that endpoint's response.
  */
@@ -280,6 +309,7 @@ const pokemonAPI = {
   getCardLanguageInfo,
   conditions,
   getConditionInfo,
+  meetsMinimumCondition,
   rarities,
   getVariants,
   fetchPokemonSets,
