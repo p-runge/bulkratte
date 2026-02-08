@@ -101,111 +101,97 @@ export function SetInfo({ userCards }: SetInfoProps) {
     totalCards > 0 ? (obtainedButNotPlaced / totalCards) * 100 : 0;
 
   return (
-    <Card className="p-6 mb-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* General Info */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold mb-3">
+    <Card className="p-4 sm:p-6 mb-6">
+      <div className="space-y-6">
+        {/* Header with General Info */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <h3 className="text-lg font-semibold">
             <FormattedMessage
               id="binder.info.title"
               defaultMessage="Set Information"
             />
           </h3>
-
-          <div className="flex items-center gap-3 text-sm">
-            <LayoutGridIcon className="h-4 w-4 text-muted-foreground" />
-            <span className="text-muted-foreground">
-              <FormattedMessage
-                id="binder.info.total.cards"
-                defaultMessage="Total Cards:"
-              />
-            </span>
-            <span className="font-medium">{totalCards}</span>
-          </div>
-
-          <div className="flex items-center gap-3 text-sm">
+          <div className="flex items-center gap-2">
             <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-            <span className="text-muted-foreground">
-              <FormattedMessage
-                id="binder.info.created.at"
-                defaultMessage="Created on:"
-              />
-            </span>
-            <span className="font-medium">
+            <span className="text-sm font-medium">
               <FormattedDate
                 value={new Date(initialUserSet.set.createdAt)}
                 year="numeric"
-                month="numeric"
+                month="short"
                 day="numeric"
               />
             </span>
           </div>
         </div>
 
-        {/* Progress Info */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold mb-3">
-            <FormattedMessage
-              id="binder.info.progress.title"
-              defaultMessage="Collection Progress"
-            />
-          </h3>
-
-          {/* Combined Progress Bar */}
-          <div className="space-y-2">
-            <Progress
-              segments={[
-                { value: obtainedPercentage, className: "bg-yellow-400" },
-                { value: placedPercentage, className: "bg-green-600" },
-              ]}
-              className="h-3"
-            />
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-sm bg-green-600" />
-                  <span className="text-muted-foreground">
-                    <FormattedMessage
-                      id="binder.info.progress.placed"
-                      defaultMessage="Placed in Binder"
-                    />
-                  </span>
-                  <span className="font-medium">
-                    {placedCards} ({placedPercentage.toFixed(1)}%)
-                  </span>
-                </div>
-                {obtainedButNotPlaced > 0 && (
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-sm bg-yellow-400" />
-                    <span className="text-muted-foreground">
-                      <FormattedMessage
-                        id="binder.info.progress.obtained"
-                        defaultMessage="Obtained but not placed"
-                      />
-                    </span>
-                    <span className="font-medium">
-                      {obtainedButNotPlaced} (
-                      {obtainedButNotPlacedPercentage.toFixed(1)}%)
-                    </span>
-                  </div>
-                )}
-              </div>
+        {/* Progress Section */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-medium text-muted-foreground">
+              <FormattedMessage
+                id="binder.info.progress.title"
+                defaultMessage="Collection Progress"
+              />
+            </h4>
+            <div className="flex items-center gap-2">
+              <LayoutGridIcon className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">
+                {obtainedCards}/{totalCards}
+              </span>
             </div>
+          </div>
+
+          <Progress
+            segments={[
+              { value: obtainedPercentage, className: "bg-yellow-400" },
+              { value: placedPercentage, className: "bg-green-600" },
+            ]}
+            className="h-2.5"
+          />
+
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 text-xs">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-sm bg-green-600 shrink-0" />
+              <span className="text-muted-foreground">
+                <FormattedMessage
+                  id="binder.info.progress.placed"
+                  defaultMessage="Placed in Binder"
+                />
+              </span>
+              <span className="font-medium">
+                {placedCards} ({placedPercentage.toFixed(1)}%)
+              </span>
+            </div>
+            {obtainedButNotPlaced > 0 && (
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-sm bg-yellow-400 shrink-0" />
+                <span className="text-muted-foreground">
+                  <FormattedMessage
+                    id="binder.info.progress.obtained"
+                    defaultMessage="Obtained but not placed"
+                  />
+                </span>
+                <span className="font-medium">
+                  {obtainedButNotPlaced} (
+                  {obtainedButNotPlacedPercentage.toFixed(1)}%)
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Preferences */}
         {hasAnyPreferred && (
-          <div className="space-y-4 md:col-span-2">
-            <h3 className="text-lg font-semibold mb-3">
+          <div className="space-y-3 pt-3 border-t">
+            <h4 className="text-sm font-medium text-muted-foreground">
               <FormattedMessage
                 id="binder.info.preferences.title"
                 defaultMessage="Preferences"
               />
-            </h3>
-            <div className="flex items-center gap-3">
+            </h4>
+            <div className="flex flex-wrap items-center gap-2">
               {preferredLanguage && setConsiderPreferredLanguage && (
-                <div className="flex items-center gap-2 px-3 py-1.5 border rounded-md bg-muted/30">
+                <div className="flex items-center gap-2 px-2.5 py-1.5 border rounded-md bg-muted/30">
                   <Checkbox
                     id="considerPreferredLanguage"
                     checked={considerPreferredLanguage}
@@ -215,7 +201,7 @@ export function SetInfo({ userCards }: SetInfoProps) {
                   />
                   <Label
                     htmlFor="considerPreferredLanguage"
-                    className="font-normal cursor-pointer flex items-center gap-1.5 text-lg"
+                    className="font-normal cursor-pointer flex items-center gap-1.5 text-base leading-none"
                   >
                     {
                       pokemonAPI.cardLanguages.find(
@@ -227,7 +213,7 @@ export function SetInfo({ userCards }: SetInfoProps) {
               )}
 
               {preferredVariant && setConsiderPreferredVariant && (
-                <div className="flex items-center gap-2 px-3 py-1.5 border rounded-md bg-muted/30">
+                <div className="flex items-center gap-2 px-2.5 py-1.5 border rounded-md bg-muted/30">
                   <Checkbox
                     id="considerPreferredVariant"
                     checked={considerPreferredVariant}
@@ -237,7 +223,7 @@ export function SetInfo({ userCards }: SetInfoProps) {
                   />
                   <Label
                     htmlFor="considerPreferredVariant"
-                    className="text-sm font-normal cursor-pointer"
+                    className="text-sm font-normal cursor-pointer leading-none"
                   >
                     <Badge variant="outline" className="text-xs font-medium">
                       {preferredVariant}
@@ -247,7 +233,7 @@ export function SetInfo({ userCards }: SetInfoProps) {
               )}
 
               {preferredCondition && setConsiderPreferredCondition && (
-                <div className="flex items-center gap-2 px-3 py-1.5 border rounded-md bg-muted/30">
+                <div className="flex items-center gap-2 px-2.5 py-1.5 border rounded-md bg-muted/30">
                   <Checkbox
                     id="considerPreferredCondition"
                     checked={considerPreferredCondition}
@@ -257,7 +243,7 @@ export function SetInfo({ userCards }: SetInfoProps) {
                   />
                   <Label
                     htmlFor="considerPreferredCondition"
-                    className="text-sm font-normal cursor-pointer"
+                    className="text-sm font-normal cursor-pointer leading-none"
                   >
                     <Badge
                       className={`${
