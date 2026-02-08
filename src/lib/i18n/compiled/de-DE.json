@@ -1055,10 +1055,70 @@
       "value": "Dieser Benutzer hat alle Karten in seinen eigenen Sets!"
     }
   ],
+  "page.user.wantlist.empty.in-collection-not-in-sets.description": [
+    {
+      "type": 0,
+      "value": "Du hast keine Karten, die dieser Benutzer benötigt, die nicht bereits in deinen Sets sind."
+    }
+  ],
+  "page.user.wantlist.empty.in-collection-not-in-sets.title": [
+    {
+      "type": 0,
+      "value": "Keine passenden Karten gefunden"
+    }
+  ],
+  "page.user.wantlist.empty.in-collection.description": [
+    {
+      "type": 0,
+      "value": "Du hast keine Karten, die dieser Benutzer benötigt, in deiner Sammlung."
+    }
+  ],
+  "page.user.wantlist.empty.in-collection.title": [
+    {
+      "type": 0,
+      "value": "Keine passenden Karten gefunden"
+    }
+  ],
   "page.user.wantlist.empty.title": [
     {
       "type": 0,
       "value": "Die Wunschliste dieses Benutzers ist leer!"
+    }
+  ],
+  "page.user.wantlist.filter.collection.in-collection": [
+    {
+      "type": 0,
+      "value": "Nur Karten, die ich habe"
+    }
+  ],
+  "page.user.wantlist.filter.collection.in-collection-not-in-sets": [
+    {
+      "type": 0,
+      "value": "Nur Karten, die ich habe, die nicht in meinen Sets sind"
+    }
+  ],
+  "page.user.wantlist.filter.collection.label": [
+    {
+      "type": 0,
+      "value": "Anzeigen"
+    }
+  ],
+  "page.user.wantlist.filter.collection.wantlist": [
+    {
+      "type": 0,
+      "value": "Alle Karten"
+    }
+  ],
+  "page.user.wantlist.own-wantlist.description": [
+    {
+      "type": 0,
+      "value": "Du siehst deine eigene Wunschliste. Dies sind Karten, die du benötigst, um deine Sets zu vervollständigen."
+    }
+  ],
+  "page.user.wantlist.own-wantlist.title": [
+    {
+      "type": 0,
+      "value": "Das ist deine Wunschliste"
     }
   ],
   "page.user.wantlist.title": [

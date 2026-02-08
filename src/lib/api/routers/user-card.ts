@@ -300,6 +300,7 @@ export const userCardRouter = createTRPCRouter({
           rarity: z.string().optional(),
           releaseDateFrom: z.string().optional(),
           releaseDateTo: z.string().optional(),
+          excludeInSets: z.boolean().optional(),
           sortBy: z
             .enum(["set-and-number", "name", "rarity", "price"])
             .optional()
@@ -441,10 +442,35 @@ export const userCardRouter = createTRPCRouter({
       );
 
       // Map localized card data back to user cards
-      const result = userCards.map(({ cardId, ...uc }, index) => ({
+      let result = userCards.map(({ cardId, ...uc }, index) => ({
         ...uc,
         card: localizedUserCards[index]!,
       }));
+
+      // Filter out cards that are in user sets if excludeInSets is true
+      if (input?.excludeInSets) {
+        const userCardIdsInSets = await ctx.db
+          .selectDistinct({ userCardId: userSetCardsTable.user_card_id })
+          .from(userSetCardsTable)
+          .innerJoin(
+            userSetsTable,
+            eq(userSetCardsTable.user_set_id, userSetsTable.id),
+          )
+          .where(
+            and(
+              eq(userSetsTable.user_id, ctx.session.user.id),
+              sql`${userSetCardsTable.user_card_id} IS NOT NULL`,
+            ),
+          )
+          .then((rows) =>
+            rows
+              .map((row) => row.userCardId)
+              .filter((id): id is string => id !== null),
+          );
+
+        const userCardIdsInSetsSet = new Set(userCardIdsInSets);
+        result = result.filter((uc) => !userCardIdsInSetsSet.has(uc.id));
+      }
 
       // Apply name sorting after localization if needed
       if (sortBy === "name") {

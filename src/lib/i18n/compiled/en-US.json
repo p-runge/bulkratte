@@ -1055,10 +1055,70 @@
       "value": "This user has all cards in their custom sets!"
     }
   ],
+  "page.user.wantlist.empty.in-collection-not-in-sets.description": [
+    {
+      "type": 0,
+      "value": "You don't have any cards this user needs that aren't already in your sets."
+    }
+  ],
+  "page.user.wantlist.empty.in-collection-not-in-sets.title": [
+    {
+      "type": 0,
+      "value": "No matching cards found"
+    }
+  ],
+  "page.user.wantlist.empty.in-collection.description": [
+    {
+      "type": 0,
+      "value": "You don't have any cards this user needs in your collection."
+    }
+  ],
+  "page.user.wantlist.empty.in-collection.title": [
+    {
+      "type": 0,
+      "value": "No matching cards found"
+    }
+  ],
   "page.user.wantlist.empty.title": [
     {
       "type": 0,
       "value": "This user's wantlist is empty!"
+    }
+  ],
+  "page.user.wantlist.filter.collection.in-collection": [
+    {
+      "type": 0,
+      "value": "Only cards I have"
+    }
+  ],
+  "page.user.wantlist.filter.collection.in-collection-not-in-sets": [
+    {
+      "type": 0,
+      "value": "Only cards I have that aren't in my sets"
+    }
+  ],
+  "page.user.wantlist.filter.collection.label": [
+    {
+      "type": 0,
+      "value": "Show"
+    }
+  ],
+  "page.user.wantlist.filter.collection.wantlist": [
+    {
+      "type": 0,
+      "value": "All cards"
+    }
+  ],
+  "page.user.wantlist.own-wantlist.description": [
+    {
+      "type": 0,
+      "value": "You are viewing your own wantlist. These are cards you need to complete your sets."
+    }
+  ],
+  "page.user.wantlist.own-wantlist.title": [
+    {
+      "type": 0,
+      "value": "This is your wantlist"
     }
   ],
   "page.user.wantlist.title": [
