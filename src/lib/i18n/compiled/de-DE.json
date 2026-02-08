@@ -1088,13 +1088,13 @@
   "page.user.wantlist.filter.collection.in-collection": [
     {
       "type": 0,
-      "value": "Nur Karten, die ich habe"
+      "value": "Karten, die ich habe"
     }
   ],
   "page.user.wantlist.filter.collection.in-collection-not-in-sets": [
     {
       "type": 0,
-      "value": "Nur Karten, die ich habe, die nicht in meinen Sets sind"
+      "value": "Karten, die ich habe und nicht in Sets sind"
     }
   ],
   "page.user.wantlist.filter.collection.label": [
