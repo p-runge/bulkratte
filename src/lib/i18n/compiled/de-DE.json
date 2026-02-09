@@ -59,10 +59,10 @@
       "value": "Verwalten"
     }
   ],
-  "binder.mode.remove": [
+  "binder.mode.modify": [
     {
       "type": 0,
-      "value": "Entfernen"
+      "value": "Bearbeiten"
     }
   ],
   "binder.navigation.next": [
@@ -437,6 +437,12 @@
       "value": "Löschen"
     }
   ],
+  "common.button.save": [
+    {
+      "type": 0,
+      "value": "Speichern"
+    }
+  ],
   "common.button.saving": [
     {
       "type": 0,
@@ -453,6 +459,38 @@
     {
       "type": 0,
       "value": "Bestätigen"
+    }
+  ],
+  "dialog.card_preferences.description": [
+    {
+      "type": 0,
+      "value": "Lege Präferenzen für diese spezifische Karte fest. Diese überschreiben die Set-Präferenzen."
+    }
+  ],
+  "dialog.card_preferences.position": [
+    {
+      "type": 0,
+      "value": "Position "
+    },
+    {
+      "type": 1,
+      "value": "position"
+    }
+  ],
+  "dialog.card_preferences.set_default": [
+    {
+      "type": 0,
+      "value": "Standard für Set: "
+    },
+    {
+      "type": 1,
+      "value": "value"
+    }
+  ],
+  "dialog.card_preferences.title": [
+    {
+      "type": 0,
+      "value": "Karten-Präferenzen"
     }
   ],
   "dialog.create_card.button.add": [

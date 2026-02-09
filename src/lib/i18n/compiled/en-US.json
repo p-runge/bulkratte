@@ -59,10 +59,10 @@
       "value": "Manage"
     }
   ],
-  "binder.mode.remove": [
+  "binder.mode.modify": [
     {
       "type": 0,
-      "value": "Remove"
+      "value": "Modify"
     }
   ],
   "binder.navigation.next": [
@@ -437,6 +437,12 @@
       "value": "Delete"
     }
   ],
+  "common.button.save": [
+    {
+      "type": 0,
+      "value": "Save"
+    }
+  ],
   "common.button.saving": [
     {
       "type": 0,
@@ -453,6 +459,38 @@
     {
       "type": 0,
       "value": "Confirm"
+    }
+  ],
+  "dialog.card_preferences.description": [
+    {
+      "type": 0,
+      "value": "Set preferences for this specific card. These will override the set-level preferences."
+    }
+  ],
+  "dialog.card_preferences.position": [
+    {
+      "type": 0,
+      "value": "Position "
+    },
+    {
+      "type": 1,
+      "value": "position"
+    }
+  ],
+  "dialog.card_preferences.set_default": [
+    {
+      "type": 0,
+      "value": "Set default: "
+    },
+    {
+      "type": 1,
+      "value": "value"
+    }
+  ],
+  "dialog.card_preferences.title": [
+    {
+      "type": 0,
+      "value": "Card Preferences"
     }
   ],
   "dialog.create_card.button.add": [

@@ -42,7 +42,7 @@ export function CardSlot({
   } = useDraggable({
     id: `binder-slot-${position}`,
     data: { position },
-    disabled: !card || interactionMode === "remove" || mode === "place",
+    disabled: !card || interactionMode === "modify" || mode === "place",
   });
   const { setNodeRef: setDroppableRef, isOver } = useDroppable({
     id: `binder-slot-${position}`,
@@ -193,39 +193,96 @@ export function CardSlot({
     );
   }
 
-  // In remove mode, the card renders as a remove button and is fully clickable
-  if (interactionMode === "remove") {
+  // In modify mode, show both remove and settings buttons
+  if (interactionMode === "modify") {
     return (
-      <div
-        onClick={handleRemoveClick}
-        className={cn(
-          "w-full h-full aspect-245/337 border border-gray-400 rounded flex items-center justify-center text-xs font-medium relative overflow-hidden",
-          "cursor-pointer",
-        )}
-      >
-        {card ? (
-          <Image
-            src={card.imageSmall}
-            alt={card.name}
-            width={245}
-            height={337}
-            unoptimized
-            className="w-full h-full object-contain rounded"
-          />
-        ) : (
-          <div className="w-full h-full bg-gray-200 animate-pulse rounded" />
-        )}
-        {/* Remove button in top-right corner, always visible */}
-        <div className="absolute inset-0 flex justify-center items-center">
-          <Button
-            variant="destructive"
-            size="icon"
-            className={cn("h-7 w-7 rounded-lg")}
-          >
-            <X className="h-4 w-4" />
-          </Button>
+      <>
+        <div
+          className={cn(
+            "w-full h-full aspect-245/337 border border-gray-400 rounded flex items-center justify-center text-xs font-medium relative overflow-hidden",
+          )}
+        >
+          {card ? (
+            <Image
+              src={card.imageSmall}
+              alt={card.name}
+              width={245}
+              height={337}
+              unoptimized
+              className="w-full h-full object-contain rounded"
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-200 animate-pulse rounded" />
+          )}
+          {/* Action buttons, always visible, arranged vertically */}
+          <div className="absolute inset-0 flex flex-col justify-center items-center gap-2 pointer-events-none">
+            <Button
+              variant="secondary"
+              size="icon"
+              className={cn(
+                "h-8 w-8 rounded-lg shadow-lg bg-background/70 text-foreground pointer-events-auto",
+              )}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowPreferencesDialog(true);
+              }}
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="destructive"
+              size="icon"
+              className={cn("h-8 w-8 rounded-lg shadow-lg pointer-events-auto")}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleRemoveClick();
+              }}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-      </div>
+
+        {showPreferencesDialog && card && (
+          <CardPreferencesDialog
+            card={card}
+            position={position}
+            currentPreferences={{
+              preferredLanguage:
+                form?.watch("cardData").find((c) => c.order === position)
+                  ?.preferredLanguage ?? null,
+              preferredVariant:
+                form?.watch("cardData").find((c) => c.order === position)
+                  ?.preferredVariant ?? null,
+              preferredCondition:
+                form?.watch("cardData").find((c) => c.order === position)
+                  ?.preferredCondition ?? null,
+            }}
+            setLevelPreferences={{
+              preferredLanguage: form?.watch("preferredLanguage"),
+              preferredVariant: form?.watch("preferredVariant"),
+              preferredCondition: form?.watch("preferredCondition"),
+            }}
+            onSave={(preferences) => {
+              const cardData = form?.getValues("cardData") || [];
+              const cardIndex = cardData.findIndex((c) => c.order === position);
+              if (cardIndex !== -1) {
+                const updatedCardData = [...cardData];
+                updatedCardData[cardIndex] = {
+                  ...updatedCardData[cardIndex]!,
+                  preferredLanguage: preferences.preferredLanguage as any,
+                  preferredVariant: preferences.preferredVariant as any,
+                  preferredCondition: preferences.preferredCondition as any,
+                };
+                form?.setValue("cardData", updatedCardData);
+              }
+            }}
+            onClose={() => setShowPreferencesDialog(false)}
+          />
+        )}
+      </>
     );
   }
 

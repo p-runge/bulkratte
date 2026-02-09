@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, LayoutGrid, Trash2 } from "lucide-react";
+import { BookOpen, LayoutGrid, Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FormattedMessage } from "react-intl";
 import { useDevice } from "@/lib/hooks";
@@ -14,9 +14,9 @@ export function Binder() {
   const [activeTab, setActiveTab] = useState("browse");
   const isTouch = useDevice((state) => state.isTouch);
 
-  // Auto-switch from remove to browse mode on non-touch devices (desktop with mouse)
+  // Auto-switch from modify to browse mode on non-touch devices (desktop with mouse)
   useEffect(() => {
-    if (!isTouch && interactionMode === "remove") {
+    if (!isTouch && interactionMode === "modify") {
       setInteractionMode("browse");
       setActiveTab("browse");
     }
@@ -33,7 +33,7 @@ export function Binder() {
       className="w-full"
       onValueChange={(value) => {
         setActiveTab(value);
-        if (value === "browse" || value === "remove") {
+        if (value === "browse" || value === "modify") {
           setInteractionMode(value);
         }
       }}
@@ -56,11 +56,11 @@ export function Binder() {
             </span>
           </TabsTrigger>
           {isTouch && (
-            <TabsTrigger value="remove" className="gap-2">
-              <Trash2 className="h-4 w-4" />
+            <TabsTrigger value="modify" className="gap-2">
+              <Settings className="h-4 w-4" />
               <FormattedMessage
-                id="binder.mode.remove"
-                defaultMessage="Remove"
+                id="binder.mode.modify"
+                defaultMessage="Modify"
               />
             </TabsTrigger>
           )}
@@ -86,7 +86,7 @@ export function Binder() {
         <BrowseMode />
       </TabsContent>
 
-      <TabsContent value="remove">
+      <TabsContent value="modify">
         <BrowseMode />
       </TabsContent>
 

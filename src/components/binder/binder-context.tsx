@@ -27,8 +27,8 @@ type BinderContextValue = {
   setCurrentSpread: React.Dispatch<React.SetStateAction<number>>;
   // mode: create (new set), edit (modify structure), place (add user cards to slots)
   mode: "create" | "edit" | "place";
-  interactionMode: "browse" | "remove"; // browse/remove for mobile compatibility
-  setInteractionMode: React.Dispatch<React.SetStateAction<"browse" | "remove">>;
+  interactionMode: "browse" | "modify"; // browse/modify for mobile compatibility
+  setInteractionMode: React.Dispatch<React.SetStateAction<"browse" | "modify">>;
   userSetId: string | null; // Required for place mode
   // Place mode specific data
   userCards: any[] | null; // User's card collection for place mode
@@ -92,7 +92,7 @@ export function BinderProvider({
   const intl = useIntl();
   const [currentSpread, setCurrentSpread] = React.useState(0);
   const [interactionMode, setInteractionMode] = React.useState<
-    "browse" | "remove"
+    "browse" | "modify"
   >("browse");
 
   const [considerPreferredLanguage, setConsiderPreferredLanguage] =
