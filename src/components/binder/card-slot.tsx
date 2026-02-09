@@ -1,13 +1,15 @@
+import pokemonAPI from "@/lib/pokemon-api";
 import { cn } from "@/lib/utils";
-import { Plus, X, Settings } from "lucide-react";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
+import { Plus, Settings, X } from "lucide-react";
 import Image from "next/image";
+import { useState } from "react";
+import { ConditionBadge } from "../condition-badge";
+import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { useBinderContext } from "./binder-context";
-import { BinderCard } from "./types";
-import React, { useState } from "react";
-import { useDraggable, useDroppable } from "@dnd-kit/core";
-import pokemonAPI from "@/lib/pokemon-api";
 import { CardPreferencesDialog } from "./card-preferences-dialog";
+import { BinderCard } from "./types";
 
 export function CardSlot({
   card,
@@ -29,6 +31,7 @@ export function CardSlot({
     considerPreferredLanguage = false,
     considerPreferredVariant = false,
     considerPreferredCondition = false,
+    showCardPreferences = false,
   } = useBinderContext();
   const [showRemove, setShowRemove] = useState(false);
   const [showPreferencesDialog, setShowPreferencesDialog] = useState(false);
@@ -64,6 +67,24 @@ export function CardSlot({
   const handleRemoveClick = () => {
     removeCardAtPosition(position);
   };
+
+  // Check if this card has card-level preferences (different from set-level defaults)
+  const cardData = form?.watch("cardData");
+  const currentCardData = cardData?.find((c) => c.order === position);
+  const setLevelLanguage = form?.watch("preferredLanguage");
+  const setLevelVariant = form?.watch("preferredVariant");
+  const setLevelCondition = form?.watch("preferredCondition");
+
+  const hasCardLevelPreferences =
+    (currentCardData?.preferredLanguage !== undefined &&
+      currentCardData?.preferredLanguage !== null &&
+      currentCardData?.preferredLanguage !== setLevelLanguage) ||
+    (currentCardData?.preferredVariant !== undefined &&
+      currentCardData?.preferredVariant !== null &&
+      currentCardData?.preferredVariant !== setLevelVariant) ||
+    (currentCardData?.preferredCondition !== undefined &&
+      currentCardData?.preferredCondition !== null &&
+      currentCardData?.preferredCondition !== setLevelCondition);
 
   // Place mode - different rendering for view-only with user card status
   if (mode === "place") {
@@ -189,6 +210,33 @@ export function CardSlot({
             className="w-full h-full object-contain rounded"
           />
         </div>
+        {/* Show detailed preferences when toggle is enabled */}
+        {showCardPreferences && hasCardLevelPreferences && (
+          <div className="absolute top-2 right-2 flex flex-col gap-1 items-end pointer-events-none">
+            {currentCardData?.preferredLanguage &&
+              currentCardData.preferredLanguage !== setLevelLanguage && (
+                <Badge className="text-lg bg-black/70 text-white border-none px-1.5 py-0.5">
+                  {
+                    pokemonAPI.cardLanguages.find(
+                      (l) => l.code === currentCardData.preferredLanguage,
+                    )?.flag
+                  }
+                </Badge>
+              )}
+            {currentCardData?.preferredVariant &&
+              currentCardData.preferredVariant !== setLevelVariant && (
+                <Badge className="text-xs bg-black/70 text-white border-none">
+                  {currentCardData.preferredVariant}
+                </Badge>
+              )}
+            {currentCardData?.preferredCondition &&
+              currentCardData.preferredCondition !== setLevelCondition && (
+                <ConditionBadge
+                  condition={currentCardData.preferredCondition}
+                />
+              )}
+          </div>
+        )}
       </button>
     );
   }
@@ -315,6 +363,32 @@ export function CardSlot({
         </div>
       ) : (
         <div className="w-full h-full bg-gray-200 animate-pulse rounded" />
+      )}
+
+      {/* Card-level preferences indicator */}
+      {hasCardLevelPreferences && (
+        <div className="absolute top-1 left-1/2 -translate-x-1/2 z-10 pointer-events-none flex flex-col gap-1 items-center">
+          {currentCardData?.preferredLanguage &&
+            currentCardData.preferredLanguage !== setLevelLanguage && (
+              <Badge className="text-lg bg-black/70 text-white border-none px-1.5 py-0.5">
+                {
+                  pokemonAPI.cardLanguages.find(
+                    (l) => l.code === currentCardData.preferredLanguage,
+                  )?.flag
+                }
+              </Badge>
+            )}
+          {currentCardData?.preferredVariant &&
+            currentCardData.preferredVariant !== setLevelVariant && (
+              <Badge className="text-xs bg-black/70 text-white border-none">
+                {currentCardData.preferredVariant}
+              </Badge>
+            )}
+          {currentCardData?.preferredCondition &&
+            currentCardData.preferredCondition !== setLevelCondition && (
+              <ConditionBadge condition={currentCardData.preferredCondition} />
+            )}
+        </div>
       )}
 
       {showRemove && (

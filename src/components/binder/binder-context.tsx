@@ -55,6 +55,9 @@ type BinderContextValue = {
   setConsiderPreferredLanguage?: (value: boolean) => void;
   setConsiderPreferredVariant?: (value: boolean) => void;
   setConsiderPreferredCondition?: (value: boolean) => void;
+  // Toggle to show detailed card preferences in place mode
+  showCardPreferences?: boolean;
+  setShowCardPreferences?: (value: boolean) => void;
 };
 
 const BinderContext = createContext<BinderContextValue | undefined>(undefined);
@@ -101,6 +104,7 @@ export function BinderProvider({
     React.useState(true);
   const [considerPreferredCondition, setConsiderPreferredCondition] =
     React.useState(true);
+  const [showCardPreferences, setShowCardPreferences] = React.useState(false);
 
   const form = useRHFForm(getBinderFormSchema(intl), {
     defaultValues: {
@@ -329,6 +333,8 @@ export function BinderProvider({
         setConsiderPreferredLanguage,
         setConsiderPreferredVariant,
         setConsiderPreferredCondition,
+        showCardPreferences,
+        setShowCardPreferences,
       }}
     >
       {children}

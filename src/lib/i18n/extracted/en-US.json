@@ -4,6 +4,7 @@
   "binder.info.progress.obtained": "Obtained but not placed",
   "binder.info.progress.placed": "Placed in Binder",
   "binder.info.progress.title": "Collection Progress",
+  "binder.info.showCardPreferences": "Show card-level preferences",
   "binder.info.title": "Set Information",
   "binder.mode.browse": "Browse Mode",
   "binder.mode.browse.short": "Browse",

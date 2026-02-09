@@ -29,6 +29,12 @@
       "value": "Sammlungsfortschritt"
     }
   ],
+  "binder.info.showCardPreferences": [
+    {
+      "type": 0,
+      "value": "Karten-Präferenzen anzeigen"
+    }
+  ],
   "binder.info.title": [
     {
       "type": 0,

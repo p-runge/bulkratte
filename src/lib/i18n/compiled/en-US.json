@@ -29,6 +29,12 @@
       "value": "Collection Progress"
     }
   ],
+  "binder.info.showCardPreferences": [
+    {
+      "type": 0,
+      "value": "Show card-level preferences"
+    }
+  ],
   "binder.info.title": [
     {
       "type": 0,

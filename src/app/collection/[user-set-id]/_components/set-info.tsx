@@ -28,6 +28,8 @@ export function SetInfo({ userCards }: SetInfoProps) {
     setConsiderPreferredLanguage,
     setConsiderPreferredVariant,
     setConsiderPreferredCondition,
+    showCardPreferences = false,
+    setShowCardPreferences,
   } = useBinderContext();
 
   const preferredLanguage = form.watch("preferredLanguage");
@@ -280,6 +282,25 @@ export function SetInfo({ userCards }: SetInfoProps) {
                 </div>
               )}
             </div>
+          </div>
+        )}
+        {/* Toggle to show card-level preferences */}
+        {setShowCardPreferences && (
+          <div className="flex items-center gap-2 px-2.5 py-1.5 border rounded-md bg-muted/30 mt-2 w-fit">
+            <Checkbox
+              id="showCardPreferences"
+              checked={showCardPreferences}
+              onCheckedChange={(checked) => setShowCardPreferences(!!checked)}
+            />
+            <Label
+              htmlFor="showCardPreferences"
+              className="text-sm font-normal cursor-pointer leading-none"
+            >
+              <FormattedMessage
+                id="binder.info.showCardPreferences"
+                defaultMessage="Show card-level preferences"
+              />
+            </Label>
           </div>
         )}
       </div>
