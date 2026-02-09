@@ -65,7 +65,13 @@ function Content() {
     await createUserSet({
       name: data.name,
       image: data.image ?? undefined,
-      cardData: data.cardData,
+      cardData: data.cardData.map((cd) => ({
+        cardId: cd.cardId,
+        order: cd.order,
+        preferredLanguage: cd.preferredLanguage ?? null,
+        preferredVariant: cd.preferredVariant ?? null,
+        preferredCondition: cd.preferredCondition ?? null,
+      })),
       preferredLanguage: data.preferredLanguage,
       preferredVariant: data.preferredVariant,
       preferredCondition: data.preferredCondition,

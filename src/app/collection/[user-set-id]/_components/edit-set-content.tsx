@@ -62,6 +62,9 @@ function Content({ userSet }: { userSet: UserSet }) {
       userSetCardId: existingCardMap.get(cd.order) ?? null,
       cardId: cd.cardId,
       order: cd.order,
+      preferredLanguage: cd.preferredLanguage ?? null,
+      preferredVariant: cd.preferredVariant ?? null,
+      preferredCondition: cd.preferredCondition ?? null,
     }));
 
     await updateUserSet({

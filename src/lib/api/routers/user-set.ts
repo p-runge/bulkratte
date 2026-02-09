@@ -16,6 +16,18 @@ export const userSetRouter = createTRPCRouter({
           z.object({
             cardId: z.string(),
             order: z.number(),
+            preferredLanguage: z
+              .enum(languageEnum.enumValues)
+              .nullable()
+              .optional(),
+            preferredVariant: z
+              .enum(variantEnum.enumValues)
+              .nullable()
+              .optional(),
+            preferredCondition: z
+              .enum(conditionEnum.enumValues)
+              .nullable()
+              .optional(),
           }),
         ),
         image: z.string().optional(),
@@ -46,6 +58,9 @@ export const userSetRouter = createTRPCRouter({
             user_set_id: userSet.id,
             card_id: card.cardId,
             order: card.order,
+            preferred_language: card.preferredLanguage,
+            preferred_variant: card.preferredVariant,
+            preferred_condition: card.preferredCondition,
           })),
         );
       }
@@ -94,6 +109,9 @@ export const userSetRouter = createTRPCRouter({
           cardId: userSetCardsTable.card_id,
           userCardId: userSetCardsTable.user_card_id,
           order: userSetCardsTable.order,
+          preferredLanguage: userSetCardsTable.preferred_language,
+          preferredVariant: userSetCardsTable.preferred_variant,
+          preferredCondition: userSetCardsTable.preferred_condition,
           card: {
             id: cardsTable.id,
             name: cardsTable.name,
@@ -153,6 +171,18 @@ export const userSetRouter = createTRPCRouter({
             userSetCardId: z.string().uuid().nullable(), // null for new cards
             cardId: z.string().nullable(),
             order: z.number(),
+            preferredLanguage: z
+              .enum(languageEnum.enumValues)
+              .nullable()
+              .optional(),
+            preferredVariant: z
+              .enum(variantEnum.enumValues)
+              .nullable()
+              .optional(),
+            preferredCondition: z
+              .enum(conditionEnum.enumValues)
+              .nullable()
+              .optional(),
           }),
         ),
         image: z.string().optional(),
@@ -265,6 +295,9 @@ export const userSetRouter = createTRPCRouter({
             .set({
               order: card.order,
               card_id: card.cardId,
+              preferred_language: card.preferredLanguage,
+              preferred_variant: card.preferredVariant,
+              preferred_condition: card.preferredCondition,
             })
             .where(eq(userSetCardsTable.id, card.userSetCardId));
         } else {
@@ -273,6 +306,9 @@ export const userSetRouter = createTRPCRouter({
             user_set_id: input.id,
             card_id: card.cardId,
             order: card.order,
+            preferred_language: card.preferredLanguage,
+            preferred_variant: card.preferredVariant,
+            preferred_condition: card.preferredCondition,
           });
         }
       }

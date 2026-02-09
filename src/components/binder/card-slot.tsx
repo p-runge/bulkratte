@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Settings } from "lucide-react";
 import Image from "next/image";
 import { Button } from "../ui/button";
 import { useBinderContext } from "./binder-context";
@@ -7,6 +7,7 @@ import { BinderCard } from "./types";
 import React, { useState } from "react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import pokemonAPI from "@/lib/pokemon-api";
+import { CardPreferencesDialog } from "./card-preferences-dialog";
 
 export function CardSlot({
   card,
@@ -30,6 +31,7 @@ export function CardSlot({
     considerPreferredCondition = false,
   } = useBinderContext();
   const [showRemove, setShowRemove] = useState(false);
+  const [showPreferencesDialog, setShowPreferencesDialog] = useState(false);
 
   // DnD Kit hooks - disable dragging in remove mode
   const {
@@ -80,9 +82,16 @@ export function CardSlot({
 
     // Check if user has this card in their collection
     // If we're in place mode with toggles, we need to match against preferred properties
-    const preferredLanguage = form?.watch("preferredLanguage");
-    const preferredVariant = form?.watch("preferredVariant");
-    const preferredCondition = form?.watch("preferredCondition");
+    // Use card-level preferences if available, otherwise fall back to set-level preferences
+    const setLevelLanguage = form?.watch("preferredLanguage");
+    const setLevelVariant = form?.watch("preferredVariant");
+    const setLevelCondition = form?.watch("preferredCondition");
+
+    const preferredLanguage =
+      originalCard?.preferredLanguage ?? setLevelLanguage;
+    const preferredVariant = originalCard?.preferredVariant ?? setLevelVariant;
+    const preferredCondition =
+      originalCard?.preferredCondition ?? setLevelCondition;
 
     const matchingUserCards =
       userCards?.filter((uc) => {
@@ -228,7 +237,6 @@ export function CardSlot({
         setDroppableRef(node);
       }}
       {...attributes}
-      {...listeners}
       className={cn(
         "group w-full h-full aspect-245/337 border border-gray-400 rounded flex items-center justify-center text-xs font-medium relative overflow-hidden",
         isDragging && "opacity-50",
@@ -238,33 +246,89 @@ export function CardSlot({
       onMouseLeave={() => setShowRemove(false)}
     >
       {card ? (
-        <Image
-          src={card.imageSmall}
-          alt={card.name}
-          width={245}
-          height={337}
-          unoptimized
-          className="w-full h-full object-contain rounded"
-        />
+        <div {...listeners} className="w-full h-full">
+          <Image
+            src={card.imageSmall}
+            alt={card.name}
+            width={245}
+            height={337}
+            unoptimized
+            className="w-full h-full object-contain rounded"
+          />
+        </div>
       ) : (
         <div className="w-full h-full bg-gray-200 animate-pulse rounded" />
       )}
 
       {showRemove && (
-        <Button
-          variant="destructive"
-          size="icon"
-          className="absolute top-1 right-1 h-7 w-7 z-10 shadow-lg"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleRemoveClick();
+        <>
+          <Button
+            variant="secondary"
+            size="icon"
+            className="absolute top-1 left-1 h-7 w-7 z-10 shadow-lg"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setShowPreferencesDialog(true);
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="destructive"
+            size="icon"
+            className="absolute top-1 right-1 h-7 w-7 z-10 shadow-lg"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleRemoveClick();
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </>
+      )}
+
+      {showPreferencesDialog && card && (
+        <CardPreferencesDialog
+          card={card}
+          position={position}
+          currentPreferences={{
+            preferredLanguage:
+              form?.watch("cardData").find((c) => c.order === position)
+                ?.preferredLanguage ?? null,
+            preferredVariant:
+              form?.watch("cardData").find((c) => c.order === position)
+                ?.preferredVariant ?? null,
+            preferredCondition:
+              form?.watch("cardData").find((c) => c.order === position)
+                ?.preferredCondition ?? null,
           }}
-          onMouseDown={(e) => e.stopPropagation()}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <X className="h-4 w-4" />
-        </Button>
+          setLevelPreferences={{
+            preferredLanguage: form?.watch("preferredLanguage"),
+            preferredVariant: form?.watch("preferredVariant"),
+            preferredCondition: form?.watch("preferredCondition"),
+          }}
+          onSave={(preferences) => {
+            const cardData = form?.getValues("cardData") || [];
+            const cardIndex = cardData.findIndex((c) => c.order === position);
+            if (cardIndex !== -1) {
+              const updatedCardData = [...cardData];
+              updatedCardData[cardIndex] = {
+                ...updatedCardData[cardIndex]!,
+                preferredLanguage: preferences.preferredLanguage as any,
+                preferredVariant: preferences.preferredVariant as any,
+                preferredCondition: preferences.preferredCondition as any,
+              };
+              form?.setValue("cardData", updatedCardData);
+            }
+          }}
+          onClose={() => setShowPreferencesDialog(false)}
+        />
       )}
     </div>
   );

@@ -48,35 +48,48 @@ export function SetInfo({ userCards }: SetInfoProps) {
         initialUserSet.cards.map((card) => card.cardId),
       );
 
-      // Get preferred properties from user set
-      const preferredLanguage = initialUserSet.set.preferredLanguage;
-      const preferredVariant = initialUserSet.set.preferredVariant;
-      const preferredCondition = initialUserSet.set.preferredCondition;
+      // Build a map of card-level preferences
+      const cardPreferencesMap = new Map(
+        initialUserSet.cards.map((card) => [
+          card.cardId,
+          {
+            preferredLanguage:
+              card.preferredLanguage ?? initialUserSet.set.preferredLanguage,
+            preferredVariant:
+              card.preferredVariant ?? initialUserSet.set.preferredVariant,
+            preferredCondition:
+              card.preferredCondition ?? initialUserSet.set.preferredCondition,
+          },
+        ]),
+      );
 
       // Count how many of these cards the user has in their collection
-      // Considering preferred properties if toggles are on
+      // Considering preferred properties (card-level or set-level) if toggles are on
       const obtainedCardIds = new Set(
         userCards
           .filter((userCard) => {
             // Must match card ID
             if (!userSetCardIds.has(userCard.card.id)) return false;
 
+            const cardPrefs = cardPreferencesMap.get(userCard.card.id);
+
             // Check preferred language if toggle is on
-            if (considerPreferredLanguage && preferredLanguage) {
-              if (userCard.language !== preferredLanguage) return false;
+            if (considerPreferredLanguage && cardPrefs?.preferredLanguage) {
+              if (userCard.language !== cardPrefs.preferredLanguage)
+                return false;
             }
 
             // Check preferred variant if toggle is on
-            if (considerPreferredVariant && preferredVariant) {
-              if (userCard.variant !== preferredVariant) return false;
+            if (considerPreferredVariant && cardPrefs?.preferredVariant) {
+              if (userCard.variant !== cardPrefs.preferredVariant) return false;
             }
 
             // Check preferred condition if toggle is on (as minimum condition)
-            if (considerPreferredCondition && preferredCondition) {
+            if (considerPreferredCondition && cardPrefs?.preferredCondition) {
               if (
                 !pokemonAPI.meetsMinimumCondition(
                   userCard.condition,
-                  preferredCondition,
+                  cardPrefs.preferredCondition,
                 )
               ) {
                 return false;

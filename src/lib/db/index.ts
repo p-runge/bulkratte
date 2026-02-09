@@ -274,6 +274,9 @@ export const userSetCardsTable = pgTable(
       .references(() => userCardsTable.id)
       .unique(),
     order: integer("order").notNull(),
+    preferred_language: languageEnum(),
+    preferred_variant: variantEnum(),
+    preferred_condition: conditionEnum(),
   },
   (table) => ({
     uniqueUserSetOrderIdx: uniqueIndex("unique_user_set_order_idx").on(

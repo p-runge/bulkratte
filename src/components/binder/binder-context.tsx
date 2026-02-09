@@ -111,6 +111,9 @@ export function BinderProvider({
         .map((card) => ({
           cardId: card.cardId!,
           order: card.order!,
+          preferredLanguage: card.preferredLanguage ?? null,
+          preferredVariant: card.preferredVariant ?? null,
+          preferredCondition: card.preferredCondition ?? null,
         })),
       preferredLanguage: initialUserSet.set.preferredLanguage ?? null,
       preferredVariant: initialUserSet.set.preferredVariant ?? null,
@@ -279,6 +282,9 @@ export function BinderProvider({
         .map((card) => ({
           cardId: card.cardId!,
           order: card.order!,
+          preferredLanguage: card.preferredLanguage ?? null,
+          preferredVariant: card.preferredVariant ?? null,
+          preferredCondition: card.preferredCondition ?? null,
         })),
       preferredLanguage: initialUserSet.set.preferredLanguage ?? null,
       preferredVariant: initialUserSet.set.preferredVariant ?? null,
@@ -352,6 +358,15 @@ export function getBinderFormSchema(intl: IntlShape) {
       z.object({
         cardId: z.string(),
         order: z.number(),
+        preferredLanguage: z
+          .enum(languageEnum.enumValues)
+          .nullable()
+          .optional(),
+        preferredVariant: z.enum(variantEnum.enumValues).nullable().optional(),
+        preferredCondition: z
+          .enum(conditionEnum.enumValues)
+          .nullable()
+          .optional(),
       }),
     ),
     preferredLanguage: z.enum(languageEnum.enumValues).nullable(),
@@ -368,6 +383,12 @@ export const BinderFormSchema = z.object({
     z.object({
       cardId: z.string(),
       order: z.number(),
+      preferredLanguage: z.enum(languageEnum.enumValues).nullable().optional(),
+      preferredVariant: z.enum(variantEnum.enumValues).nullable().optional(),
+      preferredCondition: z
+        .enum(conditionEnum.enumValues)
+        .nullable()
+        .optional(),
     }),
   ),
   preferredLanguage: z.enum(languageEnum.enumValues).nullable(),
