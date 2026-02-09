@@ -681,6 +681,18 @@
       "value": "Select from Collection"
     }
   ],
+  "dialog.place_card.section.matching_preferences": [
+    {
+      "type": 0,
+      "value": "Matching Preferences"
+    }
+  ],
+  "dialog.place_card.section.not_matching_preferences": [
+    {
+      "type": 0,
+      "value": "Not Matching Preferences"
+    }
+  ],
   "dialog.place_card.title.change": [
     {
       "type": 0,

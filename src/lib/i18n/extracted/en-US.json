@@ -90,6 +90,8 @@
   "dialog.place_card.label.placed_elsewhere": "(In \"{setName}\")",
   "dialog.place_card.mode.add_new": "Add New",
   "dialog.place_card.mode.select_existing": "Select from Collection",
+  "dialog.place_card.section.matching_preferences": "Matching Preferences",
+  "dialog.place_card.section.not_matching_preferences": "Not Matching Preferences",
   "dialog.place_card.title.change": "Change Placed Card",
   "dialog.place_card.title.place": "Place Card in Binder",
   "form.field.condition.label": "Condition",
