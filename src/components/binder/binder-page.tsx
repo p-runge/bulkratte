@@ -58,7 +58,7 @@ export default function BinderPage({
       </div>
 
       <Dialog open={currentPosition !== null} onOpenChange={closeDialog}>
-        <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col">
+        <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>
               <FormattedMessage
@@ -67,12 +67,8 @@ export default function BinderPage({
               />
             </DialogTitle>
           </DialogHeader>
-          <div className="flex-1 overflow-hidden">
-            <CardPicker
-              onSelect={handleSelectCards}
-              onClose={closeDialog}
-              maxHeightGrid="60vh"
-            />
+          <div className="overflow-y-auto max-h-[80vh]">
+            <CardPicker onSelect={handleSelectCards} onClose={closeDialog} />
           </div>
         </DialogContent>
       </Dialog>
