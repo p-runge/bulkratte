@@ -155,9 +155,49 @@ export function CardSlot({
       }
     };
 
-    // Determine border color based on card availability
+    // Determine border color based on card availability and preference matching
     let borderColor = "";
-    if (hasUserCard && !isPlaced) {
+
+    // Check if the placed card matches preferences (red border if it doesn't)
+    if (isPlaced && currentUserCardId) {
+      const placedUserCard = userCards?.find(
+        (uc) => uc.id === currentUserCardId,
+      );
+
+      if (placedUserCard) {
+        let matchesPreferences = true;
+
+        // Check preferred language if toggle is on
+        if (considerPreferredLanguage && preferredLanguage) {
+          if (placedUserCard.language !== preferredLanguage) {
+            matchesPreferences = false;
+          }
+        }
+
+        // Check preferred variant if toggle is on
+        if (considerPreferredVariant && preferredVariant) {
+          if (placedUserCard.variant !== preferredVariant) {
+            matchesPreferences = false;
+          }
+        }
+
+        // Check preferred condition if toggle is on (as minimum condition)
+        if (considerPreferredCondition && preferredCondition) {
+          if (
+            !pokemonAPI.meetsMinimumCondition(
+              placedUserCard.condition,
+              preferredCondition,
+            )
+          ) {
+            matchesPreferences = false;
+          }
+        }
+
+        if (!matchesPreferences) {
+          borderColor = "border-4 border-red-500";
+        }
+      }
+    } else if (hasUserCard && !isPlaced) {
       // User has the card but it's not placed here
       // Check if ALL user's cards of this type are in other sets
 
@@ -199,6 +239,7 @@ export function CardSlot({
             "focus:outline-none focus:ring-4 focus:ring-ring focus:ring-offset-2",
             !isPlaced && "opacity-40 grayscale",
             hasUserCard && !isPlaced && "-m-1",
+            borderColor && "-m-1",
           )}
         >
           <Image
