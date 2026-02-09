@@ -116,7 +116,7 @@ export default function UserCardDialog({
 
   return (
     <Dialog open onOpenChange={onClose} modal>
-      <DialogContent className="max-h-[90vh] w-5xl sm:max-w-screen">
+      <DialogContent className="w-5xl sm:max-w-screen">
         <DialogHeader>
           <DialogTitle>
             {mode === "create"
@@ -130,121 +130,125 @@ export default function UserCardDialog({
                 })}
           </DialogTitle>
         </DialogHeader>
-        <RHFForm form={form} onSubmit={handleSubmit} className="py-4">
-          {!selectedCardId && mode === "create" ? (
-            <CardBrowser
-              selectionMode="single"
-              onCardClick={(cardId) => setSelectedCardId(cardId)}
-              maxHeightGrid="600px"
-            />
-          ) : card ? (
-            <div className="flex gap-6">
-              <Image
-                src={card.imageSmall}
-                alt={card.name}
-                width={240}
-                height={165}
-                unoptimized
-                className="w-auto h-auto object-contain rounded-md"
-                draggable={false}
-                priority
+        <RHFForm form={form} onSubmit={handleSubmit} className="flex flex-col">
+          <div className="overflow-y-auto max-h-[70vh]">
+            {!selectedCardId && mode === "create" ? (
+              <CardBrowser
+                selectionMode="single"
+                onCardClick={(cardId) => setSelectedCardId(cardId)}
+                maxHeightGrid="600px"
               />
-              <div className="flex-1 space-y-6">
-                <h2 className="text-2xl font-bold mb-4">{card.name}</h2>
+            ) : card ? (
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+                <Image
+                  src={card.imageSmall}
+                  alt={card.name}
+                  width={240}
+                  height={165}
+                  unoptimized
+                  className="w-full sm:w-auto h-auto max-w-50 sm:max-w-60 mx-auto sm:mx-0 object-contain rounded-md"
+                  draggable={false}
+                  priority
+                />
+                <div className="flex-1 space-y-4 sm:space-y-6">
+                  <h2 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-4">
+                    {card.name}
+                  </h2>
 
-                {mode === "edit" && placement && (
-                  <Alert>
-                    <Info />
-                    <AlertTitle>
+                  {mode === "edit" && placement && (
+                    <Alert>
+                      <Info />
+                      <AlertTitle>
+                        {intl.formatMessage({
+                          id: "dialog.edit_card.placed_in_set",
+                          defaultMessage: "Placed in Set",
+                        })}
+                      </AlertTitle>
+                      <AlertDescription>
+                        {intl.formatMessage(
+                          {
+                            id: "dialog.edit_card.placed_in_set.description",
+                            defaultMessage:
+                              'This card is currently placed in "{setName}"',
+                          },
+                          { setName: placement.setName },
+                        )}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {/* Language Field */}
+                  <div className="space-y-2">
+                    <Label>
                       {intl.formatMessage({
-                        id: "dialog.edit_card.placed_in_set",
-                        defaultMessage: "Placed in Set",
+                        id: "form.field.language.label",
+                        defaultMessage: "Language",
                       })}
-                    </AlertTitle>
-                    <AlertDescription>
-                      {intl.formatMessage(
-                        {
-                          id: "dialog.edit_card.placed_in_set.description",
-                          defaultMessage:
-                            'This card is currently placed in "{setName}"',
-                        },
-                        { setName: placement.setName },
+                    </Label>
+                    <Controller
+                      control={form.control}
+                      name="language"
+                      render={({ field }) => (
+                        <LanguageToggleGroup
+                          value={field.value ?? null}
+                          onValueChange={field.onChange}
+                          includeNone
+                        />
                       )}
-                    </AlertDescription>
-                  </Alert>
-                )}
+                    />
+                  </div>
 
-                {/* Language Field */}
-                <div className="space-y-2">
-                  <Label>
-                    {intl.formatMessage({
-                      id: "form.field.language.label",
-                      defaultMessage: "Language",
-                    })}
-                  </Label>
-                  <Controller
-                    control={form.control}
-                    name="language"
-                    render={({ field }) => (
-                      <LanguageToggleGroup
-                        value={field.value ?? null}
-                        onValueChange={field.onChange}
-                        includeNone
-                      />
-                    )}
-                  />
-                </div>
+                  {/* Variant Field */}
+                  <div className="space-y-2">
+                    <Label>
+                      {intl.formatMessage({
+                        id: "form.field.variant.label",
+                        defaultMessage: "Variant",
+                      })}
+                    </Label>
+                    <Controller
+                      control={form.control}
+                      name="variant"
+                      render={({ field }) => (
+                        <VariantToggleGroup
+                          value={field.value ?? null}
+                          onValueChange={field.onChange}
+                          includeNone
+                        />
+                      )}
+                    />
+                  </div>
 
-                {/* Variant Field */}
-                <div className="space-y-2">
-                  <Label>
-                    {intl.formatMessage({
-                      id: "form.field.variant.label",
-                      defaultMessage: "Variant",
-                    })}
-                  </Label>
-                  <Controller
-                    control={form.control}
-                    name="variant"
-                    render={({ field }) => (
-                      <VariantToggleGroup
-                        value={field.value ?? null}
-                        onValueChange={field.onChange}
-                        includeNone
-                      />
-                    )}
-                  />
-                </div>
-
-                {/* Condition Field */}
-                <div className="space-y-2">
-                  <Label>
-                    {intl.formatMessage({
-                      id: "form.field.condition.label",
-                      defaultMessage: "Condition",
-                    })}
-                  </Label>
-                  <Controller
-                    control={form.control}
-                    name="condition"
-                    render={({ field }) => (
-                      <ConditionToggleGroup
-                        value={field.value ?? null}
-                        onValueChange={field.onChange}
-                        includeNone
-                      />
-                    )}
-                  />
+                  {/* Condition Field */}
+                  <div className="space-y-2">
+                    <Label>
+                      {intl.formatMessage({
+                        id: "form.field.condition.label",
+                        defaultMessage: "Condition",
+                      })}
+                    </Label>
+                    <Controller
+                      control={form.control}
+                      name="condition"
+                      render={({ field }) => (
+                        <ConditionToggleGroup
+                          value={field.value ?? null}
+                          onValueChange={field.onChange}
+                          includeNone
+                        />
+                      )}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            // loading skeleton
-            <div className="w-60 h-84 bg-muted animate-pulse rounded-md" />
-          )}
+            ) : (
+              // loading skeleton
+              <div className="w-60 h-84 bg-muted animate-pulse rounded-md" />
+            )}
+          </div>
 
           {(selectedCardId || mode === "edit") && (
-            <DialogFooter className="flex justify-between items-center">
+            <DialogFooter className="flex justify-between items-center pt-4">
               <div>
                 {mode === "edit" && (
                   <ConfirmButton

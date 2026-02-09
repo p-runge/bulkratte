@@ -174,9 +174,7 @@ export function PlaceCardDialog({
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent
-        className={
-          mode === "select" ? "max-w-2xl" : "max-h-[90vh] w-5xl sm:max-w-screen"
-        }
+        className={mode === "select" ? "max-w-2xl" : "w-5xl sm:max-w-screen"}
       >
         <DialogHeader>
           <DialogTitle>
@@ -192,272 +190,353 @@ export function PlaceCardDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="py-4">
-          {isPlaced && currentlyPlacedCard && (
-            <div className="mb-6 p-4 border rounded-lg bg-muted/30">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="font-semibold">
-                  {intl.formatMessage({
-                    id: "dialog.place_card.currently_placed",
-                    defaultMessage: "Currently Placed",
-                  })}
-                </h4>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleUnplace}
-                  disabled={isUnplacing}
-                >
-                  {intl.formatMessage({
-                    id: "dialog.place_card.action.unplace",
-                    defaultMessage: "Unplace",
-                  })}
-                </Button>
-              </div>
-              <div className="flex items-center gap-3">
-                <Image
-                  src={currentlyPlacedCard.card.imageSmall ?? ""}
-                  alt={currentlyPlacedCard.card.name ?? ""}
-                  width={64}
-                  height={89}
-                  unoptimized
-                  className="w-16 h-auto object-contain rounded"
-                />
-                <div>
-                  <div className="font-medium">
-                    {currentlyPlacedCard.card.name}
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    {currentlyPlacedCard.language && (
-                      <Badge variant="outline" className="h-5.5">
-                        <LanguageBadge
-                          code={currentlyPlacedCard.language}
-                          className="text-sm"
+        {mode === "select" ? (
+          <div className="overflow-y-auto max-h-[70vh]">
+            {isPlaced && currentlyPlacedCard && (
+              <div className="mb-6 p-4 border rounded-lg bg-muted/30">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-semibold">
+                    {intl.formatMessage({
+                      id: "dialog.place_card.currently_placed",
+                      defaultMessage: "Currently Placed",
+                    })}
+                  </h4>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleUnplace}
+                    disabled={isUnplacing}
+                  >
+                    {intl.formatMessage({
+                      id: "dialog.place_card.action.unplace",
+                      defaultMessage: "Unplace",
+                    })}
+                  </Button>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Image
+                    src={currentlyPlacedCard.card.imageSmall ?? ""}
+                    alt={currentlyPlacedCard.card.name ?? ""}
+                    width={64}
+                    height={89}
+                    unoptimized
+                    className="w-16 h-auto object-contain rounded"
+                  />
+                  <div>
+                    <div className="font-medium">
+                      {currentlyPlacedCard.card.name}
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      {currentlyPlacedCard.language && (
+                        <Badge variant="outline" className="h-5.5">
+                          <LanguageBadge
+                            code={currentlyPlacedCard.language}
+                            className="text-sm"
+                          />
+                        </Badge>
+                      )}
+                      {currentlyPlacedCard.variant && (
+                        <Badge variant="outline" className="text-xs">
+                          {currentlyPlacedCard.variant}
+                        </Badge>
+                      )}
+                      {currentlyPlacedCard.condition && (
+                        <ConditionBadge
+                          condition={currentlyPlacedCard.condition}
                         />
-                      </Badge>
-                    )}
-                    {currentlyPlacedCard.variant && (
-                      <Badge variant="outline" className="text-xs">
-                        {currentlyPlacedCard.variant}
-                      </Badge>
-                    )}
-                    {currentlyPlacedCard.condition && (
-                      <ConditionBadge
-                        condition={currentlyPlacedCard.condition}
-                      />
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {hasUserCard && (
-            <div className="flex gap-2 mb-4">
-              <Button
-                variant={mode === "select" ? "default" : "outline"}
-                onClick={() => setMode("select")}
-                size="sm"
-              >
-                {intl.formatMessage({
-                  id: "dialog.place_card.mode.select_existing",
-                  defaultMessage: "Select from Collection",
-                })}
-              </Button>
-              <Button
-                variant={mode === "create" ? "default" : "outline"}
-                onClick={() => setMode("create")}
-                size="sm"
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                {intl.formatMessage({
-                  id: "dialog.place_card.mode.add_new",
-                  defaultMessage: "Add New",
-                })}
-              </Button>
-            </div>
-          )}
+            {hasUserCard && (
+              <div className="flex gap-2 mb-4">
+                <Button onClick={() => setMode("select")} size="sm">
+                  {intl.formatMessage({
+                    id: "dialog.place_card.mode.select_existing",
+                    defaultMessage: "Select from Collection",
+                  })}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setMode("create")}
+                  size="sm"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  {intl.formatMessage({
+                    id: "dialog.place_card.mode.add_new",
+                    defaultMessage: "Add New",
+                  })}
+                </Button>
+              </div>
+            )}
 
-          {mode === "select" ? (
-            <>
-              <ScrollArea className="h-64">
-                <div className="space-y-2">
-                  {matchingUserCards
-                    .filter(
-                      (uc) =>
-                        uc.id !== currentUserCardId &&
-                        (!uc.isPlacedElsewhere || showCardsFromOtherSets),
-                    )
-                    .map((userCard) => {
-                      const isCurrentlyPlaced =
-                        userCard.id === currentUserCardId;
+            <ScrollArea className="h-64">
+              <div className="space-y-2">
+                {matchingUserCards
+                  .filter(
+                    (uc) =>
+                      uc.id !== currentUserCardId &&
+                      (!uc.isPlacedElsewhere || showCardsFromOtherSets),
+                  )
+                  .map((userCard) => {
+                    const isCurrentlyPlaced = userCard.id === currentUserCardId;
 
-                      return (
-                        <div
-                          key={userCard.id}
-                          className={cn(
-                            "w-full p-3 rounded border",
-                            isCurrentlyPlaced
-                              ? "bg-primary/10 border-primary"
-                              : userCard.isPlacedElsewhere
-                                ? "border-destructive"
-                                : "",
-                          )}
-                        >
-                          <div className="flex items-center gap-3">
-                            <Image
-                              src={userCard.card.imageSmall ?? ""}
-                              alt={userCard.card.name ?? ""}
-                              width={64}
-                              height={89}
-                              unoptimized
-                              className="w-16 h-auto object-contain rounded"
-                            />
-                            <div className="flex-1">
-                              <div className="font-medium">
-                                {userCard.card.name}
-                                {isCurrentlyPlaced && (
-                                  <span className="ml-2 text-xs text-primary">
-                                    {intl.formatMessage({
-                                      id: "dialog.place_card.label.currently_placed",
-                                      defaultMessage: "(Currently Placed)",
-                                    })}
-                                  </span>
-                                )}
-                                {userCard.isPlacedElsewhere && (
-                                  <span className="ml-2 text-xs text-muted-foreground">
-                                    {intl.formatMessage(
-                                      {
-                                        id: "dialog.place_card.label.placed_elsewhere",
-                                        defaultMessage: '(In "{setName}")',
-                                      },
-                                      {
-                                        setName:
-                                          userCard.placementInfo?.setName,
-                                      },
-                                    )}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-1.5 mt-1">
-                                {userCard.language && (
-                                  <Badge variant="outline" className="h-5.5">
-                                    <LanguageBadge
-                                      code={userCard.language}
-                                      className="text-sm"
-                                    />
-                                  </Badge>
-                                )}
-                                {userCard.variant && (
-                                  <Badge variant="outline" className="text-xs">
-                                    {userCard.variant}
-                                  </Badge>
-                                )}
-                                {userCard.condition && (
-                                  <ConditionBadge
-                                    condition={userCard.condition}
-                                  />
-                                )}
-                              </div>
-                            </div>
-                            {!isCurrentlyPlaced &&
-                              (userCard.isPlacedElsewhere ? (
-                                <ConfirmButton
-                                  variant="destructive"
-                                  size="sm"
-                                  title={intl.formatMessage({
-                                    id: "dialog.place_card.confirm.title",
-                                    defaultMessage:
-                                      "Move Card from Another Set?",
+                    return (
+                      <div
+                        key={userCard.id}
+                        className={cn(
+                          "w-full p-3 rounded border",
+                          isCurrentlyPlaced
+                            ? "bg-primary/10 border-primary"
+                            : userCard.isPlacedElsewhere
+                              ? "border-destructive"
+                              : "",
+                        )}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Image
+                            src={userCard.card.imageSmall ?? ""}
+                            alt={userCard.card.name ?? ""}
+                            width={64}
+                            height={89}
+                            unoptimized
+                            className="w-16 h-auto object-contain rounded"
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium">
+                              {userCard.card.name}
+                              {isCurrentlyPlaced && (
+                                <span className="ml-2 text-xs text-primary">
+                                  {intl.formatMessage({
+                                    id: "dialog.place_card.label.currently_placed",
+                                    defaultMessage: "(Currently Placed)",
                                   })}
-                                  description={intl.formatMessage(
+                                </span>
+                              )}
+                              {userCard.isPlacedElsewhere && (
+                                <span className="ml-2 text-xs text-muted-foreground">
+                                  {intl.formatMessage(
                                     {
-                                      id: "dialog.place_card.confirm.description",
-                                      defaultMessage:
-                                        'This card is currently placed in "{setName}". Moving it here will remove it from that set. Do you want to continue?',
+                                      id: "dialog.place_card.label.placed_elsewhere",
+                                      defaultMessage: '(In "{setName}")',
                                     },
                                     {
                                       setName: userCard.placementInfo?.setName,
                                     },
                                   )}
-                                  confirmLabel={intl.formatMessage({
-                                    id: "dialog.place_card.confirm.confirm_label",
-                                    defaultMessage: "Move Card",
-                                  })}
-                                  destructive
-                                  onClick={() =>
-                                    handleSelectUserCard(userCard.id)
-                                  }
-                                  disabled={isPlacing}
-                                >
-                                  {intl.formatMessage({
-                                    id: "dialog.place_card.action.place",
-                                    defaultMessage: "Place",
-                                  })}
-                                </ConfirmButton>
-                              ) : (
-                                <Button
-                                  variant="default"
-                                  size="sm"
-                                  onClick={() =>
-                                    handleSelectUserCard(userCard.id)
-                                  }
-                                  disabled={isPlacing}
-                                >
-                                  {intl.formatMessage({
-                                    id: "dialog.place_card.action.place",
-                                    defaultMessage: "Place",
-                                  })}
-                                </Button>
-                              ))}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1.5 mt-1">
+                              {userCard.language && (
+                                <Badge variant="outline" className="h-5.5">
+                                  <LanguageBadge
+                                    code={userCard.language}
+                                    className="text-sm"
+                                  />
+                                </Badge>
+                              )}
+                              {userCard.variant && (
+                                <Badge variant="outline" className="text-xs">
+                                  {userCard.variant}
+                                </Badge>
+                              )}
+                              {userCard.condition && (
+                                <ConditionBadge
+                                  condition={userCard.condition}
+                                />
+                              )}
+                            </div>
                           </div>
+                          {!isCurrentlyPlaced &&
+                            (userCard.isPlacedElsewhere ? (
+                              <ConfirmButton
+                                variant="destructive"
+                                size="sm"
+                                title={intl.formatMessage({
+                                  id: "dialog.place_card.confirm.title",
+                                  defaultMessage: "Move Card from Another Set?",
+                                })}
+                                description={intl.formatMessage(
+                                  {
+                                    id: "dialog.place_card.confirm.description",
+                                    defaultMessage:
+                                      'This card is currently placed in "{setName}". Moving it here will remove it from that set. Do you want to continue?',
+                                  },
+                                  {
+                                    setName: userCard.placementInfo?.setName,
+                                  },
+                                )}
+                                confirmLabel={intl.formatMessage({
+                                  id: "dialog.place_card.confirm.confirm_label",
+                                  defaultMessage: "Move Card",
+                                })}
+                                destructive
+                                onClick={() =>
+                                  handleSelectUserCard(userCard.id)
+                                }
+                                disabled={isPlacing}
+                              >
+                                {intl.formatMessage({
+                                  id: "dialog.place_card.action.place",
+                                  defaultMessage: "Place",
+                                })}
+                              </ConfirmButton>
+                            ) : (
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() =>
+                                  handleSelectUserCard(userCard.id)
+                                }
+                                disabled={isPlacing}
+                              >
+                                {intl.formatMessage({
+                                  id: "dialog.place_card.action.place",
+                                  defaultMessage: "Place",
+                                })}
+                              </Button>
+                            ))}
                         </div>
-                      );
-                    })}
-                </div>
-              </ScrollArea>
+                      </div>
+                    );
+                  })}
+              </div>
+            </ScrollArea>
 
-              {matchingUserCards.some((uc) => uc.isPlacedElsewhere) && (
-                <div className="mt-3">
+            {matchingUserCards.some((uc) => uc.isPlacedElsewhere) && (
+              <div className="mt-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    setShowCardsFromOtherSets(!showCardsFromOtherSets)
+                  }
+                  className="w-full"
+                >
+                  {showCardsFromOtherSets
+                    ? intl.formatMessage({
+                        id: "dialog.place_card.filter.hide_other_sets",
+                        defaultMessage: "Hide cards from other sets",
+                      })
+                    : intl.formatMessage({
+                        id: "dialog.place_card.filter.show_other_sets",
+                        defaultMessage: "Show cards from other sets",
+                      })}
+                </Button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <RHFForm
+            form={form}
+            onSubmit={handleCreateAndPlace}
+            className="flex flex-col"
+          >
+            <div className="overflow-y-auto max-h-[70vh]">
+              {isPlaced && currentlyPlacedCard && (
+                <div className="mb-6 p-4 border rounded-lg bg-muted/30">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-semibold">
+                      {intl.formatMessage({
+                        id: "dialog.place_card.currently_placed",
+                        defaultMessage: "Currently Placed",
+                      })}
+                    </h4>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleUnplace}
+                      disabled={isUnplacing}
+                    >
+                      {intl.formatMessage({
+                        id: "dialog.place_card.action.unplace",
+                        defaultMessage: "Unplace",
+                      })}
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Image
+                      src={currentlyPlacedCard.card.imageSmall ?? ""}
+                      alt={currentlyPlacedCard.card.name ?? ""}
+                      width={64}
+                      height={89}
+                      unoptimized
+                      className="w-16 h-auto object-contain rounded"
+                    />
+                    <div>
+                      <div className="font-medium">
+                        {currentlyPlacedCard.card.name}
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        {currentlyPlacedCard.language && (
+                          <Badge variant="outline" className="h-5.5">
+                            <LanguageBadge
+                              code={currentlyPlacedCard.language}
+                              className="text-sm"
+                            />
+                          </Badge>
+                        )}
+                        {currentlyPlacedCard.variant && (
+                          <Badge variant="outline" className="text-xs">
+                            {currentlyPlacedCard.variant}
+                          </Badge>
+                        )}
+                        {currentlyPlacedCard.condition && (
+                          <ConditionBadge
+                            condition={currentlyPlacedCard.condition}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {hasUserCard && (
+                <div className="flex gap-2 mb-4">
                   <Button
-                    variant="ghost"
+                    variant="outline"
+                    onClick={() => setMode("select")}
                     size="sm"
-                    onClick={() =>
-                      setShowCardsFromOtherSets(!showCardsFromOtherSets)
-                    }
-                    className="w-full"
                   >
-                    {showCardsFromOtherSets
-                      ? intl.formatMessage({
-                          id: "dialog.place_card.filter.hide_other_sets",
-                          defaultMessage: "Hide cards from other sets",
-                        })
-                      : intl.formatMessage({
-                          id: "dialog.place_card.filter.show_other_sets",
-                          defaultMessage: "Show cards from other sets",
-                        })}
+                    {intl.formatMessage({
+                      id: "dialog.place_card.mode.select_existing",
+                      defaultMessage: "Select from Collection",
+                    })}
+                  </Button>
+                  <Button
+                    variant={mode === "create" ? "default" : "outline"}
+                    onClick={() => setMode("create")}
+                    size="sm"
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    {intl.formatMessage({
+                      id: "dialog.place_card.mode.add_new",
+                      defaultMessage: "Add New",
+                    })}
                   </Button>
                 </div>
               )}
-            </>
-          ) : (
-            <RHFForm form={form} onSubmit={handleCreateAndPlace}>
-              <div className="flex gap-6">
+
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
                 <Image
                   src={card.imageSmall}
                   alt={card.name}
                   width={240}
                   height={165}
                   unoptimized
-                  className="w-auto h-auto object-contain rounded-md"
+                  className="w-full sm:w-auto h-auto max-w-50 sm:max-w-60 mx-auto sm:mx-0 object-contain rounded-md"
                   draggable={false}
                   priority
                 />
-                <div className="flex-1 space-y-6">
-                  <h3 className="text-2xl font-bold">{card.name}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    #{card.number} · {card.rarity}
-                  </p>
+                <div className="flex-1 space-y-4 sm:space-y-6">
+                  <h2 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-4">
+                    {card.name}
+                  </h2>
 
                   {/* Language Field */}
                   <div className="space-y-2">
@@ -523,34 +602,34 @@ export function PlaceCardDialog({
                   </div>
                 </div>
               </div>
+            </div>
 
-              <DialogFooter className="mt-6">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onClose}
-                  disabled={isCreating}
-                >
-                  {intl.formatMessage({
-                    id: "common.button.cancel",
-                    defaultMessage: "Cancel",
-                  })}
-                </Button>
-                <Button type="submit" disabled={isCreating}>
-                  {isCreating
-                    ? intl.formatMessage({
-                        id: "common.button.saving",
-                        defaultMessage: "Saving...",
-                      })
-                    : intl.formatMessage({
-                        id: "dialog.place_card.action.add_and_place",
-                        defaultMessage: "Add New Card to Collection & Place It",
-                      })}
-                </Button>
-              </DialogFooter>
-            </RHFForm>
-          )}
-        </div>
+            <DialogFooter className="pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={isCreating}
+              >
+                {intl.formatMessage({
+                  id: "common.button.cancel",
+                  defaultMessage: "Cancel",
+                })}
+              </Button>
+              <Button type="submit" disabled={isCreating}>
+                {isCreating
+                  ? intl.formatMessage({
+                      id: "common.button.saving",
+                      defaultMessage: "Saving...",
+                    })
+                  : intl.formatMessage({
+                      id: "dialog.place_card.action.add_and_place",
+                      defaultMessage: "Add New Card to Collection & Place It",
+                    })}
+              </Button>
+            </DialogFooter>
+          </RHFForm>
+        )}
       </DialogContent>
     </Dialog>
   );
