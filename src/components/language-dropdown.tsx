@@ -9,30 +9,41 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Locale, LOCALES } from "@/lib/i18n";
 import { useLanguageStore } from "@/lib/i18n/client";
-import { Globe } from "lucide-react";
+import pokemonAPI from "@/lib/pokemon-api";
 
 export function LanguageDropdown() {
-  const { setLocale } = useLanguageStore();
+  const { locale, setLocale } = useLanguageStore();
+
+  const localeToLanguageCode: Record<Locale, string> = {
+    "en-US": "en",
+    "de-DE": "de",
+  };
+
+  const currentLanguageCode = localeToLanguageCode[locale];
+  const currentLanguage = pokemonAPI.cardLanguages.find(
+    (lang) => lang.code === currentLanguageCode,
+  );
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline">
-          <Globe />
+          <span className="text-xl">{currentLanguage?.flag || "🇺🇸"}</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="start">
-        {LOCALES.map((l) => (
-          <DropdownMenuItem key={l} onClick={() => setLocale(l)}>
-            {localeLabelMap[l]}
-          </DropdownMenuItem>
-        ))}
+      <DropdownMenuContent align="start">
+        {LOCALES.map((l) => {
+          const languageCode = localeToLanguageCode[l];
+          const language = pokemonAPI.cardLanguages.find(
+            (lang) => lang.code === languageCode,
+          );
+          return (
+            <DropdownMenuItem key={l} onClick={() => setLocale(l)}>
+              <span className="text-xl">{language?.flag || "🇺🇸"}</span>
+            </DropdownMenuItem>
+          );
+        })}
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
-
-const localeLabelMap: Record<Locale, string> = {
-  "en-US": "English",
-  "de-DE": "Deutsch",
-};
