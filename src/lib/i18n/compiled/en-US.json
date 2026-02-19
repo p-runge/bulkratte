@@ -1207,6 +1207,12 @@
       "value": "Preferences"
     }
   ],
+  "redirectingToSignIn": [
+    {
+      "type": 0,
+      "value": "Redirecting to Sign In..."
+    }
+  ],
   "set.cards.count": [
     {
       "type": 1,
@@ -1263,6 +1269,12 @@
     {
       "type": 0,
       "value": " symbol"
+    }
+  ],
+  "signingOut": [
+    {
+      "type": 0,
+      "value": "Signing out..."
     }
   ],
   "toggle-group-option.none": [

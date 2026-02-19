@@ -173,10 +173,12 @@
   "page.user_set.private.description": "This collection set is private and can only be viewed by its owner.",
   "page.user_set.private.title": "This Set is Private",
   "preferred_properties.label": "Preferences",
+  "redirectingToSignIn": "Redirecting to Sign In...",
   "set.cards.count": "{total} cards",
   "set.cards.count_with_extras": "{total} (+{extras}) cards",
   "set.logo.alt": "{setName} logo",
   "set.series.logo.alt": "{series} logo",
   "set.symbol.alt": "{setName} symbol",
+  "signingOut": "Signing out...",
   "toggle-group-option.none": "None"
 }

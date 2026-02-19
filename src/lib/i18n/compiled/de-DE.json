@@ -681,6 +681,18 @@
       "value": "Aus Sammlung auswählen"
     }
   ],
+  "dialog.place_card.section.matching_preferences": [
+    {
+      "type": 0,
+      "value": "Passende Präferenzen"
+    }
+  ],
+  "dialog.place_card.section.not_matching_preferences": [
+    {
+      "type": 0,
+      "value": "Nicht passende Präferenzen"
+    }
+  ],
   "dialog.place_card.title.change": [
     {
       "type": 0,
@@ -1195,6 +1207,12 @@
       "value": "Präferenzen"
     }
   ],
+  "redirectingToSignIn": [
+    {
+      "type": 0,
+      "value": "Weiterleitung zur Anmeldung..."
+    }
+  ],
   "set.cards.count": [
     {
       "type": 1,
@@ -1251,6 +1269,12 @@
     {
       "type": 0,
       "value": " Symbol"
+    }
+  ],
+  "signingOut": [
+    {
+      "type": 0,
+      "value": "Abmelden..."
     }
   ],
   "toggle-group-option.none": [

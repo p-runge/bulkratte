@@ -90,6 +90,8 @@
   "dialog.place_card.label.placed_elsewhere": "(In \"{setName}\")",
   "dialog.place_card.mode.add_new": "Neue hinzufügen",
   "dialog.place_card.mode.select_existing": "Aus Sammlung auswählen",
+  "dialog.place_card.section.matching_preferences": "Passende Präferenzen",
+  "dialog.place_card.section.not_matching_preferences": "Nicht passende Präferenzen",
   "dialog.place_card.title.change": "Platzierte Karte ändern",
   "dialog.place_card.title.place": "Karte im Binder platzieren",
   "form.field.condition.label": "Zustand",
@@ -171,10 +173,12 @@
   "page.user_set.private.description": "Dieses Sammlungsset ist privat und kann nur vom Besitzer eingesehen werden.",
   "page.user_set.private.title": "Dieses Set ist privat",
   "preferred_properties.label": "Präferenzen",
+  "redirectingToSignIn": "Weiterleitung zur Anmeldung...",
   "set.cards.count": "{total} Karten",
   "set.cards.count_with_extras": "{total} (+{extras}) Karten",
   "set.logo.alt": "{setName}-Logo",
   "set.series.logo.alt": "{series}-Logo",
   "set.symbol.alt": "{setName} Symbol",
+  "signingOut": "Abmelden...",
   "toggle-group-option.none": "Keine"
 }
