@@ -74,7 +74,7 @@ export const useLanguageStore = create<LanguageState>()(
         document.documentElement.lang = validLocale.substring(0, 2);
 
         // used for server-side rendering to detect preferred locale
-        document.cookie = `preferred-locale=${locale}; path=/`;
+        document.cookie = `preferred-locale=${validLocale}; path=/`;
 
         set({ locale: validLocale });
 

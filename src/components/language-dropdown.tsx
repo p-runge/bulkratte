@@ -10,9 +10,12 @@ import {
 import { Locale, LOCALES } from "@/lib/i18n";
 import { useLanguageStore } from "@/lib/i18n/client";
 import pokemonAPI from "@/lib/pokemon-api";
+import { useIntl } from "react-intl";
 
 export function LanguageDropdown() {
-  const { locale, setLocale } = useLanguageStore();
+  const { setLocale } = useLanguageStore();
+  const { locale: rawLocale } = useIntl();
+  const locale = rawLocale as Locale;
 
   const localeToLanguageCode: Record<Locale, string> = {
     "en-US": "en",
