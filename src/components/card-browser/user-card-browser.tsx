@@ -8,6 +8,8 @@ import type { UserCard } from "@/components/binder/types";
 
 type UserCardBrowserProps = {
   onCardClick: (userCard: UserCard) => void;
+  onUserCardDelete?: (userCard: UserCard) => void;
+  placedUserCardIds?: Array<{ userCardId: string; setName: string }>;
   maxHeightGrid?: string;
 };
 
@@ -58,6 +60,8 @@ export function UserCardBrowser(props: UserCardBrowserProps) {
           selectionMode="single"
           selectedUserCardIds={new Set()}
           onUserCardClick={props.onCardClick}
+          onUserCardDelete={props.onUserCardDelete}
+          placedUserCardIds={props.placedUserCardIds}
           isLoading={isLoading}
           maxHeight={props.maxHeightGrid}
         />

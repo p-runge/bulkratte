@@ -19,7 +19,19 @@ export default function MyCardsTab() {
   const [editingUserCard, setEditingUserCard] = useState<UserCard | null>(null);
 
   const { data, isLoading } = api.userCard.getList.useQuery();
+  const { data: placedUserCardIds } =
+    api.userSet.getPlacedUserCardIds.useQuery();
+  const { mutateAsync: deleteUserCard } = api.userCard.delete.useMutation();
+  const apiUtils = api.useUtils();
   const userCards = data ?? [];
+
+  async function handleDelete(userCard: UserCard) {
+    await deleteUserCard({ id: userCard.id });
+    await Promise.all([
+      apiUtils.userCard.getList.invalidate(),
+      apiUtils.userSet.getPlacedUserCardIds.invalidate(),
+    ]);
+  }
 
   if (isLoading) {
     return (
@@ -71,6 +83,8 @@ export default function MyCardsTab() {
             onCardClick={(userCard) => {
               setEditingUserCard(userCard);
             }}
+            onUserCardDelete={handleDelete}
+            placedUserCardIds={placedUserCardIds ?? []}
           />
         )}
       </TabsContent>

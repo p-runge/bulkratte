@@ -1,12 +1,14 @@
 "use client";
 
 import type { UserCard } from "@/components/binder/types";
+import ConfirmButton from "@/components/confirm-button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import pokemonAPI from "@/lib/pokemon-api";
 import { cn } from "@/lib/utils";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { Circle } from "lucide-react";
+import { Circle, Info, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { FormattedMessage, useIntl } from "react-intl";
 import Loader from "../loader";
@@ -17,6 +19,8 @@ type UserCardGridProps = {
   selectedUserCardIds: Set<string>;
   onUserCardClick: (userCard: UserCard) => void;
   onSelectAll?: (selectAll: boolean) => void;
+  onUserCardDelete?: (userCard: UserCard) => void;
+  placedUserCardIds?: Array<{ userCardId: string; setName: string }>;
   isLoading: boolean;
   maxHeight?: string;
 };
@@ -27,6 +31,8 @@ export function UserCardGrid({
   selectedUserCardIds,
   onUserCardClick,
   onSelectAll,
+  onUserCardDelete,
+  placedUserCardIds,
   isLoading,
   maxHeight,
 }: UserCardGridProps) {
@@ -112,15 +118,26 @@ export function UserCardGrid({
           const selectionIndex = isSelected
             ? Array.from(selectedUserCardIds).indexOf(userCard.id) + 1
             : 0;
+          const placement = placedUserCardIds?.find(
+            (p) => p.userCardId === userCard.id,
+          );
           return (
-            <button
+            <div
               key={userCard.id}
+              role="button"
+              tabIndex={0}
               onClick={() => onUserCardClick(userCard)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onUserCardClick(userCard);
+                }
+              }}
               className={cn(
                 "group relative rounded-lg overflow-hidden transition-all hover:scale-105",
                 "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background",
                 isSelected && "ring-2 ring-primary",
-                "w-full",
+                "w-full cursor-pointer",
               )}
             >
               <div className="aspect-245/337 relative">
@@ -148,6 +165,58 @@ export function UserCardGrid({
                 )}
               </div>
               {/* User card details overlay */}
+              {onUserCardDelete && (
+                <div
+                  className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <ConfirmButton
+                    size="icon"
+                    variant="destructive"
+                    className="h-7 w-7 bg-black/70 hover:bg-destructive border-none"
+                    destructive
+                    title={intl.formatMessage({
+                      id: "dialog.delete_card.title",
+                      defaultMessage: "Delete Card",
+                    })}
+                    description={intl.formatMessage({
+                      id: "dialog.delete_card.description",
+                      defaultMessage:
+                        "Are you sure you want to delete this card from your collection?",
+                    })}
+                    extraContent={
+                      placement ? (
+                        <Alert variant="destructive">
+                          <Info />
+                          <AlertTitle>
+                            {intl.formatMessage({
+                              id: "dialog.delete_card.placed_warning.title",
+                              defaultMessage: "Card is Placed in a Set",
+                            })}
+                          </AlertTitle>
+                          <AlertDescription>
+                            {intl.formatMessage(
+                              {
+                                id: "dialog.delete_card.placed_warning.description",
+                                defaultMessage:
+                                  'This card is currently placed in "{setName}" and will be removed from it.',
+                              },
+                              { setName: placement.setName },
+                            )}
+                          </AlertDescription>
+                        </Alert>
+                      ) : undefined
+                    }
+                    confirmLabel={intl.formatMessage({
+                      id: "common.button.delete",
+                      defaultMessage: "Delete",
+                    })}
+                    onClick={() => onUserCardDelete(userCard)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </ConfirmButton>
+                </div>
+              )}
               <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
                 {userCard.language && (
                   <Badge
@@ -188,7 +257,7 @@ export function UserCardGrid({
                     `${intl.formatNumber(userCard.card.price / 100, { style: "currency", currency: "EUR" })} (avg. 7d)`}
                 </p>
               </div>
-            </button>
+            </div>
           );
         })}
       </div>
