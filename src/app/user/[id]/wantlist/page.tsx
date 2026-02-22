@@ -2,7 +2,7 @@
 
 import {
   CardFilters,
-  type FilterState,
+  type CardQuery,
 } from "@/components/card-browser/card-filters";
 import { UserCardGrid } from "@/components/card-browser/user-card-grid";
 import Loader from "@/components/loader";
@@ -25,7 +25,7 @@ export default function UserWantlistPage({
     "wantlist" | "in-collection" | "in-collection-not-in-sets"
   >("wantlist");
 
-  const [filters, setFilters] = useState<FilterState>({
+  const [filters, setFilters] = useState<CardQuery>({
     setId: "",
     rarity: "",
     search: "",

@@ -22,21 +22,30 @@ export type FilterState = {
   search: string;
   releaseDateFrom: string;
   releaseDateTo: string;
+};
+
+export type SortState = {
   sortBy: "set-and-number" | "name" | "rarity" | "price";
   sortOrder: "asc" | "desc";
 };
-const EMPTY_FILTERS: FilterState = {
+
+export type CardQuery = FilterState & SortState;
+
+const EMPTY_FILTER_STATE: FilterState = {
   setId: "",
   rarity: "",
   search: "",
   releaseDateFrom: "",
   releaseDateTo: "",
+};
+
+const DEFAULT_SORT_STATE: SortState = {
   sortBy: "set-and-number",
   sortOrder: "asc",
 };
 
 type CardFiltersProps = {
-  onFilterChange: (filters: FilterState) => void;
+  onFilterChange: (query: CardQuery) => void;
   disableSetFilter?: boolean;
   filterOptions?: {
     setIds: string[];
@@ -51,7 +60,9 @@ export function CardFilters({
 }: CardFiltersProps) {
   const intl = useIntl();
 
-  const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
+  const [filterState, setFilterState] =
+    useState<FilterState>(EMPTY_FILTER_STATE);
+  const [sortState, setSortState] = useState<SortState>(DEFAULT_SORT_STATE);
 
   const { data: setListData } = api.set.getList.useQuery(undefined, {
     enabled: !disableSetFilter,
@@ -65,18 +76,24 @@ export function CardFilters({
   // Filter sets to only show those with cards
   const sets = allSets.filter((set) => availableSetIds.has(set.id));
 
-  const updateFilter = (key: keyof FilterState, value: string) => {
-    const newFilters = { ...filters, [key]: value };
-    setFilters(newFilters);
-    onFilterChange(newFilters);
+  const updateFilterValue = (key: keyof FilterState, value: string) => {
+    const newFilterState = { ...filterState, [key]: value };
+    setFilterState(newFilterState);
+    onFilterChange({ ...newFilterState, ...sortState });
+  };
+
+  const updateSortState = (key: keyof SortState, value: string) => {
+    const newSortState = { ...sortState, [key]: value } as SortState;
+    setSortState(newSortState);
+    onFilterChange({ ...filterState, ...newSortState });
   };
 
   const clearFilters = () => {
-    setFilters(EMPTY_FILTERS);
-    onFilterChange(EMPTY_FILTERS);
+    setFilterState(EMPTY_FILTER_STATE);
+    onFilterChange({ ...EMPTY_FILTER_STATE, ...sortState });
   };
 
-  const hasActiveFilters = Object.values(filters).some((v) => v !== "");
+  const hasActiveFilters = Object.values(filterState).some((v) => v !== "");
 
   return (
     <div className="space-y-4">
@@ -117,8 +134,8 @@ export function CardFilters({
               id: "card.filter.search.placeholder",
               defaultMessage: "Card name or number...",
             })}
-            value={filters.search}
-            onChange={(e) => updateFilter("search", e.target.value)}
+            value={filterState.search}
+            onChange={(e) => updateFilterValue("search", e.target.value)}
             className="bg-background"
           />
         </div>
@@ -132,8 +149,8 @@ export function CardFilters({
               })}
             </Label>
             <Select
-              value={filters.setId}
-              onValueChange={(value) => updateFilter("setId", value)}
+              value={filterState.setId}
+              onValueChange={(value) => updateFilterValue("setId", value)}
             >
               <SelectTrigger id="set" className="bg-background">
                 <SelectValue
@@ -170,8 +187,8 @@ export function CardFilters({
             })}
           </Label>
           <Select
-            value={filters.rarity}
-            onValueChange={(value) => updateFilter("rarity", value)}
+            value={filterState.rarity}
+            onValueChange={(value) => updateFilterValue("rarity", value)}
           >
             <SelectTrigger id="rarity" className="bg-background">
               <SelectValue
@@ -211,8 +228,10 @@ export function CardFilters({
               id: "card.filter.date.placeholder.from",
               defaultMessage: "From",
             })}
-            value={filters.releaseDateFrom}
-            onChange={(e) => updateFilter("releaseDateFrom", e.target.value)}
+            value={filterState.releaseDateFrom}
+            onChange={(e) =>
+              updateFilterValue("releaseDateFrom", e.target.value)
+            }
             className="bg-background"
           />
         </div>
@@ -231,8 +250,8 @@ export function CardFilters({
               id: "card.filter.date.placeholder.to",
               defaultMessage: "To",
             })}
-            value={filters.releaseDateTo}
-            onChange={(e) => updateFilter("releaseDateTo", e.target.value)}
+            value={filterState.releaseDateTo}
+            onChange={(e) => updateFilterValue("releaseDateTo", e.target.value)}
             className="bg-background"
           />
         </div>
@@ -247,8 +266,8 @@ export function CardFilters({
             })}
           </Label>
           <Select
-            value={filters.sortBy}
-            onValueChange={(value) => updateFilter("sortBy", value)}
+            value={sortState.sortBy}
+            onValueChange={(value) => updateSortState("sortBy", value)}
           >
             <SelectTrigger id="sort-by" className="bg-background">
               <SelectValue
@@ -295,10 +314,8 @@ export function CardFilters({
             })}
           </Label>
           <Select
-            value={filters.sortOrder}
-            onValueChange={(value) =>
-              updateFilter("sortOrder", value as "asc" | "desc")
-            }
+            value={sortState.sortOrder}
+            onValueChange={(value) => updateSortState("sortOrder", value)}
           >
             <SelectTrigger id="sort-order" className="bg-background">
               <SelectValue

@@ -2,7 +2,7 @@
 
 import { api } from "@/lib/api/react";
 import { useState } from "react";
-import { CardFilters, type FilterState } from "./card-filters";
+import { CardFilters, type CardQuery } from "./card-filters";
 import { UserCardGrid } from "./user-card-grid";
 import type { UserCard } from "@/components/binder/types";
 
@@ -12,7 +12,7 @@ type UserCardBrowserProps = {
 };
 
 export function UserCardBrowser(props: UserCardBrowserProps) {
-  const [filters, setFilters] = useState<FilterState>({
+  const [filters, setFilters] = useState<CardQuery>({
     setId: "",
     rarity: "",
     search: "",
