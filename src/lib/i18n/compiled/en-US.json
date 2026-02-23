@@ -1069,6 +1069,12 @@
       "value": " cards selected"
     }
   ],
+  "page.set.new.hint": [
+    {
+      "type": 0,
+      "value": "First, set up your set's structure — this defines how it will look once finished. After creating it, you can place cards from your collection into it."
+    }
+  ],
   "page.set.new.title": [
     {
       "type": 0,

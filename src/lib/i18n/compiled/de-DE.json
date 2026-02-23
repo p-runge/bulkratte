@@ -1069,6 +1069,12 @@
       "value": " Karten ausgewählt"
     }
   ],
+  "page.set.new.hint": [
+    {
+      "type": 0,
+      "value": "Lege zuerst die Struktur deines Sets fest – das bestimmt, wie es aussehen wird, sobald du es vervollständigt hast. Nach dem Erstellen kannst du Karten aus deiner Sammlung darin platzieren."
+    }
+  ],
   "page.set.new.title": [
     {
       "type": 0,

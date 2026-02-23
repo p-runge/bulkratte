@@ -2,6 +2,7 @@ import { TRPCReactProvider } from "@/lib/api/react";
 import { DeviceSync } from "@/lib/hooks";
 import { I18nProvider } from "@/lib/i18n/client";
 import { getServerLocale } from "@/lib/i18n/server";
+import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/providers/theme-provider";
 import "@total-typescript/ts-reset";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -39,6 +40,7 @@ export default async function RootLayout({
             >
               <I18nProvider serverLocale={serverLocale}>
                 {children}
+                <Toaster />
               </I18nProvider>
             </ThemeProvider>
           </TRPCReactProvider>

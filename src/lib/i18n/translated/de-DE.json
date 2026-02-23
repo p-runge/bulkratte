@@ -150,6 +150,7 @@
   "page.set.edit.title": "Set bearbeiten",
   "page.set.error.not_found": "Set nicht gefunden",
   "page.set.form.cards_selected": "{count} Karten ausgewählt",
+  "page.set.new.hint": "Lege zuerst die Struktur deines Sets fest – das bestimmt, wie es aussehen wird, sobald du es vervollständigt hast. Nach dem Erstellen kannst du Karten aus deiner Sammlung darin platzieren.",
   "page.set.new.title": "Neues Set erstellen",
   "page.sets.description": "Durchsuche alle verfügbaren Pokémon-Kartensets. Klicke auf ein Set, um seine Karten anzuzeigen oder um Sets zu markieren, die du aktiv sammelst.",
   "page.sets.label": "Sets",

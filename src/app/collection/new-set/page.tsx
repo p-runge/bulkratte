@@ -16,6 +16,8 @@ import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormattedMessage, useIntl } from "react-intl";
+import { useEffect } from "react";
+import { toast } from "sonner";
 import z from "zod";
 
 export default function NewSetPage() {
@@ -46,6 +48,22 @@ function Content() {
   const intl = useIntl();
 
   const { form } = useBinderContext();
+
+  useEffect(() => {
+    toast.info(
+      intl.formatMessage({
+        id: "page.set.new.hint",
+        defaultMessage:
+          "First, set up your set's structure — this defines how it will look once finished. After creating it, you can place cards from your collection into it.",
+      }),
+      {
+        duration: Infinity,
+        closeButton: true,
+        position: "top-center",
+      },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { mutateAsync: createUserSet, isPending } =
     api.userSet.create.useMutation();
