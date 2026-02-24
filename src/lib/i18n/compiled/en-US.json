@@ -5,6 +5,94 @@
       "value": "Add Cards"
     }
   ],
+  "binder.info.autoPlace.button": [
+    {
+      "type": 0,
+      "value": "Auto-place"
+    }
+  ],
+  "binder.info.autoPlace.description": [
+    {
+      "type": 1,
+      "value": "count"
+    },
+    {
+      "type": 0,
+      "value": " "
+    },
+    {
+      "offset": 0,
+      "options": {
+        "one": {
+          "value": [
+            {
+              "type": 0,
+              "value": "card"
+            }
+          ]
+        },
+        "other": {
+          "value": [
+            {
+              "type": 0,
+              "value": "cards"
+            }
+          ]
+        }
+      },
+      "pluralType": "cardinal",
+      "type": 6,
+      "value": "count"
+    },
+    {
+      "type": 0,
+      "value": " can be automatically placed"
+    }
+  ],
+  "binder.info.autoPlace.error": [
+    {
+      "type": 0,
+      "value": "Failed to auto-place cards."
+    }
+  ],
+  "binder.info.autoPlace.success": [
+    {
+      "type": 1,
+      "value": "count"
+    },
+    {
+      "type": 0,
+      "value": " "
+    },
+    {
+      "offset": 0,
+      "options": {
+        "one": {
+          "value": [
+            {
+              "type": 0,
+              "value": "card"
+            }
+          ]
+        },
+        "other": {
+          "value": [
+            {
+              "type": 0,
+              "value": "cards"
+            }
+          ]
+        }
+      },
+      "pluralType": "cardinal",
+      "type": 6,
+      "value": "count"
+    },
+    {
+      "type": 0,
+      "value": " placed successfully."
+    }
+  ],
   "binder.info.preferences.title": [
     {
       "type": 0,

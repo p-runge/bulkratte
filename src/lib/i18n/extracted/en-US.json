@@ -1,5 +1,9 @@
 {
   "binder.addCards.title": "Add Cards",
+  "binder.info.autoPlace.button": "Auto-place",
+  "binder.info.autoPlace.description": "{count} {count, plural, one {card} other {cards}} can be automatically placed",
+  "binder.info.autoPlace.error": "Failed to auto-place cards.",
+  "binder.info.autoPlace.success": "{count} {count, plural, one {card} other {cards}} placed successfully.",
   "binder.info.preferences.title": "Preferences",
   "binder.info.progress.obtained": "Obtained but not placed",
   "binder.info.progress.placed": "Placed in Binder",

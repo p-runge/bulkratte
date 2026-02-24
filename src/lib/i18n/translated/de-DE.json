@@ -1,5 +1,9 @@
 {
   "binder.addCards.title": "Karten hinzufügen",
+  "binder.info.autoPlace.button": "Automatisch platzieren",
+  "binder.info.autoPlace.description": "{count} {count, plural, one {Karte kann} other {Karten können}} automatisch platziert werden",
+  "binder.info.autoPlace.error": "Automatisches Platzieren fehlgeschlagen.",
+  "binder.info.autoPlace.success": "{count} {count, plural, one {Karte} other {Karten}} erfolgreich platziert.",
   "binder.info.preferences.title": "Präferenzen",
   "binder.info.progress.obtained": "Im Besitz aber nicht platziert",
   "binder.info.progress.placed": "Im Binder platziert",

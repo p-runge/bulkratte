@@ -4,13 +4,16 @@ import { AppRouter } from "@/lib/api/routers/_app";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { CalendarIcon, LayoutGridIcon } from "lucide-react";
-import { FormattedMessage, FormattedDate } from "react-intl";
+import { CalendarIcon, LayoutGridIcon, Loader2, Wand2Icon } from "lucide-react";
+import { FormattedMessage, FormattedDate, useIntl } from "react-intl";
 import { useMemo } from "react";
 import { useBinderContext } from "@/components/binder/binder-context";
+import { api } from "@/lib/api/react";
 import pokemonAPI from "@/lib/pokemon-api";
+import { toast } from "sonner";
 
 type UserCard = Awaited<ReturnType<AppRouter["userCard"]["getList"]>>[number];
 
@@ -19,9 +22,12 @@ interface SetInfoProps {
 }
 
 export function SetInfo({ userCards }: SetInfoProps) {
+  const intl = useIntl();
   const {
     form,
     initialUserSet,
+    placedUserCards,
+    userSetId,
     considerPreferredLanguage = true,
     considerPreferredVariant = true,
     considerPreferredCondition = true,
@@ -38,6 +44,33 @@ export function SetInfo({ userCards }: SetInfoProps) {
 
   const hasAnyPreferred =
     preferredLanguage || preferredVariant || preferredCondition;
+  const apiUtils = api.useUtils();
+  const { mutateAsync: autoPlace, isPending: isAutoPlacing } =
+    api.userSet.autoPlace.useMutation({
+      onSuccess: async (data) => {
+        await apiUtils.userSet.getById.invalidate({ id: userSetId! });
+        await apiUtils.userSet.getPlacedUserCardIds.invalidate();
+        toast.success(
+          intl.formatMessage(
+            {
+              id: "binder.info.autoPlace.success",
+              defaultMessage:
+                "{count} {count, plural, one {card} other {cards}} placed successfully.",
+            },
+            { count: data.placed },
+          ),
+        );
+      },
+      onError: () => {
+        toast.error(
+          intl.formatMessage({
+            id: "binder.info.autoPlace.error",
+            defaultMessage: "Failed to auto-place cards.",
+          }),
+        );
+      },
+    });
+
   const { totalCards, placedCards, obtainedCards, obtainedButNotPlaced } =
     useMemo(() => {
       const totalCards = initialUserSet.cards.length;
@@ -114,6 +147,68 @@ export function SetInfo({ userCards }: SetInfoProps) {
       considerPreferredVariant,
       considerPreferredCondition,
     ]);
+
+  const autoPlaceCount = useMemo(() => {
+    if (!placedUserCards) return 0;
+
+    const alreadyPlacedIds = new Set(
+      placedUserCards.map((pc) => pc.userCardId),
+    );
+
+    const unplacedSlots = initialUserSet.cards.filter(
+      (card) => card.userCardId === null && card.cardId !== null,
+    );
+
+    if (unplacedSlots.length === 0) return 0;
+
+    const availableUserCards = userCards.filter(
+      (uc) => !alreadyPlacedIds.has(uc.id),
+    );
+
+    const usedIds = new Set<string>();
+    let count = 0;
+
+    for (const slot of unplacedSlots) {
+      const effectiveLang =
+        slot.preferredLanguage ?? initialUserSet.set.preferredLanguage;
+      const effectiveVariant =
+        slot.preferredVariant ?? initialUserSet.set.preferredVariant;
+      const effectiveCondition =
+        slot.preferredCondition ?? initialUserSet.set.preferredCondition;
+
+      const match = availableUserCards.find((uc) => {
+        if (uc.card.id !== slot.cardId) return false;
+        if (usedIds.has(uc.id)) return false;
+        if (considerPreferredLanguage && effectiveLang) {
+          if (uc.language !== effectiveLang) return false;
+        }
+        if (considerPreferredVariant && effectiveVariant) {
+          if (uc.variant !== effectiveVariant) return false;
+        }
+        if (considerPreferredCondition && effectiveCondition) {
+          if (
+            !pokemonAPI.meetsMinimumCondition(uc.condition, effectiveCondition)
+          )
+            return false;
+        }
+        return true;
+      });
+
+      if (match) {
+        usedIds.add(match.id);
+        count++;
+      }
+    }
+
+    return count;
+  }, [
+    initialUserSet,
+    userCards,
+    placedUserCards,
+    considerPreferredLanguage,
+    considerPreferredVariant,
+    considerPreferredCondition,
+  ]);
 
   const placedPercentage =
     totalCards > 0 ? (placedCards / totalCards) * 100 : 0;
@@ -201,6 +296,42 @@ export function SetInfo({ userCards }: SetInfoProps) {
             )}
           </div>
         </div>
+
+        {/* Auto-place */}
+        {autoPlaceCount > 0 && userSetId && (
+          <div className="flex items-center justify-between gap-3 pt-3 border-t">
+            <p className="text-sm text-muted-foreground">
+              <FormattedMessage
+                id="binder.info.autoPlace.description"
+                defaultMessage="{count} {count, plural, one {card} other {cards}} can be automatically placed"
+                values={{ count: autoPlaceCount }}
+              />
+            </p>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={isAutoPlacing}
+              onClick={() =>
+                autoPlace({
+                  userSetId,
+                  considerPreferredLanguage,
+                  considerPreferredVariant,
+                  considerPreferredCondition,
+                })
+              }
+            >
+              {isAutoPlacing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Wand2Icon className="h-4 w-4" />
+              )}
+              <FormattedMessage
+                id="binder.info.autoPlace.button"
+                defaultMessage="Auto-place"
+              />
+            </Button>
+          </div>
+        )}
 
         {/* Preferences */}
         {hasAnyPreferred && (

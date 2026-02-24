@@ -1,10 +1,15 @@
 import { z } from "zod";
 
 import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
-import { cardsTable, userSetCardsTable, userSetsTable } from "@/lib/db/index";
+import {
+  cardsTable,
+  userCardsTable,
+  userSetCardsTable,
+  userSetsTable,
+} from "@/lib/db/index";
 import { localizeRecords } from "@/lib/db/localization";
 import { TRPCError } from "@trpc/server";
-import { and, asc, eq, inArray, isNotNull, ne } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull, isNull, ne } from "drizzle-orm";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const userSetRouter = createTRPCRouter({
@@ -547,6 +552,168 @@ export const userSetRouter = createTRPCRouter({
         );
 
       return { success: true };
+    }),
+
+  autoPlace: protectedProcedure
+    .input(
+      z.object({
+        userSetId: z.string().uuid(),
+        considerPreferredLanguage: z.boolean().default(true),
+        considerPreferredVariant: z.boolean().default(true),
+        considerPreferredCondition: z.boolean().default(true),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Condition ordering: best (index 0) to worst (index N)
+      const conditionOrder = [
+        "Mint",
+        "Near Mint",
+        "Excellent",
+        "Good",
+        "Light Played",
+        "Played",
+        "Poor",
+      ];
+
+      function meetsMinCondition(
+        cardCondition: string | null | undefined,
+        minCondition: string | null | undefined,
+      ): boolean {
+        if (!minCondition) return true;
+        if (!cardCondition) return false;
+        const cardIdx = conditionOrder.indexOf(cardCondition);
+        const minIdx = conditionOrder.indexOf(minCondition);
+        if (cardIdx === -1 || minIdx === -1) return false;
+        return cardIdx <= minIdx;
+      }
+
+      // Verify the user owns the set
+      const userSet = await ctx.db
+        .select({
+          id: userSetsTable.id,
+          userId: userSetsTable.user_id,
+          preferredLanguage: userSetsTable.preferred_language,
+          preferredVariant: userSetsTable.preferred_variant,
+          preferredCondition: userSetsTable.preferred_condition,
+        })
+        .from(userSetsTable)
+        .where(eq(userSetsTable.id, input.userSetId))
+        .then((res) => res[0]);
+
+      if (!userSet || userSet.userId !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to modify this user set",
+        });
+      }
+
+      // Get all unplaced slots in this user set
+      const unplacedSlots = await ctx.db
+        .select({
+          id: userSetCardsTable.id,
+          cardId: userSetCardsTable.card_id,
+          preferredLanguage: userSetCardsTable.preferred_language,
+          preferredVariant: userSetCardsTable.preferred_variant,
+          preferredCondition: userSetCardsTable.preferred_condition,
+        })
+        .from(userSetCardsTable)
+        .where(
+          and(
+            eq(userSetCardsTable.user_set_id, input.userSetId),
+            isNull(userSetCardsTable.user_card_id),
+          ),
+        );
+
+      if (unplacedSlots.length === 0) {
+        return { placed: 0 };
+      }
+
+      // Get all user card IDs already placed in any set owned by this user
+      const placedRows = await ctx.db
+        .select({ userCardId: userSetCardsTable.user_card_id })
+        .from(userSetCardsTable)
+        .innerJoin(
+          userSetsTable,
+          eq(userSetCardsTable.user_set_id, userSetsTable.id),
+        )
+        .where(
+          and(
+            eq(userSetsTable.user_id, ctx.session.user.id),
+            isNotNull(userSetCardsTable.user_card_id),
+          ),
+        );
+
+      const placedIds = new Set(
+        placedRows.map((p) => p.userCardId).filter(Boolean) as string[],
+      );
+
+      // Fetch user cards from the collection that belong to the needed card IDs
+      const neededCardIds = [...new Set(unplacedSlots.map((s) => s.cardId))];
+
+      const collectionCards = await ctx.db
+        .select({
+          id: userCardsTable.id,
+          cardId: userCardsTable.card_id,
+          language: userCardsTable.language,
+          variant: userCardsTable.variant,
+          condition: userCardsTable.condition,
+        })
+        .from(userCardsTable)
+        .where(
+          and(
+            eq(userCardsTable.user_id, ctx.session.user.id),
+            inArray(userCardsTable.card_id, neededCardIds),
+          ),
+        );
+
+      const availableCards = collectionCards.filter(
+        (uc) => !placedIds.has(uc.id),
+      );
+
+      // Match each unplaced slot to an available user card
+      const usedIds = new Set<string>();
+      const placements: Array<{ userSetCardId: string; userCardId: string }> =
+        [];
+
+      for (const slot of unplacedSlots) {
+        const effectiveLang =
+          slot.preferredLanguage ?? userSet.preferredLanguage;
+        const effectiveVariant =
+          slot.preferredVariant ?? userSet.preferredVariant;
+        const effectiveCondition =
+          slot.preferredCondition ?? userSet.preferredCondition;
+
+        const match = availableCards.find((uc) => {
+          if (uc.cardId !== slot.cardId) return false;
+          if (usedIds.has(uc.id)) return false;
+          if (input.considerPreferredLanguage && effectiveLang) {
+            if (uc.language !== effectiveLang) return false;
+          }
+          if (input.considerPreferredVariant && effectiveVariant) {
+            if (uc.variant !== effectiveVariant) return false;
+          }
+          if (input.considerPreferredCondition && effectiveCondition) {
+            if (!meetsMinCondition(uc.condition, effectiveCondition))
+              return false;
+          }
+          return true;
+        });
+
+        if (match) {
+          usedIds.add(match.id);
+          placements.push({ userSetCardId: slot.id, userCardId: match.id });
+        }
+      }
+
+      // Apply all placements
+      for (const placement of placements) {
+        await ctx.db
+          .update(userSetCardsTable)
+          .set({ user_card_id: placement.userCardId })
+          .where(eq(userSetCardsTable.id, placement.userSetCardId));
+      }
+
+      return { placed: placements.length };
     }),
 
   // TODO: remove
