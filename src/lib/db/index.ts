@@ -250,6 +250,7 @@ export const userSetsTable = pgTable("user_sets", {
   preferred_language: languageEnum(),
   preferred_variant: variantEnum(),
   preferred_condition: conditionEnum(),
+  order: integer("order").notNull().default(0),
 });
 
 export const userSetCardsTable = pgTable(

@@ -9,7 +9,7 @@ import {
 } from "@/lib/db/index";
 import { localizeRecords } from "@/lib/db/localization";
 import { TRPCError } from "@trpc/server";
-import { and, asc, eq, inArray, isNotNull, isNull, ne } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull, isNull, ne, sql } from "drizzle-orm";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const userSetRouter = createTRPCRouter({
@@ -42,6 +42,12 @@ export const userSetRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      // Shift all existing sets' order up by 1 so the new set can be first
+      await ctx.db
+        .update(userSetsTable)
+        .set({ order: sql`${userSetsTable.order} + 1` })
+        .where(eq(userSetsTable.user_id, ctx.session.user.id));
+
       const userSet = await ctx.db
         .insert(userSetsTable)
         .values({
@@ -51,6 +57,7 @@ export const userSetRouter = createTRPCRouter({
           preferred_language: input.preferredLanguage,
           preferred_variant: input.preferredVariant,
           preferred_condition: input.preferredCondition,
+          order: 0,
         })
         .returning({
           id: userSetsTable.id,
@@ -451,7 +458,7 @@ export const userSetRouter = createTRPCRouter({
       })
       .from(userSetsTable)
       .where(eq(userSetsTable.user_id, ctx.session.user.id))
-      .orderBy(userSetsTable.created_at);
+      .orderBy(asc(userSetsTable.order), asc(userSetsTable.created_at));
 
     // Get card counts for each user set
     const userSetsWithCounts = await Promise.all(
@@ -714,6 +721,37 @@ export const userSetRouter = createTRPCRouter({
       }
 
       return { placed: placements.length };
+    }),
+
+  reorder: protectedProcedure
+    .input(z.object({ ids: z.array(z.string().uuid()) }))
+    .mutation(async ({ ctx, input }) => {
+      // Verify all sets belong to the current user
+      const userSets = await ctx.db
+        .select({ id: userSetsTable.id })
+        .from(userSetsTable)
+        .where(
+          and(
+            eq(userSetsTable.user_id, ctx.session.user.id),
+            inArray(userSetsTable.id, input.ids),
+          ),
+        );
+
+      if (userSets.length !== input.ids.length) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to reorder one or more sets",
+        });
+      }
+
+      await Promise.all(
+        input.ids.map((id, index) =>
+          ctx.db
+            .update(userSetsTable)
+            .set({ order: index })
+            .where(eq(userSetsTable.id, id)),
+        ),
+      );
     }),
 
   // TODO: remove
