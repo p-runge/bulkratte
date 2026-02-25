@@ -77,8 +77,9 @@ function Content({ userSet }: { userSet: UserSet }) {
       preferredCondition: data.preferredCondition,
     });
 
-    // Invalidate the query to ensure fresh data
+    // Invalidate the queries to ensure fresh data
     await apiUtils.userSet.getById.invalidate({ id: userSet.set.id });
+    await apiUtils.userSet.getList.invalidate();
 
     router.push(`/collection/${userSet.set.id}`);
   }

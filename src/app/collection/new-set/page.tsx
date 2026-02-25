@@ -65,6 +65,7 @@ function Content() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const apiUtils = api.useUtils();
   const { mutateAsync: createUserSet, isPending } =
     api.userSet.create.useMutation();
 
@@ -94,6 +95,7 @@ function Content() {
       preferredVariant: data.preferredVariant,
       preferredCondition: data.preferredCondition,
     });
+    await apiUtils.userSet.getList.invalidate();
     router.push("/collection");
   }
 
