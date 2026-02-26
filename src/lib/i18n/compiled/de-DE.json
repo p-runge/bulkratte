@@ -531,6 +531,12 @@
       "value": "Löschen"
     }
   ],
+  "common.button.edit": [
+    {
+      "type": 0,
+      "value": "Bearbeiten"
+    }
+  ],
   "common.button.save": [
     {
       "type": 0,

@@ -61,6 +61,7 @@
   "common.breadcrumb.label": "Breadcrumb",
   "common.button.cancel": "Cancel",
   "common.button.delete": "Delete",
+  "common.button.edit": "Edit",
   "common.button.save": "Save",
   "common.button.saving": "Saving...",
   "confirm.button.cancel.label": "Cancel",

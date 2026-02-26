@@ -1,5 +1,6 @@
 "use client";
 
+import UserCardDialog from "@/app/collection/_components/my-cards-tab/user-card-dialog";
 import { ConditionBadge } from "@/components/condition-badge";
 import { ConditionToggleGroup } from "@/components/condition-toggle-group";
 import ConfirmButton from "@/components/confirm-button";
@@ -22,7 +23,7 @@ import { AppRouter } from "@/lib/api/routers/_app";
 import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
 import { RHFForm, useRHFForm } from "@/lib/form/utils";
 import { cn } from "@/lib/utils";
-import { Plus } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { Controller } from "react-hook-form";
@@ -68,6 +69,7 @@ export function PlaceCardDialog({
     hasUserCard ? "select" : "create",
   );
   const [showCardsFromOtherSets, setShowCardsFromOtherSets] = useState(false);
+  const [editingUserCard, setEditingUserCard] = useState<UserCard | null>(null);
 
   const { data: card } = api.card.getById.useQuery({ cardId });
   const { data: placedUserCards } = api.userSet.getPlacedUserCardIds.useQuery();
@@ -226,6 +228,16 @@ export function PlaceCardDialog({
     return null;
   }
 
+  if (editingUserCard) {
+    return (
+      <UserCardDialog
+        mode="edit"
+        userCard={editingUserCard}
+        onClose={() => setEditingUserCard(null)}
+      />
+    );
+  }
+
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent
@@ -248,62 +260,12 @@ export function PlaceCardDialog({
         {mode === "select" ? (
           <div className="overflow-y-auto max-h-[70vh]">
             {isPlaced && currentlyPlacedCard && (
-              <div className="mb-6 p-4 border rounded-lg bg-muted/30">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold">
-                    {intl.formatMessage({
-                      id: "dialog.place_card.currently_placed",
-                      defaultMessage: "Currently Placed",
-                    })}
-                  </h4>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleUnplace}
-                    disabled={isUnplacing}
-                  >
-                    {intl.formatMessage({
-                      id: "dialog.place_card.action.unplace",
-                      defaultMessage: "Unplace",
-                    })}
-                  </Button>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Image
-                    src={currentlyPlacedCard.card.imageSmall ?? ""}
-                    alt={currentlyPlacedCard.card.name ?? ""}
-                    width={64}
-                    height={89}
-                    unoptimized
-                    className="w-16 h-auto object-contain rounded"
-                  />
-                  <div>
-                    <div className="font-medium">
-                      {currentlyPlacedCard.card.name}
-                    </div>
-                    <div className="flex items-center gap-1.5 mt-1">
-                      {currentlyPlacedCard.language && (
-                        <Badge variant="outline" className="h-5.5">
-                          <LanguageBadge
-                            code={currentlyPlacedCard.language}
-                            className="text-sm"
-                          />
-                        </Badge>
-                      )}
-                      {currentlyPlacedCard.variant && (
-                        <Badge variant="outline" className="text-xs">
-                          {currentlyPlacedCard.variant}
-                        </Badge>
-                      )}
-                      {currentlyPlacedCard.condition && (
-                        <ConditionBadge
-                          condition={currentlyPlacedCard.condition}
-                        />
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <CurrentlyPlacedCardPanel
+                userCard={currentlyPlacedCard}
+                isUnplacing={isUnplacing}
+                onEdit={() => setEditingUserCard(currentlyPlacedCard)}
+                onUnplace={handleUnplace}
+              />
             )}
 
             {hasUserCard && (
@@ -774,62 +736,12 @@ export function PlaceCardDialog({
           >
             <div className="overflow-y-auto max-h-[70vh]">
               {isPlaced && currentlyPlacedCard && (
-                <div className="mb-6 p-4 border rounded-lg bg-muted/30">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-semibold">
-                      {intl.formatMessage({
-                        id: "dialog.place_card.currently_placed",
-                        defaultMessage: "Currently Placed",
-                      })}
-                    </h4>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={handleUnplace}
-                      disabled={isUnplacing}
-                    >
-                      {intl.formatMessage({
-                        id: "dialog.place_card.action.unplace",
-                        defaultMessage: "Unplace",
-                      })}
-                    </Button>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Image
-                      src={currentlyPlacedCard.card.imageSmall ?? ""}
-                      alt={currentlyPlacedCard.card.name ?? ""}
-                      width={64}
-                      height={89}
-                      unoptimized
-                      className="w-16 h-auto object-contain rounded"
-                    />
-                    <div>
-                      <div className="font-medium">
-                        {currentlyPlacedCard.card.name}
-                      </div>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        {currentlyPlacedCard.language && (
-                          <Badge variant="outline" className="h-5.5">
-                            <LanguageBadge
-                              code={currentlyPlacedCard.language}
-                              className="text-sm"
-                            />
-                          </Badge>
-                        )}
-                        {currentlyPlacedCard.variant && (
-                          <Badge variant="outline" className="text-xs">
-                            {currentlyPlacedCard.variant}
-                          </Badge>
-                        )}
-                        {currentlyPlacedCard.condition && (
-                          <ConditionBadge
-                            condition={currentlyPlacedCard.condition}
-                          />
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <CurrentlyPlacedCardPanel
+                  userCard={currentlyPlacedCard}
+                  isUnplacing={isUnplacing}
+                  onEdit={() => setEditingUserCard(currentlyPlacedCard)}
+                  onUnplace={handleUnplace}
+                />
               )}
 
               {hasUserCard && (
@@ -968,5 +880,80 @@ export function PlaceCardDialog({
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function CurrentlyPlacedCardPanel({
+  userCard,
+  isUnplacing,
+  onEdit,
+  onUnplace,
+}: {
+  userCard: UserCard;
+  isUnplacing: boolean;
+  onEdit: () => void;
+  onUnplace: () => void;
+}) {
+  const intl = useIntl();
+
+  return (
+    <div className="mb-6 p-4 border rounded-lg bg-muted/30">
+      <div className="flex items-center justify-between mb-3">
+        <h4 className="font-semibold">
+          {intl.formatMessage({
+            id: "dialog.place_card.currently_placed",
+            defaultMessage: "Currently Placed",
+          })}
+        </h4>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={onEdit}>
+            <Pencil className="h-4 w-4 mr-1" />
+            {intl.formatMessage({
+              id: "common.button.edit",
+              defaultMessage: "Edit",
+            })}
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={onUnplace}
+            disabled={isUnplacing}
+          >
+            {intl.formatMessage({
+              id: "dialog.place_card.action.unplace",
+              defaultMessage: "Unplace",
+            })}
+          </Button>
+        </div>
+      </div>
+      <div className="flex items-center gap-3">
+        <Image
+          src={userCard.card.imageSmall ?? ""}
+          alt={userCard.card.name ?? ""}
+          width={64}
+          height={89}
+          unoptimized
+          className="w-16 h-auto object-contain rounded"
+        />
+        <div>
+          <div className="font-medium">{userCard.card.name}</div>
+          <div className="flex items-center gap-1.5 mt-1">
+            {userCard.language && (
+              <Badge variant="outline" className="h-5.5">
+                <LanguageBadge code={userCard.language} className="text-sm" />
+              </Badge>
+            )}
+            {userCard.variant && (
+              <Badge variant="outline" className="text-xs">
+                {userCard.variant}
+              </Badge>
+            )}
+            {userCard.condition && (
+              <ConditionBadge condition={userCard.condition} />
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
