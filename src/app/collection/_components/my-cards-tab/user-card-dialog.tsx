@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { VariantToggleGroup } from "@/components/variant-toggle-group";
 import { api } from "@/lib/api/react";
 import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
@@ -73,11 +74,13 @@ export default function UserCardDialog({
             language: userCard.language ?? null,
             variant: userCard.variant ?? null,
             condition: userCard.condition ?? null,
+            notes: userCard.notes ?? "",
           }
         : {
             language: null,
             variant: null,
             condition: null,
+            notes: "",
           },
   });
 
@@ -92,6 +95,7 @@ export default function UserCardDialog({
         language: data.language ?? undefined,
         variant: data.variant ?? undefined,
         condition: data.condition ?? undefined,
+        notes: data.notes || undefined,
       });
     } else if (mode === "edit" && userCard) {
       await updateUserCard({
@@ -99,6 +103,7 @@ export default function UserCardDialog({
         language: data.language,
         variant: data.variant,
         condition: data.condition,
+        notes: data.notes || undefined,
       });
     }
 
@@ -239,6 +244,33 @@ export default function UserCardDialog({
                       )}
                     />
                   </div>
+
+                  {/* Notes Field */}
+                  <div className="space-y-2">
+                    <Label htmlFor="notes">
+                      {intl.formatMessage({
+                        id: "form.field.notes.label",
+                        defaultMessage: "Notes",
+                      })}
+                    </Label>
+                    <Controller
+                      control={form.control}
+                      name="notes"
+                      render={({ field }) => (
+                        <Textarea
+                          id="notes"
+                          placeholder={intl.formatMessage({
+                            id: "form.field.notes.placeholder",
+                            defaultMessage:
+                              "Creased corner, scratched foil, swirl on the right…",
+                          })}
+                          className="resize-none"
+                          rows={5}
+                          {...field}
+                        />
+                      )}
+                    />
+                  </div>
                 </div>
               </div>
             ) : (
@@ -333,6 +365,6 @@ const FormSchema = z.object({
   language: z.enum(languageEnum.enumValues).nullable(),
   variant: z.enum(variantEnum.enumValues).nullable(),
   condition: z.enum(conditionEnum.enumValues).nullable(),
-  // notes: z.string().optional(),
+  notes: z.string().optional(),
   // photos: z.array(z.string().url()).optional(),
 });

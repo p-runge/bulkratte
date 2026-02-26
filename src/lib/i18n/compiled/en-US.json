@@ -829,6 +829,18 @@
       "value": "Language"
     }
   ],
+  "form.field.notes.label": [
+    {
+      "type": 0,
+      "value": "Notes"
+    }
+  ],
+  "form.field.notes.placeholder": [
+    {
+      "type": 0,
+      "value": "Creased corner, scratched foil, swirl on the right…"
+    }
+  ],
   "form.field.set_name.label": [
     {
       "type": 0,

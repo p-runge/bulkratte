@@ -104,6 +104,8 @@
   "form.field.image.preview.alt": "Set preview",
   "form.field.image.upload": "Upload Image",
   "form.field.language.label": "Language",
+  "form.field.notes.label": "Notes",
+  "form.field.notes.placeholder": "Creased corner, scratched foil, swirl on the right…",
   "form.field.set_name.label": "Set Name",
   "form.field.set_name.placeholder": "Enter set name",
   "form.field.variant.label": "Variant",

@@ -829,6 +829,18 @@
       "value": "Sprache"
     }
   ],
+  "form.field.notes.label": [
+    {
+      "type": 0,
+      "value": "Notizen"
+    }
+  ],
+  "form.field.notes.placeholder": [
+    {
+      "type": 0,
+      "value": "Geknickte Ecke, Kratzer im Holo, Swirl auf der rechten Seite…"
+    }
+  ],
   "form.field.set_name.label": [
     {
       "type": 0,

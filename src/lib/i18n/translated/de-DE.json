@@ -104,6 +104,8 @@
   "form.field.image.preview.alt": "Set-Vorschau",
   "form.field.image.upload": "Bild hochladen",
   "form.field.language.label": "Sprache",
+  "form.field.notes.label": "Notizen",
+  "form.field.notes.placeholder": "Geknickte Ecke, Kratzer im Holo, Swirl auf der rechten Seite…",
   "form.field.set_name.label": "Set-Name",
   "form.field.set_name.placeholder": "Set-Namen eingeben",
   "form.field.variant.label": "Variante",
