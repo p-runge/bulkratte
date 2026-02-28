@@ -323,3 +323,47 @@ export const wantlistShareLinksTable = pgTable("wantlist_share_links", {
 });
 
 export type WantlistShareLink = typeof wantlistShareLinksTable.$inferSelect;
+
+/**
+ * --------------------------------
+ * Trade Connections
+ * -------------------------------
+ */
+
+export const tradeConnectionsTable = pgTable("trade_connections", {
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  requester_id: uuid("requester_id")
+    .notNull()
+    .references(() => usersTable.id, { onDelete: "cascade" }),
+  // Null until the invite is accepted (we don't know the target at creation time)
+  target_id: uuid("target_id").references(() => usersTable.id, {
+    onDelete: "cascade",
+  }),
+  // "pending" | "accepted" | "declined"
+  status: varchar("status", { length: 16 }).notNull().default("pending"),
+  // Token embedded in the invite URL /trade/join/[invite_token]
+  invite_token: uuid("invite_token")
+    .notNull()
+    .default(sql`gen_random_uuid()`)
+    .unique(),
+  // Auto-created when accepted: share link the requester shared with the target
+  requester_share_link_id: uuid("requester_share_link_id").references(
+    () => wantlistShareLinksTable.id,
+    { onDelete: "set null" },
+  ),
+  // Auto-created when accepted: share link the target shared with the requester
+  target_share_link_id: uuid("target_share_link_id").references(
+    () => wantlistShareLinksTable.id,
+    { onDelete: "set null" },
+  ),
+  created_at: timestamp("created_at", { mode: "string" })
+    .notNull()
+    .defaultNow(),
+  updated_at: timestamp("updated_at", { mode: "string" })
+    .notNull()
+    .defaultNow(),
+});
+
+export type TradeConnection = typeof tradeConnectionsTable.$inferSelect;

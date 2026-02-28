@@ -54,14 +54,24 @@ export default async function HeaderContent({
           </Button>
         </Link>
         {session && (
-          <Link href="/collection">
-            <Button variant="ghost">
-              {intl.formatMessage({
-                id: "nav.link.collection",
-                defaultMessage: "My Collection",
-              })}
-            </Button>
-          </Link>
+          <>
+            <Link href="/collection">
+              <Button variant="ghost">
+                {intl.formatMessage({
+                  id: "nav.link.collection",
+                  defaultMessage: "My Collection",
+                })}
+              </Button>
+            </Link>
+            <Link href="/trade">
+              <Button variant="ghost">
+                {intl.formatMessage({
+                  id: "nav.link.trade",
+                  defaultMessage: "Trade",
+                })}
+              </Button>
+            </Link>
+          </>
         )}
         {session ? (
           <Link href="/auth/signout">

@@ -29,17 +29,30 @@ export async function MobileMenuContent({
         </Button>
       </Link>
       {session && (
-        <Link
-          href="/collection"
-          // onClick={() => setIsOpen(false)}
-        >
-          <Button variant="ghost" className="w-full text-left">
-            {intl.formatMessage({
-              id: "nav.link.collection",
-              defaultMessage: "My Collection",
-            })}
-          </Button>
-        </Link>
+        <>
+          <Link
+            href="/collection"
+            // onClick={() => setIsOpen(false)}
+          >
+            <Button variant="ghost" className="w-full text-left">
+              {intl.formatMessage({
+                id: "nav.link.collection",
+                defaultMessage: "My Collection",
+              })}
+            </Button>
+          </Link>
+          <Link
+            href="/trade"
+            // onClick={() => setIsOpen(false)}
+          >
+            <Button variant="ghost" className="w-full text-left">
+              {intl.formatMessage({
+                id: "nav.link.trade",
+                defaultMessage: "Trade",
+              })}
+            </Button>
+          </Link>
+        </>
       )}
       {session ? (
         <Link
