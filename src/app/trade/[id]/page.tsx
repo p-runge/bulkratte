@@ -199,8 +199,8 @@ export default function TradeOverlapPage({
         <TabsList>
           <TabsTrigger value="theirs">
             <FormattedMessage
-              id="trade.overlap.theirWantlist"
-              defaultMessage="Their wantlist"
+              id="trade.overlap.partnersWantlist"
+              defaultMessage="Partner's wantlist"
             />
             {canGiveCount > 0 && (
               <Badge variant="secondary" className="ml-2">

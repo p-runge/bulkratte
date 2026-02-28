@@ -907,6 +907,12 @@
       "value": "Sets"
     }
   ],
+  "nav.link.trade": [
+    {
+      "type": 0,
+      "value": "Tauschen"
+    }
+  ],
   "page.collection.action.add_card": [
     {
       "type": 0,
@@ -1001,12 +1007,6 @@
     {
       "type": 0,
       "value": "Wunschliste teilen"
-    }
-  ],
-  "page.collection.wantlist.share.copied": [
-    {
-      "type": 0,
-      "value": "Kopiert!"
     }
   ],
   "page.error.action.home": [
@@ -1214,85 +1214,55 @@
   "page.user.wantlist.description": [
     {
       "type": 0,
-      "value": "Karten, die dieser Benutzer sucht"
+      "value": "Karten, die dir noch zum Vervollständigen deiner Sets fehlen."
     }
   ],
   "page.user.wantlist.empty.description": [
     {
       "type": 0,
-      "value": "Dieser Benutzer hat alle Karten in seinen eigenen Sets!"
-    }
-  ],
-  "page.user.wantlist.empty.in-collection-not-in-sets.description": [
-    {
-      "type": 0,
-      "value": "Du hast keine Karten, die dieser Benutzer benötigt, die nicht bereits in deinen Sets sind."
-    }
-  ],
-  "page.user.wantlist.empty.in-collection-not-in-sets.title": [
-    {
-      "type": 0,
-      "value": "Keine passenden Karten gefunden"
-    }
-  ],
-  "page.user.wantlist.empty.in-collection.description": [
-    {
-      "type": 0,
-      "value": "Du hast keine Karten, die dieser Benutzer benötigt, in deiner Sammlung."
-    }
-  ],
-  "page.user.wantlist.empty.in-collection.title": [
-    {
-      "type": 0,
-      "value": "Keine passenden Karten gefunden"
+      "value": "Du hast alle Karten in deinen benutzerdefinierten Sets!"
     }
   ],
   "page.user.wantlist.empty.title": [
     {
       "type": 0,
-      "value": "Die Wunschliste dieses Benutzers ist leer!"
+      "value": "Deine Wunschliste ist leer!"
     }
   ],
-  "page.user.wantlist.filter.collection.in-collection": [
+  "page.user.wantlist.manage-links": [
     {
       "type": 0,
-      "value": "Karten, die ich habe"
-    }
-  ],
-  "page.user.wantlist.filter.collection.in-collection-not-in-sets": [
-    {
-      "type": 0,
-      "value": "Karten, die ich habe und nicht in Sets sind"
-    }
-  ],
-  "page.user.wantlist.filter.collection.label": [
-    {
-      "type": 0,
-      "value": "Anzeigen"
-    }
-  ],
-  "page.user.wantlist.filter.collection.wantlist": [
-    {
-      "type": 0,
-      "value": "Alle Karten"
+      "value": "Freigabelinks verwalten"
     }
   ],
   "page.user.wantlist.own-wantlist.description": [
     {
       "type": 0,
-      "value": "Du siehst deine eigene Wunschliste. Dies sind Karten, die du benötigst, um deine Sets zu vervollständigen."
+      "value": "Nur du kannst diese Seite sehen. Nutze Freigabelinks, um anderen Zugriff auf deine Wunschliste zu geben."
     }
   ],
   "page.user.wantlist.own-wantlist.title": [
     {
       "type": 0,
-      "value": "Das ist deine Wunschliste"
+      "value": "Das ist deine private Wunschliste"
+    }
+  ],
+  "page.user.wantlist.private.description": [
+    {
+      "type": 0,
+      "value": "Die Wunschliste dieses Nutzers ist nur über einen Freigabelink zugänglich. Bitte ihn, dir einen zu teilen."
+    }
+  ],
+  "page.user.wantlist.private.title": [
+    {
+      "type": 0,
+      "value": "Diese Wunschliste ist privat"
     }
   ],
   "page.user.wantlist.title": [
     {
       "type": 0,
-      "value": "Benutzer-Wunschliste"
+      "value": "Meine Wunschliste"
     }
   ],
   "page.user_set.private.back": [
@@ -1383,6 +1353,370 @@
       "value": " Symbol"
     }
   ],
+  "share-links.all-sets": [
+    {
+      "type": 0,
+      "value": "Alle Sets"
+    }
+  ],
+  "share-links.copy": [
+    {
+      "type": 0,
+      "value": "Link kopieren"
+    }
+  ],
+  "share-links.create.expiry": [
+    {
+      "type": 0,
+      "value": "Ablaufdatum"
+    }
+  ],
+  "share-links.create.expiry.1d": [
+    {
+      "type": 0,
+      "value": "24 Stunden"
+    }
+  ],
+  "share-links.create.expiry.30d": [
+    {
+      "type": 0,
+      "value": "30 Tage"
+    }
+  ],
+  "share-links.create.expiry.7d": [
+    {
+      "type": 0,
+      "value": "7 Tage"
+    }
+  ],
+  "share-links.create.expiry.never": [
+    {
+      "type": 0,
+      "value": "Läuft nicht ab"
+    }
+  ],
+  "share-links.create.label": [
+    {
+      "type": 0,
+      "value": "Bezeichnung (optional)"
+    }
+  ],
+  "share-links.create.label.placeholder": [
+    {
+      "type": 0,
+      "value": "z. B. Für den Tausch mit Jonas"
+    }
+  ],
+  "share-links.create.mode": [
+    {
+      "type": 0,
+      "value": "Inhalt"
+    }
+  ],
+  "share-links.create.mode.live": [
+    {
+      "type": 0,
+      "value": "Live"
+    }
+  ],
+  "share-links.create.mode.live.description": [
+    {
+      "type": 0,
+      "value": "Zeigt immer deine aktuelle Wunschliste"
+    }
+  ],
+  "share-links.create.mode.snapshot": [
+    {
+      "type": 0,
+      "value": "Momentaufnahme"
+    }
+  ],
+  "share-links.create.mode.snapshot.description": [
+    {
+      "type": 0,
+      "value": "Eingefrorene Liste der Karten, die du gerade benötigst"
+    }
+  ],
+  "share-links.create.open": [
+    {
+      "type": 0,
+      "value": "Neuen Link erstellen"
+    }
+  ],
+  "share-links.create.scope": [
+    {
+      "type": 0,
+      "value": "Welche Sets einschließen"
+    }
+  ],
+  "share-links.create.scope.all": [
+    {
+      "type": 0,
+      "value": "Alle meine Sets"
+    }
+  ],
+  "share-links.create.scope.no-sets": [
+    {
+      "type": 0,
+      "value": "Keine Sets gefunden"
+    }
+  ],
+  "share-links.create.scope.specific": [
+    {
+      "type": 0,
+      "value": "Bestimmte Sets"
+    }
+  ],
+  "share-links.create.submit": [
+    {
+      "type": 0,
+      "value": "Link erstellen"
+    }
+  ],
+  "share-links.create.title": [
+    {
+      "type": 0,
+      "value": "Neuer Freigabelink"
+    }
+  ],
+  "share-links.dialog.title": [
+    {
+      "type": 0,
+      "value": "Freigabelinks"
+    }
+  ],
+  "share-links.empty": [
+    {
+      "type": 0,
+      "value": "Noch keine Freigabelinks. Erstelle einen, um deine Wunschliste zu teilen."
+    }
+  ],
+  "share-links.expires": [
+    {
+      "type": 0,
+      "value": "Läuft ab am "
+    },
+    {
+      "type": 1,
+      "value": "date"
+    }
+  ],
+  "share-links.last-accessed": [
+    {
+      "type": 0,
+      "value": "Aufgerufen: "
+    },
+    {
+      "type": 1,
+      "value": "date"
+    }
+  ],
+  "share-links.live": [
+    {
+      "type": 0,
+      "value": "Live"
+    }
+  ],
+  "share-links.no-expiry": [
+    {
+      "type": 0,
+      "value": "Kein Ablaufdatum"
+    }
+  ],
+  "share-links.revoke": [
+    {
+      "type": 0,
+      "value": "Link widerrufen"
+    }
+  ],
+  "share-links.scoped": [
+    {
+      "offset": 0,
+      "options": {
+        "one": {
+          "value": [
+            {
+              "type": 7
+            },
+            {
+              "type": 0,
+              "value": " Set"
+            }
+          ]
+        },
+        "other": {
+          "value": [
+            {
+              "type": 7
+            },
+            {
+              "type": 0,
+              "value": " Sets"
+            }
+          ]
+        }
+      },
+      "pluralType": "cardinal",
+      "type": 6,
+      "value": "count"
+    }
+  ],
+  "share-links.snapshot": [
+    {
+      "type": 0,
+      "value": "Momentaufnahme"
+    }
+  ],
+  "share-links.untitled": [
+    {
+      "type": 0,
+      "value": "Unbenannter Link"
+    }
+  ],
+  "share.badge.scoped-sets": [
+    {
+      "offset": 0,
+      "options": {
+        "one": {
+          "value": [
+            {
+              "type": 7
+            },
+            {
+              "type": 0,
+              "value": " Set"
+            }
+          ]
+        },
+        "other": {
+          "value": [
+            {
+              "type": 7
+            },
+            {
+              "type": 0,
+              "value": " Sets"
+            }
+          ]
+        }
+      },
+      "pluralType": "cardinal",
+      "type": 6,
+      "value": "count"
+    }
+  ],
+  "share.badge.snapshot": [
+    {
+      "type": 0,
+      "value": "Momentaufnahme"
+    }
+  ],
+  "share.empty.description": [
+    {
+      "type": 0,
+      "value": "Dieser Nutzer hat alle Karten, die er braucht!"
+    }
+  ],
+  "share.empty.filter.description": [
+    {
+      "type": 0,
+      "value": "Du hast keine der Karten auf dieser Wunschliste in deiner Sammlung."
+    }
+  ],
+  "share.empty.filter.title": [
+    {
+      "type": 0,
+      "value": "Keine passenden Karten"
+    }
+  ],
+  "share.empty.title": [
+    {
+      "type": 0,
+      "value": "Wunschliste ist leer"
+    }
+  ],
+  "share.expired.description": [
+    {
+      "type": 0,
+      "value": "Dieser Freigabelink ist abgelaufen. Bitte den Besitzer, einen neuen zu erstellen."
+    }
+  ],
+  "share.expired.title": [
+    {
+      "type": 0,
+      "value": "Link abgelaufen"
+    }
+  ],
+  "share.expires-at": [
+    {
+      "type": 0,
+      "value": "Läuft ab am "
+    },
+    {
+      "type": 1,
+      "value": "date"
+    }
+  ],
+  "share.filter.collection.all": [
+    {
+      "type": 0,
+      "value": "Alle gesuchten Karten"
+    }
+  ],
+  "share.filter.collection.have": [
+    {
+      "type": 0,
+      "value": "Nur Karten, die ich habe"
+    }
+  ],
+  "share.filter.collection.have-free": [
+    {
+      "type": 0,
+      "value": "Nur Karten, die ich habe und nicht in meinen Sets sind"
+    }
+  ],
+  "share.filter.collection.label": [
+    {
+      "type": 0,
+      "value": "Nach deiner Sammlung filtern"
+    }
+  ],
+  "share.not-found.description": [
+    {
+      "type": 0,
+      "value": "Dieser Freigabelink existiert nicht oder wurde widerrufen."
+    }
+  ],
+  "share.not-found.title": [
+    {
+      "type": 0,
+      "value": "Link nicht gefunden"
+    }
+  ],
+  "share.snapshot.notice": [
+    {
+      "type": 0,
+      "value": "Dies ist eine Momentaufnahme vom "
+    },
+    {
+      "type": 1,
+      "value": "date"
+    },
+    {
+      "type": 0,
+      "value": ". Sie zeigt die Wunschliste so, wie sie zu diesem Zeitpunkt war."
+    }
+  ],
+  "share.title.default": [
+    {
+      "type": 0,
+      "value": "Wunschliste von "
+    },
+    {
+      "type": 1,
+      "value": "name"
+    }
+  ],
   "signingOut": [
     {
       "type": 0,
@@ -1393,6 +1727,200 @@
     {
       "type": 0,
       "value": "Keine"
+    }
+  ],
+  "trade.index.createInvite": [
+    {
+      "type": 0,
+      "value": "Einladungslink erstellen"
+    }
+  ],
+  "trade.index.heading": [
+    {
+      "type": 0,
+      "value": "Tauschpartner"
+    }
+  ],
+  "trade.index.inviteCopied": [
+    {
+      "type": 0,
+      "value": "Einladungslink in die Zwischenablage kopiert"
+    }
+  ],
+  "trade.index.noPartners": [
+    {
+      "type": 0,
+      "value": "Noch keine Tauschpartner. Erstelle einen Einladungslink und teile ihn!"
+    }
+  ],
+  "trade.index.partners": [
+    {
+      "type": 0,
+      "value": "Tauschpartner"
+    }
+  ],
+  "trade.index.pendingInvites": [
+    {
+      "type": 0,
+      "value": "Ausstehende Einladungen"
+    }
+  ],
+  "trade.index.pendingInvitesDesc": [
+    {
+      "type": 0,
+      "value": "Teile diese Links mit jemandem, um mit dem Tauschen zu beginnen."
+    }
+  ],
+  "trade.index.pendingRequests": [
+    {
+      "type": 0,
+      "value": "Ausstehende Anfragen"
+    }
+  ],
+  "trade.index.pendingRequestsDesc": [
+    {
+      "type": 0,
+      "value": "Diese Nutzer möchten mit dir tauschen."
+    }
+  ],
+  "trade.index.review": [
+    {
+      "type": 0,
+      "value": "Ansehen"
+    }
+  ],
+  "trade.index.signIn": [
+    {
+      "type": 0,
+      "value": "Anmelden"
+    }
+  ],
+  "trade.index.signInRequired": [
+    {
+      "type": 0,
+      "value": "Bitte melde dich an, um deine Tauschpartner zu verwalten."
+    }
+  ],
+  "trade.index.subheading": [
+    {
+      "type": 0,
+      "value": "Teile deine Wunschliste und finde Karten zum Tauschen."
+    }
+  ],
+  "trade.index.unknownUser": [
+    {
+      "type": 0,
+      "value": "Unbekannter Nutzer"
+    }
+  ],
+  "trade.join.accept": [
+    {
+      "type": 0,
+      "value": "Tauscheinladung annehmen"
+    }
+  ],
+  "trade.join.alreadyAccepted": [
+    {
+      "type": 0,
+      "value": "Diese Einladung wurde bereits angenommen."
+    }
+  ],
+  "trade.join.decline": [
+    {
+      "type": 0,
+      "value": "Ablehnen"
+    }
+  ],
+  "trade.join.description": [
+    {
+      "type": 0,
+      "value": "Wenn du diese Einladung annimmst, könnt ihr beide eure Wunschlisten sehen und Karten zum Tauschen finden."
+    }
+  ],
+  "trade.join.notFound": [
+    {
+      "type": 0,
+      "value": "Dieser Einladungslink ist ungültig oder wurde entfernt."
+    }
+  ],
+  "trade.join.ownInvite": [
+    {
+      "type": 0,
+      "value": "Das ist dein eigener Einladungslink – teile ihn mit jemandem anderen."
+    }
+  ],
+  "trade.join.signIn": [
+    {
+      "type": 0,
+      "value": "Anmelden zum Annehmen"
+    }
+  ],
+  "trade.join.title": [
+    {
+      "type": 1,
+      "value": "name"
+    },
+    {
+      "type": 0,
+      "value": " möchte mit dir tauschen"
+    }
+  ],
+  "trade.overlap.back": [
+    {
+      "type": 0,
+      "value": "Zurück zu den Trades"
+    }
+  ],
+  "trade.overlap.canGive": [
+    {
+      "type": 0,
+      "value": "Karten, die ich geben kann"
+    }
+  ],
+  "trade.overlap.canGiveSuffix": [
+    {
+      "type": 0,
+      "value": "Treffer"
+    }
+  ],
+  "trade.overlap.myWantlist": [
+    {
+      "type": 0,
+      "value": "Meine Wunschliste"
+    }
+  ],
+  "trade.overlap.notFound": [
+    {
+      "type": 0,
+      "value": "Diese Tauschverbindung wurde nicht gefunden oder du hast keinen Zugriff."
+    }
+  ],
+  "trade.overlap.partnersWantlist": [
+    {
+      "type": 0,
+      "value": "Wunschliste des Partners"
+    }
+  ],
+  "trade.overlap.showAll": [
+    {
+      "type": 0,
+      "value": "Alle"
+    }
+  ],
+  "trade.overlap.signInRequired": [
+    {
+      "type": 0,
+      "value": "Bitte melde dich an, um diese Seite zu sehen."
+    }
+  ],
+  "trade.overlap.title": [
+    {
+      "type": 0,
+      "value": "Tauschen mit "
+    },
+    {
+      "type": 1,
+      "value": "name"
     }
   ]
 }
