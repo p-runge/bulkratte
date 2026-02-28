@@ -7,6 +7,7 @@ import { cardRouter } from "./card";
 import { setRouter } from "./set";
 import { userCardRouter } from "./user-card";
 import { userSetRouter } from "./user-set";
+import { wantlistShareLinkRouter } from "./wantlist-share-link";
 
 /**
  * This is the primary router for your server.
@@ -18,6 +19,7 @@ export const appRouter = createTRPCRouter({
   set: setRouter,
   userCard: userCardRouter,
   userSet: userSetRouter,
+  wantlistShareLink: wantlistShareLinkRouter,
   getCurrentUser: protectedProcedure.query(async ({ ctx }) => {
     return ctx.session.user;
   }),

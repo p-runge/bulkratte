@@ -6,19 +6,17 @@ import {
 } from "@/components/card-browser/card-filters";
 import { UserCardGrid } from "@/components/card-browser/user-card-grid";
 import Loader from "@/components/loader";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { TabsContent } from "@/components/ui/tabs";
 import { api } from "@/lib/api/react";
-import { Check, Share2 } from "lucide-react";
+import { Share2 } from "lucide-react";
 import { useState } from "react";
 import { useIntl } from "react-intl";
+import { ShareLinksDialog } from "./share-links-dialog";
+import { Button } from "@/components/ui/button";
 
 export default function WantlistTab() {
   const intl = useIntl();
-  const [copied, setCopied] = useState(false);
-
-  const { data: currentUser } = api.getCurrentUser.useQuery();
 
   const [filters, setFilters] = useState<CardQuery>({
     setId: "",
@@ -29,22 +27,6 @@ export default function WantlistTab() {
     sortBy: "set-and-number",
     sortOrder: "asc",
   });
-
-  const handleShare = async () => {
-    if (!currentUser?.id) return;
-
-    const url = new URL(
-      `/user/${currentUser.id}/wantlist`,
-      window.location.origin,
-    ).toString();
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy:", err);
-    }
-  };
 
   const { data: wantlistData, isLoading } = api.userCard.getWantlist.useQuery({
     setId: filters.setId && filters.setId !== "all" ? filters.setId : undefined,
@@ -68,25 +50,15 @@ export default function WantlistTab() {
             onFilterChange={setFilters}
             filterOptions={filterOptions}
           />
-          <Button onClick={handleShare} size="default" className="shrink-0">
-            {copied ? (
-              <>
-                <Check className="h-4 w-4 mr-2" />
-                {intl.formatMessage({
-                  id: "page.collection.wantlist.share.copied",
-                  defaultMessage: "Copied!",
-                })}
-              </>
-            ) : (
-              <>
-                <Share2 className="h-4 w-4 mr-2" />
-                {intl.formatMessage({
-                  id: "page.collection.wantlist.share",
-                  defaultMessage: "Share Wantlist",
-                })}
-              </>
-            )}
-          </Button>
+          <ShareLinksDialog>
+            <Button size="default" className="shrink-0">
+              <Share2 className="h-4 w-4 mr-2" />
+              {intl.formatMessage({
+                id: "page.collection.wantlist.share",
+                defaultMessage: "Share Wantlist",
+              })}
+            </Button>
+          </ShareLinksDialog>
         </div>
 
         {isLoading ? (

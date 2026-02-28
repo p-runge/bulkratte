@@ -7,12 +7,24 @@ import {
   userCardsTable,
   userSetCardsTable,
   userSetsTable,
+  wantlistShareLinksTable,
 } from "@/lib/db";
 import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
 import { localizeRecords } from "@/lib/db/localization";
 import { getLanguageFromLocale, Locale } from "@/lib/i18n";
 import { TRPCError } from "@trpc/server";
-import { and, asc, desc, eq, gte, ilike, lte, or, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gte,
+  ilike,
+  inArray,
+  lte,
+  or,
+  sql,
+} from "drizzle-orm";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
@@ -26,11 +38,12 @@ type WantlistFilters = {
   sortOrder?: "asc" | "desc";
 };
 
-async function getWantlistForUser(
+export async function getWantlistForUser(
   userId: string,
   filters: WantlistFilters,
   locale: Locale,
   db: typeof database,
+  options?: { userSetIds?: string[] },
 ) {
   // Build WHERE conditions for filtering cards
   const conditions = [];
@@ -111,6 +124,9 @@ async function getWantlistForUser(
       and(
         eq(userSetsTable.user_id, userId),
         sql`${userSetCardsTable.user_card_id} IS NULL`,
+        options?.userSetIds?.length
+          ? inArray(userSetsTable.id, options.userSetIds)
+          : undefined,
       ),
     );
 
@@ -600,10 +616,10 @@ export const userCardRouter = createTRPCRouter({
       );
     }),
 
-  getPublicWantlist: publicProcedure
+  getSharedWantlist: publicProcedure
     .input(
       z.object({
-        userId: z.string(),
+        token: z.string().uuid(),
         setId: z.string().optional(),
         search: z.string().optional(),
         rarity: z.string().optional(),
@@ -617,7 +633,37 @@ export const userCardRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      const { userId, ...filters } = input;
-      return getWantlistForUser(userId, filters, ctx.language, ctx.db);
+      const { token, ...filters } = input;
+
+      const link = await ctx.db
+        .select()
+        .from(wantlistShareLinksTable)
+        .where(eq(wantlistShareLinksTable.id, token))
+        .then((res) => res[0]);
+
+      if (!link) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Share link not found",
+        });
+      }
+
+      if (link.expires_at && new Date(link.expires_at) < new Date()) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "This share link has expired",
+        });
+      }
+
+      // For snapshots, return the frozen data directly (no server-side re-filtering)
+      if (link.is_snapshot && link.snapshot_data) {
+        return link.snapshot_data as Awaited<
+          ReturnType<typeof getWantlistForUser>
+        >;
+      }
+
+      return getWantlistForUser(link.user_id, filters, ctx.language, ctx.db, {
+        userSetIds: link.set_ids ?? undefined,
+      });
     }),
 });

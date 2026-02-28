@@ -2,9 +2,11 @@ import { env } from "@/env";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import {
+  boolean,
   date,
   index,
   integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -286,3 +288,38 @@ export const userSetCardsTable = pgTable(
     ),
   }),
 );
+
+/**
+ * --------------------------------
+ * Wantlist Share Links
+ * -------------------------------
+ */
+
+export const wantlistShareLinksTable = pgTable("wantlist_share_links", {
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  user_id: uuid("user_id")
+    .notNull()
+    .references(() => usersTable.id, { onDelete: "cascade" }),
+  // Human-readable label, e.g. "For trading with Jonas"
+  label: varchar("label", { length: 128 }),
+  // null = all user sets; non-null = only cards missing from these specific user sets
+  set_ids: text("set_ids").array(),
+  // Whether this is a frozen snapshot or a live view
+  is_snapshot: boolean("is_snapshot").notNull().default(false),
+  // Populated when is_snapshot = true; stores the computed wantlist at creation time
+  snapshot_data: jsonb("snapshot_data"),
+  // Optional expiry – null means it never expires
+  expires_at: timestamp("expires_at", { mode: "string" }),
+  // Tracks whether the link was ever accessed
+  last_accessed_at: timestamp("last_accessed_at", { mode: "string" }),
+  created_at: timestamp("created_at", { mode: "string" })
+    .notNull()
+    .defaultNow(),
+  updated_at: timestamp("updated_at", { mode: "string" })
+    .notNull()
+    .defaultNow(),
+});
+
+export type WantlistShareLink = typeof wantlistShareLinksTable.$inferSelect;
