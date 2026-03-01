@@ -3,7 +3,9 @@ import { env } from "@/env";
 import pokemonAPI from "@/lib/pokemon-api";
 import { DEFAULT_LOCALE, LOCALES, type Locale } from "@/lib/i18n";
 import { upsertLocalization } from "@/lib/db/localization";
+import { db, localizationsTable, cardsTable } from "@/lib/db";
 import TCGdex, { SupportedLanguages } from "@tcgdex/sdk";
+import { eq } from "drizzle-orm";
 
 // Map locale codes to language codes used by TCGdex API
 const LOCALE_TO_LANGUAGE: Record<Locale, SupportedLanguages> = {
@@ -21,79 +23,145 @@ async function seedLocalizationsForLanguage(locale: Locale) {
   console.log(`\n📚 Seeding localizations for ${locale} (${languageCode})...`);
 
   try {
-    // Use pokemonAPI to fetch all sets for this language
-    const sets = await pokemonAPI.fetchPokemonSetsForLanguage(languageCode);
-    console.log(`  Fetched ${sets.length} sets from API`);
+    // Pre-fetch all existing localization keys for this language in one DB query
+    const existingLocalizations = await db
+      .select({
+        table_name: localizationsTable.table_name,
+        column_name: localizationsTable.column_name,
+        record_id: localizationsTable.record_id,
+      })
+      .from(localizationsTable)
+      .where(eq(localizationsTable.language, languageCode));
+
+    const existingKeys = new Set(
+      existingLocalizations.map(
+        (l) => `${l.table_name}:${l.column_name}:${l.record_id}`,
+      ),
+    );
+    const hasLocalization = (
+      tableName: string,
+      columnName: string,
+      recordId: string,
+    ) => existingKeys.has(`${tableName}:${columnName}:${recordId}`);
+
+    // Pre-fetch all card IDs grouped by setId from DB
+    const allCards = await db
+      .select({ id: cardsTable.id, setId: cardsTable.setId })
+      .from(cardsTable);
+
+    const cardsBySetId = new Map<string, string[]>();
+    for (const card of allCards) {
+      if (!cardsBySetId.has(card.setId)) cardsBySetId.set(card.setId, []);
+      cardsBySetId.get(card.setId)!.push(card.id);
+    }
+
+    // Fetch only lightweight set stubs from the API (one fast request)
+    const langTcgdex = new TCGdex(languageCode);
+    const setStubs = await langTcgdex.set.list();
+    console.log(`  Fetched ${setStubs.length} set stubs from API`);
 
     let setCount = 0;
     let cardCount = 0;
+    let skippedSets = 0;
 
-    for (const set of sets) {
-      // Upsert set name localization
-      await upsertLocalization("sets", "name", set.id, locale, set.name);
+    for (const stub of setStubs) {
+      const setId = stub.id;
 
-      // Upsert set series localization
-      await upsertLocalization("sets", "series", set.id, locale, set.series);
+      // Check if this set and all its known cards are fully localized
+      const setCardsInDb = cardsBySetId.get(setId) ?? [];
+      const setFullyLocalized =
+        hasLocalization("sets", "name", setId) &&
+        hasLocalization("sets", "series", setId) &&
+        setCardsInDb.length > 0 &&
+        setCardsInDb.every((cardId) =>
+          hasLocalization("cards", "name", cardId),
+        );
+
+      if (setFullyLocalized) {
+        skippedSets++;
+        continue;
+      }
+
+      // Fetch full set and card data only when needed
+      const cards = await pokemonAPI.fetchPokemonCardsForLanguage(
+        setId,
+        languageCode,
+      );
+      const set = cards[0]?.set ?? { id: setId, name: stub.name };
+      const setName = stub.name;
+      const rawSet = await langTcgdex.set.get(setId);
+
+      // Upsert set name localization if missing
+      if (!hasLocalization("sets", "name", setId)) {
+        await upsertLocalization("sets", "name", setId, locale, setName);
+      }
+
+      // Upsert set series localization if missing
+      if (!hasLocalization("sets", "series", setId) && rawSet) {
+        await upsertLocalization(
+          "sets",
+          "series",
+          setId,
+          locale,
+          rawSet.serie.name,
+        );
+      }
 
       setCount++;
       console.log(
-        `  ✓ Set ${setCount}/${sets.length}: ${set.name} (${set.series})`,
+        `  ✓ Set ${setCount}: ${setName} (${setId}) — ${cards.length} cards`,
       );
 
-      // Fetch and localize cards for this set using pokemonAPI
-      const cards = await pokemonAPI.fetchPokemonCardsForLanguage(
-        set.id,
-        languageCode,
-      );
-      console.log(`  Fetched ${cards.length} cards from the API.`);
-
-      const rawSet = await new TCGdex(languageCode).set.get(set.id);
-
-      let imagesAreLocalized;
+      // Determine if localized images are available for this set
+      let imagesAreLocalized = false;
       try {
         const testCard = cards[0];
         if (rawSet && testCard) {
-          await fetch(
-            `https://assets.tcgdex.net/${languageCode}/${rawSet.serie.id}${testCard.set.id}/${testCard.number}/low.webp`,
-          ).then((res) => {
-            if (!res.ok) throw new Error("Image not found");
-          });
-          imagesAreLocalized = true;
+          const res = await fetch(
+            `https://assets.tcgdex.net/${languageCode}/${rawSet.serie.id}/${setId}/${testCard.number}/low.webp`,
+          );
+          imagesAreLocalized = res.ok;
         }
-      } catch (error) {
+      } catch {
         console.warn(
-          `    ⚠️  Could not find localized images for cards in set ${set.id} (${set.name})`,
+          `    ⚠️  Could not find localized images for cards in set ${setId} (${setName})`,
         );
-        imagesAreLocalized = false;
       }
 
       for (const card of cards) {
-        await upsertLocalization("cards", "name", card.id, locale, card.name);
+        // Upsert card name if missing
+        if (!hasLocalization("cards", "name", card.id)) {
+          await upsertLocalization("cards", "name", card.id, locale, card.name);
+        }
 
         if (rawSet && imagesAreLocalized) {
-          // images
-          await upsertLocalization(
-            "cards",
-            "image_small",
-            card.id,
-            locale,
-            `https://assets.tcgdex.net/${languageCode}/${rawSet.serie.id}/${set.id}/${card.number}/low.webp`,
-          );
-          await upsertLocalization(
-            "cards",
-            "image_large",
-            card.id,
-            locale,
-            `https://assets.tcgdex.net/${languageCode}/${rawSet.serie.id}/${set.id}/${card.number}/high.webp`,
-          );
+          // Upsert card images if missing
+          if (!hasLocalization("cards", "image_small", card.id)) {
+            await upsertLocalization(
+              "cards",
+              "image_small",
+              card.id,
+              locale,
+              `https://assets.tcgdex.net/${languageCode}/${rawSet.serie.id}/${setId}/${card.number}/low.webp`,
+            );
+          }
+          if (!hasLocalization("cards", "image_large", card.id)) {
+            await upsertLocalization(
+              "cards",
+              "image_large",
+              card.id,
+              locale,
+              `https://assets.tcgdex.net/${languageCode}/${rawSet.serie.id}/${setId}/${card.number}/high.webp`,
+            );
+          }
           cardCount++;
         }
       }
-      console.log(`    ✓ Localized ${cards.length} cards`);
+      console.log(`    ✓ Processed ${cards.length} cards`);
     }
 
     console.log(
-      `✅ Completed ${locale}: ${setCount} sets, ${cardCount} cards localized`,
+      `✅ Completed ${locale}: ${setCount} sets, ${cardCount} cards localized, ${skippedSets}/${setStubs.length} sets skipped (already up to date)`,
     );
   } catch (error) {
     console.error(`❌ Error seeding localizations for ${locale}:`, error);

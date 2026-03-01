@@ -4,43 +4,56 @@ import { cardsTable, db, setsTable } from "@/lib/db";
 import { Rarity } from "@/lib/db/enums";
 import pokemonAPI from "@/lib/pokemon-api";
 import TCGdex from "@tcgdex/sdk";
+import { eq } from "drizzle-orm";
 
 export async function fetchAndStoreSets(withCards = true) {
   console.log("Fetching and storing sets...");
   try {
-    const sets = await pokemonAPI.fetchPokemonSets();
-    console.log(`Fetched ${sets.length} full sets from the API.`);
+    // Load existing set IDs from DB in one query
+    const existingSets = await db.select({ id: setsTable.id }).from(setsTable);
+    const existingSetIds = new Set(existingSets.map((s) => s.id));
+    console.log(`${existingSetIds.size} sets already in DB.`);
 
-    for (const set of sets) {
-      console.log(`Storing set: ${set.name} (${set.id})`, set);
+    // Fetch only lightweight stubs from the API (no per-set requests yet)
+    const tcgdexEn = new TCGdex("en");
+    const setStubs = await tcgdexEn.set.list();
+    console.log(`Fetched ${setStubs.length} sets from API.`);
+
+    const newSetStubs = setStubs.filter((s) => !existingSetIds.has(s.id));
+    console.log(`${newSetStubs.length} new sets to insert.`);
+
+    if (newSetStubs.length === 0) {
+      console.log("✅ All sets are already up to date.");
+      return;
+    }
+
+    for (const stub of newSetStubs) {
+      const set = await stub.getSet();
+      const mappedSet = {
+        id: set.id,
+        name: set.name,
+        logo: set.logo ? `${set.logo}.webp` : null,
+        symbol: set.symbol ? `${set.symbol}.webp` : null,
+        releaseDate: set.releaseDate,
+        total: set.cardCount.official,
+        totalWithSecretRares: set.cardCount.total,
+        series: set.serie.name,
+      };
+
+      console.log(`Storing set: ${mappedSet.name} (${mappedSet.id})`);
       await db
         .insert(setsTable)
-        .values({
-          id: set.id,
-          name: set.name,
-          logo: set.logo,
-          symbol: set.symbol,
-          releaseDate: set.releaseDate,
-          total: set.total,
-          totalWithSecretRares: set.totalWithSecretRares,
-          series: set.series,
-        })
+        .values(mappedSet)
         .onConflictDoUpdate({
           target: setsTable.id,
           set: {
             updated_at: new Date().toISOString(),
-            name: set.name,
-            logo: set.logo,
-            symbol: set.symbol,
-            releaseDate: set.releaseDate,
-            total: set.total,
-            totalWithSecretRares: set.totalWithSecretRares,
-            series: set.series,
+            ...mappedSet,
           },
         });
-      console.log(`Stored set: ${set.name} (${set.id})`);
+      console.log(`Stored set: ${mappedSet.name} (${mappedSet.id})`);
 
-      if (withCards) await fetchAndStoreCards(set.id);
+      if (withCards) await fetchAndStoreCards(mappedSet.id);
     }
 
     console.log("Sets have been successfully fetched and stored.");
@@ -50,15 +63,35 @@ export async function fetchAndStoreSets(withCards = true) {
 }
 
 export async function fetchAndStoreCards(setId: string) {
-  console.log("Fetching and storing cards...");
+  console.log(`Fetching and storing cards for set ${setId}...`);
   try {
-    const cards = await pokemonAPI.fetchPokemonCards(setId);
-    const rawSet = await new TCGdex("en").set.get(setId);
-    console.log(`Fetched ${cards.length} cards from the API.`);
-    console.log("cards", cards);
+    // Load existing card IDs for this set from DB
+    const existingCards = await db
+      .select({ id: cardsTable.id })
+      .from(cardsTable)
+      .where(eq(cardsTable.setId, setId));
+    const existingCardIds = new Set(existingCards.map((c) => c.id));
 
-    for (const card of cards) {
-      console.log(`Storing card: ${card.name} (${card.id})`, card);
+    const cards = await pokemonAPI.fetchPokemonCards(setId);
+    const newCards = cards.filter((c) => !existingCardIds.has(c.id));
+    console.log(
+      `Fetched ${cards.length} cards from API, ${existingCardIds.size} already in DB, ${newCards.length} new.`,
+    );
+
+    if (newCards.length === 0) {
+      console.log(`✅ All cards for set ${setId} are already up to date.`);
+      return;
+    }
+
+    for (const card of newCards) {
+      if (!card.images) {
+        console.warn(
+          `⚠️  Skipping card ${card.name} (${card.id}): no images available`,
+        );
+        continue;
+      }
+
+      console.log(`Storing card: ${card.name} (${card.id})`);
       await db
         .insert(cardsTable)
         .values({
@@ -66,24 +99,8 @@ export async function fetchAndStoreCards(setId: string) {
           name: card.name,
           number: card.number,
           rarity: card.rarity as Rarity,
-          imageSmall:
-            card.images?.small ??
-            pokemonAPI.getImageUrl(
-              "en",
-              rawSet!.serie.id,
-              setId,
-              card.number,
-              "small",
-            ),
-          imageLarge:
-            card.images?.large ??
-            pokemonAPI.getImageUrl(
-              "en",
-              rawSet!.serie.id,
-              setId,
-              card.number,
-              "large",
-            ),
+          imageSmall: card.images.small,
+          imageLarge: card.images.large,
           setId: card.set.id,
         })
         .onConflictDoUpdate({
@@ -92,31 +109,15 @@ export async function fetchAndStoreCards(setId: string) {
             name: card.name,
             number: card.number,
             rarity: card.rarity as Rarity,
-            imageSmall:
-              card.images?.small ??
-              pokemonAPI.getImageUrl(
-                "en",
-                rawSet!.serie.id,
-                setId,
-                card.number,
-                "small",
-              ),
-            imageLarge:
-              card.images?.large ??
-              pokemonAPI.getImageUrl(
-                "en",
-                rawSet!.serie.id,
-                setId,
-                card.number,
-                "large",
-              ),
+            imageSmall: card.images.small,
+            imageLarge: card.images.large,
             setId: card.set.id,
           },
         });
       console.log(`Stored card: ${card.name} (${card.id})`);
     }
 
-    console.log("Cards have been successfully fetched and stored.");
+    console.log(`Cards for set ${setId} have been successfully stored.`);
   } catch (error) {
     console.error("Error fetching or storing cards:", error);
   }
