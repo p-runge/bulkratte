@@ -267,7 +267,7 @@ export function CardFilters({
           <Label className="text-sm text-muted-foreground">
             {intl.formatMessage({
               id: "card.filter.date.label",
-              defaultMessage: "Release Period",
+              defaultMessage: "Release Date",
             })}
           </Label>
           <span className="text-sm text-muted-foreground tabular-nums">

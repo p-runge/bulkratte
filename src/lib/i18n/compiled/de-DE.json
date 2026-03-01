@@ -339,28 +339,10 @@
       "value": "Zurücksetzen"
     }
   ],
-  "card.filter.date.from": [
+  "card.filter.date.label": [
     {
       "type": 0,
-      "value": "Veröffentlichung ab"
-    }
-  ],
-  "card.filter.date.placeholder.from": [
-    {
-      "type": 0,
-      "value": "Von"
-    }
-  ],
-  "card.filter.date.placeholder.to": [
-    {
-      "type": 0,
-      "value": "Bis"
-    }
-  ],
-  "card.filter.date.to": [
-    {
-      "type": 0,
-      "value": "Veröffentlichung bis"
+      "value": "Erscheinungszeitraum"
     }
   ],
   "card.filter.order.asc": [
@@ -387,10 +369,10 @@
       "value": "Sortierreihenfolge"
     }
   ],
-  "card.filter.rarity.all": [
+  "card.filter.rarity.empty": [
     {
       "type": 0,
-      "value": "Alle Seltenheiten"
+      "value": "Keine Seltenheiten gefunden"
     }
   ],
   "card.filter.rarity.label": [
@@ -405,6 +387,12 @@
       "value": "Alle Seltenheiten"
     }
   ],
+  "card.filter.rarity.search": [
+    {
+      "type": 0,
+      "value": "Seltenheiten suchen..."
+    }
+  ],
   "card.filter.search.label": [
     {
       "type": 0,
@@ -417,10 +405,10 @@
       "value": "Kartenname oder -nummer..."
     }
   ],
-  "card.filter.set.all": [
+  "card.filter.set.empty": [
     {
       "type": 0,
-      "value": "Alle Sets"
+      "value": "Keine Sets gefunden"
     }
   ],
   "card.filter.set.label": [
@@ -433,6 +421,12 @@
     {
       "type": 0,
       "value": "Alle Sets"
+    }
+  ],
+  "card.filter.set.search": [
+    {
+      "type": 0,
+      "value": "Sets suchen..."
     }
   ],
   "card.filter.sort.label": [

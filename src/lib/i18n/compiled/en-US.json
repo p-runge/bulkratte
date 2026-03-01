@@ -339,28 +339,10 @@
       "value": "Clear"
     }
   ],
-  "card.filter.date.from": [
+  "card.filter.date.label": [
     {
       "type": 0,
-      "value": "Release From"
-    }
-  ],
-  "card.filter.date.placeholder.from": [
-    {
-      "type": 0,
-      "value": "From"
-    }
-  ],
-  "card.filter.date.placeholder.to": [
-    {
-      "type": 0,
-      "value": "To"
-    }
-  ],
-  "card.filter.date.to": [
-    {
-      "type": 0,
-      "value": "Release To"
+      "value": "Release Date"
     }
   ],
   "card.filter.order.asc": [
@@ -387,10 +369,10 @@
       "value": "Sort order"
     }
   ],
-  "card.filter.rarity.all": [
+  "card.filter.rarity.empty": [
     {
       "type": 0,
-      "value": "All rarities"
+      "value": "No rarities found"
     }
   ],
   "card.filter.rarity.label": [
@@ -405,6 +387,12 @@
       "value": "All rarities"
     }
   ],
+  "card.filter.rarity.search": [
+    {
+      "type": 0,
+      "value": "Search rarities..."
+    }
+  ],
   "card.filter.search.label": [
     {
       "type": 0,
@@ -417,10 +405,10 @@
       "value": "Card name or number..."
     }
   ],
-  "card.filter.set.all": [
+  "card.filter.set.empty": [
     {
       "type": 0,
-      "value": "All sets"
+      "value": "No sets found"
     }
   ],
   "card.filter.set.label": [
@@ -433,6 +421,12 @@
     {
       "type": 0,
       "value": "All sets"
+    }
+  ],
+  "card.filter.set.search": [
+    {
+      "type": 0,
+      "value": "Search sets..."
     }
   ],
   "card.filter.sort.label": [
