@@ -11,10 +11,38 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { api } from "@/lib/api/react";
 import { X } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useIntl } from "react-intl";
+
+function dateToMonthIndex(dateString: string): number {
+  const date = new Date(dateString + "T00:00:00");
+  return date.getFullYear() * 12 + date.getMonth();
+}
+
+function monthIndexToStartDateString(monthIndex: number): string {
+  const year = Math.floor(monthIndex / 12);
+  const month = monthIndex % 12;
+  return `${year}-${String(month + 1).padStart(2, "0")}-01`;
+}
+
+function monthIndexToEndDateString(monthIndex: number): string {
+  const year = Math.floor(monthIndex / 12);
+  const month = monthIndex % 12;
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  return `${year}-${String(month + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+}
+
+function formatMonthYear(monthIndex: number): string {
+  const year = Math.floor(monthIndex / 12);
+  const month = monthIndex % 12;
+  return new Date(year, month, 1).toLocaleDateString(undefined, {
+    month: "short",
+    year: "numeric",
+  });
+}
 
 export type FilterState = {
   setId: string;
@@ -64,9 +92,7 @@ export function CardFilters({
     useState<FilterState>(EMPTY_FILTER_STATE);
   const [sortState, setSortState] = useState<SortState>(DEFAULT_SORT_STATE);
 
-  const { data: setListData } = api.set.getList.useQuery(undefined, {
-    enabled: !disableSetFilter,
-  });
+  const { data: setListData } = api.set.getList.useQuery();
   const allSets = setListData || [];
 
   // Get available sets and rarities from filter options
@@ -76,8 +102,44 @@ export function CardFilters({
   // Filter sets to only show those with cards
   const sets = allSets.filter((set) => availableSetIds.has(set.id));
 
+  // Compute min/max month indices from all sets
+  const { minMonthIndex, maxMonthIndex } = useMemo(() => {
+    if (allSets.length === 0) {
+      const now = new Date();
+      const current = now.getFullYear() * 12 + now.getMonth();
+      return { minMonthIndex: current, maxMonthIndex: current };
+    }
+    const dates = allSets.map((s) => dateToMonthIndex(s.releaseDate));
+    return {
+      minMonthIndex: Math.min(...dates),
+      maxMonthIndex: Math.max(...dates),
+    };
+  }, [allSets]);
+
+  // Derive slider values from filterState (fall back to global bounds when empty)
+  const sliderFromValue = filterState.releaseDateFrom
+    ? dateToMonthIndex(filterState.releaseDateFrom)
+    : minMonthIndex;
+  const sliderToValue = filterState.releaseDateTo
+    ? dateToMonthIndex(filterState.releaseDateTo)
+    : maxMonthIndex;
+
   const updateFilterValue = (key: keyof FilterState, value: string) => {
     const newFilterState = { ...filterState, [key]: value };
+    setFilterState(newFilterState);
+    onFilterChange({ ...newFilterState, ...sortState });
+  };
+
+  const handleDateSliderChange = (values: number[]) => {
+    const [from, to] = values as [number, number];
+    const newFrom =
+      from === minMonthIndex ? "" : monthIndexToStartDateString(from);
+    const newTo = to === maxMonthIndex ? "" : monthIndexToEndDateString(to);
+    const newFilterState = {
+      ...filterState,
+      releaseDateFrom: newFrom,
+      releaseDateTo: newTo,
+    };
     setFilterState(newFilterState);
     onFilterChange({ ...newFilterState, ...sortState });
   };
@@ -120,7 +182,7 @@ export function CardFilters({
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
         <div className="flex flex-col gap-2">
           <Label htmlFor="search" className="text-sm text-muted-foreground">
             {intl.formatMessage({
@@ -198,48 +260,31 @@ export function CardFilters({
             })}
           />
         </div>
+      </div>
 
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="date-from" className="text-sm text-muted-foreground">
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <Label className="text-sm text-muted-foreground">
             {intl.formatMessage({
-              id: "card.filter.date.from",
-              defaultMessage: "Release From",
+              id: "card.filter.date.label",
+              defaultMessage: "Release Period",
             })}
           </Label>
-          <Input
-            id="date-from"
-            type="date"
-            placeholder={intl.formatMessage({
-              id: "card.filter.date.placeholder.from",
-              defaultMessage: "From",
-            })}
-            value={filterState.releaseDateFrom}
-            onChange={(e) =>
-              updateFilterValue("releaseDateFrom", e.target.value)
-            }
-            className="bg-background"
-          />
+          <span className="text-sm text-muted-foreground tabular-nums">
+            {formatMonthYear(sliderFromValue)}
+            {" – "}
+            {formatMonthYear(sliderToValue)}
+          </span>
         </div>
-
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="date-to" className="text-sm text-muted-foreground">
-            {intl.formatMessage({
-              id: "card.filter.date.to",
-              defaultMessage: "Release To",
-            })}
-          </Label>
-          <Input
-            id="date-to"
-            type="date"
-            placeholder={intl.formatMessage({
-              id: "card.filter.date.placeholder.to",
-              defaultMessage: "To",
-            })}
-            value={filterState.releaseDateTo}
-            onChange={(e) => updateFilterValue("releaseDateTo", e.target.value)}
-            className="bg-background"
-          />
-        </div>
+        <Slider
+          min={minMonthIndex}
+          max={maxMonthIndex}
+          step={1}
+          value={[sliderFromValue, sliderToValue]}
+          onValueChange={handleDateSliderChange}
+          disabled={minMonthIndex === maxMonthIndex}
+          className="w-full"
+        />
       </div>
 
       <div className="flex gap-4">
