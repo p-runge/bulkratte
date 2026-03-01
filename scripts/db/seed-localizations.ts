@@ -3,7 +3,7 @@ import { env } from "@/env";
 import pokemonAPI from "@/lib/pokemon-api";
 import { DEFAULT_LOCALE, LOCALES, type Locale } from "@/lib/i18n";
 import { upsertLocalization } from "@/lib/db/localization";
-import { db, localizationsTable, cardsTable } from "@/lib/db";
+import { db, localizationsTable } from "@/lib/db";
 import TCGdex, { SupportedLanguages } from "@tcgdex/sdk";
 import { eq } from "drizzle-orm";
 
@@ -44,17 +44,6 @@ async function seedLocalizationsForLanguage(locale: Locale) {
       recordId: string,
     ) => existingKeys.has(`${tableName}:${columnName}:${recordId}`);
 
-    // Pre-fetch all card IDs grouped by setId from DB
-    const allCards = await db
-      .select({ id: cardsTable.id, setId: cardsTable.setId })
-      .from(cardsTable);
-
-    const cardsBySetId = new Map<string, string[]>();
-    for (const card of allCards) {
-      if (!cardsBySetId.has(card.setId)) cardsBySetId.set(card.setId, []);
-      cardsBySetId.get(card.setId)!.push(card.id);
-    }
-
     // Fetch only lightweight set stubs from the API (one fast request)
     const langTcgdex = new TCGdex(languageCode);
     const setStubs = await langTcgdex.set.list();
@@ -67,17 +56,10 @@ async function seedLocalizationsForLanguage(locale: Locale) {
     for (const stub of setStubs) {
       const setId = stub.id;
 
-      // Check if this set and all its known cards are fully localized
-      const setCardsInDb = cardsBySetId.get(setId) ?? [];
-      const setFullyLocalized =
-        hasLocalization("sets", "name", setId) &&
-        hasLocalization("sets", "series", setId) &&
-        setCardsInDb.length > 0 &&
-        setCardsInDb.every((cardId) =>
-          hasLocalization("cards", "name", cardId),
-        );
-
-      if (setFullyLocalized) {
+      // A "_processed" marker is written after a set completes successfully,
+      // making the skip check immune to partial API coverage differences between
+      // languages (e.g. English DB has cards the German API doesn't return).
+      if (hasLocalization("sets", "_processed", setId)) {
         skippedSets++;
         continue;
       }
@@ -158,6 +140,9 @@ async function seedLocalizationsForLanguage(locale: Locale) {
         }
       }
       console.log(`    ✓ Processed ${cards.length} cards`);
+
+      // Mark this set as fully processed for this language so future runs skip it
+      await upsertLocalization("sets", "_processed", setId, locale, "1");
     }
 
     console.log(
