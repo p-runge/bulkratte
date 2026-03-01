@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Combobox } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -11,7 +12,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api/react";
-import { rarityEnum } from "@/lib/db/enums";
 import { X } from "lucide-react";
 import { useState } from "react";
 import { useIntl } from "react-intl";
@@ -148,32 +148,23 @@ export function CardFilters({
                 defaultMessage: "Set",
               })}
             </Label>
-            <Select
+            <Combobox
               value={filterState.setId}
               onValueChange={(value) => updateFilterValue("setId", value)}
-            >
-              <SelectTrigger id="set" className="bg-background">
-                <SelectValue
-                  placeholder={intl.formatMessage({
-                    id: "card.filter.set.placeholder",
-                    defaultMessage: "All sets",
-                  })}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">
-                  {intl.formatMessage({
-                    id: "card.filter.set.all",
-                    defaultMessage: "All sets",
-                  })}
-                </SelectItem>
-                {sets.map((set) => (
-                  <SelectItem key={set.id} value={set.id}>
-                    {set.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={sets.map((set) => ({ value: set.id, label: set.name }))}
+              placeholder={intl.formatMessage({
+                id: "card.filter.set.placeholder",
+                defaultMessage: "All sets",
+              })}
+              searchPlaceholder={intl.formatMessage({
+                id: "card.filter.set.search",
+                defaultMessage: "Search sets...",
+              })}
+              emptyMessage={intl.formatMessage({
+                id: "card.filter.set.empty",
+                defaultMessage: "No sets found",
+              })}
+            />
           </div>
         ) : (
           <div />
@@ -186,32 +177,26 @@ export function CardFilters({
               defaultMessage: "Rarity",
             })}
           </Label>
-          <Select
+          <Combobox
             value={filterState.rarity}
             onValueChange={(value) => updateFilterValue("rarity", value)}
-          >
-            <SelectTrigger id="rarity" className="bg-background">
-              <SelectValue
-                placeholder={intl.formatMessage({
-                  id: "card.filter.rarity.placeholder",
-                  defaultMessage: "All rarities",
-                })}
-              />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">
-                {intl.formatMessage({
-                  id: "card.filter.rarity.all",
-                  defaultMessage: "All rarities",
-                })}
-              </SelectItem>
-              {availableRarities.map((rarity) => (
-                <SelectItem key={rarity} value={rarity}>
-                  {rarity}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={availableRarities.map((rarity) => ({
+              value: rarity,
+              label: rarity,
+            }))}
+            placeholder={intl.formatMessage({
+              id: "card.filter.rarity.placeholder",
+              defaultMessage: "All rarities",
+            })}
+            searchPlaceholder={intl.formatMessage({
+              id: "card.filter.rarity.search",
+              defaultMessage: "Search rarities...",
+            })}
+            emptyMessage={intl.formatMessage({
+              id: "card.filter.rarity.empty",
+              defaultMessage: "No rarities found",
+            })}
+          />
         </div>
 
         <div className="flex flex-col gap-2">
