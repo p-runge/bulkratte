@@ -1,3 +1,4 @@
+import { seedAllLocalizations } from "@/lib/db/seed-localizations";
 import { fetchAndStoreSets } from "@/lib/db/seed";
 import { NextResponse } from "next/server";
 
@@ -12,6 +13,7 @@ export async function GET(request: Request) {
 
   try {
     await fetchAndStoreSets();
+    await seedAllLocalizations();
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("[cron/seed] Failed:", error);
