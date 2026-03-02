@@ -6,14 +6,16 @@ config();
 
 export const env = createEnv({
   server: {
+    NODE_ENV: z
+      .enum(["development", "test", "production"])
+      .default("development"),
+
     DATABASE_URL: z.string().url(),
     AUTH_DISCORD_CLIENT_ID: z.string(),
     AUTH_DISCORD_CLIENT_SECRET: z.string(),
     AUTH_GOOGLE_CLIENT_ID: z.string(),
     AUTH_GOOGLE_CLIENT_SECRET: z.string(),
-    NODE_ENV: z
-      .enum(["development", "test", "production"])
-      .default("development"),
+    CRON_SECRET: z.string(),
   },
   client: {
     // NEXT_PUBLIC_PUBLISHABLE_KEY: z.string().min(1),

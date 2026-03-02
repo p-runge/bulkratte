@@ -1,5 +1,6 @@
 import { seedAllLocalizations } from "@/lib/db/seed-localizations";
 import { fetchAndStoreSets } from "@/lib/db/seed";
+import { env } from "@/env";
 import { NextResponse } from "next/server";
 
 // Allow up to 5 minutes for this cron function to run (requires Vercel Pro / Fluid compute)
@@ -7,7 +8,7 @@ export const maxDuration = 300;
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (authHeader !== `Bearer ${env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
