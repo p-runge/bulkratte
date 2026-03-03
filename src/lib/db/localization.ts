@@ -4,6 +4,15 @@ import type { Language } from "./enums";
 import type { Locale } from "../i18n";
 
 /**
+ * Converts a camelCase string to snake_case.
+ * Used to map TypeScript property names (e.g. "imageSmall") to the DB column
+ * names stored in the localizations table (e.g. "image_small").
+ */
+function toSnakeCase(str: string): string {
+  return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+}
+
+/**
  * Get a single localized value for a specific record field
  * Falls back to the original value if no translation exists
  */
@@ -22,7 +31,7 @@ export async function getLocalizedValue<T extends Record<string, any>>(
     .where(
       and(
         eq(localizationsTable.table_name, tableName),
-        eq(localizationsTable.column_name, columnName as string),
+        eq(localizationsTable.column_name, toSnakeCase(columnName as string)),
         eq(localizationsTable.record_id, record.id),
         eq(localizationsTable.language, langCode),
       ),
@@ -60,8 +69,12 @@ export async function localizeRecord<T extends Record<string, any>>(
   const localized = { ...record };
 
   for (const translation of translations) {
-    if (columns.includes(translation.column_name as keyof T)) {
-      localized[translation.column_name as keyof T] = translation.value as any;
+    // The DB stores column names in snake_case; find the matching camelCase TS key
+    const tsKey = columns.find(
+      (c) => toSnakeCase(c as string) === translation.column_name,
+    );
+    if (tsKey !== undefined) {
+      localized[tsKey] = translation.value as any;
     }
   }
 
@@ -114,7 +127,10 @@ export async function localizeRecords<T extends Record<string, any>>(
 
     const localized = { ...record };
     for (const column of columns) {
-      const translation = recordTranslations.get(column as string);
+      // The DB stores column names in snake_case (e.g. "image_small"),
+      // but the TypeScript property names are camelCase (e.g. "imageSmall").
+      const dbColumnName = toSnakeCase(column as string);
+      const translation = recordTranslations.get(dbColumnName);
       if (translation) {
         localized[column] = translation as any;
       }
