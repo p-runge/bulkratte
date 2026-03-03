@@ -26,15 +26,13 @@ export default function CollectionPage() {
 
   function setMQueryParam(tab: string) {
     setActiveTab(tab);
-    const searchParams = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(searchParams.toString());
     if (tab === "collection") {
-      searchParams.delete("m");
+      params.delete("m");
     } else {
-      searchParams.set("m", tab);
+      params.set("m", tab);
     }
-    const newRelativePathQuery =
-      window.location.pathname + "?" + searchParams.toString();
-    router.replace(newRelativePathQuery);
+    router.replace(`?${params.toString()}`);
   }
 
   return (

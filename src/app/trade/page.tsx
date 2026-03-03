@@ -24,7 +24,7 @@ import {
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 import { toast } from "sonner";
 
@@ -34,6 +34,11 @@ export default function TradePage() {
 
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [creatingInvite, setCreatingInvite] = useState(false);
+  const [origin, setOrigin] = useState("");
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
 
   const { data: currentUser, isLoading: isLoadingUser } =
     api.getCurrentUser.useQuery(undefined, { retry: false });
@@ -240,7 +245,7 @@ export default function TradePage() {
                   <div key={c.id} className="flex items-center gap-3">
                     <div className="flex-1">
                       <p className="text-sm text-muted-foreground font-mono truncate">
-                        {`${typeof window !== "undefined" ? window.location.origin : ""}/trade/join/${c.inviteToken}`}
+                        {`${origin}/trade/join/${c.inviteToken}`}
                       </p>
                     </div>
                     <Button
