@@ -13,6 +13,21 @@ function toSnakeCase(str: string): string {
 }
 
 /**
+ * Wraps pokewiki.de image URLs through the internal proxy endpoint
+ * so the browser never hits Pokewiki directly (CORS / hotlink protection).
+ * All other URLs are returned unchanged.
+ */
+function applyImageProxy(url: string, columnName: string): string {
+  if (
+    (columnName === "image_small" || columnName === "image_large") &&
+    url.includes("pokewiki.de")
+  ) {
+    return `/api/pokewiki-image?url=${encodeURIComponent(url)}`;
+  }
+  return url;
+}
+
+/**
  * Get a single localized value for a specific record field
  * Falls back to the original value if no translation exists
  */
@@ -74,7 +89,10 @@ export async function localizeRecord<T extends Record<string, any>>(
       (c) => toSnakeCase(c as string) === translation.column_name,
     );
     if (tsKey !== undefined) {
-      localized[tsKey] = translation.value as any;
+      localized[tsKey] = applyImageProxy(
+        translation.value,
+        translation.column_name,
+      ) as any;
     }
   }
 
@@ -132,7 +150,7 @@ export async function localizeRecords<T extends Record<string, any>>(
       const dbColumnName = toSnakeCase(column as string);
       const translation = recordTranslations.get(dbColumnName);
       if (translation) {
-        localized[column] = translation as any;
+        localized[column] = applyImageProxy(translation, dbColumnName) as any;
       }
     }
     return localized;
