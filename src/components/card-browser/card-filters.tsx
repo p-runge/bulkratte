@@ -35,15 +35,6 @@ function monthIndexToEndDateString(monthIndex: number): string {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
 }
 
-function formatMonthYear(monthIndex: number): string {
-  const year = Math.floor(monthIndex / 12);
-  const month = monthIndex % 12;
-  return new Date(year, month, 1).toLocaleDateString(undefined, {
-    month: "short",
-    year: "numeric",
-  });
-}
-
 export type FilterState = {
   setId: string;
   rarity: string;
@@ -271,9 +262,19 @@ export function CardFilters({
             })}
           </Label>
           <span className="text-sm text-muted-foreground tabular-nums">
-            {formatMonthYear(sliderFromValue)}
+            {intl.formatDate(
+              new Date(
+                Math.floor(sliderFromValue / 12),
+                sliderFromValue % 12,
+                1,
+              ),
+              { month: "short", year: "numeric" },
+            )}
             {" – "}
-            {formatMonthYear(sliderToValue)}
+            {intl.formatDate(
+              new Date(Math.floor(sliderToValue / 12), sliderToValue % 12, 1),
+              { month: "short", year: "numeric" },
+            )}
           </span>
         </div>
         <Slider
