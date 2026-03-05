@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
 import { api } from "@/lib/api/react";
+import { cn } from "@/lib/utils";
 import { SlidersHorizontal, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useIntl } from "react-intl";
@@ -435,23 +436,25 @@ export function CardFilters({
           </Sheet>
         </div>
 
-        {/* Clear button — desktop only */}
-        {hasActiveFilters && (
-          <div className="hidden sm:flex items-end">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearFilters}
-              className="h-10 px-2 text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-4 w-4 mr-1" />
-              {intl.formatMessage({
-                id: "card.filter.button.clear",
-                defaultMessage: "Clear",
-              })}
-            </Button>
-          </div>
-        )}
+        {/* Clear button — desktop only, always rendered to avoid layout shift */}
+        <div className="hidden sm:flex items-end">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearFilters}
+            disabled={!hasActiveFilters}
+            className={cn(
+              "h-10 px-2 text-muted-foreground hover:text-foreground transition-opacity",
+              !hasActiveFilters && "invisible",
+            )}
+          >
+            <X className="h-4 w-4 mr-1" />
+            {intl.formatMessage({
+              id: "card.filter.button.clear",
+              defaultMessage: "Clear",
+            })}
+          </Button>
+        </div>
       </div>
 
       {/* ── Release date slider — desktop only ── */}
