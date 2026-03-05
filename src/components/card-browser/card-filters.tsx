@@ -402,7 +402,7 @@ export function CardFilters({
             </SheetTrigger>
             <SheetContent
               side="bottom"
-              className="max-h-[85vh] overflow-y-auto"
+              className="max-h-[85vh] overflow-y-auto px-4"
             >
               <SheetHeader className="mb-4">
                 <SheetTitle>
@@ -418,19 +418,18 @@ export function CardFilters({
                 {rarityCombobox}
                 {releaseDateSlider}
                 {sortControls}
-                {hasActiveFilters && (
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={clearFilters}
-                  >
-                    <X className="h-4 w-4 mr-2" />
-                    {intl.formatMessage({
-                      id: "card.filter.button.clear",
-                      defaultMessage: "Clear all filters",
-                    })}
-                  </Button>
-                )}
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  disabled={!hasActiveFilters}
+                  onClick={clearFilters}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  {intl.formatMessage({
+                    id: "card.filter.button.clear",
+                    defaultMessage: "Clear all filters",
+                  })}
+                </Button>
               </div>
             </SheetContent>
           </Sheet>
