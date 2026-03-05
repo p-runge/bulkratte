@@ -20,7 +20,7 @@ function toSnakeCase(str: string): string {
 function applyImageProxy(url: string, columnName: string): string {
   if (
     (columnName === "image_small" || columnName === "image_large") &&
-    url.includes("pokewiki.de")
+    (url.includes("pokewiki.de") || url.includes("pokezentrum.de"))
   ) {
     return `/api/pokewiki-image?url=${encodeURIComponent(url)}`;
   }

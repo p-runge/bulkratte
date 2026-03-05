@@ -1,5 +1,5 @@
-// Proxy route for fetching card images from Pokewiki.
-// Required because Pokewiki blocks direct hotlinking and CORS from the browser.
+// Proxy route for fetching card images from Pokewiki and Pokezentrum.
+// Required because these sites block direct hotlinking and CORS from the browser.
 // Usage: /api/pokewiki-image?url=https%3A%2F%2Fwww.pokewiki.de%2Fimages%2F...
 
 export async function GET(req: Request) {
@@ -10,7 +10,7 @@ export async function GET(req: Request) {
     return new Response("Missing url param", { status: 400 });
   }
 
-  // Only allow requests to pokewiki.de to prevent open proxy abuse
+  // Only allow requests to pokewiki.de / pokezentrum.de to prevent open proxy abuse
   let parsed: URL;
   try {
     parsed = new URL(imageUrl);
@@ -18,15 +18,21 @@ export async function GET(req: Request) {
     return new Response("Invalid url param", { status: 400 });
   }
 
-  if (!parsed.hostname.endsWith("pokewiki.de")) {
+  const allowed =
+    parsed.hostname.endsWith("pokewiki.de") ||
+    parsed.hostname.endsWith("pokezentrum.de");
+  if (!allowed) {
     return new Response("URL not allowed", { status: 403 });
   }
 
   try {
+    const referer = parsed.hostname.endsWith("pokezentrum.de")
+      ? "https://www.pokezentrum.de/"
+      : "https://www.pokewiki.de/";
     const imageRes = await fetch(imageUrl, {
       headers: {
         "User-Agent": "Bulkratte/1.0 (card image proxy)",
-        Referer: "https://www.pokewiki.de/",
+        Referer: referer,
       },
     });
 
