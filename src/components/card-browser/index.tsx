@@ -78,6 +78,7 @@ export function CardBrowser(props: CardBrowserProps) {
       <CardFilters
         onFilterChange={setFilters}
         disableSetFilter={!!props.setId}
+        disableReleaseDateFilter={!!props.setId}
         filterOptions={filterOptions}
       />
 

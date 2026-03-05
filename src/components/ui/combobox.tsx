@@ -57,7 +57,7 @@ export function Combobox({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "w-full justify-between bg-background font-normal",
+            "w-max justify-between bg-background font-normal",
             selectedLabel
               ? "hover:text-foreground"
               : "text-muted-foreground hover:text-muted-foreground",
@@ -74,8 +74,29 @@ export function Combobox({
             }
           }}
         >
-          {selectedLabel ?? placeholder}
-          <span className="ml-auto flex items-center gap-0.5">
+          {/* Invisible grid stack: all labels + placeholder occupy the same cell so the
+              browser sizes the button to the widest one — like a native <select>. */}
+          <span className="grid items-center">
+            <span
+              aria-hidden
+              className="invisible pointer-events-none col-start-1 row-start-1 select-none whitespace-nowrap"
+            >
+              {placeholder}
+            </span>
+            {options.map((o) => (
+              <span
+                key={o.value}
+                aria-hidden
+                className="invisible pointer-events-none col-start-1 row-start-1 select-none whitespace-nowrap"
+              >
+                {o.label}
+              </span>
+            ))}
+            <span className="col-start-1 row-start-1 text-left">
+              {selectedLabel ?? placeholder}
+            </span>
+          </span>
+          <span className="flex items-center gap-0.5">
             {selectedLabel && (
               <span
                 role="button"

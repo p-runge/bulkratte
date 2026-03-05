@@ -11,9 +11,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
 import { api } from "@/lib/api/react";
-import { X } from "lucide-react";
+import { SlidersHorizontal, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useIntl } from "react-intl";
 
@@ -66,6 +73,7 @@ const DEFAULT_SORT_STATE: SortState = {
 type CardFiltersProps = {
   onFilterChange: (query: CardQuery) => void;
   disableSetFilter?: boolean;
+  disableReleaseDateFilter?: boolean;
   filterOptions?: {
     setIds: string[];
     rarities: string[];
@@ -75,6 +83,7 @@ type CardFiltersProps = {
 export function CardFilters({
   onFilterChange,
   disableSetFilter = false,
+  disableReleaseDateFilter = false,
   filterOptions,
 }: CardFiltersProps) {
   const intl = useIntl();
@@ -148,34 +157,203 @@ export function CardFilters({
 
   const hasActiveFilters = Object.values(filterState).some((v) => v !== "");
 
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-lg">
+  // Active secondary filter count for the mobile badge
+  const activeSecondaryFilterCount = [
+    filterState.setId,
+    filterState.rarity,
+    filterState.releaseDateFrom || filterState.releaseDateTo ? "date" : "",
+    sortState.sortBy !== DEFAULT_SORT_STATE.sortBy ||
+    sortState.sortOrder !== DEFAULT_SORT_STATE.sortOrder
+      ? "sort"
+      : "",
+  ].filter(Boolean).length;
+
+  // ─── sub-render helpers ─────────────────────────────────────────────────
+
+  const setCombobox = !disableSetFilter ? (
+    <div className="flex flex-col gap-1.5">
+      <Label className="text-xs text-muted-foreground">
+        {intl.formatMessage({
+          id: "card.filter.set.label",
+          defaultMessage: "Set",
+        })}
+      </Label>
+      <Combobox
+        value={filterState.setId}
+        onValueChange={(value) => updateFilterValue("setId", value)}
+        options={sets.map((set) => ({ value: set.id, label: set.name }))}
+        placeholder={intl.formatMessage({
+          id: "card.filter.set.placeholder",
+          defaultMessage: "All sets",
+        })}
+        searchPlaceholder={intl.formatMessage({
+          id: "card.filter.set.search",
+          defaultMessage: "Search sets...",
+        })}
+        emptyMessage={intl.formatMessage({
+          id: "card.filter.set.empty",
+          defaultMessage: "No sets found",
+        })}
+      />
+    </div>
+  ) : null;
+
+  const rarityCombobox = (
+    <div className="flex flex-col gap-1.5">
+      <Label className="text-xs text-muted-foreground">
+        {intl.formatMessage({
+          id: "card.filter.rarity.label",
+          defaultMessage: "Rarity",
+        })}
+      </Label>
+      <Combobox
+        value={filterState.rarity}
+        onValueChange={(value) => updateFilterValue("rarity", value)}
+        options={availableRarities.map((rarity) => ({
+          value: rarity,
+          label: rarity,
+        }))}
+        placeholder={intl.formatMessage({
+          id: "card.filter.rarity.placeholder",
+          defaultMessage: "All rarities",
+        })}
+        searchPlaceholder={intl.formatMessage({
+          id: "card.filter.rarity.search",
+          defaultMessage: "Search rarities...",
+        })}
+        emptyMessage={intl.formatMessage({
+          id: "card.filter.rarity.empty",
+          defaultMessage: "No rarities found",
+        })}
+      />
+    </div>
+  );
+
+  const sortControls = (
+    <div className="flex gap-2">
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="sort-by" className="text-xs text-muted-foreground">
           {intl.formatMessage({
-            id: "card.filter.title",
-            defaultMessage: "Filter Cards",
+            id: "card.filter.sort.label",
+            defaultMessage: "Sort By",
           })}
-        </h3>
-        {hasActiveFilters && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={clearFilters}
-            className="h-8 px-2 text-muted-foreground hover:text-foreground"
-          >
-            <X className="h-4 w-4 mr-1" />
-            {intl.formatMessage({
-              id: "card.filter.button.clear",
-              defaultMessage: "Clear",
-            })}
-          </Button>
-        )}
+        </Label>
+        <Select
+          value={sortState.sortBy}
+          onValueChange={(value) => updateSortState("sortBy", value)}
+        >
+          <SelectTrigger id="sort-by" className="bg-background">
+            <SelectValue
+              placeholder={intl.formatMessage({
+                id: "card.filter.sort.placeholder",
+                defaultMessage: "Sort by",
+              })}
+            />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="set-and-number">
+              {intl.formatMessage({
+                id: "card.filter.sort.set-and-number",
+                defaultMessage: "Set → Number",
+              })}
+            </SelectItem>
+            <SelectItem value="name">
+              {intl.formatMessage({
+                id: "card.filter.sort.name",
+                defaultMessage: "Card Name",
+              })}
+            </SelectItem>
+            <SelectItem value="rarity">
+              {intl.formatMessage({
+                id: "card.filter.sort.rarity",
+                defaultMessage: "Rarity",
+              })}
+            </SelectItem>
+            <SelectItem value="price">
+              {intl.formatMessage({
+                id: "card.filter.sort.price",
+                defaultMessage: "Price",
+              })}
+            </SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="search" className="text-sm text-muted-foreground">
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="sort-order" className="text-xs text-muted-foreground">
+          {intl.formatMessage({
+            id: "card.filter.order.label",
+            defaultMessage: "Order",
+          })}
+        </Label>
+        <Select
+          value={sortState.sortOrder}
+          onValueChange={(value) => updateSortState("sortOrder", value)}
+        >
+          <SelectTrigger id="sort-order" className="bg-background">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="asc">
+              {intl.formatMessage({
+                id: "card.filter.order.asc",
+                defaultMessage: "Asc",
+              })}
+            </SelectItem>
+            <SelectItem value="desc">
+              {intl.formatMessage({
+                id: "card.filter.order.desc",
+                defaultMessage: "Desc",
+              })}
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
+
+  const releaseDateSlider = !disableReleaseDateFilter ? (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <Label className="text-xs text-muted-foreground">
+          {intl.formatMessage({
+            id: "card.filter.date.label",
+            defaultMessage: "Release Date",
+          })}
+        </Label>
+        <span className="text-xs text-muted-foreground tabular-nums">
+          {intl.formatDate(
+            new Date(Math.floor(sliderFromValue / 12), sliderFromValue % 12, 1),
+            { month: "short", year: "numeric" },
+          )}
+          {" – "}
+          {intl.formatDate(
+            new Date(Math.floor(sliderToValue / 12), sliderToValue % 12, 1),
+            { month: "short", year: "numeric" },
+          )}
+        </span>
+      </div>
+      <Slider
+        min={minMonthIndex}
+        max={maxMonthIndex}
+        step={1}
+        value={[sliderFromValue, sliderToValue]}
+        onValueChange={handleDateSliderChange}
+        disabled={minMonthIndex === maxMonthIndex}
+        className="w-full"
+      />
+    </div>
+  ) : null;
+
+  // ─── render ─────────────────────────────────────────────────────────────
+
+  return (
+    <div className="flex flex-col gap-3 flex-1 min-w-0">
+      {/* ── Main filter row ── */}
+      <div className="flex flex-wrap gap-2 items-end">
+        {/* Search — always visible */}
+        <div className="flex flex-col gap-1.5 flex-1 min-w-40">
+          <Label htmlFor="search" className="text-xs text-muted-foreground">
             {intl.formatMessage({
               id: "card.filter.search.label",
               defaultMessage: "Search",
@@ -185,7 +363,7 @@ export function CardFilters({
             id="search"
             placeholder={intl.formatMessage({
               id: "card.filter.search.placeholder",
-              defaultMessage: "Card name or number...",
+              defaultMessage: "Card name or number…",
             })}
             value={filterState.search}
             onChange={(e) => updateFilterValue("search", e.target.value)}
@@ -193,186 +371,93 @@ export function CardFilters({
           />
         </div>
 
-        {!disableSetFilter ? (
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="set" className="text-sm text-muted-foreground">
+        {/* Desktop: inline secondary filters */}
+        <div className="hidden sm:contents">
+          {setCombobox}
+          {rarityCombobox}
+          {sortControls}
+        </div>
+
+        {/* Mobile: sheet trigger with active-filter badge */}
+        <div className="flex items-end gap-2 sm:hidden">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button
+                variant="outline"
+                size="default"
+                className="relative shrink-0"
+              >
+                <SlidersHorizontal className="h-4 w-4 mr-2" />
+                {intl.formatMessage({
+                  id: "card.filter.button.filters",
+                  defaultMessage: "Filters",
+                })}
+                {activeSecondaryFilterCount > 0 && (
+                  <span className="ml-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
+                    {activeSecondaryFilterCount}
+                  </span>
+                )}
+              </Button>
+            </SheetTrigger>
+            <SheetContent
+              side="bottom"
+              className="max-h-[85vh] overflow-y-auto"
+            >
+              <SheetHeader className="mb-4">
+                <SheetTitle>
+                  {intl.formatMessage({
+                    id: "card.filter.sheet.title",
+                    defaultMessage: "Filters & Sort",
+                  })}
+                </SheetTitle>
+              </SheetHeader>
+
+              <div className="flex flex-col gap-5 pb-6">
+                {setCombobox}
+                {rarityCombobox}
+                {releaseDateSlider}
+                {sortControls}
+                {hasActiveFilters && (
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={clearFilters}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    {intl.formatMessage({
+                      id: "card.filter.button.clear",
+                      defaultMessage: "Clear all filters",
+                    })}
+                  </Button>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+
+        {/* Clear button — desktop only */}
+        {hasActiveFilters && (
+          <div className="hidden sm:flex items-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearFilters}
+              className="h-10 px-2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4 mr-1" />
               {intl.formatMessage({
-                id: "card.filter.set.label",
-                defaultMessage: "Set",
+                id: "card.filter.button.clear",
+                defaultMessage: "Clear",
               })}
-            </Label>
-            <Combobox
-              value={filterState.setId}
-              onValueChange={(value) => updateFilterValue("setId", value)}
-              options={sets.map((set) => ({ value: set.id, label: set.name }))}
-              placeholder={intl.formatMessage({
-                id: "card.filter.set.placeholder",
-                defaultMessage: "All sets",
-              })}
-              searchPlaceholder={intl.formatMessage({
-                id: "card.filter.set.search",
-                defaultMessage: "Search sets...",
-              })}
-              emptyMessage={intl.formatMessage({
-                id: "card.filter.set.empty",
-                defaultMessage: "No sets found",
-              })}
-            />
+            </Button>
           </div>
-        ) : (
-          <div />
         )}
-
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="rarity" className="text-sm text-muted-foreground">
-            {intl.formatMessage({
-              id: "card.filter.rarity.label",
-              defaultMessage: "Rarity",
-            })}
-          </Label>
-          <Combobox
-            value={filterState.rarity}
-            onValueChange={(value) => updateFilterValue("rarity", value)}
-            options={availableRarities.map((rarity) => ({
-              value: rarity,
-              label: rarity,
-            }))}
-            placeholder={intl.formatMessage({
-              id: "card.filter.rarity.placeholder",
-              defaultMessage: "All rarities",
-            })}
-            searchPlaceholder={intl.formatMessage({
-              id: "card.filter.rarity.search",
-              defaultMessage: "Search rarities...",
-            })}
-            emptyMessage={intl.formatMessage({
-              id: "card.filter.rarity.empty",
-              defaultMessage: "No rarities found",
-            })}
-          />
-        </div>
       </div>
 
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <Label className="text-sm text-muted-foreground">
-            {intl.formatMessage({
-              id: "card.filter.date.label",
-              defaultMessage: "Release Date",
-            })}
-          </Label>
-          <span className="text-sm text-muted-foreground tabular-nums">
-            {intl.formatDate(
-              new Date(
-                Math.floor(sliderFromValue / 12),
-                sliderFromValue % 12,
-                1,
-              ),
-              { month: "short", year: "numeric" },
-            )}
-            {" – "}
-            {intl.formatDate(
-              new Date(Math.floor(sliderToValue / 12), sliderToValue % 12, 1),
-              { month: "short", year: "numeric" },
-            )}
-          </span>
-        </div>
-        <Slider
-          min={minMonthIndex}
-          max={maxMonthIndex}
-          step={1}
-          value={[sliderFromValue, sliderToValue]}
-          onValueChange={handleDateSliderChange}
-          disabled={minMonthIndex === maxMonthIndex}
-          className="w-full"
-        />
-      </div>
-
-      <div className="flex gap-4">
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="sort-by" className="text-sm text-muted-foreground">
-            {intl.formatMessage({
-              id: "card.filter.sort.label",
-              defaultMessage: "Sort By",
-            })}
-          </Label>
-          <Select
-            value={sortState.sortBy}
-            onValueChange={(value) => updateSortState("sortBy", value)}
-          >
-            <SelectTrigger id="sort-by" className="bg-background">
-              <SelectValue
-                placeholder={intl.formatMessage({
-                  id: "card.filter.sort.placeholder",
-                  defaultMessage: "Sort by",
-                })}
-              />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="set-and-number">
-                {intl.formatMessage({
-                  id: "card.filter.sort.set-and-number",
-                  defaultMessage: "Set → Number",
-                })}
-              </SelectItem>
-              <SelectItem value="name">
-                {intl.formatMessage({
-                  id: "card.filter.sort.name",
-                  defaultMessage: "Card Name",
-                })}
-              </SelectItem>
-              <SelectItem value="rarity">
-                {intl.formatMessage({
-                  id: "card.filter.sort.rarity",
-                  defaultMessage: "Card Rarity",
-                })}
-              </SelectItem>
-              <SelectItem value="price">
-                {intl.formatMessage({
-                  id: "card.filter.sort.price",
-                  defaultMessage: "Card Price",
-                })}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="sort-order" className="text-sm text-muted-foreground">
-            {intl.formatMessage({
-              id: "card.filter.order.label",
-              defaultMessage: "Sort Order",
-            })}
-          </Label>
-          <Select
-            value={sortState.sortOrder}
-            onValueChange={(value) => updateSortState("sortOrder", value)}
-          >
-            <SelectTrigger id="sort-order" className="bg-background">
-              <SelectValue
-                placeholder={intl.formatMessage({
-                  id: "card.filter.order.placeholder",
-                  defaultMessage: "Sort order",
-                })}
-              />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="asc">
-                {intl.formatMessage({
-                  id: "card.filter.order.asc",
-                  defaultMessage: "Ascending",
-                })}
-              </SelectItem>
-              <SelectItem value="desc">
-                {intl.formatMessage({
-                  id: "card.filter.order.desc",
-                  defaultMessage: "Descending",
-                })}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      {/* ── Release date slider — desktop only ── */}
+      {releaseDateSlider && (
+        <div className="hidden sm:block">{releaseDateSlider}</div>
+      )}
     </div>
   );
 }
