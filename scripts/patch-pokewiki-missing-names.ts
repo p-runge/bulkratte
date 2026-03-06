@@ -14,39 +14,77 @@ import { eq, and, sql } from "drizzle-orm";
 import { pgTable, uuid, varchar, text, timestamp } from "drizzle-orm/pg-core";
 
 const DATABASE_URL = process.env.DATABASE_URL;
-if (!DATABASE_URL) { console.error("❌ DATABASE_URL not set"); process.exit(1); }
+if (!DATABASE_URL) {
+  console.error("❌ DATABASE_URL not set");
+  process.exit(1);
+}
 
 const db = drizzle(DATABASE_URL);
 const localizationsTable = pgTable("localizations", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   table_name: varchar("table_name", { length: 64 }).notNull(),
   column_name: varchar("column_name", { length: 64 }).notNull(),
   record_id: varchar("record_id", { length: 16 }).notNull(),
   language: varchar("language", { length: 8 }).notNull(),
   value: text("value").notNull(),
-  created_at: timestamp("created_at", { mode: "string" }).notNull().defaultNow(),
-  updated_at: timestamp("updated_at", { mode: "string" }).notNull().defaultNow(),
+  created_at: timestamp("created_at", { mode: "string" })
+    .notNull()
+    .defaultNow(),
+  updated_at: timestamp("updated_at", { mode: "string" })
+    .notNull()
+    .defaultNow(),
 });
 
-async function upsertLocalization(tableName: string, columnName: string, recordId: string, lang: string, value: string) {
-  const existing = await db.select().from(localizationsTable)
-    .where(and(eq(localizationsTable.table_name, tableName), eq(localizationsTable.column_name, columnName), eq(localizationsTable.record_id, recordId), eq(localizationsTable.language, lang)))
+async function upsertLocalization(
+  tableName: string,
+  columnName: string,
+  recordId: string,
+  lang: string,
+  value: string,
+) {
+  const existing = await db
+    .select()
+    .from(localizationsTable)
+    .where(
+      and(
+        eq(localizationsTable.table_name, tableName),
+        eq(localizationsTable.column_name, columnName),
+        eq(localizationsTable.record_id, recordId),
+        eq(localizationsTable.language, lang),
+      ),
+    )
     .limit(1);
   if (existing[0]) {
-    await db.update(localizationsTable).set({ value, updated_at: sql`NOW()` }).where(eq(localizationsTable.id, existing[0].id));
+    await db
+      .update(localizationsTable)
+      .set({ value, updated_at: sql`NOW()` })
+      .where(eq(localizationsTable.id, existing[0].id));
   } else {
-    await db.insert(localizationsTable).values({ table_name: tableName, column_name: columnName, record_id: recordId, language: lang, value });
+    await db
+      .insert(localizationsTable)
+      .values({
+        table_name: tableName,
+        column_name: columnName,
+        record_id: recordId,
+        language: lang,
+        value,
+      });
   }
 }
 
-const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
+const UA =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
 
-function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)); }
+function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
 
 // Maps TCGdex setId → Pokewiki article title for sets that need name resolution
 const SET_ARTICLE_TITLES: Record<string, string> = {
-  g1:   "Generationen (TCG)",
-  dv1:  "Drachengruft (TCG)",
+  g1: "Generationen (TCG)",
+  dv1: "Drachengruft (TCG)",
   col1: "Ruf der Legenden (TCG)",
 };
 
@@ -54,7 +92,9 @@ const SET_ARTICLE_TITLES: Record<string, string> = {
  * Fetch the wikitext of a Pokewiki article and extract card number → German name
  * from {{Setzeile|{num}|{name}|...}} entries.
  */
-async function fetchCardNames(articleTitle: string): Promise<Map<number, string>> {
+async function fetchCardNames(
+  articleTitle: string,
+): Promise<Map<number, string>> {
   const params = new URLSearchParams({
     action: "parse",
     page: articleTitle,
@@ -65,7 +105,7 @@ async function fetchCardNames(articleTitle: string): Promise<Map<number, string>
     headers: { "User-Agent": UA, Accept: "application/json" },
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json() as any;
+  const data = (await res.json()) as any;
   const wikitext: string = data?.parse?.wikitext?.["*"] ?? "";
 
   const map = new Map<number, string>();
@@ -88,7 +128,7 @@ async function lookupTitles(titles: string[]): Promise<Map<string, string>> {
 
   const params = new URLSearchParams({
     action: "query",
-    titles: titles.map(t => `File:${t}`).join("|"),
+    titles: titles.map((t) => `File:${t}`).join("|"),
     prop: "imageinfo",
     iiprop: "url",
     format: "json",
@@ -97,7 +137,7 @@ async function lookupTitles(titles: string[]): Promise<Map<string, string>> {
     headers: { "User-Agent": UA, Accept: "application/json" },
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json() as any;
+  const data = (await res.json()) as any;
 
   for (const page of Object.values(data?.query?.pages ?? {}) as any[]) {
     if (!page.imageinfo?.length) continue;
@@ -117,10 +157,15 @@ async function main() {
   let totalSeeded = 0;
 
   for (const [setId, articleTitle] of Object.entries(SET_ARTICLE_TITLES)) {
-    const candidates = allMissing.filter(c => c.setId === setId);
-    if (!candidates.length) { console.log(`⏭  ${setId}: no missing cards`); continue; }
+    const candidates = allMissing.filter((c) => c.setId === setId);
+    if (!candidates.length) {
+      console.log(`⏭  ${setId}: no missing cards`);
+      continue;
+    }
 
-    process.stdout.write(`\n📖 ${setId} — fetching card names from "${articleTitle}" … `);
+    process.stdout.write(
+      `\n📖 ${setId} — fetching card names from "${articleTitle}" … `,
+    );
     let nameMap: Map<number, string>;
     try {
       nameMap = await fetchCardNames(articleTitle);
@@ -175,7 +220,13 @@ async function main() {
         await upsertLocalization("cards", "image_small", card.id, LANG, url);
         await upsertLocalization("cards", "image_large", card.id, LANG, url);
         if (card.germanName) {
-          await upsertLocalization("cards", "name", card.id, LANG, card.germanName);
+          await upsertLocalization(
+            "cards",
+            "name",
+            card.id,
+            LANG,
+            card.germanName,
+          );
         }
         resolvedIds.add(card.id);
         seeded++;
@@ -186,16 +237,23 @@ async function main() {
     }
 
     const icon = seeded === candidates.length ? "✅" : seeded > 0 ? "🟡" : "⚠️";
-    console.log(`  ${icon} ${setId}: ${seeded}/${candidates.length} images seeded`);
+    console.log(
+      `  ${icon} ${setId}: ${seeded}/${candidates.length} images seeded`,
+    );
   }
 
   // Update still-missing.json: remove seeded cards
-  const remaining = allMissing.filter(c => !resolvedIds.has(c.id));
+  const remaining = allMissing.filter((c) => !resolvedIds.has(c.id));
   fs.writeFileSync(missingPath, JSON.stringify(remaining, null, 2) + "\n");
 
   console.log(`\n========= DONE =========`);
   console.log(`✅ Seeded:    ${totalSeeded} cards`);
-  console.log(`⏳ Remaining: ${remaining.length} cards in still-missing.json\n`);
+  console.log(
+    `⏳ Remaining: ${remaining.length} cards in still-missing.json\n`,
+  );
 }
 
-main().catch(err => { console.error("❌", err); process.exit(1); });
+main().catch((err) => {
+  console.error("❌", err);
+  process.exit(1);
+});

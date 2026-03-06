@@ -18,10 +18,14 @@ export const env = createEnv({
     CRON_SECRET: z.string(),
   },
   client: {
-    // NEXT_PUBLIC_PUBLISHABLE_KEY: z.string().min(1),
+    // Base URL of the deployed app, used to build absolute proxy URLs.
+    // Required for OG images, emails, or any server-side URL that must be
+    // fully qualified.  Falls back to root-relative paths when not set.
+    // Example: NEXT_PUBLIC_APP_URL=https://bulkratte.com
+    NEXT_PUBLIC_APP_URL: z.string().url().optional(),
   },
   // For Next.js >= 13.4.4, you only need to destructure client variables:
   experimental__runtimeEnv: {
-    // NEXT_PUBLIC_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_PUBLISHABLE_KEY,
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   },
 });

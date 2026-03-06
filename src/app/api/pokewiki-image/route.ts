@@ -1,6 +1,13 @@
-// Proxy route for fetching card images from Pokewiki and Pokezentrum.
+// Proxy route for fetching card images from Pokewiki, Pokezentrum and pokemonkarte.de.
 // Required because these sites block direct hotlinking and CORS from the browser.
 // Usage: /api/pokewiki-image?url=https%3A%2F%2Fwww.pokewiki.de%2Fimages%2F...
+
+const ALLOWED_HOSTS: Record<string, string> = {
+  "pokewiki.de": "https://www.pokewiki.de/",
+  "pokezentrum.de": "https://www.pokezentrum.de/",
+  "pokemonkarte.de": "https://www.pokemonkarte.de/",
+  "s3.cardmarket.com": "https://www.cardmarket.com/",
+};
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -10,7 +17,7 @@ export async function GET(req: Request) {
     return new Response("Missing url param", { status: 400 });
   }
 
-  // Only allow requests to pokewiki.de / pokezentrum.de to prevent open proxy abuse
+  // Only allow requests to known card-image hosts to prevent open proxy abuse
   let parsed: URL;
   try {
     parsed = new URL(imageUrl);
@@ -18,22 +25,22 @@ export async function GET(req: Request) {
     return new Response("Invalid url param", { status: 400 });
   }
 
-  const allowed =
-    parsed.hostname.endsWith("pokewiki.de") ||
-    parsed.hostname.endsWith("pokezentrum.de");
-  if (!allowed) {
+  const referer = Object.entries(ALLOWED_HOSTS).find(([suffix]) =>
+    parsed.hostname.endsWith(suffix),
+  )?.[1];
+
+  if (!referer) {
     return new Response("URL not allowed", { status: 403 });
   }
 
   try {
-    const referer = parsed.hostname.endsWith("pokezentrum.de")
-      ? "https://www.pokezentrum.de/"
-      : "https://www.pokewiki.de/";
     const imageRes = await fetch(imageUrl, {
       headers: {
         "User-Agent": "Bulkratte/1.0 (card image proxy)",
         Referer: referer,
       },
+      // Ensure the upstream response is not cached by Vercel Edge unexpectedly
+      cache: "no-store",
     });
 
     if (!imageRes.ok) {

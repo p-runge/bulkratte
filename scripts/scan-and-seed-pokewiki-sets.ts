@@ -44,8 +44,12 @@ const localizationsTable = pgTable("localizations", {
   record_id: varchar("record_id", { length: 16 }).notNull(),
   language: varchar("language", { length: 8 }).notNull(),
   value: text("value").notNull(),
-  created_at: timestamp("created_at", { mode: "string" }).notNull().defaultNow(),
-  updated_at: timestamp("updated_at", { mode: "string" }).notNull().defaultNow(),
+  created_at: timestamp("created_at", { mode: "string" })
+    .notNull()
+    .defaultNow(),
+  updated_at: timestamp("updated_at", { mode: "string" })
+    .notNull()
+    .defaultNow(),
 });
 
 async function upsertLocalization(
@@ -91,23 +95,65 @@ async function upsertLocalization(
 
 const POKEWIKI_SETS = new Set([
   // Vintage (already mostly seeded — residual missing cards)
-  "base1", "base2", "base3",
+  "base1",
+  "base2",
+  "base3",
   // Team Rocket
   "base5",
-  // Neo
-  "neo1", "neo2",
+  // Neo (all 4 confirmed on Pokewiki)
+  "neo1",
+  "neo2",
+  "neo3",
+  "neo4",
   // e-Card era
-  "ecard1", "ecard2", "ecard3",
-  // EX era (confirmed on Pokewiki)
-  "ex1", "ex3", "ex6", "ex8",
-  // DP era
-  "dp1", "dp2", "dp4", "dp5", "dp7",
+  "ecard1",
+  "ecard2",
+  "ecard3",
+  // EX era (all confirmed on Pokewiki)
+  "ex1",
+  "ex2",
+  "ex3",
+  "ex4",
+  "ex6",
+  "ex8",
+  "ex9",
+  "ex10",
+  "ex11",
+  "ex12",
+  "ex13",
+  "ex14",
+  "ex15",
+  "ex16",
+  // DP era (all confirmed)
+  "dp1",
+  "dp2",
+  "dp3",
+  "dp4",
+  "dp5",
+  "dp6",
+  "dp7",
+  // DP promos
+  "dpp",
   // Platinum era
-  "pl1", "pl2", "pl3", "pl4",
+  "pl1",
+  "pl2",
+  "pl3",
+  "pl4",
   // HGSS era
-  "hgss1", "hgss3", "hgss4",
+  "hgss1",
+  "hgss2",
+  "hgss3",
+  "hgss4",
+  // HGSS promos
+  "hgssp",
   // BW / misc
-  "col1", "g1", "dv1",
+  "col1",
+  "g1",
+  "dv1",
+  // Promo sets (may have partial coverage)
+  "smp",
+  "swshp",
+  "svp",
 ]);
 
 // ---------------------------------------------------------------------------
@@ -184,7 +230,10 @@ async function lookupTitles(titles: string[]): Promise<Map<string, string>> {
     if (!page.imageinfo || page.imageinfo.length === 0) continue;
     const url: string = page.imageinfo[0].url;
     if (!url) continue;
-    const titleRaw: string = (page.title as string).replace(/^(File|Datei):/i, "");
+    const titleRaw: string = (page.title as string).replace(
+      /^(File|Datei):/i,
+      "",
+    );
     result.set(titleRaw.toLowerCase(), url);
   }
 
@@ -199,8 +248,7 @@ async function main() {
   // DB safety check
   const dbHost =
     DATABASE_URL!.split("@")[1]?.split("/")[0]?.split(":")[0] ?? "unknown";
-  const dbUser =
-    DATABASE_URL!.split("//")[1]?.split(":")?.[0] ?? "unknown";
+  const dbUser = DATABASE_URL!.split("//")[1]?.split(":")?.[0] ?? "unknown";
 
   if (dbHost !== "localhost") {
     const readline = await import("readline");
@@ -318,8 +366,7 @@ async function main() {
       }
     }
 
-    const icon =
-      setSeeded === setMissing ? "✅" : setSeeded > 0 ? "🟡" : "❌";
+    const icon = setSeeded === setMissing ? "✅" : setSeeded > 0 ? "🟡" : "❌";
     console.log(`  ${icon} ${setId.padEnd(8)} ${setSeeded}/${setMissing}`);
   }
 
@@ -331,7 +378,9 @@ async function main() {
     );
     if (hasMissing && !hasResolved) {
       const count = candidates.filter((c) => c.setId === setId).length;
-      console.log(`  ⚠️  ${setId.padEnd(8)} 0/${count} — no Pokewiki images found`);
+      console.log(
+        `  ⚠️  ${setId.padEnd(8)} 0/${count} — no Pokewiki images found`,
+      );
     }
   }
 
