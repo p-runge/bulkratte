@@ -115,7 +115,9 @@ async function run() {
   }
 
   const totalMissingImages = actionable
-    .filter((r) => r.status === "missing_images" || r.status === "missing_names")
+    .filter(
+      (r) => r.status === "missing_images" || r.status === "missing_names",
+    )
     .reduce((acc, r) => acc + (r.total - r.deImages), 0);
   const notSeeded = actionable.filter((r) => r.status === "not_seeded");
   console.log(`\nTotal cards missing DE images: ${totalMissingImages}`);

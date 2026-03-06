@@ -192,8 +192,8 @@ export default async function StatusPage() {
             {rows.length} sets · {statusCounts.complete} complete ·{" "}
             {statusCounts.missing_images} missing images ·{" "}
             {statusCounts.missing_names} missing names ·{" "}
-            {statusCounts.not_seeded} not seeded · {statusCounts.nonexistent} nonexistent (across all
-            non-default languages)
+            {statusCounts.not_seeded} not seeded · {statusCounts.nonexistent}{" "}
+            nonexistent (across all non-default languages)
           </p>
         </div>
 

@@ -409,13 +409,17 @@ function Cell({ status, count, nameCount, total }: CellData) {
         <div className="flex flex-row items-center justify-center gap-1.5">
           <div className="flex flex-col items-center leading-none gap-0.5">
             <span className="text-[9px] font-semibold">{pct}%</span>
-            <span className="text-[7px] opacity-60">{count}/{total}</span>
+            <span className="text-[7px] opacity-60">
+              {count}/{total}
+            </span>
             <span className="text-[7px] opacity-60">image</span>
           </div>
           <div className="w-px h-4 bg-current opacity-20 self-center" />
           <div className="flex flex-col items-center leading-none gap-0.5">
             <span className="text-[9px] font-semibold">{namePct}%</span>
-            <span className="text-[7px] opacity-60">{nameCount}/{total}</span>
+            <span className="text-[7px] opacity-60">
+              {nameCount}/{total}
+            </span>
             <span className="text-[7px] opacity-60">name</span>
           </div>
         </div>
