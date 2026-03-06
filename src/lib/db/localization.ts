@@ -13,6 +13,37 @@ function toSnakeCase(str: string): string {
 }
 
 /**
+ * Hosts whose images must be fetched via the internal proxy endpoint because
+ * they block direct hotlinking / CORS from the browser.
+ */
+const PROXY_HOSTS = [
+  "pokewiki.de",
+  "pokezentrum.de",
+  "pokemonkarte.de",
+  "s3.cardmarket.com",
+];
+
+/**
+ * Wraps card-image URLs that require hotlink protection through the internal
+ * proxy endpoint.  The resulting URL is always absolute so it can be used in
+ * any context (browser img, OG tags, server-side fetches, etc.).
+ *
+ * The base is read from NEXT_PUBLIC_APP_URL (e.g. "https://bulkratte.com").
+ * Falls back to an empty string, which produces a root-relative URL that
+ * works for standard browser rendering when the env var is not set.
+ */
+function applyImageProxy(url: string, columnName: string): string {
+  if (
+    (columnName === "image_small" || columnName === "image_large") &&
+    PROXY_HOSTS.some((host) => url.includes(host))
+  ) {
+    const base = process.env.NEXT_PUBLIC_APP_URL ?? "";
+    return `${base}/api/pokewiki-image?url=${encodeURIComponent(url)}`;
+  }
+  return url;
+}
+
+/**
  * Get a single localized value for a specific record field
  * Falls back to the original value if no translation exists
  */
@@ -74,7 +105,10 @@ export async function localizeRecord<T extends Record<string, any>>(
       (c) => toSnakeCase(c as string) === translation.column_name,
     );
     if (tsKey !== undefined) {
-      localized[tsKey] = translation.value as any;
+      localized[tsKey] = applyImageProxy(
+        translation.value,
+        translation.column_name,
+      ) as any;
     }
   }
 
@@ -132,7 +166,7 @@ export async function localizeRecords<T extends Record<string, any>>(
       const dbColumnName = toSnakeCase(column as string);
       const translation = recordTranslations.get(dbColumnName);
       if (translation) {
-        localized[column] = translation as any;
+        localized[column] = applyImageProxy(translation, dbColumnName) as any;
       }
     }
     return localized;
