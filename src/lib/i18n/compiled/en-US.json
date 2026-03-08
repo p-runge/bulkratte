@@ -339,6 +339,12 @@
       "value": "Clear"
     }
   ],
+  "card.filter.button.filters": [
+    {
+      "type": 0,
+      "value": "Filters"
+    }
+  ],
   "card.filter.date.label": [
     {
       "type": 0,
@@ -348,25 +354,19 @@
   "card.filter.order.asc": [
     {
       "type": 0,
-      "value": "Ascending"
+      "value": "Asc"
     }
   ],
   "card.filter.order.desc": [
     {
       "type": 0,
-      "value": "Descending"
+      "value": "Desc"
     }
   ],
   "card.filter.order.label": [
     {
       "type": 0,
-      "value": "Sort Order"
-    }
-  ],
-  "card.filter.order.placeholder": [
-    {
-      "type": 0,
-      "value": "Sort order"
+      "value": "Order"
     }
   ],
   "card.filter.rarity.empty": [
@@ -402,7 +402,7 @@
   "card.filter.search.placeholder": [
     {
       "type": 0,
-      "value": "Card name or number..."
+      "value": "Card name or number…"
     }
   ],
   "card.filter.set.empty": [
@@ -429,6 +429,12 @@
       "value": "Search sets..."
     }
   ],
+  "card.filter.sheet.title": [
+    {
+      "type": 0,
+      "value": "Filters & Sort"
+    }
+  ],
   "card.filter.sort.label": [
     {
       "type": 0,
@@ -450,25 +456,19 @@
   "card.filter.sort.price": [
     {
       "type": 0,
-      "value": "Card Price"
+      "value": "Price"
     }
   ],
   "card.filter.sort.rarity": [
     {
       "type": 0,
-      "value": "Card Rarity"
+      "value": "Rarity"
     }
   ],
   "card.filter.sort.set-and-number": [
     {
       "type": 0,
       "value": "Set → Number"
-    }
-  ],
-  "card.filter.title": [
-    {
-      "type": 0,
-      "value": "Filter Cards"
     }
   ],
   "card.picker.button.add": [
@@ -838,7 +838,7 @@
   "form.field.notes.placeholder": [
     {
       "type": 0,
-      "value": "Creased corner, scratched foil, swirl on the right…"
+      "value": "Creased corner\nScratched foil\nSwirl on the right\n…"
     }
   ],
   "form.field.set_name.label": [

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { InfoTooltip } from "@/components/info-tooltip";
 import { VariantToggleGroup } from "@/components/variant-toggle-group";
 import { api } from "@/lib/api/react";
 import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
@@ -247,11 +248,21 @@ export default function UserCardDialog({
 
                   {/* Notes Field */}
                   <div className="space-y-2">
-                    <Label htmlFor="notes">
+                    <Label
+                      htmlFor="notes"
+                      className="flex items-center gap-1.5"
+                    >
                       {intl.formatMessage({
                         id: "form.field.notes.label",
                         defaultMessage: "Notes",
                       })}
+                      <InfoTooltip
+                        content={intl.formatMessage({
+                          id: "form.field.notes.placeholder",
+                          defaultMessage:
+                            "Creased corner\nScratched foil\nSwirl on the right\n…",
+                        })}
+                      />
                     </Label>
                     <Controller
                       control={form.control}
@@ -259,11 +270,6 @@ export default function UserCardDialog({
                       render={({ field }) => (
                         <Textarea
                           id="notes"
-                          placeholder={intl.formatMessage({
-                            id: "form.field.notes.placeholder",
-                            defaultMessage:
-                              "Creased corner, scratched foil, swirl on the right…",
-                          })}
                           className="resize-none"
                           rows={5}
                           {...field}

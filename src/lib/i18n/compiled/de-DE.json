@@ -339,6 +339,12 @@
       "value": "Zurücksetzen"
     }
   ],
+  "card.filter.button.filters": [
+    {
+      "type": 0,
+      "value": "Filter"
+    }
+  ],
   "card.filter.date.label": [
     {
       "type": 0,
@@ -358,12 +364,6 @@
     }
   ],
   "card.filter.order.label": [
-    {
-      "type": 0,
-      "value": "Sortierreihenfolge"
-    }
-  ],
-  "card.filter.order.placeholder": [
     {
       "type": 0,
       "value": "Sortierreihenfolge"
@@ -429,6 +429,12 @@
       "value": "Sets suchen..."
     }
   ],
+  "card.filter.sheet.title": [
+    {
+      "type": 0,
+      "value": "Filter & Sortierung"
+    }
+  ],
   "card.filter.sort.label": [
     {
       "type": 0,
@@ -463,12 +469,6 @@
     {
       "type": 0,
       "value": "Set → Nummer"
-    }
-  ],
-  "card.filter.title": [
-    {
-      "type": 0,
-      "value": "Karten filtern"
     }
   ],
   "card.picker.button.add": [
@@ -838,7 +838,7 @@
   "form.field.notes.placeholder": [
     {
       "type": 0,
-      "value": "Geknickte Ecke, Kratzer im Holo, Swirl auf der rechten Seite…"
+      "value": "Geknickte Ecke\nKratzer im Holo\nSwirl auf der rechten Seite\n…"
     }
   ],
   "form.field.set_name.label": [
