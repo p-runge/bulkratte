@@ -93,7 +93,9 @@ export function CardFilters({
     useState<FilterState>(EMPTY_FILTER_STATE);
   const [sortState, setSortState] = useState<SortState>(DEFAULT_SORT_STATE);
 
-  const { data: setListData } = api.set.getList.useQuery();
+  const { data: setListData } = api.set.getList.useQuery(undefined, {
+    enabled: !disableReleaseDateFilter,
+  });
   const allSets = setListData || [];
 
   // Get available sets and rarities from filter options

@@ -1,22 +1,32 @@
 "use client";
 
 import { CardBrowser } from "@/components/card-browser";
+import type { CardWithPrice } from "@/components/card-browser/card-grid";
 import { CardImageDialog } from "@/components/card-image";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { api } from "@/lib/api/react";
-import { Card as CardType, Set as PokemonSet } from "@/lib/db";
+import { Set as PokemonSet } from "@/lib/db";
 import Image from "next/image";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 type Props = {
   set: PokemonSet;
+  initialCards: CardWithPrice[];
 };
-export default function Content({ set }: Props) {
-  const [selectedCard, setSelectedCard] = useState<CardType | null>(null);
 
-  const { data: cards } = api.card.getList.useQuery({
-    setId: set.id,
-  });
+export default function Content({ set, initialCards }: Props) {
+  const [selectedCard, setSelectedCard] = useState<CardWithPrice | null>(null);
+
+  const staticFilterOptions = useMemo(
+    () => ({
+      setIds: [set.id],
+      rarities: [
+        ...new Set(
+          initialCards.flatMap((c) => (c.rarity != null ? [c.rarity] : [])),
+        ),
+      ] as string[],
+    }),
+    [set.id, initialCards],
+  );
 
   return (
     <div className="space-y-6">
@@ -52,18 +62,18 @@ export default function Content({ set }: Props) {
         </CardHeader>
       </Card>
 
-      {set && (
-        <CardBrowser
-          selectionMode="single"
-          onCardClick={(cardId) => {
-            const card = cards?.find((c) => c.id === cardId);
-            if (card) {
-              setSelectedCard(card);
-            }
-          }}
-          setId={set.id}
-        />
-      )}
+      <CardBrowser
+        selectionMode="single"
+        setId={set.id}
+        staticCards={initialCards}
+        staticFilterOptions={staticFilterOptions}
+        onCardClick={(cardId) => {
+          const card = initialCards.find((c) => c.id === cardId);
+          if (card) {
+            setSelectedCard(card);
+          }
+        }}
+      />
 
       {selectedCard && (
         <CardImageDialog
@@ -76,15 +86,3 @@ export default function Content({ set }: Props) {
     </div>
   );
 }
-
-// const rarityIconMap = {
-//   Common: <Circle className="w-3 h-3 fill-black" />,
-//   Uncommon: <Diamond className="w-3 h-3 fill-black" />,
-//   Rare: <Star className="w-3 h-3 fill-black" />,
-//   "Rare Holo": (
-//     <span className="flex items-center">
-//       <Star className="w-3 h-3 fill-black" />
-//       <span className="text-xs">H</span>
-//     </span>
-//   ),
-// } as Partial<Record<Rarity, ReactNode>>;

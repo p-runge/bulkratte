@@ -2,9 +2,28 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectTrigger } from "@/components/ui/select";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { api } from "@/lib/api/server";
+import { db, setsTable } from "@/lib/db";
 import { getIntl } from "@/lib/i18n/server";
+import { not, eq, desc } from "drizzle-orm";
 import Link from "next/link";
 import Content from "./_components/content";
+
+// Never revalidate set pages — they will be re-generated on demand when accessed, and
+export const revalidate = false;
+
+// Allow set pages that weren't pre-built to be generated on first request.
+export const dynamicParams = true;
+
+// Query the DB directly — generateStaticParams runs at build time outside a
+// request scope, so the tRPC caller (which calls headers()) cannot be used.
+export async function generateStaticParams() {
+  const sets = await db
+    .select({ id: setsTable.id })
+    .from(setsTable)
+    .where(not(eq(setsTable.series, "Pokémon TCG Pocket")))
+    .orderBy(desc(setsTable.releaseDate));
+  return sets.map((set) => ({ setId: set.id }));
+}
 
 export default async function SetIdPage({
   params,
@@ -14,7 +33,10 @@ export default async function SetIdPage({
   const { setId } = await params;
   const intl = await getIntl();
 
-  const sets = await api.set.getList();
+  const [sets, cards] = await Promise.all([
+    api.set.getList(),
+    api.card.getList({ setId }),
+  ]);
   const selectedSet = sets.find((set) => set.id === setId);
 
   if (!selectedSet) {
@@ -74,7 +96,7 @@ export default async function SetIdPage({
         </ol>
       </nav>
 
-      <Content set={selectedSet} />
+      <Content set={selectedSet} initialCards={cards} />
     </TooltipProvider>
   );
 }
