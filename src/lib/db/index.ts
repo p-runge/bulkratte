@@ -226,6 +226,7 @@ export const userCardsTable = pgTable("user_cards", {
   variant: variantEnum(),
   condition: conditionEnum(),
   notes: text("notes"),
+  photos: jsonb("photos").$type<string[]>(),
   created_at: timestamp("created_at", { mode: "string" })
     .notNull()
     .defaultNow(),

@@ -276,6 +276,15 @@ export async function getWantlistForUser(
   }) as any; // Type will be inferred by tRPC based on the actual query result
 }
 
+const MAX_PHOTO_STRING_LENGTH = 200 * 1024; // 200 KB as string length
+
+const PhotoSchema = z
+  .string()
+  .max(
+    MAX_PHOTO_STRING_LENGTH,
+    "Photo exceeds the 200 KB size limit",
+  );
+
 export const userCardRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
@@ -285,7 +294,7 @@ export const userCardRouter = createTRPCRouter({
         variant: z.enum(variantEnum.enumValues).nullable().optional(),
         condition: z.enum(conditionEnum.enumValues).nullable().optional(),
         notes: z.string().optional(),
-        photos: z.array(z.string()).optional(),
+        photos: z.array(PhotoSchema).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -298,6 +307,7 @@ export const userCardRouter = createTRPCRouter({
           variant: input.variant,
           condition: input.condition,
           notes: input.notes,
+          photos: input.photos ?? null,
         })
         .returning({
           id: userCardsTable.id,
@@ -401,6 +411,7 @@ export const userCardRouter = createTRPCRouter({
             variant: userCardsTable.variant,
             condition: userCardsTable.condition,
             notes: userCardsTable.notes,
+            photos: userCardsTable.photos,
             card: {
               created_at: userCardsTable.created_at,
               updated_at: userCardsTable.updated_at,
@@ -549,6 +560,7 @@ export const userCardRouter = createTRPCRouter({
         variant: z.enum(variantEnum.enumValues).nullable().optional(),
         condition: z.enum(conditionEnum.enumValues).nullable().optional(),
         notes: z.string().optional(),
+        photos: z.array(PhotoSchema).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -579,6 +591,7 @@ export const userCardRouter = createTRPCRouter({
           variant: input.variant,
           condition: input.condition,
           notes: input.notes,
+          photos: input.photos ?? null,
         })
         .where(
           and(

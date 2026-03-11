@@ -4,6 +4,10 @@ import type { UserCard } from "@/components/binder/types";
 import { CardBrowser } from "@/components/card-browser";
 import { ConditionToggleGroup } from "@/components/condition-toggle-group";
 import ConfirmButton from "@/components/confirm-button";
+import {
+  MultiPhotoUpload,
+  useMultiPhotoUpload,
+} from "@/components/image-upload";
 import { LanguageToggleGroup } from "@/components/language-toggle-group";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -85,6 +89,10 @@ export default function UserCardDialog({
           },
   });
 
+  const photoUpload = useMultiPhotoUpload(
+    mode === "edit" && userCard ? (userCard.photos ?? []) : [],
+  );
+
   async function handleSubmit(data: z.infer<typeof FormSchema>) {
     if (!card) {
       return;
@@ -97,6 +105,7 @@ export default function UserCardDialog({
         variant: data.variant ?? undefined,
         condition: data.condition ?? undefined,
         notes: data.notes || undefined,
+        photos: photoUpload.photos.length > 0 ? photoUpload.photos : undefined,
       });
     } else if (mode === "edit" && userCard) {
       await updateUserCard({
@@ -105,6 +114,7 @@ export default function UserCardDialog({
         variant: data.variant,
         condition: data.condition,
         notes: data.notes || undefined,
+        photos: photoUpload.photos.length > 0 ? photoUpload.photos : undefined,
       });
     }
 
@@ -277,6 +287,24 @@ export default function UserCardDialog({
                       )}
                     />
                   </div>
+
+                  {/* Photos Field */}
+                  <div className="space-y-2">
+                    <Label>
+                      {intl.formatMessage({
+                        id: "form.field.photos.label",
+                        defaultMessage: "Photos",
+                      })}
+                    </Label>
+                    <MultiPhotoUpload
+                      photos={photoUpload.photos}
+                      fileInputRef={photoUpload.fileInputRef}
+                      isProcessing={photoUpload.isProcessing}
+                      error={photoUpload.error}
+                      onAddPhotos={photoUpload.handleAddPhotos}
+                      onRemovePhoto={photoUpload.handleRemovePhoto}
+                    />
+                  </div>
                 </div>
               </div>
             ) : (
@@ -372,5 +400,4 @@ const FormSchema = z.object({
   variant: z.enum(variantEnum.enumValues).nullable(),
   condition: z.enum(conditionEnum.enumValues).nullable(),
   notes: z.string().optional(),
-  // photos: z.array(z.string().url()).optional(),
 });
