@@ -226,11 +226,24 @@ export const userCardsTable = pgTable("user_cards", {
   variant: variantEnum(),
   condition: conditionEnum(),
   notes: text("notes"),
-  photos: jsonb("photos").$type<string[]>(),
   created_at: timestamp("created_at", { mode: "string" })
     .notNull()
     .defaultNow(),
   updated_at: timestamp("updated_at", { mode: "string" })
+    .notNull()
+    .defaultNow(),
+});
+
+export const userCardPhotosTable = pgTable("user_card_photos", {
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  user_card_id: uuid("user_card_id")
+    .notNull()
+    .references(() => userCardsTable.id, { onDelete: "cascade" }),
+  url: text("url").notNull(),
+  position: integer("position").notNull().default(0),
+  created_at: timestamp("created_at", { mode: "string" })
     .notNull()
     .defaultNow(),
 });

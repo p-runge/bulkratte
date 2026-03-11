@@ -85,7 +85,9 @@ export function useMultiPhotoUpload(initialPhotos?: string[] | null) {
       );
       setPhotos((prev) => [...prev, ...encoded]);
     } catch {
-      setError("One or more images could not be compressed to fit within 200 KB.");
+      setError(
+        "One or more images could not be compressed to fit within 200 KB.",
+      );
     } finally {
       setIsProcessing(false);
       if (fileInputRef.current) {
@@ -355,7 +357,8 @@ export function MultiPhotoUpload({
       <p className="text-xs text-muted-foreground">
         {intl.formatMessage({
           id: "form.field.photos.description",
-          defaultMessage: "Photos are automatically compressed to max 200 KB each.",
+          defaultMessage:
+            "Photos are automatically compressed to max 200 KB each.",
         })}
       </p>
     </div>

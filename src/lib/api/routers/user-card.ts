@@ -4,6 +4,7 @@ import {
   db as database,
   localizationsTable,
   setsTable,
+  userCardPhotosTable,
   userCardsTable,
   userSetCardsTable,
   userSetsTable,
@@ -280,10 +281,7 @@ const MAX_PHOTO_STRING_LENGTH = 200 * 1024; // 200 KB as string length
 
 const PhotoSchema = z
   .string()
-  .max(
-    MAX_PHOTO_STRING_LENGTH,
-    "Photo exceeds the 200 KB size limit",
-  );
+  .max(MAX_PHOTO_STRING_LENGTH, "Photo exceeds the 200 KB size limit");
 
 export const userCardRouter = createTRPCRouter({
   create: protectedProcedure
@@ -307,12 +305,21 @@ export const userCardRouter = createTRPCRouter({
           variant: input.variant,
           condition: input.condition,
           notes: input.notes,
-          photos: input.photos ?? null,
         })
         .returning({
           id: userCardsTable.id,
         })
         .then((res) => res[0]!);
+
+      if (input.photos && input.photos.length > 0) {
+        await ctx.db.insert(userCardPhotosTable).values(
+          input.photos.map((url, position) => ({
+            user_card_id: userCard.id,
+            url,
+            position,
+          })),
+        );
+      }
 
       return userCard;
     }),
@@ -411,7 +418,6 @@ export const userCardRouter = createTRPCRouter({
             variant: userCardsTable.variant,
             condition: userCardsTable.condition,
             notes: userCardsTable.notes,
-            photos: userCardsTable.photos,
             card: {
               created_at: userCardsTable.created_at,
               updated_at: userCardsTable.updated_at,
@@ -460,6 +466,28 @@ export const userCardRouter = createTRPCRouter({
         },
       }));
 
+      // Fetch photos for all user cards
+      const userCardIds = userCards.map((uc) => uc.id);
+      const allPhotos =
+        userCardIds.length > 0
+          ? await ctx.db
+              .select({
+                user_card_id: userCardPhotosTable.user_card_id,
+                url: userCardPhotosTable.url,
+                position: userCardPhotosTable.position,
+              })
+              .from(userCardPhotosTable)
+              .where(inArray(userCardPhotosTable.user_card_id, userCardIds))
+              .orderBy(userCardPhotosTable.position)
+          : [];
+
+      const photosByCardId = new Map<string, string[]>();
+      for (const photo of allPhotos) {
+        const existing = photosByCardId.get(photo.user_card_id) ?? [];
+        existing.push(photo.url);
+        photosByCardId.set(photo.user_card_id, existing);
+      }
+
       // Localize card data
       const localizedUserCards = await localizeRecords(
         userCards.map((uc) => uc.card),
@@ -471,6 +499,7 @@ export const userCardRouter = createTRPCRouter({
       // Map localized card data back to user cards
       let result = userCards.map(({ cardId, ...uc }, index) => ({
         ...uc,
+        photos: photosByCardId.get(uc.id) ?? [],
         card: localizedUserCards[index]!,
       }));
 
@@ -591,7 +620,6 @@ export const userCardRouter = createTRPCRouter({
           variant: input.variant,
           condition: input.condition,
           notes: input.notes,
-          photos: input.photos ?? null,
         })
         .where(
           and(
@@ -599,6 +627,23 @@ export const userCardRouter = createTRPCRouter({
             eq(userCardsTable.user_id, ctx.session.user.id),
           ),
         );
+
+      if (input.photos !== undefined) {
+        // Replace all photos: delete existing, re-insert in order
+        await ctx.db
+          .delete(userCardPhotosTable)
+          .where(eq(userCardPhotosTable.user_card_id, input.id));
+
+        if (input.photos.length > 0) {
+          await ctx.db.insert(userCardPhotosTable).values(
+            input.photos.map((url, position) => ({
+              user_card_id: input.id,
+              url,
+              position,
+            })),
+          );
+        }
+      }
 
       return { success: true };
     }),
