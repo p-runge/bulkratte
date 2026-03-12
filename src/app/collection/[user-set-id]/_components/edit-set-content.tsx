@@ -84,16 +84,9 @@ function Content({ userSet }: { userSet: UserSet }) {
     router.push(`/collection/${userSet.set.id}`);
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onImageChange(e);
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        form.setValue("image", reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const url = await onImageChange(e);
+    if (url) form.setValue("image", url);
   };
 
   const handleRemoveImage = () => {

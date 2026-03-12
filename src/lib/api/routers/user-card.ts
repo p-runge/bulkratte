@@ -277,11 +277,7 @@ export async function getWantlistForUser(
   }) as any; // Type will be inferred by tRPC based on the actual query result
 }
 
-const MAX_PHOTO_STRING_LENGTH = 200 * 1024; // 200 KB as string length
-
-const PhotoSchema = z
-  .string()
-  .max(MAX_PHOTO_STRING_LENGTH, "Photo exceeds the 200 KB size limit");
+const PhotoSchema = z.string().min(1);
 
 export const userCardRouter = createTRPCRouter({
   create: protectedProcedure

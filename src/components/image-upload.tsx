@@ -3,56 +3,64 @@ import { ImagePlus, Upload, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { useIntl } from "react-intl";
 
-const MAX_PHOTO_BYTES = 200 * 1024; // 200 KB as string length
+async function uploadToR2(blob: Blob, filename: string): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", blob, filename);
+  const res = await fetch("/api/upload", { method: "POST", body: formData });
+  if (!res.ok) throw new Error("Upload failed");
+  const { key } = (await res.json()) as { key: string };
+  return `/api/images/${key}`;
+}
 
 /**
- * Scale an image file to fit within a max byte length, reducing quality as needed.
+ * Compress an image file to fit within maxBytes, reducing dimensions and
+ * quality as needed. Returns a JPEG Blob.
  */
-function scaleImageToSize(
+function compressImage(
   file: File,
-  maxLength: number = MAX_PHOTO_BYTES,
-): Promise<string> {
+  maxBytes: number = 200 * 1024,
+): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        const tryEncode = (dim: number, quality: number): string | null => {
-          const canvas = document.createElement("canvas");
-          let width = img.width;
-          let height = img.height;
-
-          if (width > dim || height > dim) {
-            if (width > height) {
-              height = Math.round((height / width) * dim);
-              width = dim;
-            } else {
-              width = Math.round((width / height) * dim);
-              height = dim;
-            }
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext("2d");
-          if (!ctx) return null;
-          ctx.drawImage(img, 0, 0, width, height);
-          return canvas.toDataURL("image/jpeg", quality);
-        };
-
         const dims = [1200, 800, 400, 200];
         const qualities = [0.9, 0.7, 0.5, 0.3, 0.1];
 
         for (const dim of dims) {
           for (const q of qualities) {
-            const result = tryEncode(dim, q);
-            if (result && result.length <= maxLength) {
-              resolve(result);
+            const canvas = document.createElement("canvas");
+            let { width, height } = img;
+            if (width > dim || height > dim) {
+              if (width > height) {
+                height = Math.round((height / width) * dim);
+                width = dim;
+              } else {
+                width = Math.round((width / height) * dim);
+                height = dim;
+              }
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) continue;
+            ctx.drawImage(img, 0, 0, width, height);
+
+            const dataUrl = canvas.toDataURL("image/jpeg", q);
+            if (dataUrl.length <= maxBytes) {
+              canvas.toBlob(
+                (blob) => {
+                  if (blob) resolve(blob);
+                  else reject(new Error("Canvas toBlob failed"));
+                },
+                "image/jpeg",
+                q,
+              );
               return;
             }
           }
         }
-
         reject(new Error("Image could not be compressed to fit within 200 KB"));
       };
       img.onerror = reject;
@@ -64,7 +72,50 @@ function scaleImageToSize(
 }
 
 /**
- * Hook for managing multiple photo uploads with preview and compression.
+ * Scale an image file to fit within maxDimension while maintaining aspect
+ * ratio. Returns a Blob.
+ */
+function scaleImage(file: File, maxDimension: number = 100): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let { width, height } = img;
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = Math.round((height / width) * maxDimension);
+            width = maxDimension;
+          } else {
+            width = Math.round((width / height) * maxDimension);
+            height = maxDimension;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error("Canvas toBlob failed"));
+          },
+          file.type,
+          0.9,
+        );
+      };
+      img.onerror = reject;
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Hook for managing multiple photo uploads. Compresses each photo and uploads
+ * it to R2, storing the resulting URLs in state.
  */
 export function useMultiPhotoUpload(initialPhotos?: string[] | null) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -80,19 +131,18 @@ export function useMultiPhotoUpload(initialPhotos?: string[] | null) {
     setError(null);
 
     try {
-      const encoded = await Promise.all(
-        files.map((file) => scaleImageToSize(file)),
+      const urls = await Promise.all(
+        files.map(async (file) => {
+          const blob = await compressImage(file);
+          return uploadToR2(blob, file.name);
+        }),
       );
-      setPhotos((prev) => [...prev, ...encoded]);
+      setPhotos((prev) => [...prev, ...urls]);
     } catch {
-      setError(
-        "One or more images could not be compressed to fit within 200 KB.",
-      );
+      setError("One or more photos could not be uploaded. Please try again.");
     } finally {
       setIsProcessing(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -111,49 +161,8 @@ export function useMultiPhotoUpload(initialPhotos?: string[] | null) {
 }
 
 /**
- * Scale an image file to a maximum dimension while maintaining aspect ratio
- */
-function scaleImage(file: File, maxDimension: number = 100): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        let width = img.width;
-        let height = img.height;
-
-        // Scale down if either dimension is larger than maxDimension
-        if (width > maxDimension || height > maxDimension) {
-          if (width > height) {
-            height = (height / width) * maxDimension;
-            width = maxDimension;
-          } else {
-            width = (width / height) * maxDimension;
-            height = maxDimension;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext("2d");
-        ctx?.drawImage(img, 0, 0, width, height);
-
-        // Convert to base64
-        const base64 = canvas.toDataURL(file.type);
-        resolve(base64);
-      };
-      img.onerror = reject;
-      img.src = e.target?.result as string;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-/**
- * Hook for managing image upload with preview and scaling
+ * Hook for managing a single image upload. Shows a local preview immediately
+ * while uploading to R2 in the background. Returns the R2 URL via `image`.
  */
 export function useImageUpload(initialImage?: string | null) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -161,30 +170,34 @@ export function useImageUpload(initialImage?: string | null) {
     initialImage ?? null,
   );
   const [image, setImage] = useState<string | undefined>(
-    initialImage || undefined,
+    initialImage ?? undefined,
   );
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ): Promise<string | undefined> => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const objectUrl = URL.createObjectURL(file);
+    setImagePreview(objectUrl);
+
     try {
-      const base64Image = await scaleImage(file);
-      setImage(base64Image);
-      setImagePreview(base64Image);
-      return base64Image;
-    } catch (error) {
-      console.error("Error processing image:", error);
-      throw error;
+      const blob = await scaleImage(file);
+      const url = await uploadToR2(blob, file.name);
+      setImage(url);
+      return url;
+    } catch (err) {
+      setImagePreview(null);
+      console.error("Error uploading image:", err);
+      throw err;
     }
   };
 
   const handleRemoveImage = () => {
     setImage(undefined);
     setImagePreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   return {
