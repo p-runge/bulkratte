@@ -1,127 +1,24 @@
 import { Button } from "@/components/ui/button";
-import { ImagePlus, Upload, X } from "lucide-react";
+import { api } from "@/lib/api/react";
+import imageCompression from "browser-image-compression";
+import { ImagePlus, Loader2, Upload, X } from "lucide-react";
+import Image from "next/image";
 import { useRef, useState } from "react";
 import { useIntl } from "react-intl";
 
-async function uploadToR2(blob: Blob, filename: string): Promise<string> {
-  const formData = new FormData();
-  formData.append("file", blob, filename);
-  const res = await fetch("/api/upload", { method: "POST", body: formData });
-  if (!res.ok) throw new Error("Upload failed");
-  const { key } = (await res.json()) as { key: string };
-  return `/api/images/${key}`;
-}
-
 /**
- * Compress an image file to fit within maxBytes, reducing dimensions and
- * quality as needed. Returns a JPEG Blob.
- */
-function compressImage(
-  file: File,
-  maxBytes: number = 200 * 1024,
-): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const dims = [1200, 800, 400, 200];
-        const qualities = [0.9, 0.7, 0.5, 0.3, 0.1];
-
-        for (const dim of dims) {
-          for (const q of qualities) {
-            const canvas = document.createElement("canvas");
-            let { width, height } = img;
-            if (width > dim || height > dim) {
-              if (width > height) {
-                height = Math.round((height / width) * dim);
-                width = dim;
-              } else {
-                width = Math.round((width / height) * dim);
-                height = dim;
-              }
-            }
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext("2d");
-            if (!ctx) continue;
-            ctx.drawImage(img, 0, 0, width, height);
-
-            const dataUrl = canvas.toDataURL("image/jpeg", q);
-            if (dataUrl.length <= maxBytes) {
-              canvas.toBlob(
-                (blob) => {
-                  if (blob) resolve(blob);
-                  else reject(new Error("Canvas toBlob failed"));
-                },
-                "image/jpeg",
-                q,
-              );
-              return;
-            }
-          }
-        }
-        reject(new Error("Image could not be compressed to fit within 200 KB"));
-      };
-      img.onerror = reject;
-      img.src = e.target?.result as string;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-/**
- * Scale an image file to fit within maxDimension while maintaining aspect
- * ratio. Returns a Blob.
- */
-function scaleImage(file: File, maxDimension: number = 100): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        let { width, height } = img;
-        if (width > maxDimension || height > maxDimension) {
-          if (width > height) {
-            height = Math.round((height / width) * maxDimension);
-            width = maxDimension;
-          } else {
-            width = Math.round((width / height) * maxDimension);
-            height = maxDimension;
-          }
-        }
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        ctx?.drawImage(img, 0, 0, width, height);
-        canvas.toBlob(
-          (blob) => {
-            if (blob) resolve(blob);
-            else reject(new Error("Canvas toBlob failed"));
-          },
-          file.type,
-          0.9,
-        );
-      };
-      img.onerror = reject;
-      img.src = e.target?.result as string;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-/**
- * Hook for managing multiple photo uploads. Compresses each photo and uploads
- * it to R2, storing the resulting URLs in state.
+ * Hook for managing multiple photo uploads. Compresses each photo with
+ * browser-image-compression and uploads to R2 via a presigned PUT URL,
+ * storing the resulting proxy URLs in state.
  */
 export function useMultiPhotoUpload(initialPhotos?: string[] | null) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [photos, setPhotos] = useState<string[]>(initialPhotos ?? []);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const { mutateAsync: createPresignedUploadUrl } =
+    api.upload.createPresignedUploadUrl.useMutation();
 
   const handleAddPhotos = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
@@ -133,8 +30,22 @@ export function useMultiPhotoUpload(initialPhotos?: string[] | null) {
     try {
       const urls = await Promise.all(
         files.map(async (file) => {
-          const blob = await compressImage(file);
-          return uploadToR2(blob, file.name);
+          const compressed = await imageCompression(file, {
+            maxSizeMB: 0.2,
+            maxWidthOrHeight: 1200,
+            useWebWorker: true,
+            fileType: "image/jpeg",
+          });
+          const { uploadUrl, key } = await createPresignedUploadUrl({
+            filename: compressed.name,
+            contentType: compressed.type,
+          });
+          await fetch(uploadUrl, {
+            method: "PUT",
+            body: compressed,
+            headers: { "Content-Type": compressed.type },
+          });
+          return `/api/images/${key}`;
         }),
       );
       setPhotos((prev) => [...prev, ...urls]);
@@ -161,8 +72,9 @@ export function useMultiPhotoUpload(initialPhotos?: string[] | null) {
 }
 
 /**
- * Hook for managing a single image upload. Shows a local preview immediately
- * while uploading to R2 in the background. Returns the R2 URL via `image`.
+ * Hook for managing a single image upload. Shows a local object URL
+ * immediately for instant feedback, then replaces it with the R2 proxy URL
+ * once the upload completes. Returns `isUploading` to drive loading UI.
  */
 export function useImageUpload(initialImage?: string | null) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -172,6 +84,10 @@ export function useImageUpload(initialImage?: string | null) {
   const [image, setImage] = useState<string | undefined>(
     initialImage ?? undefined,
   );
+  const [isUploading, setIsUploading] = useState(false);
+
+  const { mutateAsync: createPresignedUploadUrl } =
+    api.upload.createPresignedUploadUrl.useMutation();
 
   const handleImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -179,18 +95,35 @@ export function useImageUpload(initialImage?: string | null) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const objectUrl = URL.createObjectURL(file);
-    setImagePreview(objectUrl);
+    setImagePreview(URL.createObjectURL(file));
+    setIsUploading(true);
 
     try {
-      const blob = await scaleImage(file);
-      const url = await uploadToR2(blob, file.name);
+      const compressed = await imageCompression(file, {
+        maxSizeMB: 0.05,
+        maxWidthOrHeight: 100,
+        useWebWorker: true,
+        fileType: "image/jpeg",
+      });
+      const { uploadUrl, key } = await createPresignedUploadUrl({
+        filename: compressed.name,
+        contentType: compressed.type,
+      });
+      await fetch(uploadUrl, {
+        method: "PUT",
+        body: compressed,
+        headers: { "Content-Type": compressed.type },
+      });
+      const url = `/api/images/${key}`;
       setImage(url);
+      setImagePreview(url);
       return url;
     } catch (err) {
       setImagePreview(null);
       console.error("Error uploading image:", err);
       throw err;
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -204,6 +137,7 @@ export function useImageUpload(initialImage?: string | null) {
     fileInputRef,
     imagePreview,
     image,
+    isUploading,
     handleImageUpload,
     handleRemoveImage,
   };
@@ -212,6 +146,7 @@ export function useImageUpload(initialImage?: string | null) {
 interface ImageUploadProps {
   imagePreview: string | null;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
+  isUploading?: boolean;
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveImage: () => void;
 }
@@ -219,6 +154,7 @@ interface ImageUploadProps {
 export function ImageUpload({
   imagePreview,
   fileInputRef,
+  isUploading,
   onImageUpload,
   onRemoveImage,
 }: ImageUploadProps) {
@@ -235,27 +171,41 @@ export function ImageUpload({
       <div className="flex items-center gap-4">
         {imagePreview ? (
           <div className="relative">
-            <img
+            <Image
               src={imagePreview}
               alt={intl.formatMessage({
                 id: "form.field.image.preview.alt",
                 defaultMessage: "Set preview",
               })}
+              width={64}
+              height={64}
+              unoptimized
               className="w-16 h-16 object-contain rounded border"
             />
-            <Button
-              type="button"
-              variant="destructive"
-              size="icon"
-              className="absolute -top-2 -right-2 h-6 w-6"
-              onClick={onRemoveImage}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            {isUploading && (
+              <div className="absolute inset-0 flex items-center justify-center rounded bg-background/60">
+                <Loader2 className="h-5 w-5 animate-spin" />
+              </div>
+            )}
+            {!isUploading && (
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                className="absolute -top-2 -right-2 h-6 w-6"
+                onClick={onRemoveImage}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         ) : (
           <div className="w-16 h-16 border-2 border-dashed rounded flex items-center justify-center text-muted-foreground">
-            <Upload className="h-6 w-6" />
+            {isUploading ? (
+              <Loader2 className="h-6 w-6 animate-spin" />
+            ) : (
+              <Upload className="h-6 w-6" />
+            )}
           </div>
         )}
         <div className="flex-1">
@@ -266,11 +216,21 @@ export function ImageUpload({
             onChange={onImageUpload}
             className="hidden"
             id="image-upload"
+            disabled={isUploading}
           />
           <label htmlFor="image-upload">
-            <Button type="button" variant="outline" asChild>
+            <Button
+              type="button"
+              variant="outline"
+              asChild
+              disabled={isUploading}
+            >
               <span>
-                <Upload className="h-4 w-4 mr-2" />
+                {isUploading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Upload className="h-4 w-4 mr-2" />
+                )}
                 {intl.formatMessage({
                   id: "form.field.image.upload",
                   defaultMessage: "Upload Image",
@@ -278,13 +238,6 @@ export function ImageUpload({
               </span>
             </Button>
           </label>
-          <p className="text-xs text-muted-foreground mt-1">
-            {intl.formatMessage({
-              id: "form.field.image.description",
-              defaultMessage:
-                "Images will be automatically scaled to max 100px",
-            })}
-          </p>
         </div>
       </div>
     </div>
@@ -315,7 +268,7 @@ export function MultiPhotoUpload({
       <div className="flex flex-wrap gap-2">
         {photos.map((src, index) => (
           <div key={index} className="relative">
-            <img
+            <Image
               src={src}
               alt={intl.formatMessage(
                 {
@@ -324,6 +277,9 @@ export function MultiPhotoUpload({
                 },
                 { n: index + 1 },
               )}
+              width={80}
+              height={80}
+              unoptimized
               className="w-20 h-20 object-cover rounded border"
             />
             <Button
@@ -347,6 +303,7 @@ export function MultiPhotoUpload({
             onChange={onAddPhotos}
             className="hidden"
             id="multi-photo-upload"
+            disabled={isProcessing}
           />
           <label htmlFor="multi-photo-upload">
             <Button
@@ -358,7 +315,11 @@ export function MultiPhotoUpload({
               disabled={isProcessing}
             >
               <span>
-                <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                {isProcessing ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                ) : (
+                  <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                )}
               </span>
             </Button>
           </label>

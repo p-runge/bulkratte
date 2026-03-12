@@ -4,6 +4,7 @@ import { getIntl } from "@/lib/i18n/server";
 import { TRPCError } from "@trpc/server";
 import { ArrowLeft, Pencil } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { PrivateSet } from "./_components/private-set";
 import { UserSetContent } from "./_components/user-set-content";
@@ -45,9 +46,12 @@ export default async function UserSetPage({
         </Link>
         <div className="flex items-center gap-4">
           {userSet.set.image && (
-            <img
+            <Image
               src={userSet.set.image}
               alt={userSet.set.name}
+              width={64}
+              height={64}
+              unoptimized
               className="w-16 h-16 object-contain rounded border"
             />
           )}

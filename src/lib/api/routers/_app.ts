@@ -1,3 +1,4 @@
+import { uploadRouter } from "./upload";
 import {
   createCallerFactory,
   createTRPCRouter,
@@ -10,11 +11,6 @@ import { userSetRouter } from "./user-set";
 import { tradeConnectionRouter } from "./trade-connection";
 import { wantlistShareLinkRouter } from "./wantlist-share-link";
 
-/**
- * This is the primary router for your server.
- *
- * All routers added in /api/routers should be manually added here.
- */
 export const appRouter = createTRPCRouter({
   card: cardRouter,
   set: setRouter,
@@ -22,6 +18,7 @@ export const appRouter = createTRPCRouter({
   userSet: userSetRouter,
   wantlistShareLink: wantlistShareLinkRouter,
   tradeConnection: tradeConnectionRouter,
+  upload: uploadRouter,
   getCurrentUser: protectedProcedure.query(async ({ ctx }) => {
     return ctx.session.user;
   }),

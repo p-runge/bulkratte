@@ -277,8 +277,6 @@ export async function getWantlistForUser(
   }) as any; // Type will be inferred by tRPC based on the actual query result
 }
 
-const PhotoSchema = z.string().min(1);
-
 export const userCardRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
@@ -288,7 +286,7 @@ export const userCardRouter = createTRPCRouter({
         variant: z.enum(variantEnum.enumValues).nullable().optional(),
         condition: z.enum(conditionEnum.enumValues).nullable().optional(),
         notes: z.string().optional(),
-        photos: z.array(PhotoSchema).optional(),
+        photos: z.array(z.string()).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -585,7 +583,7 @@ export const userCardRouter = createTRPCRouter({
         variant: z.enum(variantEnum.enumValues).nullable().optional(),
         condition: z.enum(conditionEnum.enumValues).nullable().optional(),
         notes: z.string().optional(),
-        photos: z.array(PhotoSchema).optional(),
+        photos: z.array(z.string()).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {

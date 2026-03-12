@@ -25,6 +25,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, LayoutGridIcon, Plus } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useIntl } from "react-intl";
 
@@ -54,9 +55,12 @@ function SortableSetCard({ userSet }: { userSet: UserSet }) {
             <div className="flex gap-4">
               {userSet.image && (
                 <div className="w-24 h-24 sm:w-12 sm:h-12 xl:w-24 xl:h-24 shrink-0">
-                  <img
+                  <Image
                     src={userSet.image}
                     alt={userSet.name}
+                    width={96}
+                    height={96}
+                    unoptimized
                     className="w-full h-full object-contain rounded border"
                   />
                 </div>

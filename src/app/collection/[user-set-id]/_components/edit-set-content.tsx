@@ -47,6 +47,7 @@ function Content({ userSet }: { userSet: UserSet }) {
   const {
     imagePreview,
     fileInputRef,
+    isUploading,
     handleImageUpload: onImageChange,
     handleRemoveImage: onRemoveImage,
   } = useImageUpload(imageValue ?? null);
@@ -124,6 +125,7 @@ function Content({ userSet }: { userSet: UserSet }) {
               <ImageUpload
                 imagePreview={imagePreview}
                 fileInputRef={fileInputRef}
+                isUploading={isUploading}
                 onImageUpload={handleImageUpload}
                 onRemoveImage={handleRemoveImage}
               />

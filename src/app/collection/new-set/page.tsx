@@ -76,6 +76,7 @@ function Content() {
   const {
     imagePreview,
     fileInputRef,
+    isUploading,
     handleImageUpload: onImageChange,
     handleRemoveImage: onRemoveImage,
   } = useImageUpload(imageValue ?? null);
@@ -161,6 +162,7 @@ function Content() {
               <ImageUpload
                 imagePreview={imagePreview}
                 fileInputRef={fileInputRef}
+                isUploading={isUploading}
                 onImageUpload={handleImageUpload}
                 onRemoveImage={handleRemoveImage}
               />
