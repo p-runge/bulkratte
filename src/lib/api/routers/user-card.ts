@@ -13,6 +13,7 @@ import {
 import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
 import { localizeRecords } from "@/lib/db/localization";
 import { getLanguageFromLocale, Locale } from "@/lib/i18n";
+import { deleteR2Objects } from "@/lib/r2";
 import { TRPCError } from "@trpc/server";
 import {
   and,
@@ -562,6 +563,13 @@ export const userCardRouter = createTRPCRouter({
         .set({ user_card_id: null })
         .where(eq(userSetCardsTable.user_card_id, input.id));
 
+      // Delete photos from R2 before the card (and its photos) are cascade-deleted
+      const photos = await ctx.db
+        .select({ url: userCardPhotosTable.url })
+        .from(userCardPhotosTable)
+        .where(eq(userCardPhotosTable.user_card_id, input.id));
+      await deleteR2Objects(photos.map((p) => p.url));
+
       // Now delete the user card
       await ctx.db
         .delete(userCardsTable)
@@ -623,6 +631,16 @@ export const userCardRouter = createTRPCRouter({
         );
 
       if (input.photos !== undefined) {
+        // Fetch existing photos and remove them from R2 before replacing
+        const existing = await ctx.db
+          .select({ url: userCardPhotosTable.url })
+          .from(userCardPhotosTable)
+          .where(eq(userCardPhotosTable.user_card_id, input.id));
+        const removed = existing
+          .map((p) => p.url)
+          .filter((url) => !input.photos!.includes(url));
+        await deleteR2Objects(removed);
+
         // Replace all photos: delete existing, re-insert in order
         await ctx.db
           .delete(userCardPhotosTable)

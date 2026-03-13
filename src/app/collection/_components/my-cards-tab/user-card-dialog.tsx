@@ -114,7 +114,7 @@ export default function UserCardDialog({
         variant: data.variant,
         condition: data.condition,
         notes: data.notes || undefined,
-        photos: photoUpload.photos.length > 0 ? photoUpload.photos : undefined,
+        photos: photoUpload.photos,
       });
     }
 
