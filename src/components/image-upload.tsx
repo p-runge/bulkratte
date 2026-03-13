@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api/react";
 import imageCompression from "browser-image-compression";
-import { ImagePlus, Loader2, Upload, X } from "lucide-react";
+import { ImagePlus, Upload, X } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { useIntl } from "react-intl";
@@ -11,130 +11,140 @@ async function toBase64(blob: Blob): Promise<string> {
   return Buffer.from(buffer).toString("base64");
 }
 
+type PendingPhoto = { preview: string; file: File };
+
 /**
- * Hook for managing multiple photo uploads. Compresses each photo with
- * browser-image-compression and uploads to R2 via the tRPC uploadFile
- * mutation (server-side upload — no CORS required).
+ * Hook for managing multiple photo uploads. Files are stored locally until
+ * `uploadPending()` is called (e.g. on form submit), at which point they are
+ * compressed and uploaded to R2.
  */
 export function useMultiPhotoUpload(initialPhotos?: string[] | null) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [photos, setPhotos] = useState<string[]>(initialPhotos ?? []);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [uploaded, setUploaded] = useState<string[]>(initialPhotos ?? []);
+  const [pending, setPending] = useState<PendingPhoto[]>([]);
 
   const { mutateAsync: uploadFile } = api.upload.uploadFile.useMutation();
 
-  const handleAddPhotos = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const photos = [...uploaded, ...pending.map((p) => p.preview)];
+
+  const handleAddPhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (files.length === 0) return;
-
-    setIsProcessing(true);
-    setError(null);
-
-    try {
-      const urls = await Promise.all(
-        files.map(async (file) => {
-          const compressed = await imageCompression(file, {
-            maxSizeMB: 0.2,
-            maxWidthOrHeight: 1200,
-            useWebWorker: true,
-            fileType: "image/jpeg",
-          });
-          const data = await toBase64(compressed);
-          const { url } = await uploadFile({
-            data,
-            filename: compressed.name,
-            contentType: compressed.type,
-          });
-          return url;
-        }),
-      );
-      setPhotos((prev) => [...prev, ...urls]);
-    } catch {
-      setError("One or more photos could not be uploaded. Please try again.");
-    } finally {
-      setIsProcessing(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
+    setPending((prev) => [
+      ...prev,
+      ...files.map((file) => ({ file, preview: URL.createObjectURL(file) })),
+    ]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleRemovePhoto = (index: number) => {
-    setPhotos((prev) => prev.filter((_, i) => i !== index));
+    if (index < uploaded.length) {
+      setUploaded((prev) => prev.filter((_, i) => i !== index));
+    } else {
+      const pendingIndex = index - uploaded.length;
+      setPending((prev) => {
+        URL.revokeObjectURL(prev[pendingIndex]!.preview);
+        return prev.filter((_, i) => i !== pendingIndex);
+      });
+    }
+  };
+
+  /** Upload all pending files to R2. Returns the final photo URL array. */
+  const uploadPending = async (): Promise<string[]> => {
+    if (pending.length === 0) return uploaded;
+    const newUrls = await Promise.all(
+      pending.map(async ({ file }) => {
+        const compressed = await imageCompression(file, {
+          maxSizeMB: 0.2,
+          maxWidthOrHeight: 1200,
+          useWebWorker: true,
+          fileType: "image/jpeg",
+        });
+        const data = await toBase64(compressed);
+        const { url } = await uploadFile({
+          data,
+          filename: compressed.name,
+          contentType: compressed.type,
+        });
+        return url;
+      }),
+    );
+    pending.forEach((p) => URL.revokeObjectURL(p.preview));
+    const finalPhotos = [...uploaded, ...newUrls];
+    setUploaded(finalPhotos);
+    setPending([]);
+    return finalPhotos;
   };
 
   return {
     fileInputRef,
     photos,
-    isProcessing,
-    error,
     handleAddPhotos,
     handleRemovePhoto,
+    uploadPending,
   };
 }
 
 /**
- * Hook for managing a single image upload. Shows a local object URL
- * immediately for instant feedback, then replaces it with the R2 proxy URL
- * once the upload completes. Returns `isUploading` to drive loading UI.
+ * Hook for managing a single image upload. The selected file is stored locally
+ * and shown as a preview. Call `upload()` on form submit to compress and upload
+ * to R2, which returns the proxy URL.
  */
 export function useImageUpload(initialImage?: string | null) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(
-    initialImage ?? null,
-  );
-  const [image, setImage] = useState<string | undefined>(
+  const [uploadedUrl, setUploadedUrl] = useState<string | undefined>(
     initialImage ?? undefined,
   );
-  const [isUploading, setIsUploading] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [pendingPreview, setPendingPreview] = useState<string | null>(null);
 
   const { mutateAsync: uploadFile } = api.upload.uploadFile.useMutation();
 
-  const handleImageUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ): Promise<string | undefined> => {
+  const imagePreview = pendingPreview ?? uploadedUrl ?? null;
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (pendingPreview) URL.revokeObjectURL(pendingPreview);
+    setPendingFile(file);
+    setPendingPreview(URL.createObjectURL(file));
+  };
 
-    setImagePreview(URL.createObjectURL(file));
-    setIsUploading(true);
-
-    try {
-      const compressed = await imageCompression(file, {
-        maxSizeMB: 0.05,
-        maxWidthOrHeight: 100,
-        useWebWorker: true,
-        fileType: "image/jpeg",
-      });
-      const data = await toBase64(compressed);
-      const { url } = await uploadFile({
-        data,
-        filename: compressed.name,
-        contentType: compressed.type,
-      });
-      setImage(url);
-      setImagePreview(url);
-      return url;
-    } catch (err) {
-      setImagePreview(null);
-      console.error("Error uploading image:", err);
-      throw err;
-    } finally {
-      setIsUploading(false);
-    }
+  /** Upload the pending file to R2. Returns the proxy URL (or the existing URL if nothing is pending). */
+  const upload = async (): Promise<string | undefined> => {
+    if (!pendingFile) return uploadedUrl;
+    const compressed = await imageCompression(pendingFile, {
+      maxSizeMB: 0.05,
+      maxWidthOrHeight: 100,
+      useWebWorker: true,
+      fileType: "image/jpeg",
+    });
+    const data = await toBase64(compressed);
+    const { url } = await uploadFile({
+      data,
+      filename: compressed.name,
+      contentType: compressed.type,
+    });
+    if (pendingPreview) URL.revokeObjectURL(pendingPreview);
+    setUploadedUrl(url);
+    setPendingFile(null);
+    setPendingPreview(null);
+    return url;
   };
 
   const handleRemoveImage = () => {
-    setImage(undefined);
-    setImagePreview(null);
+    if (pendingPreview) URL.revokeObjectURL(pendingPreview);
+    setPendingFile(null);
+    setPendingPreview(null);
+    setUploadedUrl(undefined);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   return {
     fileInputRef,
     imagePreview,
-    image,
-    isUploading,
     handleImageUpload,
+    upload,
     handleRemoveImage,
   };
 }
@@ -142,7 +152,6 @@ export function useImageUpload(initialImage?: string | null) {
 interface ImageUploadProps {
   imagePreview: string | null;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
-  isUploading?: boolean;
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveImage: () => void;
 }
@@ -150,7 +159,6 @@ interface ImageUploadProps {
 export function ImageUpload({
   imagePreview,
   fileInputRef,
-  isUploading,
   onImageUpload,
   onRemoveImage,
 }: ImageUploadProps) {
@@ -178,30 +186,19 @@ export function ImageUpload({
               unoptimized
               className="w-16 h-16 object-contain rounded border"
             />
-            {isUploading && (
-              <div className="absolute inset-0 flex items-center justify-center rounded bg-background/60">
-                <Loader2 className="h-5 w-5 animate-spin" />
-              </div>
-            )}
-            {!isUploading && (
-              <Button
-                type="button"
-                variant="destructive"
-                size="icon"
-                className="absolute -top-2 -right-2 h-6 w-6"
-                onClick={onRemoveImage}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
+            <Button
+              type="button"
+              variant="destructive"
+              size="icon"
+              className="absolute -top-2 -right-2 h-6 w-6"
+              onClick={onRemoveImage}
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
         ) : (
           <div className="w-16 h-16 border-2 border-dashed rounded flex items-center justify-center text-muted-foreground">
-            {isUploading ? (
-              <Loader2 className="h-6 w-6 animate-spin" />
-            ) : (
-              <Upload className="h-6 w-6" />
-            )}
+            <Upload className="h-6 w-6" />
           </div>
         )}
         <div className="flex-1">
@@ -212,21 +209,11 @@ export function ImageUpload({
             onChange={onImageUpload}
             className="hidden"
             id="image-upload"
-            disabled={isUploading}
           />
           <label htmlFor="image-upload">
-            <Button
-              type="button"
-              variant="outline"
-              asChild
-              disabled={isUploading}
-            >
+            <Button type="button" variant="outline" asChild>
               <span>
-                {isUploading ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Upload className="h-4 w-4 mr-2" />
-                )}
+                <Upload className="h-4 w-4 mr-2" />
                 {intl.formatMessage({
                   id: "form.field.image.upload",
                   defaultMessage: "Upload Image",
@@ -243,8 +230,6 @@ export function ImageUpload({
 interface MultiPhotoUploadProps {
   photos: string[];
   fileInputRef: React.RefObject<HTMLInputElement | null>;
-  isProcessing?: boolean;
-  error?: string | null;
   onAddPhotos: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemovePhoto: (index: number) => void;
 }
@@ -252,8 +237,6 @@ interface MultiPhotoUploadProps {
 export function MultiPhotoUpload({
   photos,
   fileInputRef,
-  isProcessing,
-  error,
   onAddPhotos,
   onRemovePhoto,
 }: MultiPhotoUploadProps) {
@@ -299,7 +282,6 @@ export function MultiPhotoUpload({
             onChange={onAddPhotos}
             className="hidden"
             id="multi-photo-upload"
-            disabled={isProcessing}
           />
           <label htmlFor="multi-photo-upload">
             <Button
@@ -308,21 +290,14 @@ export function MultiPhotoUpload({
               size="icon"
               className="w-20 h-20 border-dashed"
               asChild
-              disabled={isProcessing}
             >
               <span>
-                {isProcessing ? (
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                ) : (
-                  <ImagePlus className="h-6 w-6 text-muted-foreground" />
-                )}
+                <ImagePlus className="h-6 w-6 text-muted-foreground" />
               </span>
             </Button>
           </label>
         </div>
       </div>
-
-      {error && <p className="text-xs text-destructive">{error}</p>}
 
       <p className="text-xs text-muted-foreground">
         {intl.formatMessage({

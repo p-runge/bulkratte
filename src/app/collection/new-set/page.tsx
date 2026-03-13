@@ -76,15 +76,16 @@ function Content() {
   const {
     imagePreview,
     fileInputRef,
-    isUploading,
-    handleImageUpload: onImageChange,
+    handleImageUpload,
+    upload: uploadImage,
     handleRemoveImage: onRemoveImage,
   } = useImageUpload(imageValue ?? null);
 
   async function onSubmit(data: z.infer<typeof BinderFormSchema>) {
+    const imageUrl = await uploadImage();
     await createUserSet({
       name: data.name,
-      image: data.image ?? undefined,
+      image: imageUrl ?? undefined,
       cardData: data.cardData.map((cd) => ({
         cardId: cd.cardId,
         order: cd.order,
@@ -99,11 +100,6 @@ function Content() {
     await apiUtils.userSet.getList.invalidate();
     router.push("/collection");
   }
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const url = await onImageChange(e);
-    if (url) form.setValue("image", url);
-  };
 
   const handleRemoveImage = () => {
     onRemoveImage();
@@ -162,7 +158,6 @@ function Content() {
               <ImageUpload
                 imagePreview={imagePreview}
                 fileInputRef={fileInputRef}
-                isUploading={isUploading}
                 onImageUpload={handleImageUpload}
                 onRemoveImage={handleRemoveImage}
               />

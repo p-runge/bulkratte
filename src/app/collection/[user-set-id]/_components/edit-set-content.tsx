@@ -47,14 +47,14 @@ function Content({ userSet }: { userSet: UserSet }) {
   const {
     imagePreview,
     fileInputRef,
-    isUploading,
-    handleImageUpload: onImageChange,
+    handleImageUpload,
+    upload: uploadImage,
     handleRemoveImage: onRemoveImage,
   } = useImageUpload(imageValue ?? null);
 
   async function onSubmit(data: z.infer<typeof BinderFormSchema>) {
-    // Transform cardData to the format expected by the update API
-    // We need to match cardData positions to existing userSetCard IDs
+    const imageUrl = await uploadImage();
+
     const existingCardMap = new Map(
       userSet.cards.map((card) => [card.order, card.id]),
     );
@@ -71,24 +71,18 @@ function Content({ userSet }: { userSet: UserSet }) {
     await updateUserSet({
       id: userSet.set.id,
       name: data.name,
-      image: data.image ?? undefined,
+      image: imageUrl ?? undefined,
       cards,
       preferredLanguage: data.preferredLanguage,
       preferredVariant: data.preferredVariant,
       preferredCondition: data.preferredCondition,
     });
 
-    // Invalidate the queries to ensure fresh data
     await apiUtils.userSet.getById.invalidate({ id: userSet.set.id });
     await apiUtils.userSet.getList.invalidate();
 
     router.push(`/collection/${userSet.set.id}`);
   }
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const url = await onImageChange(e);
-    if (url) form.setValue("image", url);
-  };
 
   const handleRemoveImage = () => {
     onRemoveImage();
@@ -125,7 +119,6 @@ function Content({ userSet }: { userSet: UserSet }) {
               <ImageUpload
                 imagePreview={imagePreview}
                 fileInputRef={fileInputRef}
-                isUploading={isUploading}
                 onImageUpload={handleImageUpload}
                 onRemoveImage={handleRemoveImage}
               />

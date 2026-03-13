@@ -98,6 +98,8 @@ export default function UserCardDialog({
       return;
     }
 
+    const photos = await photoUpload.uploadPending();
+
     if (mode === "create") {
       await createUserCard({
         cardId: card.id,
@@ -105,7 +107,7 @@ export default function UserCardDialog({
         variant: data.variant ?? undefined,
         condition: data.condition ?? undefined,
         notes: data.notes || undefined,
-        photos: photoUpload.photos.length > 0 ? photoUpload.photos : undefined,
+        photos: photos.length > 0 ? photos : undefined,
       });
     } else if (mode === "edit" && userCard) {
       await updateUserCard({
@@ -114,7 +116,7 @@ export default function UserCardDialog({
         variant: data.variant,
         condition: data.condition,
         notes: data.notes || undefined,
-        photos: photoUpload.photos,
+        photos,
       });
     }
 
@@ -299,8 +301,6 @@ export default function UserCardDialog({
                     <MultiPhotoUpload
                       photos={photoUpload.photos}
                       fileInputRef={photoUpload.fileInputRef}
-                      isProcessing={photoUpload.isProcessing}
-                      error={photoUpload.error}
                       onAddPhotos={photoUpload.handleAddPhotos}
                       onRemovePhoto={photoUpload.handleRemovePhoto}
                     />
