@@ -6,10 +6,15 @@ import Image from "next/image";
 import { useRef, useState } from "react";
 import { useIntl } from "react-intl";
 
+async function toBase64(blob: Blob): Promise<string> {
+  const buffer = await blob.arrayBuffer();
+  return Buffer.from(buffer).toString("base64");
+}
+
 /**
  * Hook for managing multiple photo uploads. Compresses each photo with
- * browser-image-compression and uploads to R2 via a presigned PUT URL,
- * storing the resulting proxy URLs in state.
+ * browser-image-compression and uploads to R2 via the tRPC uploadFile
+ * mutation (server-side upload — no CORS required).
  */
 export function useMultiPhotoUpload(initialPhotos?: string[] | null) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -17,8 +22,7 @@ export function useMultiPhotoUpload(initialPhotos?: string[] | null) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { mutateAsync: createPresignedUploadUrl } =
-    api.upload.createPresignedUploadUrl.useMutation();
+  const { mutateAsync: uploadFile } = api.upload.uploadFile.useMutation();
 
   const handleAddPhotos = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
@@ -36,16 +40,13 @@ export function useMultiPhotoUpload(initialPhotos?: string[] | null) {
             useWebWorker: true,
             fileType: "image/jpeg",
           });
-          const { uploadUrl, key } = await createPresignedUploadUrl({
+          const data = await toBase64(compressed);
+          const { url } = await uploadFile({
+            data,
             filename: compressed.name,
             contentType: compressed.type,
           });
-          await fetch(uploadUrl, {
-            method: "PUT",
-            body: compressed,
-            headers: { "Content-Type": compressed.type },
-          });
-          return `/api/images/${key}`;
+          return url;
         }),
       );
       setPhotos((prev) => [...prev, ...urls]);
@@ -86,8 +87,7 @@ export function useImageUpload(initialImage?: string | null) {
   );
   const [isUploading, setIsUploading] = useState(false);
 
-  const { mutateAsync: createPresignedUploadUrl } =
-    api.upload.createPresignedUploadUrl.useMutation();
+  const { mutateAsync: uploadFile } = api.upload.uploadFile.useMutation();
 
   const handleImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -105,16 +105,12 @@ export function useImageUpload(initialImage?: string | null) {
         useWebWorker: true,
         fileType: "image/jpeg",
       });
-      const { uploadUrl, key } = await createPresignedUploadUrl({
+      const data = await toBase64(compressed);
+      const { url } = await uploadFile({
+        data,
         filename: compressed.name,
         contentType: compressed.type,
       });
-      await fetch(uploadUrl, {
-        method: "PUT",
-        body: compressed,
-        headers: { "Content-Type": compressed.type },
-      });
-      const url = `/api/images/${key}`;
       setImage(url);
       setImagePreview(url);
       return url;
