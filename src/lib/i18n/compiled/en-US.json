@@ -799,12 +799,6 @@
       "value": "Condition"
     }
   ],
-  "form.field.image.description": [
-    {
-      "type": 0,
-      "value": "Images will be automatically scaled to max 100px"
-    }
-  ],
   "form.field.image.label": [
     {
       "type": 0,
@@ -839,6 +833,28 @@
     {
       "type": 0,
       "value": "Creased corner\nScratched foil\nSwirl on the right\n…"
+    }
+  ],
+  "form.field.photos.description": [
+    {
+      "type": 0,
+      "value": "Photos are automatically compressed to max 200 KB each."
+    }
+  ],
+  "form.field.photos.label": [
+    {
+      "type": 0,
+      "value": "Photos"
+    }
+  ],
+  "form.field.photos.preview.alt": [
+    {
+      "type": 0,
+      "value": "Photo "
+    },
+    {
+      "type": 1,
+      "value": "n"
     }
   ],
   "form.field.set_name.label": [

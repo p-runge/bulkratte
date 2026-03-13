@@ -799,12 +799,6 @@
       "value": "Zustand"
     }
   ],
-  "form.field.image.description": [
-    {
-      "type": 0,
-      "value": "Bilder werden automatisch auf max. 100px skaliert"
-    }
-  ],
   "form.field.image.label": [
     {
       "type": 0,
@@ -839,6 +833,28 @@
     {
       "type": 0,
       "value": "Geknickte Ecke\nKratzer im Holo\nSwirl auf der rechten Seite\n…"
+    }
+  ],
+  "form.field.photos.description": [
+    {
+      "type": 0,
+      "value": "Fotos werden automatisch auf maximal 200 KB komprimiert."
+    }
+  ],
+  "form.field.photos.label": [
+    {
+      "type": 0,
+      "value": "Fotos"
+    }
+  ],
+  "form.field.photos.preview.alt": [
+    {
+      "type": 0,
+      "value": "Foto "
+    },
+    {
+      "type": 1,
+      "value": "n"
     }
   ],
   "form.field.set_name.label": [
