@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api/react";
 import imageCompression from "browser-image-compression";
-import { ImagePlus, Upload, X } from "lucide-react";
+import { ImagePlus, Star, Upload, X } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { useIntl } from "react-intl";
@@ -18,10 +18,20 @@ type PendingPhoto = { preview: string; file: File };
  * `uploadPending()` is called (e.g. on form submit), at which point they are
  * compressed and uploaded to R2.
  */
-export function useMultiPhotoUpload(initialPhotos?: string[] | null) {
+export function useMultiPhotoUpload(
+  initialPhotos?: string[] | null,
+  initialCoverPhotoUrl?: string | null,
+) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploaded, setUploaded] = useState<string[]>(initialPhotos ?? []);
   const [pending, setPending] = useState<PendingPhoto[]>([]);
+  const [coverIndex, setCoverIndex] = useState<number | null>(() => {
+    if (initialCoverPhotoUrl && initialPhotos) {
+      const idx = initialPhotos.indexOf(initialCoverPhotoUrl);
+      return idx >= 0 ? idx : null;
+    }
+    return null;
+  });
 
   const { mutateAsync: uploadFile } = api.upload.uploadFile.useMutation();
 
@@ -38,6 +48,13 @@ export function useMultiPhotoUpload(initialPhotos?: string[] | null) {
   };
 
   const handleRemovePhoto = (index: number) => {
+    setCoverIndex((prev) => {
+      if (prev === null) return null;
+      if (prev === index) return null;
+      if (index < prev) return prev - 1;
+      return prev;
+    });
+
     if (index < uploaded.length) {
       setUploaded((prev) => prev.filter((_, i) => i !== index));
     } else {
@@ -49,9 +66,20 @@ export function useMultiPhotoUpload(initialPhotos?: string[] | null) {
     }
   };
 
-  /** Upload all pending files to R2. Returns the final photo URL array. */
-  const uploadPending = async (): Promise<string[]> => {
-    if (pending.length === 0) return uploaded;
+  const handleSetCover = (index: number) => {
+    setCoverIndex((prev) => (prev === index ? null : index));
+  };
+
+  /** Upload all pending files to R2. Returns the final photo URL array and cover photo URL. */
+  const uploadPending = async (): Promise<{
+    photos: string[];
+    coverPhotoUrl: string | null;
+  }> => {
+    if (pending.length === 0) {
+      const coverPhotoUrl =
+        coverIndex !== null ? (uploaded[coverIndex] ?? null) : null;
+      return { photos: uploaded, coverPhotoUrl };
+    }
     const newUrls = await Promise.all(
       pending.map(async ({ file }) => {
         const compressed = await imageCompression(file, {
@@ -73,14 +101,18 @@ export function useMultiPhotoUpload(initialPhotos?: string[] | null) {
     const finalPhotos = [...uploaded, ...newUrls];
     setUploaded(finalPhotos);
     setPending([]);
-    return finalPhotos;
+    const coverPhotoUrl =
+      coverIndex !== null ? (finalPhotos[coverIndex] ?? null) : null;
+    return { photos: finalPhotos, coverPhotoUrl };
   };
 
   return {
     fileInputRef,
     photos,
+    coverIndex,
     handleAddPhotos,
     handleRemovePhoto,
+    handleSetCover,
     uploadPending,
   };
 }
@@ -229,16 +261,20 @@ export function ImageUpload({
 
 interface MultiPhotoUploadProps {
   photos: string[];
+  coverIndex: number | null;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   onAddPhotos: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemovePhoto: (index: number) => void;
+  onSetCover: (index: number) => void;
 }
 
 export function MultiPhotoUpload({
   photos,
+  coverIndex,
   fileInputRef,
   onAddPhotos,
   onRemovePhoto,
+  onSetCover,
 }: MultiPhotoUploadProps) {
   const intl = useIntl();
 
@@ -259,7 +295,11 @@ export function MultiPhotoUpload({
               width={80}
               height={80}
               unoptimized
-              className="w-20 h-20 object-cover rounded border"
+              className={`w-20 h-20 object-cover rounded border-2 transition-colors ${
+                coverIndex === index
+                  ? "border-yellow-400"
+                  : "border-transparent"
+              }`}
             />
             <Button
               type="button"
@@ -269,6 +309,22 @@ export function MultiPhotoUpload({
               onClick={() => onRemovePhoto(index)}
             >
               <X className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button"
+              variant={coverIndex === index ? "default" : "secondary"}
+              size="icon"
+              className="absolute -bottom-2 -right-2 h-6 w-6"
+              title={intl.formatMessage({
+                id: "form.field.photos.set_cover",
+                defaultMessage: "Set as cover",
+              })}
+              onClick={() => onSetCover(index)}
+            >
+              <Star
+                className="h-3 w-3"
+                fill={coverIndex === index ? "currentColor" : "none"}
+              />
             </Button>
           </div>
         ))}

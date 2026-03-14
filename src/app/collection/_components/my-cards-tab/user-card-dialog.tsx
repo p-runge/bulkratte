@@ -91,6 +91,7 @@ export default function UserCardDialog({
 
   const photoUpload = useMultiPhotoUpload(
     mode === "edit" && userCard ? (userCard.photos ?? []) : [],
+    mode === "edit" && userCard ? (userCard.coverPhoto ?? null) : null,
   );
 
   async function handleSubmit(data: z.infer<typeof FormSchema>) {
@@ -98,7 +99,7 @@ export default function UserCardDialog({
       return;
     }
 
-    const photos = await photoUpload.uploadPending();
+    const { photos, coverPhotoUrl } = await photoUpload.uploadPending();
 
     if (mode === "create") {
       await createUserCard({
@@ -108,6 +109,7 @@ export default function UserCardDialog({
         condition: data.condition ?? undefined,
         notes: data.notes || undefined,
         photos: photos.length > 0 ? photos : undefined,
+        coverPhotoUrl: coverPhotoUrl ?? undefined,
       });
     } else if (mode === "edit" && userCard) {
       await updateUserCard({
@@ -117,6 +119,7 @@ export default function UserCardDialog({
         condition: data.condition,
         notes: data.notes || undefined,
         photos,
+        coverPhotoUrl,
       });
     }
 
@@ -300,9 +303,11 @@ export default function UserCardDialog({
                     </Label>
                     <MultiPhotoUpload
                       photos={photoUpload.photos}
+                      coverIndex={photoUpload.coverIndex}
                       fileInputRef={photoUpload.fileInputRef}
                       onAddPhotos={photoUpload.handleAddPhotos}
                       onRemovePhoto={photoUpload.handleRemovePhoto}
+                      onSetCover={photoUpload.handleSetCover}
                     />
                   </div>
                 </div>

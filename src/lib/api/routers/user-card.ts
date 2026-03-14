@@ -288,6 +288,7 @@ export const userCardRouter = createTRPCRouter({
         condition: z.enum(conditionEnum.enumValues).nullable().optional(),
         notes: z.string().optional(),
         photos: z.array(z.string()).optional(),
+        coverPhotoUrl: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -312,6 +313,7 @@ export const userCardRouter = createTRPCRouter({
             user_card_id: userCard.id,
             url,
             position,
+            is_cover: url === input.coverPhotoUrl,
           })),
         );
       }
@@ -470,16 +472,24 @@ export const userCardRouter = createTRPCRouter({
                 user_card_id: userCardPhotosTable.user_card_id,
                 url: userCardPhotosTable.url,
                 position: userCardPhotosTable.position,
+                is_cover: userCardPhotosTable.is_cover,
               })
               .from(userCardPhotosTable)
               .where(inArray(userCardPhotosTable.user_card_id, userCardIds))
               .orderBy(userCardPhotosTable.position)
           : [];
 
-      const photosByCardId = new Map<string, string[]>();
+      const photosByCardId = new Map<
+        string,
+        { urls: string[]; coverPhotoUrl: string | null }
+      >();
       for (const photo of allPhotos) {
-        const existing = photosByCardId.get(photo.user_card_id) ?? [];
-        existing.push(photo.url);
+        const existing = photosByCardId.get(photo.user_card_id) ?? {
+          urls: [],
+          coverPhotoUrl: null,
+        };
+        existing.urls.push(photo.url);
+        if (photo.is_cover) existing.coverPhotoUrl = photo.url;
         photosByCardId.set(photo.user_card_id, existing);
       }
 
@@ -494,7 +504,8 @@ export const userCardRouter = createTRPCRouter({
       // Map localized card data back to user cards
       let result = userCards.map(({ cardId, ...uc }, index) => ({
         ...uc,
-        photos: photosByCardId.get(uc.id) ?? [],
+        photos: photosByCardId.get(uc.id)?.urls ?? [],
+        coverPhoto: photosByCardId.get(uc.id)?.coverPhotoUrl ?? null,
         card: localizedUserCards[index]!,
       }));
 
@@ -592,6 +603,7 @@ export const userCardRouter = createTRPCRouter({
         condition: z.enum(conditionEnum.enumValues).nullable().optional(),
         notes: z.string().optional(),
         photos: z.array(z.string()).optional(),
+        coverPhotoUrl: z.string().nullable().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -652,6 +664,7 @@ export const userCardRouter = createTRPCRouter({
               user_card_id: input.id,
               url,
               position,
+              is_cover: url === input.coverPhotoUrl,
             })),
           );
         }

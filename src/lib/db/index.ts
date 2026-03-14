@@ -243,6 +243,7 @@ export const userCardPhotosTable = pgTable("user_card_photos", {
     .references(() => userCardsTable.id, { onDelete: "cascade" }),
   url: text("url").notNull(),
   position: integer("position").notNull().default(0),
+  is_cover: boolean("is_cover").notNull().default(false),
   created_at: timestamp("created_at", { mode: "string" })
     .notNull()
     .defaultNow(),

@@ -225,6 +225,12 @@ export function CardSlot({
       }
     }
 
+    const placedUserCard =
+      isPlaced && currentUserCardId
+        ? userCards?.find((uc: any) => uc.id === currentUserCardId)
+        : null;
+    const displayImage = placedUserCard?.coverPhoto ?? card.imageSmall;
+
     return (
       <button
         onClick={handleClick}
@@ -243,7 +249,7 @@ export function CardSlot({
           )}
         >
           <Image
-            src={card.imageSmall}
+            src={displayImage}
             alt={card.name}
             width={245}
             height={337}
