@@ -1,4 +1,7 @@
-import { CoverCropEditor, type CoverCrop } from "@/components/cover-crop-editor";
+import {
+  CoverCropEditor,
+  type CoverCrop,
+} from "@/components/cover-crop-editor";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api/react";
 import imageCompression from "browser-image-compression";
@@ -384,6 +387,7 @@ export function MultiPhotoUpload({
             ref={fileInputRef}
             type="file"
             accept="image/*"
+            capture="environment"
             multiple
             onChange={onAddPhotos}
             className="hidden"
