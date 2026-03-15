@@ -8,6 +8,7 @@ import {
   integer,
   jsonb,
   pgTable,
+  real,
   text,
   timestamp,
   uniqueIndex,
@@ -244,6 +245,10 @@ export const userCardPhotosTable = pgTable("user_card_photos", {
   url: text("url").notNull(),
   position: integer("position").notNull().default(0),
   is_cover: boolean("is_cover").notNull().default(false),
+  crop_x: real("crop_x"),
+  crop_y: real("crop_y"),
+  crop_width: real("crop_width"),
+  crop_height: real("crop_height"),
   created_at: timestamp("created_at", { mode: "string" })
     .notNull()
     .defaultNow(),

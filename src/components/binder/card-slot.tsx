@@ -9,6 +9,7 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { useBinderContext } from "./binder-context";
 import { CardPreferencesDialog } from "./card-preferences-dialog";
+import { CroppedCardImage } from "./cropped-card-image";
 import { BinderCard } from "./types";
 
 export function CardSlot({
@@ -229,7 +230,8 @@ export function CardSlot({
       isPlaced && currentUserCardId
         ? userCards?.find((uc: any) => uc.id === currentUserCardId)
         : null;
-    const displayImage = placedUserCard?.coverPhoto ?? card.imageSmall;
+    const coverPhoto: string | null = placedUserCard?.coverPhoto ?? null;
+    const coverCrop = placedUserCard?.coverCrop ?? null;
 
     return (
       <button
@@ -242,20 +244,29 @@ export function CardSlot({
       >
         <div
           className={cn(
-            "focus:outline-none focus:ring-4 focus:ring-ring focus:ring-offset-2",
+            "w-full h-full focus:outline-none focus:ring-4 focus:ring-ring focus:ring-offset-2",
             !isPlaced && "opacity-40 grayscale",
             hasUserCard && !isPlaced && "-m-1",
             borderColor && "-m-1",
           )}
         >
-          <Image
-            src={displayImage}
-            alt={card.name}
-            width={245}
-            height={337}
-            unoptimized
-            className="w-full h-full object-contain rounded"
-          />
+          {coverPhoto && coverCrop ? (
+            <CroppedCardImage
+              src={coverPhoto}
+              alt={card.name}
+              crop={coverCrop}
+              className="w-full h-full"
+            />
+          ) : (
+            <Image
+              src={coverPhoto ?? card.imageSmall}
+              alt={card.name}
+              width={245}
+              height={337}
+              unoptimized
+              className="w-full h-full object-contain rounded"
+            />
+          )}
         </div>
         {/* Show detailed preferences when toggle is enabled */}
         {showCardPreferences && hasCardLevelPreferences && (

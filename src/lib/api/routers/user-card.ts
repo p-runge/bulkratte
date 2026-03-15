@@ -278,6 +278,16 @@ export async function getWantlistForUser(
   }) as any; // Type will be inferred by tRPC based on the actual query result
 }
 
+const coverCropSchema = z
+  .object({
+    x: z.number(),
+    y: z.number(),
+    width: z.number(),
+    height: z.number(),
+  })
+  .nullable()
+  .optional();
+
 export const userCardRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
@@ -289,6 +299,7 @@ export const userCardRouter = createTRPCRouter({
         notes: z.string().optional(),
         photos: z.array(z.string()).optional(),
         coverPhotoUrl: z.string().optional(),
+        coverCrop: coverCropSchema,
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -309,12 +320,19 @@ export const userCardRouter = createTRPCRouter({
 
       if (input.photos && input.photos.length > 0) {
         await ctx.db.insert(userCardPhotosTable).values(
-          input.photos.map((url, position) => ({
-            user_card_id: userCard.id,
-            url,
-            position,
-            is_cover: url === input.coverPhotoUrl,
-          })),
+          input.photos.map((url, position) => {
+            const isCover = url === input.coverPhotoUrl;
+            return {
+              user_card_id: userCard.id,
+              url,
+              position,
+              is_cover: isCover,
+              crop_x: isCover ? (input.coverCrop?.x ?? null) : null,
+              crop_y: isCover ? (input.coverCrop?.y ?? null) : null,
+              crop_width: isCover ? (input.coverCrop?.width ?? null) : null,
+              crop_height: isCover ? (input.coverCrop?.height ?? null) : null,
+            };
+          }),
         );
       }
 
@@ -473,6 +491,10 @@ export const userCardRouter = createTRPCRouter({
                 url: userCardPhotosTable.url,
                 position: userCardPhotosTable.position,
                 is_cover: userCardPhotosTable.is_cover,
+                crop_x: userCardPhotosTable.crop_x,
+                crop_y: userCardPhotosTable.crop_y,
+                crop_width: userCardPhotosTable.crop_width,
+                crop_height: userCardPhotosTable.crop_height,
               })
               .from(userCardPhotosTable)
               .where(inArray(userCardPhotosTable.user_card_id, userCardIds))
@@ -481,15 +503,35 @@ export const userCardRouter = createTRPCRouter({
 
       const photosByCardId = new Map<
         string,
-        { urls: string[]; coverPhotoUrl: string | null }
+        {
+          urls: string[];
+          coverPhotoUrl: string | null;
+          coverCrop: { x: number; y: number; width: number; height: number } | null;
+        }
       >();
       for (const photo of allPhotos) {
         const existing = photosByCardId.get(photo.user_card_id) ?? {
           urls: [],
           coverPhotoUrl: null,
+          coverCrop: null,
         };
         existing.urls.push(photo.url);
-        if (photo.is_cover) existing.coverPhotoUrl = photo.url;
+        if (photo.is_cover) {
+          existing.coverPhotoUrl = photo.url;
+          if (
+            photo.crop_x != null &&
+            photo.crop_y != null &&
+            photo.crop_width != null &&
+            photo.crop_height != null
+          ) {
+            existing.coverCrop = {
+              x: photo.crop_x,
+              y: photo.crop_y,
+              width: photo.crop_width,
+              height: photo.crop_height,
+            };
+          }
+        }
         photosByCardId.set(photo.user_card_id, existing);
       }
 
@@ -506,6 +548,7 @@ export const userCardRouter = createTRPCRouter({
         ...uc,
         photos: photosByCardId.get(uc.id)?.urls ?? [],
         coverPhoto: photosByCardId.get(uc.id)?.coverPhotoUrl ?? null,
+        coverCrop: photosByCardId.get(uc.id)?.coverCrop ?? null,
         card: localizedUserCards[index]!,
       }));
 
@@ -604,6 +647,7 @@ export const userCardRouter = createTRPCRouter({
         notes: z.string().optional(),
         photos: z.array(z.string()).optional(),
         coverPhotoUrl: z.string().nullable().optional(),
+        coverCrop: coverCropSchema,
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -660,12 +704,21 @@ export const userCardRouter = createTRPCRouter({
 
         if (input.photos.length > 0) {
           await ctx.db.insert(userCardPhotosTable).values(
-            input.photos.map((url, position) => ({
-              user_card_id: input.id,
-              url,
-              position,
-              is_cover: url === input.coverPhotoUrl,
-            })),
+            input.photos.map((url, position) => {
+              const isCover = url === input.coverPhotoUrl;
+              return {
+                user_card_id: input.id,
+                url,
+                position,
+                is_cover: isCover,
+                crop_x: isCover ? (input.coverCrop?.x ?? null) : null,
+                crop_y: isCover ? (input.coverCrop?.y ?? null) : null,
+                crop_width: isCover ? (input.coverCrop?.width ?? null) : null,
+                crop_height: isCover
+                  ? (input.coverCrop?.height ?? null)
+                  : null,
+              };
+            }),
           );
         }
       }

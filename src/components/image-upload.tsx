@@ -1,7 +1,8 @@
+import { CoverCropEditor, type CoverCrop } from "@/components/cover-crop-editor";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api/react";
 import imageCompression from "browser-image-compression";
-import { ImagePlus, Star, Upload, X } from "lucide-react";
+import { Crop, ImagePlus, Star, Upload, X } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { useIntl } from "react-intl";
@@ -21,6 +22,7 @@ type PendingPhoto = { preview: string; file: File };
 export function useMultiPhotoUpload(
   initialPhotos?: string[] | null,
   initialCoverPhotoUrl?: string | null,
+  initialCoverCrop?: CoverCrop | null,
 ) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploaded, setUploaded] = useState<string[]>(initialPhotos ?? []);
@@ -32,6 +34,9 @@ export function useMultiPhotoUpload(
     }
     return null;
   });
+  const [coverCrop, setCoverCrop] = useState<CoverCrop | null>(
+    initialCoverCrop ?? null,
+  );
 
   const { mutateAsync: uploadFile } = api.upload.uploadFile.useMutation();
 
@@ -50,7 +55,10 @@ export function useMultiPhotoUpload(
   const handleRemovePhoto = (index: number) => {
     setCoverIndex((prev) => {
       if (prev === null) return null;
-      if (prev === index) return null;
+      if (prev === index) {
+        setCoverCrop(null);
+        return null;
+      }
       if (index < prev) return prev - 1;
       return prev;
     });
@@ -67,18 +75,25 @@ export function useMultiPhotoUpload(
   };
 
   const handleSetCover = (index: number) => {
-    setCoverIndex((prev) => (prev === index ? null : index));
+    const isDeselecting = coverIndex === index;
+    setCoverIndex(isDeselecting ? null : index);
+    if (isDeselecting) setCoverCrop(null);
   };
 
-  /** Upload all pending files to R2. Returns the final photo URL array and cover photo URL. */
+  const handleSetCoverCrop = (crop: CoverCrop | null) => {
+    setCoverCrop(crop);
+  };
+
+  /** Upload all pending files to R2. Returns photos, cover URL, and cover crop. */
   const uploadPending = async (): Promise<{
     photos: string[];
     coverPhotoUrl: string | null;
+    coverCrop: CoverCrop | null;
   }> => {
     if (pending.length === 0) {
       const coverPhotoUrl =
         coverIndex !== null ? (uploaded[coverIndex] ?? null) : null;
-      return { photos: uploaded, coverPhotoUrl };
+      return { photos: uploaded, coverPhotoUrl, coverCrop };
     }
     const newUrls = await Promise.all(
       pending.map(async ({ file }) => {
@@ -103,16 +118,18 @@ export function useMultiPhotoUpload(
     setPending([]);
     const coverPhotoUrl =
       coverIndex !== null ? (finalPhotos[coverIndex] ?? null) : null;
-    return { photos: finalPhotos, coverPhotoUrl };
+    return { photos: finalPhotos, coverPhotoUrl, coverCrop };
   };
 
   return {
     fileInputRef,
     photos,
     coverIndex,
+    coverCrop,
     handleAddPhotos,
     handleRemovePhoto,
     handleSetCover,
+    handleSetCoverCrop,
     uploadPending,
   };
 }
@@ -262,21 +279,39 @@ export function ImageUpload({
 interface MultiPhotoUploadProps {
   photos: string[];
   coverIndex: number | null;
+  coverCrop: CoverCrop | null;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   onAddPhotos: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemovePhoto: (index: number) => void;
   onSetCover: (index: number) => void;
+  onSetCoverCrop: (crop: CoverCrop | null) => void;
 }
 
 export function MultiPhotoUpload({
   photos,
   coverIndex,
+  coverCrop,
   fileInputRef,
   onAddPhotos,
   onRemovePhoto,
   onSetCover,
+  onSetCoverCrop,
 }: MultiPhotoUploadProps) {
   const intl = useIntl();
+  const [cropEditorOpen, setCropEditorOpen] = useState(false);
+
+  const handleStarClick = (index: number) => {
+    const isNewCover = coverIndex !== index;
+    onSetCover(index);
+    if (isNewCover) {
+      setCropEditorOpen(true);
+    }
+  };
+
+  const handleCropSave = (crop: CoverCrop) => {
+    onSetCoverCrop(crop);
+    setCropEditorOpen(false);
+  };
 
   return (
     <div className="space-y-2">
@@ -308,7 +343,7 @@ export function MultiPhotoUpload({
               className="absolute -top-2 -right-2 h-6 w-6"
               onClick={() => onRemovePhoto(index)}
             >
-              <X className="h-4 w-4" />
+              <X className="h-3 w-3" />
             </Button>
             <Button
               type="button"
@@ -319,13 +354,28 @@ export function MultiPhotoUpload({
                 id: "form.field.photos.set_cover",
                 defaultMessage: "Set as cover",
               })}
-              onClick={() => onSetCover(index)}
+              onClick={() => handleStarClick(index)}
             >
               <Star
                 className="h-3 w-3"
                 fill={coverIndex === index ? "currentColor" : "none"}
               />
             </Button>
+            {coverIndex === index && (
+              <Button
+                type="button"
+                variant={coverCrop ? "default" : "secondary"}
+                size="icon"
+                className="absolute -bottom-2 -left-2 h-6 w-6"
+                title={intl.formatMessage({
+                  id: "form.field.photos.crop_cover",
+                  defaultMessage: "Crop cover photo",
+                })}
+                onClick={() => setCropEditorOpen(true)}
+              >
+                <Crop className="h-3 w-3" />
+              </Button>
+            )}
           </div>
         ))}
 
@@ -362,6 +412,15 @@ export function MultiPhotoUpload({
             "Photos are automatically compressed to max 200 KB each.",
         })}
       </p>
+
+      {cropEditorOpen && coverIndex !== null && photos[coverIndex] && (
+        <CoverCropEditor
+          photoUrl={photos[coverIndex]}
+          initialCrop={coverCrop}
+          onSave={handleCropSave}
+          onClose={() => setCropEditorOpen(false)}
+        />
+      )}
     </div>
   );
 }
