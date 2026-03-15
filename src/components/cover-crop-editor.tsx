@@ -8,16 +8,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import ReactCrop, {
-  type Crop,
-  type PixelCrop,
+  type PercentCrop,
   centerCrop,
   makeAspectCrop,
 } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 import { useIntl } from "react-intl";
 
+/**
+ * Crop coordinates as percentages (0–100) of the image's natural dimensions.
+ * Using percentages makes the values display-independent (no DPR or zoom issues).
+ */
 export type CoverCrop = {
   x: number;
   y: number;
@@ -27,12 +30,12 @@ export type CoverCrop = {
 
 const CARD_ASPECT = 245 / 337;
 
-function defaultCrop(width: number, height: number): Crop {
+function defaultCrop(width: number, height: number): PercentCrop {
   return centerCrop(
     makeAspectCrop({ unit: "%", width: 80 }, CARD_ASPECT, width, height),
     width,
     height,
-  );
+  ) as PercentCrop;
 }
 
 interface CoverCropEditorProps {
@@ -49,26 +52,18 @@ export function CoverCropEditor({
   onClose,
 }: CoverCropEditorProps) {
   const intl = useIntl();
-  const imgRef = useRef<HTMLImageElement>(null);
-  const [crop, setCrop] = useState<Crop | undefined>(undefined);
-  const [completedCrop, setCompletedCrop] = useState<PixelCrop | undefined>(
-    undefined,
+
+  // Crop state is always kept as PercentCrop (unit: "%", values 0–100).
+  // This avoids any display-pixel coordinate issues on mobile/high-DPR screens.
+  const [crop, setCrop] = useState<PercentCrop | undefined>(
+    initialCrop ? { unit: "%", ...initialCrop } : undefined,
   );
 
   const handleImageLoad = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
-      const { naturalWidth: nW, naturalHeight: nH } = e.currentTarget;
-
-      if (initialCrop) {
-        // Convert stored natural-px crop → percentage crop for react-image-crop
-        setCrop({
-          unit: "%",
-          x: (initialCrop.x / nW) * 100,
-          y: (initialCrop.y / nH) * 100,
-          width: (initialCrop.width / nW) * 100,
-          height: (initialCrop.height / nH) * 100,
-        });
-      } else {
+      // Only set a default crop if there is no initial crop to restore
+      if (!initialCrop) {
+        const { naturalWidth: nW, naturalHeight: nH } = e.currentTarget;
         setCrop(defaultCrop(nW, nH));
       }
     },
@@ -76,31 +71,9 @@ export function CoverCropEditor({
   );
 
   const handleSave = () => {
-    const img = imgRef.current;
-    if (!img || !crop) return;
-
-    const { naturalWidth: nW, naturalHeight: nH } = img;
-
-    if (completedCrop) {
-      // User interacted — use pixel crop from onComplete (display px → natural px)
-      const { width: displayW, height: displayH } = img.getBoundingClientRect();
-      const scaleX = nW / displayW;
-      const scaleY = nH / displayH;
-      onSave({
-        x: completedCrop.x * scaleX,
-        y: completedCrop.y * scaleY,
-        width: completedCrop.width * scaleX,
-        height: completedCrop.height * scaleY,
-      });
-    } else if (crop.unit === "%") {
-      // Initial crop loaded but not interacted with — convert % → natural px
-      onSave({
-        x: (crop.x / 100) * nW,
-        y: (crop.y / 100) * nH,
-        width: (crop.width / 100) * nW,
-        height: (crop.height / 100) * nH,
-      });
-    }
+    if (!crop) return;
+    // crop.x/y/width/height are already 0–100% — pass straight through
+    onSave({ x: crop.x, y: crop.y, width: crop.width, height: crop.height });
   };
 
   return (
@@ -123,17 +96,16 @@ export function CoverCropEditor({
           })}
         </p>
 
-        <div className="flex justify-center max-h-[60vh] overflow-auto">
+        <div className="flex justify-center overflow-hidden">
           <ReactCrop
             crop={crop}
-            onChange={(c) => setCrop(c)}
-            onComplete={(c) => setCompletedCrop(c)}
+            // Use the PercentCrop (second arg) so values are always image-relative percentages
+            onChange={(_, pc) => setCrop(pc)}
             aspect={CARD_ASPECT}
             className="max-w-full"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              ref={imgRef}
               src={photoUrl}
               alt={intl.formatMessage({
                 id: "dialog.crop_cover.image.alt",
