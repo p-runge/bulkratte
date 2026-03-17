@@ -100,7 +100,8 @@ export default function UserCardDialog({
       return;
     }
 
-    const { photos, coverPhotoUrl, coverCrop } = await photoUpload.uploadPending();
+    const { photos, coverPhotoUrl, coverCrop } =
+      await photoUpload.uploadPending();
 
     if (mode === "create") {
       await createUserCard({
@@ -278,7 +279,7 @@ export default function UserCardDialog({
                         content={intl.formatMessage({
                           id: "form.field.notes.placeholder",
                           defaultMessage:
-                            "Creased corner\nScratched foil\nSwirl on the right\n…",
+                            "Self-pulled\nReceived from John\nCreased corner\nScratched foil\nSwirl on the right\n…",
                         })}
                       />
                     </Label>

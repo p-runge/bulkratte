@@ -599,6 +599,24 @@
       "value": "Add New Card"
     }
   ],
+  "dialog.crop_cover.description": [
+    {
+      "type": 0,
+      "value": "Drag the rectangle to frame the card. It will be shown in the binder view."
+    }
+  ],
+  "dialog.crop_cover.image.alt": [
+    {
+      "type": 0,
+      "value": "Photo to crop"
+    }
+  ],
+  "dialog.crop_cover.title": [
+    {
+      "type": 0,
+      "value": "Crop Cover Photo"
+    }
+  ],
   "dialog.delete_set.description": [
     {
       "type": 0,
@@ -832,7 +850,13 @@
   "form.field.notes.placeholder": [
     {
       "type": 0,
-      "value": "Creased corner\nScratched foil\nSwirl on the right\n…"
+      "value": "Self-pulled\nReceived from John\nCreased corner\nScratched foil\nSwirl on the right\n…"
+    }
+  ],
+  "form.field.photos.crop_cover": [
+    {
+      "type": 0,
+      "value": "Crop cover photo"
     }
   ],
   "form.field.photos.description": [
@@ -855,6 +879,12 @@
     {
       "type": 1,
       "value": "n"
+    }
+  ],
+  "form.field.photos.set_cover": [
+    {
+      "type": 0,
+      "value": "Set as cover"
     }
   ],
   "form.field.set_name.label": [
