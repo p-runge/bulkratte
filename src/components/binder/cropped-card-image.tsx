@@ -32,9 +32,7 @@ export function CroppedCardImage({
   const h = crop.height || 1;
 
   return (
-    <div
-      className={`relative overflow-hidden ${className ?? "w-full h-full"}`}
-    >
+    <div className={`relative overflow-hidden ${className ?? "w-full h-full"}`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={src}

@@ -506,7 +506,12 @@ export const userCardRouter = createTRPCRouter({
         {
           urls: string[];
           coverPhotoUrl: string | null;
-          coverCrop: { x: number; y: number; width: number; height: number } | null;
+          coverCrop: {
+            x: number;
+            y: number;
+            width: number;
+            height: number;
+          } | null;
         }
       >();
       for (const photo of allPhotos) {
@@ -714,9 +719,7 @@ export const userCardRouter = createTRPCRouter({
                 crop_x: isCover ? (input.coverCrop?.x ?? null) : null,
                 crop_y: isCover ? (input.coverCrop?.y ?? null) : null,
                 crop_width: isCover ? (input.coverCrop?.width ?? null) : null,
-                crop_height: isCover
-                  ? (input.coverCrop?.height ?? null)
-                  : null,
+                crop_height: isCover ? (input.coverCrop?.height ?? null) : null,
               };
             }),
           );
