@@ -1,5 +1,5 @@
 import { seedAllLocalizations } from "@/lib/db/seed-localizations";
-import { fetchAndStoreSets } from "@/lib/db/seed";
+import { fetchAndStoreSets, fetchAndStoreAllPrices } from "@/lib/db/seed";
 import { env } from "@/env";
 import { NextResponse } from "next/server";
 
@@ -15,6 +15,7 @@ export async function GET(request: Request) {
   try {
     await fetchAndStoreSets();
     await seedAllLocalizations();
+    await fetchAndStoreAllPrices();
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("[cron/seed] Failed:", error);

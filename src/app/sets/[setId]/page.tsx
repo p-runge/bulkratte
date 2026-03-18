@@ -8,8 +8,9 @@ import { not, eq, desc } from "drizzle-orm";
 import Link from "next/link";
 import Content from "./_components/content";
 
-// Never revalidate set pages — they will be re-generated on demand when accessed, and
-export const revalidate = false;
+// Cache set pages for 24 hours. The daily cron job refreshes prices in the DB,
+// and ISR background revalidation will pick them up within the next 24h window.
+export const revalidate = 86400;
 
 // Allow set pages that weren't pre-built to be generated on first request.
 export const dynamicParams = true;

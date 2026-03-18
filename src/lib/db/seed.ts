@@ -1,5 +1,5 @@
 // Shared seeding logic — used by scripts/db/seed.ts and src/app/api/cron/seed/route.ts
-import { cardsTable, db, setsTable } from "@/lib/db";
+import { cardPricesTable, cardsTable, db, setsTable } from "@/lib/db";
 import { Rarity } from "@/lib/db/enums";
 import pokemonAPI from "@/lib/pokemon-api";
 import TCGdex from "@tcgdex/sdk";
@@ -120,6 +120,46 @@ export async function fetchAndStoreCards(setId: string) {
     console.log(`Cards for set ${setId} have been successfully stored.`);
   } catch (error) {
     console.error("Error fetching or storing cards:", error);
+    throw error;
+  }
+}
+
+const PRICE_BATCH_SIZE = 50;
+
+export async function fetchAndStoreAllPrices() {
+  console.log("Fetching and storing prices for all cards...");
+  try {
+    const allCards = await db.select({ id: cardsTable.id }).from(cardsTable);
+    console.log(`Updating prices for ${allCards.length} cards...`);
+
+    for (let i = 0; i < allCards.length; i += PRICE_BATCH_SIZE) {
+      const batch = allCards.slice(i, i + PRICE_BATCH_SIZE);
+      await Promise.all(
+        batch.map(async ({ id }) => {
+          try {
+            const price = await pokemonAPI.fetchPriceForCard(id);
+            if (price !== null) {
+              await db
+                .insert(cardPricesTable)
+                .values({ card_id: id, price })
+                .onConflictDoUpdate({
+                  target: cardPricesTable.card_id,
+                  set: { price, updated_at: new Date().toISOString() },
+                });
+            }
+          } catch (e) {
+            console.error(`Error fetching price for card ${id}:`, e);
+          }
+        }),
+      );
+      console.log(
+        `Prices: ${Math.min(i + PRICE_BATCH_SIZE, allCards.length)} / ${allCards.length}`,
+      );
+    }
+
+    console.log("✅ All prices have been successfully updated.");
+  } catch (error) {
+    console.error("Error fetching or storing prices:", error);
     throw error;
   }
 }

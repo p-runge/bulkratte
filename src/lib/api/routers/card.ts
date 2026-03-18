@@ -7,7 +7,6 @@ import {
 } from "@/lib/db";
 import { localizeRecord, localizeRecords } from "@/lib/db/localization";
 import { getLanguageFromLocale } from "@/lib/i18n";
-import pokemonAPI from "@/lib/pokemon-api";
 import { TRPCError } from "@trpc/server";
 import {
   and,
@@ -150,64 +149,10 @@ export const cardRouter = createTRPCRouter({
 
       const results = await query;
 
-      // Process results and handle price updates
-      const cardsWithPrices = await Promise.all(
-        results.map(async ({ card, price: existingPrice }) => {
-          let shouldUpdatePrice = false;
-          if (!existingPrice) {
-            shouldUpdatePrice = true;
-          } else {
-            // Check if price is older than 24 hours
-            const priceRecord = await db
-              .select({
-                updatedAt: cardPricesTable.updated_at,
-              })
-              .from(cardPricesTable)
-              .where(eq(cardPricesTable.card_id, card.id))
-              .limit(1)
-              .then((rows) => rows[0]);
-
-            if (
-              priceRecord &&
-              Date.now() - new Date(priceRecord.updatedAt).getTime() >
-                1000 * 60 * 60 * 24
-            ) {
-              shouldUpdatePrice = true;
-            }
-          }
-
-          let newPrice = null;
-          if (shouldUpdatePrice) {
-            try {
-              const fetchedPrice = await pokemonAPI.fetchPriceForCard(card.id);
-              if (fetchedPrice !== null) {
-                // upsert price
-                await db
-                  .insert(cardPricesTable)
-                  .values({
-                    card_id: card.id,
-                    price: fetchedPrice,
-                  })
-                  .onConflictDoUpdate({
-                    target: cardPricesTable.card_id,
-                    set: {
-                      price: fetchedPrice,
-                      updated_at: new Date().toISOString(),
-                    },
-                  });
-              }
-              newPrice = fetchedPrice;
-            } catch (e) {
-              console.error("Error fetching price for card", card.id, e);
-            }
-          }
-
-          return {
-            ...card,
-            price: newPrice ?? existingPrice ?? undefined,
-          };
-        }),
-      );
+      const cardsWithPrices = results.map(({ card, price: existingPrice }) => ({
+        ...card,
+        price: existingPrice ?? undefined,
+      }));
 
       // Localize the cards
       const localizedCards = await localizeRecords(
