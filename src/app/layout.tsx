@@ -8,6 +8,7 @@ import "@total-typescript/ts-reset";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
 import PlausibleProvider from "next-plausible";
+import NextTopLoader from "nextjs-toploader";
 import type React from "react";
 import "./globals.css";
 
@@ -29,6 +30,7 @@ export default async function RootLayout({
   return (
     <html lang={lang} suppressHydrationWarning>
       <body>
+        <NextTopLoader showSpinner={false} color="#C6A96B" />
         <DeviceSync />
         <PlausibleProvider domain="bulkratte.de">
           <TRPCReactProvider>
