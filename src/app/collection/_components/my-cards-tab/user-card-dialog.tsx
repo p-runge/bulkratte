@@ -2,13 +2,12 @@
 
 import type { UserCard } from "@/components/binder/types";
 import { CardBrowser } from "@/components/card-browser";
-import { ConditionToggleGroup } from "@/components/condition-toggle-group";
 import ConfirmButton from "@/components/confirm-button";
 import {
   MultiPhotoUpload,
   useMultiPhotoUpload,
 } from "@/components/image-upload";
-import { LanguageToggleGroup } from "@/components/language-toggle-group";
+import { InfoTooltip } from "@/components/info-tooltip";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,11 +19,10 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { InfoTooltip } from "@/components/info-tooltip";
-import { VariantToggleGroup } from "@/components/variant-toggle-group";
+import { UserCardFormFields } from "@/components/user-card-form-fields";
 import { api } from "@/lib/api/react";
-import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
 import { RHFForm, useRHFForm } from "@/lib/form/utils";
+import { userCardFormSchema } from "@/lib/schemas/user-card";
 import { Info, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
@@ -72,7 +70,7 @@ export default function UserCardDialog({
 
   const placement = placedCards?.find((p) => p.userCardId === userCard?.id);
 
-  const form = useRHFForm(FormSchema, {
+  const form = useRHFForm(userCardFormSchema, {
     defaultValues:
       mode === "edit" && userCard
         ? {
@@ -95,7 +93,7 @@ export default function UserCardDialog({
     mode === "edit" && userCard ? (userCard.coverCrop ?? null) : null,
   );
 
-  async function handleSubmit(data: z.infer<typeof FormSchema>) {
+  async function handleSubmit(data: z.infer<typeof userCardFormSchema>) {
     if (!card) {
       return;
     }
@@ -202,68 +200,7 @@ export default function UserCardDialog({
                     </Alert>
                   )}
 
-                  {/* Language Field */}
-                  <div className="space-y-2">
-                    <Label>
-                      {intl.formatMessage({
-                        id: "form.field.language.label",
-                        defaultMessage: "Language",
-                      })}
-                    </Label>
-                    <Controller
-                      control={form.control}
-                      name="language"
-                      render={({ field }) => (
-                        <LanguageToggleGroup
-                          value={field.value ?? null}
-                          onValueChange={field.onChange}
-                          includeNone
-                        />
-                      )}
-                    />
-                  </div>
-
-                  {/* Variant Field */}
-                  <div className="space-y-2">
-                    <Label>
-                      {intl.formatMessage({
-                        id: "form.field.variant.label",
-                        defaultMessage: "Variant",
-                      })}
-                    </Label>
-                    <Controller
-                      control={form.control}
-                      name="variant"
-                      render={({ field }) => (
-                        <VariantToggleGroup
-                          value={field.value ?? null}
-                          onValueChange={field.onChange}
-                          includeNone
-                        />
-                      )}
-                    />
-                  </div>
-
-                  {/* Condition Field */}
-                  <div className="space-y-2">
-                    <Label>
-                      {intl.formatMessage({
-                        id: "form.field.condition.label",
-                        defaultMessage: "Condition",
-                      })}
-                    </Label>
-                    <Controller
-                      control={form.control}
-                      name="condition"
-                      render={({ field }) => (
-                        <ConditionToggleGroup
-                          value={field.value ?? null}
-                          onValueChange={field.onChange}
-                          includeNone
-                        />
-                      )}
-                    />
-                  </div>
+                  <UserCardFormFields control={form.control} />
 
                   {/* Notes Field */}
                   <div className="space-y-2">
@@ -405,10 +342,3 @@ export default function UserCardDialog({
     </Dialog>
   );
 }
-
-const FormSchema = z.object({
-  language: z.enum(languageEnum.enumValues).nullable(),
-  variant: z.enum(variantEnum.enumValues).nullable(),
-  condition: z.enum(conditionEnum.enumValues).nullable(),
-  notes: z.string().optional(),
-});

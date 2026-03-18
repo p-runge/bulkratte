@@ -2,10 +2,9 @@
 
 import UserCardDialog from "@/app/collection/_components/my-cards-tab/user-card-dialog";
 import { ConditionBadge } from "@/components/condition-badge";
-import { ConditionToggleGroup } from "@/components/condition-toggle-group";
 import ConfirmButton from "@/components/confirm-button";
 import { LanguageBadge } from "@/components/language-badge";
-import { LanguageToggleGroup } from "@/components/language-toggle-group";
+import { UserCardFormFields } from "@/components/user-card-form-fields";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,18 +14,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { VariantToggleGroup } from "@/components/variant-toggle-group";
 import { api } from "@/lib/api/react";
 import { AppRouter } from "@/lib/api/routers/_app";
-import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
 import { RHFForm, useRHFForm } from "@/lib/form/utils";
 import { cn } from "@/lib/utils";
+import { userCardBaseSchema } from "@/lib/schemas/user-card";
 import { Pencil, Plus } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
-import { Controller } from "react-hook-form";
 import { useIntl } from "react-intl";
 import z from "zod";
 
@@ -45,12 +41,6 @@ interface PlaceCardDialogProps {
   onClose: () => void;
   onSuccess: () => void;
 }
-
-const FormSchema = z.object({
-  language: z.enum(languageEnum.enumValues).nullable(),
-  variant: z.enum(variantEnum.enumValues).nullable(),
-  condition: z.enum(conditionEnum.enumValues).nullable(),
-});
 
 export function PlaceCardDialog({
   userSetId,
@@ -81,7 +71,7 @@ export function PlaceCardDialog({
     api.userCard.create.useMutation();
   const apiUtils = api.useUtils();
 
-  const form = useRHFForm(FormSchema, {
+  const form = useRHFForm(userCardBaseSchema, {
     defaultValues: {
       condition: userSet.set.preferredCondition ?? null,
       language: userSet.set.preferredLanguage ?? null,
@@ -202,7 +192,9 @@ export function PlaceCardDialog({
     onSuccess();
   };
 
-  const handleCreateAndPlace = async (data: z.infer<typeof FormSchema>) => {
+  const handleCreateAndPlace = async (
+    data: z.infer<typeof userCardBaseSchema>,
+  ) => {
     const newUserCard = await createUserCard({
       cardId,
       condition: data.condition ?? undefined,
@@ -301,264 +293,29 @@ export function PlaceCardDialog({
                       })}
                     </h4>
                     <div className="space-y-2">
-                      {matchingCards.map((userCard) => {
-                        const isCurrentlyPlaced =
-                          userCard.id === currentUserCardId;
-
-                        return (
-                          <div
-                            key={userCard.id}
-                            className={cn(
-                              "w-full p-3 rounded border",
-                              isCurrentlyPlaced
-                                ? "bg-primary/10 border-primary"
-                                : userCard.isPlacedElsewhere
-                                  ? "border-destructive"
-                                  : "",
-                            )}
-                          >
-                            <div className="flex items-center gap-3">
-                              <Image
-                                src={userCard.card.imageSmall ?? ""}
-                                alt={userCard.card.name ?? ""}
-                                width={64}
-                                height={89}
-                                unoptimized
-                                className="w-16 h-auto object-contain rounded"
-                              />
-                              <div className="flex-1">
-                                <div className="font-medium">
-                                  {userCard.card.name}
-                                  {isCurrentlyPlaced && (
-                                    <span className="ml-2 text-xs text-primary">
-                                      {intl.formatMessage({
-                                        id: "dialog.place_card.label.currently_placed",
-                                        defaultMessage: "(Currently Placed)",
-                                      })}
-                                    </span>
-                                  )}
-                                  {userCard.isPlacedElsewhere && (
-                                    <span className="ml-2 text-xs text-muted-foreground">
-                                      {intl.formatMessage(
-                                        {
-                                          id: "dialog.place_card.label.placed_elsewhere",
-                                          defaultMessage: '(In "{setName}")',
-                                        },
-                                        {
-                                          setName:
-                                            userCard.placementInfo?.setName,
-                                        },
-                                      )}
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-1.5 mt-1">
-                                  {userCard.language && (
-                                    <Badge variant="outline" className="h-5.5">
-                                      <LanguageBadge
-                                        code={userCard.language}
-                                        className="text-sm"
-                                      />
-                                    </Badge>
-                                  )}
-                                  {userCard.variant && (
-                                    <Badge
-                                      variant="outline"
-                                      className="text-xs"
-                                    >
-                                      {userCard.variant}
-                                    </Badge>
-                                  )}
-                                  {userCard.condition && (
-                                    <ConditionBadge
-                                      condition={userCard.condition}
-                                    />
-                                  )}
-                                </div>
-                              </div>
-                              {!isCurrentlyPlaced &&
-                                (userCard.isPlacedElsewhere ? (
-                                  <ConfirmButton
-                                    variant="destructive"
-                                    size="sm"
-                                    title={intl.formatMessage({
-                                      id: "dialog.place_card.confirm.title",
-                                      defaultMessage:
-                                        "Move Card from Another Set?",
-                                    })}
-                                    description={intl.formatMessage(
-                                      {
-                                        id: "dialog.place_card.confirm.description",
-                                        defaultMessage:
-                                          'This card is currently placed in "{setName}". Moving it here will remove it from that set. Do you want to continue?',
-                                      },
-                                      {
-                                        setName:
-                                          userCard.placementInfo?.setName,
-                                      },
-                                    )}
-                                    confirmLabel={intl.formatMessage({
-                                      id: "dialog.place_card.confirm.confirm_label",
-                                      defaultMessage: "Move Card",
-                                    })}
-                                    destructive
-                                    onClick={() =>
-                                      handleSelectUserCard(userCard.id)
-                                    }
-                                    disabled={isPlacing}
-                                  >
-                                    {intl.formatMessage({
-                                      id: "dialog.place_card.action.place",
-                                      defaultMessage: "Place",
-                                    })}
-                                  </ConfirmButton>
-                                ) : (
-                                  <Button
-                                    variant="default"
-                                    size="sm"
-                                    onClick={() =>
-                                      handleSelectUserCard(userCard.id)
-                                    }
-                                    disabled={isPlacing}
-                                  >
-                                    {intl.formatMessage({
-                                      id: "dialog.place_card.action.place",
-                                      defaultMessage: "Place",
-                                    })}
-                                  </Button>
-                                ))}
-                            </div>
-                          </div>
-                        );
-                      })}
+                      {matchingCards.map((userCard) => (
+                        <PlacableCardRow
+                          key={userCard.id}
+                          userCard={userCard}
+                          isCurrentlyPlaced={userCard.id === currentUserCardId}
+                          isPlacing={isPlacing}
+                          onSelect={handleSelectUserCard}
+                        />
+                      ))}
                     </div>
                   </div>
                 )}
 
                 {!hasPreferences &&
-                  filteredCards.map((userCard) => {
-                    const isCurrentlyPlaced = userCard.id === currentUserCardId;
-
-                    return (
-                      <div
-                        key={userCard.id}
-                        className={cn(
-                          "w-full p-3 rounded border",
-                          isCurrentlyPlaced
-                            ? "bg-primary/10 border-primary"
-                            : userCard.isPlacedElsewhere
-                              ? "border-destructive"
-                              : "",
-                        )}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Image
-                            src={userCard.card.imageSmall ?? ""}
-                            alt={userCard.card.name ?? ""}
-                            width={64}
-                            height={89}
-                            unoptimized
-                            className="w-16 h-auto object-contain rounded"
-                          />
-                          <div className="flex-1">
-                            <div className="font-medium">
-                              {userCard.card.name}
-                              {isCurrentlyPlaced && (
-                                <span className="ml-2 text-xs text-primary">
-                                  {intl.formatMessage({
-                                    id: "dialog.place_card.label.currently_placed",
-                                    defaultMessage: "(Currently Placed)",
-                                  })}
-                                </span>
-                              )}
-                              {userCard.isPlacedElsewhere && (
-                                <span className="ml-2 text-xs text-muted-foreground">
-                                  {intl.formatMessage(
-                                    {
-                                      id: "dialog.place_card.label.placed_elsewhere",
-                                      defaultMessage: '(In "{setName}")',
-                                    },
-                                    {
-                                      setName: userCard.placementInfo?.setName,
-                                    },
-                                  )}
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1.5 mt-1">
-                              {userCard.language && (
-                                <Badge variant="outline" className="h-5.5">
-                                  <LanguageBadge
-                                    code={userCard.language}
-                                    className="text-sm"
-                                  />
-                                </Badge>
-                              )}
-                              {userCard.variant && (
-                                <Badge variant="outline" className="text-xs">
-                                  {userCard.variant}
-                                </Badge>
-                              )}
-                              {userCard.condition && (
-                                <ConditionBadge
-                                  condition={userCard.condition}
-                                />
-                              )}
-                            </div>
-                          </div>
-                          {!isCurrentlyPlaced &&
-                            (userCard.isPlacedElsewhere ? (
-                              <ConfirmButton
-                                variant="destructive"
-                                size="sm"
-                                title={intl.formatMessage({
-                                  id: "dialog.place_card.confirm.title",
-                                  defaultMessage: "Move Card from Another Set?",
-                                })}
-                                description={intl.formatMessage(
-                                  {
-                                    id: "dialog.place_card.confirm.description",
-                                    defaultMessage:
-                                      'This card is currently placed in "{setName}". Moving it here will remove it from that set. Do you want to continue?',
-                                  },
-                                  {
-                                    setName: userCard.placementInfo?.setName,
-                                  },
-                                )}
-                                confirmLabel={intl.formatMessage({
-                                  id: "dialog.place_card.confirm.confirm_label",
-                                  defaultMessage: "Move Card",
-                                })}
-                                destructive
-                                onClick={() =>
-                                  handleSelectUserCard(userCard.id)
-                                }
-                                disabled={isPlacing}
-                              >
-                                {intl.formatMessage({
-                                  id: "dialog.place_card.action.place",
-                                  defaultMessage: "Place",
-                                })}
-                              </ConfirmButton>
-                            ) : (
-                              <Button
-                                variant="default"
-                                size="sm"
-                                onClick={() =>
-                                  handleSelectUserCard(userCard.id)
-                                }
-                                disabled={isPlacing}
-                              >
-                                {intl.formatMessage({
-                                  id: "dialog.place_card.action.place",
-                                  defaultMessage: "Place",
-                                })}
-                              </Button>
-                            ))}
-                        </div>
-                      </div>
-                    );
-                  })}
+                  filteredCards.map((userCard) => (
+                    <PlacableCardRow
+                      key={userCard.id}
+                      userCard={userCard}
+                      isCurrentlyPlaced={userCard.id === currentUserCardId}
+                      isPlacing={isPlacing}
+                      onSelect={handleSelectUserCard}
+                    />
+                  ))}
 
                 {hasPreferences && nonMatchingCards.length > 0 && (
                   <div>
@@ -569,136 +326,16 @@ export function PlaceCardDialog({
                       })}
                     </h4>
                     <div className="space-y-2">
-                      {nonMatchingCards.map((userCard) => {
-                        const isCurrentlyPlaced =
-                          userCard.id === currentUserCardId;
-
-                        return (
-                          <div
-                            key={userCard.id}
-                            className={cn(
-                              "w-full p-3 rounded border opacity-60",
-                              isCurrentlyPlaced
-                                ? "bg-primary/10 border-primary"
-                                : userCard.isPlacedElsewhere
-                                  ? "border-destructive"
-                                  : "",
-                            )}
-                          >
-                            <div className="flex items-center gap-3">
-                              <Image
-                                src={userCard.card.imageSmall ?? ""}
-                                alt={userCard.card.name ?? ""}
-                                width={64}
-                                height={89}
-                                unoptimized
-                                className="w-16 h-auto object-contain rounded"
-                              />
-                              <div className="flex-1">
-                                <div className="font-medium">
-                                  {userCard.card.name}
-                                  {isCurrentlyPlaced && (
-                                    <span className="ml-2 text-xs text-primary">
-                                      {intl.formatMessage({
-                                        id: "dialog.place_card.label.currently_placed",
-                                        defaultMessage: "(Currently Placed)",
-                                      })}
-                                    </span>
-                                  )}
-                                  {userCard.isPlacedElsewhere && (
-                                    <span className="ml-2 text-xs text-muted-foreground">
-                                      {intl.formatMessage(
-                                        {
-                                          id: "dialog.place_card.label.placed_elsewhere",
-                                          defaultMessage: '(In "{setName}")',
-                                        },
-                                        {
-                                          setName:
-                                            userCard.placementInfo?.setName,
-                                        },
-                                      )}
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-1.5 mt-1">
-                                  {userCard.language && (
-                                    <Badge variant="outline" className="h-5.5">
-                                      <LanguageBadge
-                                        code={userCard.language}
-                                        className="text-sm"
-                                      />
-                                    </Badge>
-                                  )}
-                                  {userCard.variant && (
-                                    <Badge
-                                      variant="outline"
-                                      className="text-xs"
-                                    >
-                                      {userCard.variant}
-                                    </Badge>
-                                  )}
-                                  {userCard.condition && (
-                                    <ConditionBadge
-                                      condition={userCard.condition}
-                                    />
-                                  )}
-                                </div>
-                              </div>
-                              {!isCurrentlyPlaced &&
-                                (userCard.isPlacedElsewhere ? (
-                                  <ConfirmButton
-                                    variant="destructive"
-                                    size="sm"
-                                    title={intl.formatMessage({
-                                      id: "dialog.place_card.confirm.title",
-                                      defaultMessage:
-                                        "Move Card from Another Set?",
-                                    })}
-                                    description={intl.formatMessage(
-                                      {
-                                        id: "dialog.place_card.confirm.description",
-                                        defaultMessage:
-                                          'This card is currently placed in "{setName}". Moving it here will remove it from that set. Do you want to continue?',
-                                      },
-                                      {
-                                        setName:
-                                          userCard.placementInfo?.setName,
-                                      },
-                                    )}
-                                    confirmLabel={intl.formatMessage({
-                                      id: "dialog.place_card.confirm.confirm_label",
-                                      defaultMessage: "Move Card",
-                                    })}
-                                    destructive
-                                    onClick={() =>
-                                      handleSelectUserCard(userCard.id)
-                                    }
-                                    disabled={isPlacing}
-                                  >
-                                    {intl.formatMessage({
-                                      id: "dialog.place_card.action.place",
-                                      defaultMessage: "Place",
-                                    })}
-                                  </ConfirmButton>
-                                ) : (
-                                  <Button
-                                    variant="default"
-                                    size="sm"
-                                    onClick={() =>
-                                      handleSelectUserCard(userCard.id)
-                                    }
-                                    disabled={isPlacing}
-                                  >
-                                    {intl.formatMessage({
-                                      id: "dialog.place_card.action.place",
-                                      defaultMessage: "Place",
-                                    })}
-                                  </Button>
-                                ))}
-                            </div>
-                          </div>
-                        );
-                      })}
+                      {nonMatchingCards.map((userCard) => (
+                        <PlacableCardRow
+                          key={userCard.id}
+                          userCard={userCard}
+                          isCurrentlyPlaced={userCard.id === currentUserCardId}
+                          isPlacing={isPlacing}
+                          dimmed
+                          onSelect={handleSelectUserCard}
+                        />
+                      ))}
                     </div>
                   </div>
                 )}
@@ -786,68 +423,7 @@ export function PlaceCardDialog({
                     {card.name}
                   </h2>
 
-                  {/* Language Field */}
-                  <div className="space-y-2">
-                    <Label>
-                      {intl.formatMessage({
-                        id: "form.field.language.label",
-                        defaultMessage: "Language",
-                      })}
-                    </Label>
-                    <Controller
-                      control={form.control}
-                      name="language"
-                      render={({ field }) => (
-                        <LanguageToggleGroup
-                          value={field.value ?? null}
-                          onValueChange={field.onChange}
-                          includeNone
-                        />
-                      )}
-                    />
-                  </div>
-
-                  {/* Variant Field */}
-                  <div className="space-y-2">
-                    <Label>
-                      {intl.formatMessage({
-                        id: "form.field.variant.label",
-                        defaultMessage: "Variant",
-                      })}
-                    </Label>
-                    <Controller
-                      control={form.control}
-                      name="variant"
-                      render={({ field }) => (
-                        <VariantToggleGroup
-                          value={field.value ?? null}
-                          onValueChange={field.onChange}
-                          includeNone
-                        />
-                      )}
-                    />
-                  </div>
-
-                  {/* Condition Field */}
-                  <div className="space-y-2">
-                    <Label>
-                      {intl.formatMessage({
-                        id: "form.field.condition.label",
-                        defaultMessage: "Condition",
-                      })}
-                    </Label>
-                    <Controller
-                      control={form.control}
-                      name="condition"
-                      render={({ field }) => (
-                        <ConditionToggleGroup
-                          value={field.value ?? null}
-                          onValueChange={field.onChange}
-                          includeNone
-                        />
-                      )}
-                    />
-                  </div>
+                  <UserCardFormFields control={form.control} />
                 </div>
               </div>
             </div>
@@ -880,6 +456,132 @@ export function PlaceCardDialog({
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function PlacableCardRow({
+  userCard,
+  isCurrentlyPlaced,
+  isPlacing,
+  dimmed,
+  onSelect,
+}: {
+  userCard: UserCard & {
+    isPlacedElsewhere?: boolean;
+    placementInfo?: { setName: string | undefined } | null;
+  };
+  isCurrentlyPlaced: boolean;
+  isPlacing: boolean;
+  dimmed?: boolean;
+  onSelect: (userCardId: string) => void;
+}) {
+  const intl = useIntl();
+
+  return (
+    <div
+      className={cn(
+        "w-full p-3 rounded border",
+        dimmed && "opacity-60",
+        isCurrentlyPlaced
+          ? "bg-primary/10 border-primary"
+          : userCard.isPlacedElsewhere
+            ? "border-destructive"
+            : "",
+      )}
+    >
+      <div className="flex items-center gap-3">
+        <Image
+          src={userCard.card.imageSmall ?? ""}
+          alt={userCard.card.name ?? ""}
+          width={64}
+          height={89}
+          unoptimized
+          className="w-16 h-auto object-contain rounded"
+        />
+        <div className="flex-1">
+          <div className="font-medium">
+            {userCard.card.name}
+            {isCurrentlyPlaced && (
+              <span className="ml-2 text-xs text-primary">
+                {intl.formatMessage({
+                  id: "dialog.place_card.label.currently_placed",
+                  defaultMessage: "(Currently Placed)",
+                })}
+              </span>
+            )}
+            {userCard.isPlacedElsewhere && (
+              <span className="ml-2 text-xs text-muted-foreground">
+                {intl.formatMessage(
+                  {
+                    id: "dialog.place_card.label.placed_elsewhere",
+                    defaultMessage: '(In "{setName}")',
+                  },
+                  { setName: userCard.placementInfo?.setName },
+                )}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5 mt-1">
+            {userCard.language && (
+              <Badge variant="outline" className="h-5.5">
+                <LanguageBadge code={userCard.language} className="text-sm" />
+              </Badge>
+            )}
+            {userCard.variant && (
+              <Badge variant="outline" className="text-xs">
+                {userCard.variant}
+              </Badge>
+            )}
+            {userCard.condition && (
+              <ConditionBadge condition={userCard.condition} />
+            )}
+          </div>
+        </div>
+        {!isCurrentlyPlaced &&
+          (userCard.isPlacedElsewhere ? (
+            <ConfirmButton
+              variant="destructive"
+              size="sm"
+              title={intl.formatMessage({
+                id: "dialog.place_card.confirm.title",
+                defaultMessage: "Move Card from Another Set?",
+              })}
+              description={intl.formatMessage(
+                {
+                  id: "dialog.place_card.confirm.description",
+                  defaultMessage:
+                    'This card is currently placed in "{setName}". Moving it here will remove it from that set. Do you want to continue?',
+                },
+                { setName: userCard.placementInfo?.setName },
+              )}
+              confirmLabel={intl.formatMessage({
+                id: "dialog.place_card.confirm.confirm_label",
+                defaultMessage: "Move Card",
+              })}
+              destructive
+              onClick={() => onSelect(userCard.id)}
+              disabled={isPlacing}
+            >
+              {intl.formatMessage({
+                id: "dialog.place_card.action.place",
+                defaultMessage: "Place",
+              })}
+            </ConfirmButton>
+          ) : (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => onSelect(userCard.id)}
+              disabled={isPlacing}
+            >
+              {intl.formatMessage({
+                id: "dialog.place_card.action.place",
+                defaultMessage: "Place",
+              })}
+            </Button>
+          ))}
+      </div>
+    </div>
   );
 }
 
