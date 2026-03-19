@@ -4,6 +4,7 @@ import { I18nProvider } from "@/lib/i18n/client";
 import { getServerLocale } from "@/lib/i18n/server";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/providers/theme-provider";
+import { UiPreferencesProvider } from "@/providers/ui-preferences-provider";
 import "@total-typescript/ts-reset";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
@@ -41,8 +42,10 @@ export default async function RootLayout({
               disableTransitionOnChange
             >
               <I18nProvider serverLocale={serverLocale}>
-                {children}
-                <Toaster />
+                <UiPreferencesProvider>
+                  {children}
+                  <Toaster />
+                </UiPreferencesProvider>
               </I18nProvider>
             </ThemeProvider>
           </TRPCReactProvider>

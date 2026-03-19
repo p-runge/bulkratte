@@ -1,6 +1,7 @@
 "use client";
 
 import { api } from "@/lib/api/react";
+import { useUiPreferences } from "@/providers/ui-preferences-provider";
 import { useMemo, useState } from "react";
 import { CardFilters, type CardQuery } from "./card-filters";
 import { CardGrid, type CardWithPrice } from "./card-grid";
@@ -71,6 +72,7 @@ function applyClientFilters(
 
 export function CardBrowser(props: CardBrowserProps) {
   const isStatic = !!props.staticCards;
+  const { cardBrowserSort, setCardBrowserSort } = useUiPreferences();
 
   const [filters, setFilters] = useState<CardQuery>({
     setId: "",
@@ -78,8 +80,8 @@ export function CardBrowser(props: CardBrowserProps) {
     search: "",
     releaseDateFrom: "",
     releaseDateTo: "",
-    sortBy: "set-and-number",
-    sortOrder: "asc",
+    sortBy: cardBrowserSort.sortBy,
+    sortOrder: cardBrowserSort.sortOrder,
   });
 
   const {
@@ -135,9 +137,11 @@ export function CardBrowser(props: CardBrowserProps) {
     <div className="space-y-6">
       <CardFilters
         onFilterChange={setFilters}
+        onSortChange={setCardBrowserSort}
         disableSetFilter={!!props.setId}
         disableReleaseDateFilter={!!props.setId}
         filterOptions={filterOptions}
+        initialSort={cardBrowserSort}
       />
 
       <div className="relative">

@@ -73,25 +73,31 @@ const DEFAULT_SORT_STATE: SortState = {
 
 type CardFiltersProps = {
   onFilterChange: (query: CardQuery) => void;
+  onSortChange?: (sort: SortState) => void;
   disableSetFilter?: boolean;
   disableReleaseDateFilter?: boolean;
   filterOptions?: {
     setIds: string[];
     rarities: string[];
   };
+  initialSort?: SortState;
 };
 
 export function CardFilters({
   onFilterChange,
+  onSortChange,
   disableSetFilter = false,
   disableReleaseDateFilter = false,
   filterOptions,
+  initialSort,
 }: CardFiltersProps) {
   const intl = useIntl();
 
   const [filterState, setFilterState] =
     useState<FilterState>(EMPTY_FILTER_STATE);
-  const [sortState, setSortState] = useState<SortState>(DEFAULT_SORT_STATE);
+  const [sortState, setSortState] = useState<SortState>(
+    initialSort ?? DEFAULT_SORT_STATE,
+  );
 
   const { data: setListData } = api.set.getList.useQuery(undefined, {
     enabled: !disableReleaseDateFilter,
@@ -151,6 +157,7 @@ export function CardFilters({
     const newSortState = { ...sortState, [key]: value } as SortState;
     setSortState(newSortState);
     onFilterChange({ ...filterState, ...newSortState });
+    onSortChange?.(newSortState);
   };
 
   const clearFilters = () => {
