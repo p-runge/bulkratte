@@ -1,5 +1,3 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Select, SelectContent, SelectTrigger } from "@/components/ui/select";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { api } from "@/lib/api/server";
 import { db, setsTable } from "@/lib/db";
@@ -7,6 +5,7 @@ import { getIntl } from "@/lib/i18n/server";
 import { not, eq, desc } from "drizzle-orm";
 import Link from "next/link";
 import Content from "./_components/content";
+import { SetBreadcrumbCombobox } from "./_components/set-breadcrumb-combobox";
 
 // Cache set pages for 24 hours. The daily cron job refreshes prices in the DB,
 // and ISR background revalidation will pick them up within the next 24h window.
@@ -72,27 +71,7 @@ export default async function SetIdPage({
           </li>
           <li className="font-semibold flex">
             <span className="mx-2">/</span>
-            <Select value={selectedSet.id}>
-              <SelectTrigger className="flex items-center -my-2 gap-2 p-0 border-none shadow-none bg-transparent h-auto cursor-pointer hover:underline">
-                <span className="font-bold">{selectedSet.name}</span>
-              </SelectTrigger>
-              <SelectContent>
-                <ScrollArea className="h-72">
-                  {sets.map((set) => (
-                    <Link
-                      key={set.id}
-                      href={`/sets/${set.id}`}
-                      className="flex flex-col items-start hover:bg-muted py-1 rounded"
-                    >
-                      <span className="font-medium">{set.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {set.series}
-                      </span>
-                    </Link>
-                  ))}
-                </ScrollArea>
-              </SelectContent>
-            </Select>
+            <SetBreadcrumbCombobox sets={sets} currentSetId={selectedSet.id} />
           </li>
         </ol>
       </nav>

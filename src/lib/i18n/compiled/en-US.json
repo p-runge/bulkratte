@@ -1181,6 +1181,18 @@
       "value": "Save Changes"
     }
   ],
+  "page.set.breadcrumb.empty": [
+    {
+      "type": 0,
+      "value": "No sets found"
+    }
+  ],
+  "page.set.breadcrumb.search": [
+    {
+      "type": 0,
+      "value": "Search sets..."
+    }
+  ],
   "page.set.description": [
     {
       "type": 0,

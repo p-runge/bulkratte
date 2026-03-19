@@ -156,6 +156,8 @@
   "page.set.description": "Definiere, welche Karten dieses Set enthalten soll, wenn es fertiggestellt ist.",
   "page.set.detail.description": "Platziere deine Karten in diesem Set",
   "page.set.edit.title": "Set bearbeiten",
+  "page.set.breadcrumb.empty": "Keine Sets gefunden",
+  "page.set.breadcrumb.search": "Sets durchsuchen...",
   "page.set.error.not_found": "Set nicht gefunden",
   "page.set.form.cards_selected": "{count} Karten ausgewählt",
   "page.set.new.hint": "Lege zuerst die Struktur deines Sets fest – das bestimmt, wie es aussehen wird, sobald du es vervollständigt hast. Nach dem Erstellen kannst du Karten aus deiner Sammlung darin platzieren.",

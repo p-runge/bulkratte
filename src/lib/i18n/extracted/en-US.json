@@ -158,6 +158,8 @@
   "page.set.action.delete": "Delete Set",
   "page.set.action.edit": "Edit Set",
   "page.set.action.save": "Save Changes",
+  "page.set.breadcrumb.empty": "No sets found",
+  "page.set.breadcrumb.search": "Search sets...",
   "page.set.description": "Define what cards you would like this set to contain once it is finished.",
   "page.set.detail.description": "Place your cards into this set",
   "page.set.edit.title": "Edit Set",

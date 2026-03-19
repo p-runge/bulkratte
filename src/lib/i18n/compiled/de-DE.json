@@ -1151,6 +1151,18 @@
       "value": "Änderungen speichern"
     }
   ],
+  "page.set.breadcrumb.empty": [
+    {
+      "type": 0,
+      "value": "Keine Sets gefunden"
+    }
+  ],
+  "page.set.breadcrumb.search": [
+    {
+      "type": 0,
+      "value": "Sets durchsuchen..."
+    }
+  ],
   "page.set.description": [
     {
       "type": 0,
