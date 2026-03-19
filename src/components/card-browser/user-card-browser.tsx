@@ -1,6 +1,7 @@
 "use client";
 
 import { api } from "@/lib/api/react";
+import { useUiPreferences } from "@/providers/ui-preferences-provider";
 import { useState } from "react";
 import { CardFilters, type CardQuery } from "./card-filters";
 import { UserCardGrid } from "./user-card-grid";
@@ -12,6 +13,7 @@ type UserCardBrowserProps = {
 };
 
 export function UserCardBrowser(props: UserCardBrowserProps) {
+  const { cardBrowserView, setCardBrowserView } = useUiPreferences();
   const [filters, setFilters] = useState<CardQuery>({
     setId: "",
     rarity: "",
@@ -47,7 +49,12 @@ export function UserCardBrowser(props: UserCardBrowserProps) {
 
   return (
     <div className="space-y-6">
-      <CardFilters onFilterChange={setFilters} filterOptions={filterOptions} />
+      <CardFilters
+        onFilterChange={setFilters}
+        filterOptions={filterOptions}
+        view={cardBrowserView}
+        onViewChange={setCardBrowserView}
+      />
 
       <div className="relative">
         {isFetching && (
@@ -60,6 +67,7 @@ export function UserCardBrowser(props: UserCardBrowserProps) {
           onUserCardClick={props.onCardClick}
           isLoading={isLoading}
           maxHeight={props.maxHeightGrid}
+          view={cardBrowserView}
         />
       </div>
     </div>

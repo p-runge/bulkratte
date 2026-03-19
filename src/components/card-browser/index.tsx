@@ -5,7 +5,6 @@ import { useUiPreferences } from "@/providers/ui-preferences-provider";
 import { useMemo, useState } from "react";
 import { CardFilters, type CardQuery } from "./card-filters";
 import { CardGrid, type CardWithPrice } from "./card-grid";
-
 type CardBrowserSingleProps = {
   selectionMode: "single";
   onCardClick: (cardId: string) => void;
@@ -72,7 +71,12 @@ function applyClientFilters(
 
 export function CardBrowser(props: CardBrowserProps) {
   const isStatic = !!props.staticCards;
-  const { cardBrowserSort, setCardBrowserSort } = useUiPreferences();
+  const {
+    cardBrowserSort,
+    setCardBrowserSort,
+    cardBrowserView,
+    setCardBrowserView,
+  } = useUiPreferences();
 
   const [filters, setFilters] = useState<CardQuery>({
     setId: "",
@@ -138,6 +142,8 @@ export function CardBrowser(props: CardBrowserProps) {
       <CardFilters
         onFilterChange={setFilters}
         onSortChange={setCardBrowserSort}
+        view={cardBrowserView}
+        onViewChange={setCardBrowserView}
         disableSetFilter={!!props.setId}
         disableReleaseDateFilter={!!props.setId}
         filterOptions={filterOptions}
@@ -160,6 +166,7 @@ export function CardBrowser(props: CardBrowserProps) {
           }
           isLoading={isStatic ? false : isLoading}
           maxHeight={props.maxHeightGrid}
+          view={cardBrowserView}
         />
       </div>
     </div>

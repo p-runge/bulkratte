@@ -19,11 +19,13 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { api } from "@/lib/api/react";
 import { cn } from "@/lib/utils";
-import { SlidersHorizontal, X } from "lucide-react";
+import { LayoutGrid, LayoutList, SlidersHorizontal, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useIntl } from "react-intl";
+import type { CardBrowserView } from "@/providers/ui-preferences-provider";
 
 function dateToMonthIndex(dateString: string): number {
   const date = new Date(dateString + "T00:00:00");
@@ -74,6 +76,8 @@ const DEFAULT_SORT_STATE: SortState = {
 type CardFiltersProps = {
   onFilterChange: (query: CardQuery) => void;
   onSortChange?: (sort: SortState) => void;
+  view?: CardBrowserView;
+  onViewChange?: (view: CardBrowserView) => void;
   disableSetFilter?: boolean;
   disableReleaseDateFilter?: boolean;
   filterOptions?: {
@@ -86,6 +90,8 @@ type CardFiltersProps = {
 export function CardFilters({
   onFilterChange,
   onSortChange,
+  view,
+  onViewChange,
   disableSetFilter = false,
   disableReleaseDateFilter = false,
   filterOptions,
@@ -355,6 +361,42 @@ export function CardFilters({
     </div>
   ) : null;
 
+  const viewToggle = onViewChange ? (
+    <div className="flex flex-col gap-1.5">
+      <Label className="text-xs text-muted-foreground">
+        {intl.formatMessage({
+          id: "card.filter.view.label",
+          defaultMessage: "View",
+        })}
+      </Label>
+      <ToggleGroup
+        type="single"
+        value={view ?? "grid"}
+        onValueChange={(v) => v && onViewChange(v as CardBrowserView)}
+        className="justify-start"
+      >
+        <ToggleGroupItem
+          value="grid"
+          aria-label={intl.formatMessage({
+            id: "card.filter.view.grid",
+            defaultMessage: "Grid view",
+          })}
+        >
+          <LayoutGrid className="h-4 w-4" />
+        </ToggleGroupItem>
+        <ToggleGroupItem
+          value="list"
+          aria-label={intl.formatMessage({
+            id: "card.filter.view.list",
+            defaultMessage: "List view",
+          })}
+        >
+          <LayoutList className="h-4 w-4" />
+        </ToggleGroupItem>
+      </ToggleGroup>
+    </div>
+  ) : null;
+
   // ─── render ─────────────────────────────────────────────────────────────
 
   return (
@@ -386,6 +428,7 @@ export function CardFilters({
           {setCombobox}
           {rarityCombobox}
           {sortControls}
+          {viewToggle}
         </div>
 
         {/* Mobile: sheet trigger with active-filter badge */}
@@ -427,6 +470,7 @@ export function CardFilters({
                 {rarityCombobox}
                 {releaseDateSlider}
                 {sortControls}
+                {viewToggle}
                 <Button
                   variant="outline"
                   className="w-full"
