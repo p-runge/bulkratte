@@ -30,16 +30,23 @@ fi
 BACKUP_DIR="backups/${ENV_LABEL}"
 mkdir -p "$BACKUP_DIR"
 
-FILENAME="${BACKUP_DIR}/db-$(date +%Y%m%d-%H%M%S).sql"
+FILENAME="${BACKUP_DIR}/db-$(date +%Y%m%d-%H%M%S).dump"
 
 echo "💾 Backing up [${ENV_LABEL}] database to ${FILENAME}..."
 
-# Run pg_dump inside the Docker container to avoid client/server version mismatches.
+# Use custom format (compressed binary). Unlike plain SQL, this supports selective
+# restore with pg_restore --table, which is required by db:import-core.
+# Run inside the Docker container to avoid client/server version mismatches.
 # Falls back to a local pg_dump if Docker is not running or the container is not found.
 if docker inspect postgres_db &>/dev/null 2>&1; then
-  docker exec postgres_db pg_dump "$DATABASE_URL" > "$FILENAME"
+  # DATABASE_URL contains the host-mapped port (e.g. 5469) which is unreachable
+  # from inside the container — replace it with the internal PostgreSQL port 5432.
+  CONTAINER_DB_URL=$(echo "$DATABASE_URL" | sed -E 's|@[^/]+/|@localhost:5432/|')
+  docker exec postgres_db pg_dump --format=custom "$CONTAINER_DB_URL" -f /tmp/backup.dump
+  docker cp postgres_db:/tmp/backup.dump "$FILENAME"
+  docker exec postgres_db rm /tmp/backup.dump
 else
-  pg_dump "$DATABASE_URL" > "$FILENAME"
+  pg_dump --format=custom "$DATABASE_URL" -f "$FILENAME"
 fi
 
 echo "✅ Backup saved to ${FILENAME}"

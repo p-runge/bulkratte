@@ -11,6 +11,7 @@
     "format:check": "prettier --check .",
     "db:push": "drizzle-kit push --config ./drizzle.config.ts",
     "db:backup": "bash scripts/db/backup.sh",
+    "db:import-core": "bash scripts/db/import-core.sh",
     "db:seed": "tsx scripts/db/seed.ts",
     "db:seed-localizations": "tsx scripts/db/seed-localizations.ts",
     "i18n:extract": "formatjs extract --format simple --preserve-whitespace 'src/**/*.ts*' --ignore='src/**/*.d.ts' --out-file src/lib/i18n/extracted/en-US.json",
