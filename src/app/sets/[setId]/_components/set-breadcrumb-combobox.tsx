@@ -1,7 +1,7 @@
 "use client";
 
+import { useRouter } from "@/lib/hooks";
 import { Check, ChevronsUpDown } from "lucide-react";
-import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useIntl } from "react-intl";
 
