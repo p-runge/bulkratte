@@ -11,6 +11,11 @@ import { useBinderContext } from "./binder-context";
 import { CardPreferencesDialog } from "./card-preferences-dialog";
 import { CroppedCardImage } from "./cropped-card-image";
 import { BinderCard } from "./types";
+import {
+  CARD_ASPECT_CLASS,
+  CARD_IMAGE_HEIGHT,
+  CARD_IMAGE_WIDTH,
+} from "@/lib/card-config";
 
 export function CardSlot({
   card,
@@ -91,7 +96,9 @@ export function CardSlot({
   if (mode === "place") {
     if (!card) {
       return (
-        <div className="aspect-245/337 bg-muted/30 rounded border-2 border-dashed border-muted-foreground/20" />
+        <div
+          className={`${CARD_ASPECT_CLASS} bg-muted/30 rounded border-2 border-dashed border-muted-foreground/20`}
+        />
       );
     }
 
@@ -237,7 +244,7 @@ export function CardSlot({
       <button
         onClick={handleClick}
         className={cn(
-          "cursor-pointer aspect-245/337 rounded relative overflow-hidden",
+          "cursor-pointer aspect-5/7 rounded relative overflow-hidden",
           "transition-all hover:scale-105",
           borderColor,
         )}
@@ -261,8 +268,8 @@ export function CardSlot({
             <Image
               src={coverPhoto ?? card.imageSmall}
               alt={card.name}
-              width={245}
-              height={337}
+              width={CARD_IMAGE_WIDTH}
+              height={CARD_IMAGE_HEIGHT}
               unoptimized
               className="w-full h-full object-contain rounded"
             />
@@ -305,15 +312,15 @@ export function CardSlot({
       <>
         <div
           className={cn(
-            "w-full h-full aspect-245/337 border border-gray-400 rounded flex items-center justify-center text-xs font-medium relative overflow-hidden",
+            "w-full h-full aspect-5/7 border border-gray-400 rounded flex items-center justify-center text-xs font-medium relative overflow-hidden",
           )}
         >
           {card ? (
             <Image
               src={card.imageSmall}
               alt={card.name}
-              width={245}
-              height={337}
+              width={CARD_IMAGE_WIDTH}
+              height={CARD_IMAGE_HEIGHT}
               unoptimized
               className="w-full h-full object-contain rounded"
             />
@@ -401,7 +408,7 @@ export function CardSlot({
       }}
       {...attributes}
       className={cn(
-        "group w-full h-full aspect-245/337 border border-gray-400 rounded flex items-center justify-center text-xs font-medium relative overflow-hidden",
+        "group w-full h-full aspect-5/7 border border-gray-400 rounded flex items-center justify-center text-xs font-medium relative overflow-hidden",
         isDragging && "opacity-50",
         isOver && "ring-2 ring-primary",
       )}
@@ -413,8 +420,8 @@ export function CardSlot({
           <Image
             src={card.imageSmall}
             alt={card.name}
-            width={245}
-            height={337}
+            width={CARD_IMAGE_WIDTH}
+            height={CARD_IMAGE_HEIGHT}
             unoptimized
             className="w-full h-full object-contain rounded"
           />
@@ -537,7 +544,9 @@ function EmptyCardSlot({
   // In place mode, empty slots are just visual - not interactive
   if (mode === "place") {
     return (
-      <div className="aspect-245/337 bg-muted/30 rounded border-2 border-dashed border-muted-foreground/20" />
+      <div
+        className={`${CARD_ASPECT_CLASS} bg-muted/30 rounded border-2 border-dashed border-muted-foreground/20`}
+      />
     );
   }
 
@@ -551,7 +560,7 @@ function EmptyCardSlot({
       variant="link"
       onClick={onAdd}
       className={cn(
-        "group w-full h-full aspect-245/337 p-0",
+        "group w-full h-full aspect-5/7 p-0",
         "bg-muted/30 rounded border-2 border-dashed border-muted-foreground/20",
         "hover:border-primary/50 transition-colors",
         isOver && "ring-2 ring-primary",

@@ -25,6 +25,7 @@ import ConfirmButton from "../../confirm-button";
 import { Button } from "../../ui/button";
 import { PAGE_SIZE, useBinderContext } from "../binder-context";
 import { BinderCard, BinderCardData } from "../types";
+import { CARD_ASPECT_CLASS } from "@/lib/card-config";
 
 export function SheetManagement() {
   const { cardData, sheetCount, reorderSheet } = useBinderContext();
@@ -286,7 +287,7 @@ function MiniPage({ cards }: { cards: (BinderCard | null | undefined)[] }) {
         {cards.map((card, i) => (
           <div
             key={i}
-            className="aspect-245/337 bg-muted rounded-sm overflow-hidden flex items-center justify-center"
+            className={`${CARD_ASPECT_CLASS} bg-muted rounded-sm overflow-hidden flex items-center justify-center`}
           >
             {card?.imageSmall ? (
               <Image

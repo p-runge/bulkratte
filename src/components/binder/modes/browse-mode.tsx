@@ -16,6 +16,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../../ui/tooltip";
 import { PAGE_SIZE, useBinderContext } from "../binder-context";
 import BinderPage from "../binder-page";
 import { BinderCard, BinderCardData } from "../types";
+import { CARD_IMAGE_HEIGHT, CARD_IMAGE_WIDTH } from "@/lib/card-config";
 
 export function BrowseMode() {
   const intl = useIntl();
@@ -172,8 +173,8 @@ export function BrowseMode() {
                   <Image
                     src={draggingCard.imageSmall}
                     alt={draggingCard.name}
-                    width={245}
-                    height={337}
+                    width={CARD_IMAGE_WIDTH}
+                    height={CARD_IMAGE_HEIGHT}
                     className="w-full h-full object-contain rounded shadow-lg border"
                     style={{ background: "white" }}
                   />

@@ -3,6 +3,11 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Card } from "@/lib/db";
 import { cn } from "@/lib/utils";
+import {
+  CARD_ASPECT_CLASS,
+  CARD_IMAGE_HEIGHT,
+  CARD_IMAGE_WIDTH,
+} from "@/lib/card-config";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Circle } from "lucide-react";
 import Image from "next/image";
@@ -105,8 +110,7 @@ export function CardGrid({
           className="gap-4"
           style={{
             display: "grid",
-            gridTemplateColumns:
-              "repeat(auto-fill, minmax(clamp(120px, 20vw, 245px), 1fr))",
+            gridTemplateColumns: `repeat(auto-fill, minmax(clamp(120px, 20vw, ${CARD_IMAGE_WIDTH}px), 1fr))`,
           }}
         >
           {cards.map((card, index) => {
@@ -125,11 +129,11 @@ export function CardGrid({
                   "w-full",
                 )}
               >
-                <div className="aspect-245/337 relative">
+                <div className={`${CARD_ASPECT_CLASS} relative`}>
                   <Image
                     src={card.imageSmall || "/placeholder.svg"}
-                    width="245"
-                    height="337"
+                    width={CARD_IMAGE_WIDTH}
+                    height={CARD_IMAGE_HEIGHT}
                     unoptimized
                     alt={`${card.name} - ${card.number}`}
                     className="w-full h-full object-cover"

@@ -3,6 +3,11 @@
 import type { UserCard } from "@/components/binder/types";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  CARD_ASPECT_CLASS,
+  CARD_IMAGE_HEIGHT,
+  CARD_IMAGE_WIDTH,
+} from "@/lib/card-config";
 import pokemonAPI from "@/lib/pokemon-api";
 import { cn } from "@/lib/utils";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
@@ -108,8 +113,7 @@ export function UserCardGrid({
           className="gap-4"
           style={{
             display: "grid",
-            gridTemplateColumns:
-              "repeat(auto-fill, minmax(clamp(120px, 20vw, 245px), 1fr))",
+            gridTemplateColumns: `repeat(auto-fill, minmax(clamp(120px, 20vw, ${CARD_IMAGE_WIDTH}px), 1fr))`,
           }}
         >
           {userCards.map((userCard) => {
@@ -128,11 +132,11 @@ export function UserCardGrid({
                   "w-full",
                 )}
               >
-                <div className="aspect-245/337 relative">
+                <div className={`${CARD_ASPECT_CLASS} relative`}>
                   <Image
                     src={userCard.card.imageSmall || "/placeholder.svg"}
-                    width="245"
-                    height="337"
+                    width={CARD_IMAGE_WIDTH}
+                    height={CARD_IMAGE_HEIGHT}
                     unoptimized
                     alt={`${userCard.card.name} - ${userCard.card.number}`}
                     className="w-full h-full object-cover"

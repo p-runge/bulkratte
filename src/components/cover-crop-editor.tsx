@@ -16,6 +16,7 @@ import ReactCrop, {
 } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 import { useIntl } from "react-intl";
+import { CARD_ASPECT_RATIO } from "@/lib/card-config";
 
 /**
  * Crop coordinates as percentages (0–100) of the image's natural dimensions.
@@ -28,11 +29,9 @@ export type CoverCrop = {
   height: number;
 };
 
-const CARD_ASPECT = 245 / 337;
-
 function defaultCrop(width: number, height: number): PercentCrop {
   return centerCrop(
-    makeAspectCrop({ unit: "%", width: 80 }, CARD_ASPECT, width, height),
+    makeAspectCrop({ unit: "%", width: 80 }, CARD_ASPECT_RATIO, width, height),
     width,
     height,
   ) as PercentCrop;
@@ -101,7 +100,7 @@ export function CoverCropEditor({
             crop={crop}
             // Use the PercentCrop (second arg) so values are always image-relative percentages
             onChange={(_, pc) => setCrop(pc)}
-            aspect={CARD_ASPECT}
+            aspect={CARD_ASPECT_RATIO}
             className="max-w-full"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
