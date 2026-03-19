@@ -1,6 +1,7 @@
 "use client";
 
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { CARD_BORDER_RADIUS } from "@/lib/card-config";
 import Image from "next/image";
 
 type CardImageDialogProps = {
@@ -35,7 +36,8 @@ export function CardImageDialog({
           width={600}
           height={825}
           unoptimized
-          className="w-auto h-auto object-contain rounded-2xl"
+          className="w-auto h-auto object-contain"
+          style={{ borderRadius: CARD_BORDER_RADIUS }}
           draggable={false}
           priority
         />

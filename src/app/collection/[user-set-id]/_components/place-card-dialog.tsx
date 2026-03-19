@@ -4,7 +4,6 @@ import UserCardDialog from "@/app/collection/_components/my-cards-tab/user-card-
 import { ConditionBadge } from "@/components/condition-badge";
 import ConfirmButton from "@/components/confirm-button";
 import { LanguageBadge } from "@/components/language-badge";
-import { UserCardFormFields } from "@/components/user-card-form-fields";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,11 +14,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { UserCardFormFields } from "@/components/user-card-form-fields";
 import { api } from "@/lib/api/react";
 import { AppRouter } from "@/lib/api/routers/_app";
+import {
+  CARD_BORDER_RADIUS,
+  CARD_IMAGE_HEIGHT,
+  CARD_IMAGE_WIDTH,
+} from "@/lib/card-config";
 import { RHFForm, useRHFForm } from "@/lib/form/utils";
-import { cn } from "@/lib/utils";
 import { userCardBaseSchema } from "@/lib/schemas/user-card";
+import { cn } from "@/lib/utils";
 import { Pencil, Plus } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
@@ -411,12 +416,13 @@ export function PlaceCardDialog({
                 <Image
                   src={card.imageSmall}
                   alt={card.name}
-                  width={240}
-                  height={165}
+                  width={CARD_IMAGE_WIDTH}
+                  height={CARD_IMAGE_HEIGHT}
                   unoptimized
-                  className="w-full sm:w-auto h-auto max-w-50 sm:max-w-60 mx-auto sm:mx-0 object-contain rounded-md"
+                  className="w-full sm:w-auto h-auto max-w-50 sm:max-w-60 mx-auto sm:mx-0 object-cover"
                   draggable={false}
                   priority
+                  style={{ borderRadius: CARD_BORDER_RADIUS }}
                 />
                 <div className="flex-1 space-y-4 sm:space-y-6">
                   <h2 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-4">
@@ -496,7 +502,8 @@ function PlacableCardRow({
           width={64}
           height={89}
           unoptimized
-          className="w-16 h-auto object-contain rounded"
+          className="w-16 h-auto object-cover"
+          style={{ borderRadius: CARD_BORDER_RADIUS }}
         />
         <div className="flex-1">
           <div className="font-medium">
@@ -635,7 +642,8 @@ function CurrentlyPlacedCardPanel({
           width={64}
           height={89}
           unoptimized
-          className="w-16 h-auto object-contain rounded"
+          className="w-16 h-auto object-cover"
+          style={{ borderRadius: CARD_BORDER_RADIUS }}
         />
         <div>
           <div className="font-medium">{userCard.card.name}</div>

@@ -5,6 +5,7 @@ import type { Card } from "@/lib/db";
 import { cn } from "@/lib/utils";
 import {
   CARD_ASPECT_CLASS,
+  CARD_BORDER_RADIUS,
   CARD_IMAGE_HEIGHT,
   CARD_IMAGE_WIDTH,
 } from "@/lib/card-config";
@@ -123,11 +124,12 @@ export function CardGrid({
                 key={card.id}
                 onClick={() => onCardClick(card.id)}
                 className={cn(
-                  "group relative rounded-lg overflow-hidden transition-all hover:scale-105",
+                  "group relative overflow-hidden transition-all hover:scale-105",
                   "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background",
                   isSelected && "ring-2 ring-primary",
                   "w-full",
                 )}
+                style={{ borderRadius: CARD_BORDER_RADIUS }}
               >
                 <div className={`${CARD_ASPECT_CLASS} relative`}>
                   <Image
@@ -199,7 +201,10 @@ export function CardGrid({
                 </div>
 
                 {/* Card thumbnail */}
-                <div className="shrink-0 w-9 h-[50px] rounded overflow-hidden relative">
+                <div
+                  className="shrink-0 w-9 h-[50px] overflow-hidden relative"
+                  style={{ borderRadius: CARD_BORDER_RADIUS }}
+                >
                   <Image
                     src={card.imageSmall || "/placeholder.svg"}
                     width="36"

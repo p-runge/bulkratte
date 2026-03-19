@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { VariantToggleGroup } from "@/components/variant-toggle-group";
+import { CARD_BORDER_RADIUS } from "@/lib/card-config";
 import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
 import { RHFForm, useRHFForm } from "@/lib/form/utils";
 import Image from "next/image";
@@ -120,7 +121,8 @@ export function CardPreferencesDialog({
                 width={80}
                 height={110}
                 unoptimized
-                className="rounded border"
+                className="border"
+                style={{ borderRadius: CARD_BORDER_RADIUS }}
               />
               <div>
                 <h3 className="font-semibold">{card.name}</h3>

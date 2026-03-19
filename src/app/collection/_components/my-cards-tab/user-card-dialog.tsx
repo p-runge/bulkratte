@@ -21,6 +21,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { UserCardFormFields } from "@/components/user-card-form-fields";
 import { api } from "@/lib/api/react";
+import {
+  CARD_BORDER_RADIUS,
+  CARD_IMAGE_HEIGHT,
+  CARD_IMAGE_WIDTH,
+} from "@/lib/card-config";
 import { RHFForm, useRHFForm } from "@/lib/form/utils";
 import { userCardFormSchema } from "@/lib/schemas/user-card";
 import { Info, Trash2 } from "lucide-react";
@@ -162,16 +167,17 @@ export default function UserCardDialog({
                 maxHeightGrid="600px"
               />
             ) : card ? (
-              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start">
                 <Image
                   src={card.imageSmall}
                   alt={card.name}
-                  width={240}
-                  height={165}
+                  width={CARD_IMAGE_WIDTH}
+                  height={CARD_IMAGE_HEIGHT}
                   unoptimized
-                  className="w-full sm:w-auto h-auto max-w-50 sm:max-w-60 mx-auto sm:mx-0 object-contain rounded-md"
+                  className="w-full sm:w-auto h-auto max-w-50 sm:max-w-60 mx-auto sm:mx-0 object-cover"
                   draggable={false}
                   priority
+                  style={{ borderRadius: CARD_BORDER_RADIUS }}
                 />
                 <div className="flex-1 space-y-4 sm:space-y-6">
                   <h2 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-4">

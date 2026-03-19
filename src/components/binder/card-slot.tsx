@@ -13,6 +13,7 @@ import { CroppedCardImage } from "./cropped-card-image";
 import { BinderCard } from "./types";
 import {
   CARD_ASPECT_CLASS,
+  CARD_BORDER_RADIUS,
   CARD_IMAGE_HEIGHT,
   CARD_IMAGE_WIDTH,
 } from "@/lib/card-config";
@@ -97,7 +98,8 @@ export function CardSlot({
     if (!card) {
       return (
         <div
-          className={`${CARD_ASPECT_CLASS} bg-muted/30 rounded border-2 border-dashed border-muted-foreground/20`}
+          className={`${CARD_ASPECT_CLASS} bg-muted/30 border-2 border-dashed border-muted-foreground/20`}
+          style={{ borderRadius: CARD_BORDER_RADIUS }}
         />
       );
     }
@@ -244,10 +246,11 @@ export function CardSlot({
       <button
         onClick={handleClick}
         className={cn(
-          "cursor-pointer aspect-5/7 rounded relative overflow-hidden",
+          "cursor-pointer aspect-5/7 relative overflow-hidden",
           "transition-all hover:scale-105",
           borderColor,
         )}
+        style={{ borderRadius: CARD_BORDER_RADIUS }}
       >
         <div
           className={cn(
@@ -271,7 +274,7 @@ export function CardSlot({
               width={CARD_IMAGE_WIDTH}
               height={CARD_IMAGE_HEIGHT}
               unoptimized
-              className="w-full h-full object-contain rounded"
+              className="w-full h-full object-cover"
             />
           )}
         </div>
@@ -312,8 +315,9 @@ export function CardSlot({
       <>
         <div
           className={cn(
-            "w-full h-full aspect-5/7 border border-gray-400 rounded flex items-center justify-center text-xs font-medium relative overflow-hidden",
+            "w-full h-full aspect-5/7 border border-gray-400 flex items-center justify-center text-xs font-medium relative overflow-hidden",
           )}
+          style={{ borderRadius: CARD_BORDER_RADIUS }}
         >
           {card ? (
             <Image
@@ -322,10 +326,10 @@ export function CardSlot({
               width={CARD_IMAGE_WIDTH}
               height={CARD_IMAGE_HEIGHT}
               unoptimized
-              className="w-full h-full object-contain rounded"
+              className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full bg-gray-200 animate-pulse rounded" />
+            <div className="w-full h-full bg-gray-200 animate-pulse" />
           )}
           {/* Action buttons, always visible, arranged vertically */}
           <div className="absolute inset-0 flex flex-col justify-center items-center gap-2 pointer-events-none">
@@ -408,12 +412,13 @@ export function CardSlot({
       }}
       {...attributes}
       className={cn(
-        "group w-full h-full aspect-5/7 border border-gray-400 rounded flex items-center justify-center text-xs font-medium relative overflow-hidden",
+        "group w-full h-full aspect-5/7 border border-gray-400 flex items-center justify-center text-xs font-medium relative overflow-hidden",
         isDragging && "opacity-50",
         isOver && "ring-2 ring-primary",
       )}
       onMouseEnter={() => setShowRemove(true)}
       onMouseLeave={() => setShowRemove(false)}
+      style={{ borderRadius: CARD_BORDER_RADIUS }}
     >
       {card ? (
         <div {...listeners} className="w-full h-full">
@@ -423,11 +428,11 @@ export function CardSlot({
             width={CARD_IMAGE_WIDTH}
             height={CARD_IMAGE_HEIGHT}
             unoptimized
-            className="w-full h-full object-contain rounded"
+            className="w-full h-full object-cover"
           />
         </div>
       ) : (
-        <div className="w-full h-full bg-gray-200 animate-pulse rounded" />
+        <div className="w-full h-full bg-gray-200 animate-pulse" />
       )}
 
       {/* Card-level preferences indicator */}
@@ -545,7 +550,8 @@ function EmptyCardSlot({
   if (mode === "place") {
     return (
       <div
-        className={`${CARD_ASPECT_CLASS} bg-muted/30 rounded border-2 border-dashed border-muted-foreground/20`}
+        className={`${CARD_ASPECT_CLASS} bg-muted/30 border-2 border-dashed border-muted-foreground/20`}
+        style={{ borderRadius: CARD_BORDER_RADIUS }}
       />
     );
   }
@@ -561,10 +567,11 @@ function EmptyCardSlot({
       onClick={onAdd}
       className={cn(
         "group w-full h-full aspect-5/7 p-0",
-        "bg-muted/30 rounded border-2 border-dashed border-muted-foreground/20",
+        "bg-muted/30 border-2 border-dashed border-muted-foreground/20",
         "hover:border-primary/50 transition-colors",
         isOver && "ring-2 ring-primary",
       )}
+      style={{ borderRadius: CARD_BORDER_RADIUS }}
     >
       <Plus className="h-6 w-6 opacity-20 group-hover:opacity-100 transition-opacity" />
     </Button>
