@@ -25,9 +25,14 @@ export async function GET(req: Request) {
     return new Response("Invalid url param", { status: 400 });
   }
 
-  const referer = Object.entries(ALLOWED_HOSTS).find(([suffix]) =>
-    parsed.hostname.endsWith(suffix),
-  )?.[1];
+  const hostname = parsed.hostname.toLowerCase();
+  const referer = Object.entries(ALLOWED_HOSTS).find(([suffix]) => {
+    const normalizedSuffix = suffix.toLowerCase();
+    return (
+      hostname === normalizedSuffix ||
+      hostname.endsWith(`.${normalizedSuffix}`)
+    );
+  })?.[1];
 
   if (!referer) {
     return new Response("URL not allowed", { status: 403 });
