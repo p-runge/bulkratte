@@ -254,6 +254,7 @@ export default function UserCardDialog({
                       coverCrop={photoUpload.coverCrop}
                       fileInputRef={photoUpload.fileInputRef}
                       onAddPhotos={photoUpload.handleAddPhotos}
+                      onAddFiles={photoUpload.addFiles}
                       onRemovePhoto={photoUpload.handleRemovePhoto}
                       onSetCover={photoUpload.handleSetCover}
                       onSetCoverCrop={photoUpload.handleSetCoverCrop}

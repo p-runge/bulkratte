@@ -2,12 +2,13 @@ import {
   CoverCropEditor,
   type CoverCrop,
 } from "@/components/cover-crop-editor";
+import { CameraCapture } from "@/components/camera-capture";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api/react";
 import imageCompression from "browser-image-compression";
-import { Crop, ImagePlus, Star, Upload, X } from "lucide-react";
+import { Camera, Crop, ImagePlus, Star, Upload, X } from "lucide-react";
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useIntl } from "react-intl";
 
 async function toBase64(blob: Blob): Promise<string> {
@@ -134,6 +135,13 @@ export function useMultiPhotoUpload(
     handleSetCover,
     handleSetCoverCrop,
     uploadPending,
+    addFiles: (files: File[]) => {
+      if (files.length === 0) return;
+      setPending((prev) => [
+        ...prev,
+        ...files.map((file) => ({ file, preview: URL.createObjectURL(file) })),
+      ]);
+    },
   };
 }
 
@@ -285,6 +293,7 @@ interface MultiPhotoUploadProps {
   coverCrop: CoverCrop | null;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   onAddPhotos: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onAddFiles?: (files: File[]) => void;
   onRemovePhoto: (index: number) => void;
   onSetCover: (index: number) => void;
   onSetCoverCrop: (crop: CoverCrop | null) => void;
@@ -296,12 +305,19 @@ export function MultiPhotoUpload({
   coverCrop,
   fileInputRef,
   onAddPhotos,
+  onAddFiles,
   onRemovePhoto,
   onSetCover,
   onSetCoverCrop,
 }: MultiPhotoUploadProps) {
   const intl = useIntl();
   const [cropEditorOpen, setCropEditorOpen] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [hasCameraSupport, setHasCameraSupport] = useState(false);
+
+  useEffect(() => {
+    setHasCameraSupport(!!navigator.mediaDevices);
+  }, []);
 
   const handleStarClick = (index: number) => {
     const isNewCover = coverIndex !== index;
@@ -382,12 +398,12 @@ export function MultiPhotoUpload({
           </div>
         ))}
 
-        <div>
+        <div className="flex gap-1">
+          {/* Gallery / file picker */}
           <input
             ref={fileInputRef}
             type="file"
             accept="image/*"
-            capture="environment"
             multiple
             onChange={onAddPhotos}
             className="hidden"
@@ -398,14 +414,35 @@ export function MultiPhotoUpload({
               type="button"
               variant="outline"
               size="icon"
-              className="w-20 h-20 border-dashed"
+              className="w-20 h-20 border-dashed flex flex-col gap-1"
+              title={intl.formatMessage({
+                id: "form.field.photos.add_from_gallery",
+                defaultMessage: "Add from gallery",
+              })}
               asChild
             >
               <span>
-                <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                <ImagePlus className="h-5 w-5 text-muted-foreground" />
               </span>
             </Button>
           </label>
+
+          {/* In-browser camera with guide overlay */}
+          {hasCameraSupport && onAddFiles && (
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="w-20 h-20 border-dashed flex flex-col gap-1"
+              title={intl.formatMessage({
+                id: "form.field.photos.camera",
+                defaultMessage: "Use camera",
+              })}
+              onClick={() => setCameraOpen(true)}
+            >
+              <Camera className="h-5 w-5 text-muted-foreground" />
+            </Button>
+          )}
         </div>
       </div>
 
@@ -423,6 +460,16 @@ export function MultiPhotoUpload({
           initialCrop={coverCrop}
           onSave={handleCropSave}
           onClose={() => setCropEditorOpen(false)}
+        />
+      )}
+
+      {cameraOpen && onAddFiles && (
+        <CameraCapture
+          onCapture={(file) => {
+            onAddFiles([file]);
+            setCameraOpen(false);
+          }}
+          onClose={() => setCameraOpen(false)}
         />
       )}
     </div>
