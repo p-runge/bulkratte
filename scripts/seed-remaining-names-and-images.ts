@@ -16,7 +16,7 @@ import { eq, and, sql } from "drizzle-orm";
 const S3_BASE = "https://product-images.s3.cardmarket.com/51";
 const REFERER = "https://www.cardmarket.com/";
 const STILL_MISSING_PATH = path.join(
-  path.dirname(new URL(import.meta.url).pathname),
+  __dirname,
   "../public/still-missing.json",
 );
 
