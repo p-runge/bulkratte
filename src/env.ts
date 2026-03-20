@@ -2,6 +2,7 @@ import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 import { config } from "dotenv";
 
+config({ path: ".env.local" });
 config();
 
 export const env = createEnv({
