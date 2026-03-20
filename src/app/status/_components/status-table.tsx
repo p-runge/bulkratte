@@ -220,6 +220,7 @@ export function StatusTable({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search sets by name, ID, or series…"
+            aria-label="Search sets by name, ID, or series"
             className="w-full pl-9 pr-4 py-2 rounded-lg bg-zinc-900 border border-zinc-700 text-zinc-200 placeholder:text-zinc-500 text-sm focus:outline-none focus:border-zinc-500 transition-colors"
           />
           {search && (
