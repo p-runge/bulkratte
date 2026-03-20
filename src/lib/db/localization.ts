@@ -33,14 +33,32 @@ const PROXY_HOSTS = [
  * works for standard browser rendering when the env var is not set.
  */
 function applyImageProxy(url: string, columnName: string): string {
-  if (
-    (columnName === "image_small" || columnName === "image_large") &&
-    PROXY_HOSTS.some((host) => url.includes(host))
-  ) {
-    const base = process.env.NEXT_PUBLIC_APP_URL ?? "";
-    return `${base}/api/pokewiki-image?url=${encodeURIComponent(url)}`;
+  if (columnName !== "image_small" && columnName !== "image_large") {
+    return url;
   }
-  return url;
+
+  let hostname: string | null = null;
+  try {
+    const parsed = new URL(url);
+    hostname = parsed.hostname;
+  } catch {
+    // If the URL cannot be parsed (e.g. relative or invalid), do not proxy.
+    return url;
+  }
+
+  const shouldProxy = hostname != null &&
+    PROXY_HOSTS.some(
+      (host) => hostname === host || hostname.endsWith(`.${host}`),
+    );
+
+  if (!shouldProxy) {
+    return url;
+  }
+
+  const rawBase = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  const base = rawBase.replace(/\/+$/, "");
+
+  return `${base}/api/pokewiki-image?url=${encodeURIComponent(url)}`;
 }
 
 /**
