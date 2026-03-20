@@ -25,7 +25,7 @@ const LANG_META: Record<string, { name: string; flag: string }> = {
 const LANGUAGES: LanguageInfo[] = LOCALES.map((locale) => {
   const code = getLanguageFromLocale(locale);
   const meta = LANG_META[code] ?? { name: code, flag: "🏳️" };
-  return { locale, code, isDefault: locale === DEFAULT_LOCALE, ...meta };
+  return { code, isDefault: locale === DEFAULT_LOCALE, ...meta };
 });
 
 // ── Status logic ──────────────────────────────────────────────────────────────
