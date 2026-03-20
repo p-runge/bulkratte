@@ -2,6 +2,7 @@
 
 import type { UserCard } from "@/components/binder/types";
 import { CardBrowser } from "@/components/card-browser";
+import { CardFormSection } from "@/components/card-form-section";
 import ConfirmButton from "@/components/confirm-button";
 import {
   MultiPhotoUpload,
@@ -19,17 +20,10 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { UserCardFormFields } from "@/components/user-card-form-fields";
 import { api } from "@/lib/api/react";
-import {
-  CARD_BORDER_RADIUS,
-  CARD_IMAGE_HEIGHT,
-  CARD_IMAGE_WIDTH,
-} from "@/lib/card-config";
 import { RHFForm, useRHFForm } from "@/lib/form/utils";
 import { userCardFormSchema } from "@/lib/schemas/user-card";
 import { Info, Trash2 } from "lucide-react";
-import Image from "next/image";
 import { useState } from "react";
 import { Controller } from "react-hook-form";
 import { useIntl } from "react-intl";
@@ -167,24 +161,11 @@ export default function UserCardDialog({
                 maxHeightGrid="600px"
               />
             ) : card ? (
-              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start">
-                <Image
-                  src={card.imageSmall}
-                  alt={card.name}
-                  width={CARD_IMAGE_WIDTH}
-                  height={CARD_IMAGE_HEIGHT}
-                  unoptimized
-                  className="w-full sm:w-auto h-auto max-w-50 sm:max-w-60 mx-auto sm:mx-0 object-cover"
-                  draggable={false}
-                  priority
-                  style={{ borderRadius: CARD_BORDER_RADIUS }}
-                />
-                <div className="flex-1 space-y-4 sm:space-y-6">
-                  <h2 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-4">
-                    {card.name}
-                  </h2>
-
-                  {mode === "edit" && placement && (
+              <CardFormSection
+                card={card}
+                control={form.control}
+                alert={
+                  mode === "edit" && placement ? (
                     <Alert>
                       <Info />
                       <AlertTitle>
@@ -204,64 +185,53 @@ export default function UserCardDialog({
                         )}
                       </AlertDescription>
                     </Alert>
-                  )}
-
-                  <UserCardFormFields control={form.control} />
-
-                  {/* Notes Field */}
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="notes"
-                      className="flex items-center gap-1.5"
-                    >
-                      {intl.formatMessage({
-                        id: "form.field.notes.label",
-                        defaultMessage: "Notes",
+                  ) : undefined
+                }
+                mediaSlot={
+                  <MultiPhotoUpload
+                    photos={photoUpload.photos}
+                    coverIndex={photoUpload.coverIndex}
+                    coverCrop={photoUpload.coverCrop}
+                    fileInputRef={photoUpload.fileInputRef}
+                    onAddPhotos={photoUpload.handleAddPhotos}
+                    onAddFiles={photoUpload.addFiles}
+                    onRemovePhoto={photoUpload.handleRemovePhoto}
+                    onSetCover={photoUpload.handleSetCover}
+                    onSetCoverCrop={photoUpload.handleSetCoverCrop}
+                    fallbackSrc={card.imageSmall}
+                    fallbackAlt={card.name}
+                  />
+                }
+              >
+                {/* Notes */}
+                <div className="space-y-2">
+                  <Label htmlFor="notes" className="flex items-center gap-1.5">
+                    {intl.formatMessage({
+                      id: "form.field.notes.label",
+                      defaultMessage: "Notes",
+                    })}
+                    <InfoTooltip
+                      content={intl.formatMessage({
+                        id: "form.field.notes.placeholder",
+                        defaultMessage:
+                          "Self-pulled\nReceived from John\nCreased corner\nScratched foil\nSwirl on the right\n…",
                       })}
-                      <InfoTooltip
-                        content={intl.formatMessage({
-                          id: "form.field.notes.placeholder",
-                          defaultMessage:
-                            "Self-pulled\nReceived from John\nCreased corner\nScratched foil\nSwirl on the right\n…",
-                        })}
+                    />
+                  </Label>
+                  <Controller
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <Textarea
+                        id="notes"
+                        className="resize-none"
+                        rows={5}
+                        {...field}
                       />
-                    </Label>
-                    <Controller
-                      control={form.control}
-                      name="notes"
-                      render={({ field }) => (
-                        <Textarea
-                          id="notes"
-                          className="resize-none"
-                          rows={5}
-                          {...field}
-                        />
-                      )}
-                    />
-                  </div>
-
-                  {/* Photos Field */}
-                  <div className="space-y-2">
-                    <Label>
-                      {intl.formatMessage({
-                        id: "form.field.photos.label",
-                        defaultMessage: "Photos",
-                      })}
-                    </Label>
-                    <MultiPhotoUpload
-                      photos={photoUpload.photos}
-                      coverIndex={photoUpload.coverIndex}
-                      coverCrop={photoUpload.coverCrop}
-                      fileInputRef={photoUpload.fileInputRef}
-                      onAddPhotos={photoUpload.handleAddPhotos}
-                      onAddFiles={photoUpload.addFiles}
-                      onRemovePhoto={photoUpload.handleRemovePhoto}
-                      onSetCover={photoUpload.handleSetCover}
-                      onSetCoverCrop={photoUpload.handleSetCoverCrop}
-                    />
-                  </div>
+                    )}
+                  />
                 </div>
-              </div>
+              </CardFormSection>
             ) : (
               // loading skeleton
               <div className="w-60 h-84 bg-muted animate-pulse rounded-md" />

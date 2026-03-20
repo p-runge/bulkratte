@@ -1,12 +1,13 @@
+import { CameraCapture } from "@/components/camera-capture";
 import {
   CoverCropEditor,
   type CoverCrop,
 } from "@/components/cover-crop-editor";
-import { CameraCapture } from "@/components/camera-capture";
+import { PhotoGallery } from "@/components/photo-gallery";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api/react";
 import imageCompression from "browser-image-compression";
-import { Camera, Crop, ImagePlus, Star, Upload, X } from "lucide-react";
+import { Camera, ImagePlus, Upload, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useIntl } from "react-intl";
@@ -297,6 +298,9 @@ interface MultiPhotoUploadProps {
   onRemovePhoto: (index: number) => void;
   onSetCover: (index: number) => void;
   onSetCoverCrop: (crop: CoverCrop | null) => void;
+  /** Shown as a read-only placeholder when no photos have been uploaded yet. */
+  fallbackSrc?: string;
+  fallbackAlt?: string;
 }
 
 export function MultiPhotoUpload({
@@ -309,6 +313,8 @@ export function MultiPhotoUpload({
   onRemovePhoto,
   onSetCover,
   onSetCoverCrop,
+  fallbackSrc,
+  fallbackAlt,
 }: MultiPhotoUploadProps) {
   const intl = useIntl();
   const [cropEditorOpen, setCropEditorOpen] = useState(false);
@@ -319,7 +325,7 @@ export function MultiPhotoUpload({
     setHasCameraSupport(!!navigator.mediaDevices);
   }, []);
 
-  const handleStarClick = (index: number) => {
+  const handleSetCover = (index: number) => {
     const isNewCover = coverIndex !== index;
     onSetCover(index);
     if (isNewCover) {
@@ -334,116 +340,66 @@ export function MultiPhotoUpload({
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap gap-2">
-        {photos.map((src, index) => (
-          <div key={index} className="relative">
-            <Image
-              src={src}
-              alt={intl.formatMessage(
-                {
-                  id: "form.field.photos.preview.alt",
-                  defaultMessage: "Photo {n}",
-                },
-                { n: index + 1 },
-              )}
-              width={80}
-              height={80}
-              unoptimized
-              className={`w-20 h-20 object-cover rounded border-2 transition-colors ${
-                coverIndex === index
-                  ? "border-yellow-400"
-                  : "border-transparent"
-              }`}
-            />
-            <Button
-              type="button"
-              variant="destructive"
-              size="icon"
-              className="absolute -top-2 -right-2 h-6 w-6"
-              onClick={() => onRemovePhoto(index)}
-            >
-              <X className="h-3 w-3" />
-            </Button>
-            <Button
-              type="button"
-              variant={coverIndex === index ? "default" : "secondary"}
-              size="icon"
-              className="absolute -bottom-2 -right-2 h-6 w-6"
-              title={intl.formatMessage({
-                id: "form.field.photos.set_cover",
-                defaultMessage: "Set as cover",
-              })}
-              onClick={() => handleStarClick(index)}
-            >
-              <Star
-                className="h-3 w-3"
-                fill={coverIndex === index ? "currentColor" : "none"}
-              />
-            </Button>
-            {coverIndex === index && (
-              <Button
-                type="button"
-                variant={coverCrop ? "default" : "secondary"}
-                size="icon"
-                className="absolute -bottom-2 -left-2 h-6 w-6"
-                title={intl.formatMessage({
-                  id: "form.field.photos.crop_cover",
-                  defaultMessage: "Crop cover photo",
-                })}
-                onClick={() => setCropEditorOpen(true)}
-              >
-                <Crop className="h-3 w-3" />
-              </Button>
-            )}
-          </div>
-        ))}
+      <PhotoGallery
+        photos={photos}
+        coverIndex={coverIndex}
+        editActions={{
+          onRemove: onRemovePhoto,
+          onSetCover: handleSetCover,
+          onOpenCrop: (index) => {
+            onSetCover(index);
+            setCropEditorOpen(true);
+          },
+          coverCrop,
+        }}
+        fallbackSrc={fallbackSrc}
+        fallbackAlt={fallbackAlt}
+      />
 
-        <div className="flex gap-1">
-          {/* Gallery / file picker */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={onAddPhotos}
-            className="hidden"
-            id="multi-photo-upload"
-          />
-          <label htmlFor="multi-photo-upload">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="w-20 h-20 border-dashed flex flex-col gap-1"
-              title={intl.formatMessage({
-                id: "form.field.photos.add_from_gallery",
-                defaultMessage: "Add from gallery",
-              })}
-              asChild
-            >
-              <span>
-                <ImagePlus className="h-5 w-5 text-muted-foreground" />
-              </span>
-            </Button>
-          </label>
+      {/* Upload controls — separate from the gallery selection strip */}
+      <div className="flex gap-2">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={onAddPhotos}
+          className="hidden"
+          id="multi-photo-upload"
+        />
+        <label htmlFor="multi-photo-upload">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="w-16 h-16 border-dashed flex-shrink-0"
+            title={intl.formatMessage({
+              id: "form.field.photos.add_from_gallery",
+              defaultMessage: "Add from gallery",
+            })}
+            asChild
+          >
+            <span>
+              <ImagePlus className="h-5 w-5 text-muted-foreground" />
+            </span>
+          </Button>
+        </label>
 
-          {/* In-browser camera with guide overlay */}
-          {hasCameraSupport && onAddFiles && (
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="w-20 h-20 border-dashed flex flex-col gap-1"
-              title={intl.formatMessage({
-                id: "form.field.photos.camera",
-                defaultMessage: "Use camera",
-              })}
-              onClick={() => setCameraOpen(true)}
-            >
-              <Camera className="h-5 w-5 text-muted-foreground" />
-            </Button>
-          )}
-        </div>
+        {hasCameraSupport && onAddFiles && (
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="w-16 h-16 border-dashed flex-shrink-0"
+            title={intl.formatMessage({
+              id: "form.field.photos.camera",
+              defaultMessage: "Use camera",
+            })}
+            onClick={() => setCameraOpen(true)}
+          >
+            <Camera className="h-5 w-5 text-muted-foreground" />
+          </Button>
+        )}
       </div>
 
       <p className="text-xs text-muted-foreground">

@@ -1,8 +1,14 @@
 "use client";
 
 import UserCardDialog from "@/app/collection/_components/my-cards-tab/user-card-dialog";
+import { CardFormSection } from "@/components/card-form-section";
 import { ConditionBadge } from "@/components/condition-badge";
 import ConfirmButton from "@/components/confirm-button";
+import {
+  MultiPhotoUpload,
+  useMultiPhotoUpload,
+} from "@/components/image-upload";
+import { InfoTooltip } from "@/components/info-tooltip";
 import { LanguageBadge } from "@/components/language-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,21 +19,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { UserCardFormFields } from "@/components/user-card-form-fields";
+import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api/react";
 import { AppRouter } from "@/lib/api/routers/_app";
-import {
-  CARD_BORDER_RADIUS,
-  CARD_IMAGE_HEIGHT,
-  CARD_IMAGE_WIDTH,
-} from "@/lib/card-config";
+import { CARD_BORDER_RADIUS } from "@/lib/card-config";
 import { RHFForm, useRHFForm } from "@/lib/form/utils";
-import { userCardBaseSchema } from "@/lib/schemas/user-card";
+import { userCardFormSchema } from "@/lib/schemas/user-card";
 import { cn } from "@/lib/utils";
 import { Pencil, Plus } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
+import { Controller } from "react-hook-form";
 import { useIntl } from "react-intl";
 import z from "zod";
 
@@ -76,13 +80,16 @@ export function PlaceCardDialog({
     api.userCard.create.useMutation();
   const apiUtils = api.useUtils();
 
-  const form = useRHFForm(userCardBaseSchema, {
+  const form = useRHFForm(userCardFormSchema, {
     defaultValues: {
       condition: userSet.set.preferredCondition ?? null,
       language: userSet.set.preferredLanguage ?? null,
       variant: userSet.set.preferredVariant ?? null,
+      notes: "",
     },
   });
+
+  const photoUpload = useMultiPhotoUpload();
 
   // Create a map of user_card_id to the set it's placed in
   const placedCardsMap = new Map(
@@ -198,13 +205,19 @@ export function PlaceCardDialog({
   };
 
   const handleCreateAndPlace = async (
-    data: z.infer<typeof userCardBaseSchema>,
+    data: z.infer<typeof userCardFormSchema>,
   ) => {
+    const { photos, coverPhotoUrl, coverCrop } =
+      await photoUpload.uploadPending();
     const newUserCard = await createUserCard({
       cardId,
       condition: data.condition ?? undefined,
       language: data.language ?? undefined,
       variant: data.variant ?? undefined,
+      notes: data.notes || undefined,
+      photos: photos.length > 0 ? photos : undefined,
+      coverPhotoUrl: coverPhotoUrl ?? undefined,
+      coverCrop,
     });
 
     try {
@@ -412,26 +425,57 @@ export function PlaceCardDialog({
                 </div>
               )}
 
-              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
-                <Image
-                  src={card.imageSmall}
-                  alt={card.name}
-                  width={CARD_IMAGE_WIDTH}
-                  height={CARD_IMAGE_HEIGHT}
-                  unoptimized
-                  className="w-full sm:w-auto h-auto max-w-50 sm:max-w-60 mx-auto sm:mx-0 object-cover"
-                  draggable={false}
-                  priority
-                  style={{ borderRadius: CARD_BORDER_RADIUS }}
-                />
-                <div className="flex-1 space-y-4 sm:space-y-6">
-                  <h2 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-4">
-                    {card.name}
-                  </h2>
-
-                  <UserCardFormFields control={form.control} />
+              <CardFormSection
+                card={card}
+                control={form.control}
+                mediaSlot={
+                  <MultiPhotoUpload
+                    photos={photoUpload.photos}
+                    coverIndex={photoUpload.coverIndex}
+                    coverCrop={photoUpload.coverCrop}
+                    fileInputRef={photoUpload.fileInputRef}
+                    onAddPhotos={photoUpload.handleAddPhotos}
+                    onAddFiles={photoUpload.addFiles}
+                    onRemovePhoto={photoUpload.handleRemovePhoto}
+                    onSetCover={photoUpload.handleSetCover}
+                    onSetCoverCrop={photoUpload.handleSetCoverCrop}
+                    fallbackSrc={card.imageSmall}
+                    fallbackAlt={card.name}
+                  />
+                }
+              >
+                {/* Notes */}
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="place-notes"
+                    className="flex items-center gap-1.5"
+                  >
+                    {intl.formatMessage({
+                      id: "form.field.notes.label",
+                      defaultMessage: "Notes",
+                    })}
+                    <InfoTooltip
+                      content={intl.formatMessage({
+                        id: "form.field.notes.placeholder",
+                        defaultMessage:
+                          "Self-pulled\nReceived from John\nCreased corner\nScratched foil\nSwirl on the right\n…",
+                      })}
+                    />
+                  </Label>
+                  <Controller
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <Textarea
+                        id="place-notes"
+                        className="resize-none"
+                        rows={3}
+                        {...field}
+                      />
+                    )}
+                  />
                 </div>
-              </div>
+              </CardFormSection>
             </div>
 
             <DialogFooter className="pt-4">
