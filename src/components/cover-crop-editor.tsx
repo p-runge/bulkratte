@@ -32,7 +32,7 @@ export type CoverCrop = {
 function defaultCrop(width: number, height: number): PercentCrop {
   return centerCrop(
     makeAspectCrop(
-      { unit: "%", width: 100 - 2 * CARD_FRAME_INSET },
+      { unit: "%", height: 100 - 2 * CARD_FRAME_INSET },
       CARD_ASPECT_RATIO,
       width,
       height,
