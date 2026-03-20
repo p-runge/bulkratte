@@ -5,11 +5,9 @@ import {
   CARD_ASPECT_CLASS,
   CARD_BORDER_RADIUS,
   CARD_FRAME_INSET,
-  CARD_IMAGE_HEIGHT,
-  CARD_IMAGE_WIDTH,
 } from "@/lib/card-config";
 import { cn } from "@/lib/utils";
-import { Camera, X } from "lucide-react";
+import { Camera, Frame, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useIntl } from "react-intl";
 
@@ -25,6 +23,7 @@ export function CameraCapture({ onCapture, onClose }: Props) {
   const streamRef = useRef<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [showOverlay, setShowOverlay] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -84,7 +83,7 @@ export function CameraCapture({ onCapture, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 bg-black flex flex-col">
       <div className="flex-1 flex items-center justify-center">
-        <div className="relative flex items-center justify-center m-auto">
+        <div className="relative flex items-center justify-center m-auto overflow-hidden">
           <video
             ref={videoRef}
             autoPlay
@@ -94,7 +93,7 @@ export function CameraCapture({ onCapture, onClose }: Props) {
             className="object-contain"
           />
           {/* Card guide — centered, "contain" sizing with CARD_FRAME_INSET padding on every side */}
-          {ready && (
+          {ready && showOverlay && (
             <div
               className="absolute flex items-center justify-center pointer-events-none"
               style={{
@@ -145,12 +144,24 @@ export function CameraCapture({ onCapture, onClose }: Props) {
             id: "camera.action.capture",
             defaultMessage: "Take photo",
           })}
-          className="h-16 w-16 rounded-full bg-white disabled:opacity-40 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
+          className="cursor-pointer h-16 w-16 rounded-full bg-white disabled:opacity-40 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
         >
           <Camera className="h-7 w-7 text-black" />
         </button>
 
-        <div className="w-12" />
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className={`h-12 w-12 hover:bg-white/20 ${showOverlay ? "text-white hover:text-white" : "text-white/30 hover:text-white/50"}`}
+          onClick={() => setShowOverlay((v) => !v)}
+          aria-label={intl.formatMessage({
+            id: "camera.action.toggle_overlay",
+            defaultMessage: "Toggle card guide",
+          })}
+        >
+          <Frame className="h-5 w-5" />
+        </Button>
       </div>
 
       <canvas ref={canvasRef} className="hidden" />
