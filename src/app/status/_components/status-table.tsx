@@ -241,7 +241,7 @@ export function StatusTable({
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="bg-zinc-900 border-b border-zinc-800">
-              <th className="sticky left-0 z-10 bg-zinc-900 text-left px-4 py-3 font-semibold text-zinc-300 whitespace-nowrap min-w-55">
+              <th className="sticky left-0 z-10 bg-zinc-900 text-left px-4 py-3 font-semibold text-zinc-300 whitespace-nowrap min-w-[220px]">
                 Set
               </th>
               <th className="px-3 py-3 text-center text-zinc-400 font-medium whitespace-nowrap">
@@ -250,7 +250,7 @@ export function StatusTable({
               {languages.map((lang) => (
                 <th
                   key={lang.code}
-                  className="px-3 py-3 text-center font-medium whitespace-nowrap min-w-22.5"
+                  className="px-3 py-3 text-center font-medium whitespace-nowrap min-w-[90px]"
                 >
                   <div className="flex flex-col items-center gap-0.5">
                     <span className="text-lg leading-none">{lang.flag}</span>
