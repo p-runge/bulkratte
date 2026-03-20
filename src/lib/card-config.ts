@@ -39,3 +39,10 @@ export const CARD_CORNER_RADIUS = 0.031; // 0.78" ≈ 3.1% of card width (2.5") 
 export const CARD_BORDER_RADIUS =
   `${CARD_CORNER_RADIUS * 100}% / ${(((CARD_CORNER_RADIUS * CARD_IMAGE_WIDTH) / CARD_IMAGE_HEIGHT) * 100).toFixed(4)}%` as const;
 // = "5% / 3.5714%"
+
+/**
+ * Inset padding on each side (as a percentage) used for both the camera
+ * capture guide overlay and the default crop area in the cover crop editor.
+ * 5% inset each side → 90% of the image width used for the crop.
+ */
+export const CARD_FRAME_INSET = 5;

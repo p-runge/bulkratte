@@ -1,32 +1,17 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { CARD_ASPECT_RATIO, CARD_BORDER_RADIUS } from "@/lib/card-config";
+import {
+  CARD_ASPECT_CLASS,
+  CARD_BORDER_RADIUS,
+  CARD_FRAME_INSET,
+  CARD_IMAGE_HEIGHT,
+  CARD_IMAGE_WIDTH,
+} from "@/lib/card-config";
+import { cn } from "@/lib/utils";
 import { Camera, X } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useIntl } from "react-intl";
-
-type Rect = { x: number; y: number; w: number; h: number };
-
-/** Compute the actual displayed area of an object-contain video within its container. */
-function videoContentRect(
-  containerW: number,
-  containerH: number,
-  videoW: number,
-  videoH: number,
-): Rect {
-  const containerRatio = containerW / containerH;
-  const videoRatio = videoW / videoH;
-  if (videoRatio > containerRatio) {
-    // video wider than container → fits width, letterboxed top/bottom
-    const h = containerW / videoRatio;
-    return { x: 0, y: (containerH - h) / 2, w: containerW, h };
-  } else {
-    // video taller → fits height, pillarboxed left/right
-    const w = containerH * videoRatio;
-    return { x: (containerW - w) / 2, y: 0, w, h: containerH };
-  }
-}
 
 type Props = {
   onCapture: (file: File) => void;
@@ -37,25 +22,9 @@ export function CameraCapture({ onCapture, onClose }: Props) {
   const intl = useIntl();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
-  const [contentRect, setContentRect] = useState<Rect | null>(null);
-
-  const updateContentRect = useCallback(() => {
-    const video = videoRef.current;
-    const container = containerRef.current;
-    if (!video || !container || !video.videoWidth || !video.videoHeight) return;
-    setContentRect(
-      videoContentRect(
-        container.clientWidth,
-        container.clientHeight,
-        video.videoWidth,
-        video.videoHeight,
-      ),
-    );
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -91,15 +60,6 @@ export function CameraCapture({ onCapture, onClose }: Props) {
     };
   }, [intl]);
 
-  // Recompute content rect whenever the container is resized
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    const ro = new ResizeObserver(updateContentRect);
-    ro.observe(container);
-    return () => ro.disconnect();
-  }, [updateContentRect]);
-
   const capture = () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -112,81 +72,53 @@ export function CameraCapture({ onCapture, onClose }: Props) {
     canvas.toBlob(
       (blob) => {
         if (!blob) return;
-        const file = new File([blob], `capture-${Date.now()}.jpg`, {
-          type: "image/jpeg",
-        });
-        onCapture(file);
+        onCapture(
+          new File([blob], `capture-${Date.now()}.jpg`, { type: "image/jpeg" }),
+        );
       },
       "image/jpeg",
       0.92,
     );
   };
 
-  // Guide: 80% of video content width centered — matches the crop editor's default crop
-  const guideRect: Rect | null = contentRect
-    ? (() => {
-        const gW = contentRect.w * 0.8;
-        const gH = gW / CARD_ASPECT_RATIO;
-        return {
-          x: contentRect.x + (contentRect.w - gW) / 2,
-          y: contentRect.y + (contentRect.h - gH) / 2,
-          w: gW,
-          h: gH,
-        };
-      })()
-    : null;
-
   return (
     <div className="fixed inset-0 z-50 bg-black flex flex-col">
-      <div
-        ref={containerRef}
-        className="relative flex-1 min-h-0 overflow-hidden"
-      >
-        {/* object-contain so the full camera frame is always visible */}
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted
-          onLoadedMetadata={updateContentRect}
-          onCanPlay={() => {
-            setReady(true);
-            updateContentRect();
-          }}
-          className="absolute inset-0 w-full h-full object-contain"
-        />
-
-        {/* Card guide — precisely positioned over the actual video content */}
-        {ready && guideRect && (
-          <>
+      <div className="flex-1 flex items-center justify-center">
+        <div className="relative flex items-center justify-center m-auto">
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            onCanPlay={() => setReady(true)}
+            className="object-contain"
+          />
+          {/* Card guide — centered, "contain" sizing with CARD_FRAME_INSET padding on every side */}
+          {ready && (
             <div
-              className="absolute pointer-events-none border-2 border-white/80"
+              className="absolute flex items-center justify-center pointer-events-none"
               style={{
-                left: guideRect.x,
-                top: guideRect.y,
-                width: guideRect.w,
-                height: guideRect.h,
-                borderRadius: CARD_BORDER_RADIUS,
-                boxShadow: "0 0 0 9999px rgba(0,0,0,0.5)",
+                inset: `${CARD_FRAME_INSET}%`,
               }}
-            />
-            <p
-              className="absolute w-full text-center text-white/70 text-xs pointer-events-none"
-              style={{ top: guideRect.y + guideRect.h + 10, left: 0 }}
             >
-              {intl.formatMessage({
-                id: "camera.guide.position_card",
-                defaultMessage: "Position card within the frame",
-              })}
-            </p>
-          </>
-        )}
-
-        {error && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/70">
-            <p className="text-white text-sm px-8 text-center">{error}</p>
-          </div>
-        )}
+              <div
+                className={cn(
+                  "h-full object-contain border-2 border-white/80",
+                  CARD_ASPECT_CLASS,
+                )}
+                style={{
+                  borderRadius: CARD_BORDER_RADIUS,
+                  boxShadow: "0 0 0 9999px rgba(0,0,0,0.5)",
+                }}
+              />
+            </div>
+          )}
+          {error && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/70">
+              <p className="text-white text-sm px-8 text-center">{error}</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Controls */}
