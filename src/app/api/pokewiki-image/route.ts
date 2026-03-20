@@ -49,12 +49,18 @@ export async function GET(req: Request) {
       });
     }
 
+    const contentType = imageRes.headers.get("Content-Type");
+    if (!contentType || !contentType.toLowerCase().startsWith("image/")) {
+      return new Response("Upstream resource is not an image", { status: 415 });
+    }
+
     const buffer = await imageRes.arrayBuffer();
 
     return new Response(buffer, {
       headers: {
-        "Content-Type": imageRes.headers.get("Content-Type") ?? "image/jpeg",
+        "Content-Type": contentType,
         "Cache-Control": "public, max-age=604800, immutable", // 7 days
+        "X-Content-Type-Options": "nosniff",
       },
     });
   } catch {
