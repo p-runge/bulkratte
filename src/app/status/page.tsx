@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { db, setsTable, cardsTable, localizationsTable } from "@/lib/db";
 import { LOCALES, DEFAULT_LOCALE, getLanguageFromLocale } from "@/lib/i18n";
-import { eq, and, count, not } from "drizzle-orm";
+import { eq, and, count, not, sql } from "drizzle-orm";
 import {
   StatusTable,
   type CellStatus,
@@ -79,7 +79,7 @@ async function fetchStatusData(): Promise<{
     .select({
       setId: cardsTable.setId,
       language: localizationsTable.language,
-      n: count(),
+      n: sql<number>`count(distinct ${localizationsTable.record_id})`,
     })
     .from(localizationsTable)
     .innerJoin(cardsTable, eq(localizationsTable.record_id, cardsTable.id))
@@ -98,7 +98,7 @@ async function fetchStatusData(): Promise<{
     .select({
       setId: cardsTable.setId,
       language: localizationsTable.language,
-      n: count(),
+      n: sql<number>`count(distinct ${localizationsTable.record_id})`,
     })
     .from(localizationsTable)
     .innerJoin(cardsTable, eq(localizationsTable.record_id, cardsTable.id))
