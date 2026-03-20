@@ -44,7 +44,7 @@ export async function GET(req: Request) {
     });
 
     if (!imageRes.ok) {
-      return new Response("Failed to fetch image from Pokewiki", {
+      return new Response("Failed to fetch image from upstream host", {
         status: imageRes.status,
       });
     }
