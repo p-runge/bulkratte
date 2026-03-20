@@ -71,7 +71,15 @@ async function upsert(
 async function main() {
   if (DRY_RUN) console.log("⚠️  DRY RUN — no changes will be written\n");
 
-  const db = new Client({ connectionString: process.env.DATABASE_URL });
+  const DATABASE_URL = process.env.DATABASE_URL;
+  if (!DATABASE_URL) {
+    console.error(
+      "DATABASE_URL is not set. Please configure it in your environment or .env file before running this script."
+    );
+    process.exit(1);
+  }
+
+  const db = new Client({ connectionString: DATABASE_URL });
   await db.connect();
 
   try {
