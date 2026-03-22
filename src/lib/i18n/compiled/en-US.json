@@ -313,6 +313,30 @@
       "value": "Manage Sheets"
     }
   ],
+  "camera.action.cancel": [
+    {
+      "type": 0,
+      "value": "Cancel"
+    }
+  ],
+  "camera.action.capture": [
+    {
+      "type": 0,
+      "value": "Take photo"
+    }
+  ],
+  "camera.action.toggle_overlay": [
+    {
+      "type": 0,
+      "value": "Toggle card guide"
+    }
+  ],
+  "camera.error.access_denied": [
+    {
+      "type": 0,
+      "value": "Camera access denied or unavailable."
+    }
+  ],
   "card.browser.empty": [
     {
       "type": 0,
@@ -369,6 +393,12 @@
       "value": "Order"
     }
   ],
+  "card.filter.rarity.count_label": [
+    {
+      "type": 0,
+      "value": "rarities"
+    }
+  ],
   "card.filter.rarity.empty": [
     {
       "type": 0,
@@ -403,6 +433,12 @@
     {
       "type": 0,
       "value": "Card name or number…"
+    }
+  ],
+  "card.filter.set.count_label": [
+    {
+      "type": 0,
+      "value": "sets"
     }
   ],
   "card.filter.set.empty": [
@@ -469,6 +505,24 @@
     {
       "type": 0,
       "value": "Set → Number"
+    }
+  ],
+  "card.filter.view.grid": [
+    {
+      "type": 0,
+      "value": "Grid view"
+    }
+  ],
+  "card.filter.view.label": [
+    {
+      "type": 0,
+      "value": "View"
+    }
+  ],
+  "card.filter.view.list": [
+    {
+      "type": 0,
+      "value": "List view"
     }
   ],
   "card.picker.button.add": [
@@ -853,38 +907,22 @@
       "value": "Self-pulled\nReceived from John\nCreased corner\nScratched foil\nSwirl on the right\n…"
     }
   ],
-  "form.field.photos.crop_cover": [
+  "form.field.photos.add_from_gallery": [
     {
       "type": 0,
-      "value": "Crop cover photo"
+      "value": "Add from gallery"
+    }
+  ],
+  "form.field.photos.camera": [
+    {
+      "type": 0,
+      "value": "Use camera"
     }
   ],
   "form.field.photos.description": [
     {
       "type": 0,
       "value": "Photos are automatically compressed to max 200 KB each."
-    }
-  ],
-  "form.field.photos.label": [
-    {
-      "type": 0,
-      "value": "Photos"
-    }
-  ],
-  "form.field.photos.preview.alt": [
-    {
-      "type": 0,
-      "value": "Photo "
-    },
-    {
-      "type": 1,
-      "value": "n"
-    }
-  ],
-  "form.field.photos.set_cover": [
-    {
-      "type": 0,
-      "value": "Set as cover"
     }
   ],
   "form.field.set_name.label": [

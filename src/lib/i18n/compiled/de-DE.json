@@ -313,6 +313,30 @@
       "value": "Blätter verwalten"
     }
   ],
+  "camera.action.cancel": [
+    {
+      "type": 0,
+      "value": "Abbrechen"
+    }
+  ],
+  "camera.action.capture": [
+    {
+      "type": 0,
+      "value": "Foto aufnehmen"
+    }
+  ],
+  "camera.action.toggle_overlay": [
+    {
+      "type": 0,
+      "value": "Kartenführung umschalten"
+    }
+  ],
+  "camera.error.access_denied": [
+    {
+      "type": 0,
+      "value": "Kamerazugriff verweigert oder nicht verfügbar."
+    }
+  ],
   "card.browser.empty": [
     {
       "type": 0,
@@ -369,6 +393,12 @@
       "value": "Sortierreihenfolge"
     }
   ],
+  "card.filter.rarity.count_label": [
+    {
+      "type": 0,
+      "value": "Seltenheiten"
+    }
+  ],
   "card.filter.rarity.empty": [
     {
       "type": 0,
@@ -403,6 +433,12 @@
     {
       "type": 0,
       "value": "Kartenname oder -nummer..."
+    }
+  ],
+  "card.filter.set.count_label": [
+    {
+      "type": 0,
+      "value": "Sets"
     }
   ],
   "card.filter.set.empty": [
@@ -469,6 +505,24 @@
     {
       "type": 0,
       "value": "Set → Nummer"
+    }
+  ],
+  "card.filter.view.grid": [
+    {
+      "type": 0,
+      "value": "Rasteransicht"
+    }
+  ],
+  "card.filter.view.label": [
+    {
+      "type": 0,
+      "value": "Ansicht"
+    }
+  ],
+  "card.filter.view.list": [
+    {
+      "type": 0,
+      "value": "Listenansicht"
     }
   ],
   "card.picker.button.add": [
@@ -597,6 +651,24 @@
     {
       "type": 0,
       "value": "Neue Karte hinzufügen"
+    }
+  ],
+  "dialog.crop_cover.description": [
+    {
+      "type": 0,
+      "value": "Ziehe das Rechteck, um die Karte einzurahmen. Es wird in der Binderansicht angezeigt."
+    }
+  ],
+  "dialog.crop_cover.image.alt": [
+    {
+      "type": 0,
+      "value": "Foto zum Zuschneiden"
+    }
+  ],
+  "dialog.crop_cover.title": [
+    {
+      "type": 0,
+      "value": "Deckbild zuschneiden"
     }
   ],
   "dialog.delete_set.description": [
@@ -835,26 +907,22 @@
       "value": "Selbst gezogen\nVon John erhalten\nGeknickte Ecke\nKratzer im Holo\nSwirl auf der rechten Seite\n…"
     }
   ],
+  "form.field.photos.add_from_gallery": [
+    {
+      "type": 0,
+      "value": "Aus Galerie hinzufügen"
+    }
+  ],
+  "form.field.photos.camera": [
+    {
+      "type": 0,
+      "value": "Kamera verwenden"
+    }
+  ],
   "form.field.photos.description": [
     {
       "type": 0,
       "value": "Fotos werden automatisch auf maximal 200 KB komprimiert."
-    }
-  ],
-  "form.field.photos.label": [
-    {
-      "type": 0,
-      "value": "Fotos"
-    }
-  ],
-  "form.field.photos.preview.alt": [
-    {
-      "type": 0,
-      "value": "Foto "
-    },
-    {
-      "type": 1,
-      "value": "n"
     }
   ],
   "form.field.set_name.label": [
