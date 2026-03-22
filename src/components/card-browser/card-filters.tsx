@@ -46,8 +46,8 @@ function monthIndexToEndDateString(monthIndex: number): string {
 }
 
 export type FilterState = {
-  setId: string;
-  rarity: string;
+  setIds: string[];
+  rarities: string[];
   search: string;
   releaseDateFrom: string;
   releaseDateTo: string;
@@ -61,8 +61,8 @@ export type SortState = {
 export type CardQuery = FilterState & SortState;
 
 const EMPTY_FILTER_STATE: FilterState = {
-  setId: "",
-  rarity: "",
+  setIds: [],
+  rarities: [],
   search: "",
   releaseDateFrom: "",
   releaseDateTo: "",
@@ -139,7 +139,10 @@ export function CardFilters({
     ? dateToMonthIndex(filterState.releaseDateTo)
     : maxMonthIndex;
 
-  const updateFilterValue = (key: keyof FilterState, value: string) => {
+  const updateFilter = <K extends keyof FilterState>(
+    key: K,
+    value: FilterState[K],
+  ) => {
     const newFilterState = { ...filterState, [key]: value };
     setFilterState(newFilterState);
     onFilterChange({ ...newFilterState, ...sortState });
@@ -171,12 +174,17 @@ export function CardFilters({
     onFilterChange({ ...EMPTY_FILTER_STATE, ...sortState });
   };
 
-  const hasActiveFilters = Object.values(filterState).some((v) => v !== "");
+  const hasActiveFilters =
+    filterState.setIds.length > 0 ||
+    filterState.rarities.length > 0 ||
+    filterState.search !== "" ||
+    filterState.releaseDateFrom !== "" ||
+    filterState.releaseDateTo !== "";
 
   // Active secondary filter count for the mobile badge
   const activeSecondaryFilterCount = [
-    filterState.setId,
-    filterState.rarity,
+    filterState.setIds.length > 0 ? "sets" : "",
+    filterState.rarities.length > 0 ? "rarities" : "",
     filterState.releaseDateFrom || filterState.releaseDateTo ? "date" : "",
     sortState.sortBy !== DEFAULT_SORT_STATE.sortBy ||
     sortState.sortOrder !== DEFAULT_SORT_STATE.sortOrder
@@ -195,8 +203,9 @@ export function CardFilters({
         })}
       </Label>
       <Combobox
-        value={filterState.setId}
-        onValueChange={(value) => updateFilterValue("setId", value)}
+        multi
+        value={filterState.setIds}
+        onValueChange={(value) => updateFilter("setIds", value)}
         options={sets.map((set) => ({ value: set.id, label: set.name }))}
         placeholder={intl.formatMessage({
           id: "card.filter.set.placeholder",
@@ -223,8 +232,9 @@ export function CardFilters({
         })}
       </Label>
       <Combobox
-        value={filterState.rarity}
-        onValueChange={(value) => updateFilterValue("rarity", value)}
+        multi
+        value={filterState.rarities}
+        onValueChange={(value) => updateFilter("rarities", value)}
         options={availableRarities.map((rarity) => ({
           value: rarity,
           label: rarity,
@@ -418,7 +428,7 @@ export function CardFilters({
               defaultMessage: "Card name or number…",
             })}
             value={filterState.search}
-            onChange={(e) => updateFilterValue("search", e.target.value)}
+            onChange={(e) => updateFilter("search", e.target.value)}
             className="bg-background"
           />
         </div>

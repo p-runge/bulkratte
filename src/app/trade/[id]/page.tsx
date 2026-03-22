@@ -18,8 +18,8 @@ import { use, useMemo, useState } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 
 const defaultFilters: CardQuery = {
-  setId: "",
-  rarity: "",
+  setIds: [],
+  rarities: [],
   search: "",
   releaseDateFrom: "",
   releaseDateTo: "",
@@ -29,10 +29,9 @@ const defaultFilters: CardQuery = {
 
 function buildQueryArgs(filters: CardQuery) {
   return {
-    setId: filters.setId && filters.setId !== "all" ? filters.setId : undefined,
+    setIds: filters.setIds.length > 0 ? filters.setIds : undefined,
     search: filters.search || undefined,
-    rarity:
-      filters.rarity && filters.rarity !== "all" ? filters.rarity : undefined,
+    rarities: filters.rarities.length > 0 ? filters.rarities : undefined,
     releaseDateFrom: filters.releaseDateFrom || undefined,
     releaseDateTo: filters.releaseDateTo || undefined,
     sortBy: filters.sortBy as "set-and-number" | "name" | "rarity" | "price",

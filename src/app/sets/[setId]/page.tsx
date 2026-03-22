@@ -35,7 +35,7 @@ export default async function SetIdPage({
 
   const [sets, cards] = await Promise.all([
     api.set.getList(),
-    api.card.getList({ setId }),
+    api.card.getList({ setIds: [setId] }),
   ]);
   const selectedSet = sets.find((set) => set.id === setId);
 

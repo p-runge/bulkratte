@@ -10,7 +10,12 @@ import {
   userSetsTable,
   wantlistShareLinksTable,
 } from "@/lib/db";
-import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
+import {
+  conditionEnum,
+  languageEnum,
+  type Rarity,
+  variantEnum,
+} from "@/lib/db/enums";
 import { localizeRecords } from "@/lib/db/localization";
 import { getLanguageFromLocale, Locale } from "@/lib/i18n";
 import { deleteR2Objects } from "@/lib/r2";
@@ -31,9 +36,9 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 type WantlistFilters = {
-  setId?: string;
+  setIds?: string[];
   search?: string;
-  rarity?: string;
+  rarities?: string[];
   releaseDateFrom?: string;
   releaseDateTo?: string;
   sortBy?: "set-and-number" | "name" | "rarity" | "price";
@@ -50,14 +55,14 @@ export async function getWantlistForUser(
   // Build WHERE conditions for filtering cards
   const conditions = [];
 
-  if (filters.setId) {
-    conditions.push(eq(cardsTable.setId, filters.setId));
+  if (filters.setIds?.length) {
+    conditions.push(inArray(cardsTable.setId, filters.setIds));
   }
 
   const langCode = getLanguageFromLocale(locale);
 
-  if (filters.rarity && filters.rarity !== "all") {
-    conditions.push(sql`${cardsTable.rarity} = ${filters.rarity}`);
+  if (filters.rarities?.length) {
+    conditions.push(inArray(cardsTable.rarity, filters.rarities as Rarity[]));
   }
 
   if (filters.releaseDateFrom || filters.releaseDateTo) {
@@ -164,12 +169,14 @@ export async function getWantlistForUser(
     )})`,
   ];
 
-  if (filters.setId) {
-    cardConditions.push(eq(cardsTable.setId, filters.setId));
+  if (filters.setIds?.length) {
+    cardConditions.push(inArray(cardsTable.setId, filters.setIds));
   }
 
-  if (filters.rarity && filters.rarity !== "all") {
-    cardConditions.push(sql`${cardsTable.rarity} = ${filters.rarity}`);
+  if (filters.rarities?.length) {
+    cardConditions.push(
+      inArray(cardsTable.rarity, filters.rarities as Rarity[]),
+    );
   }
 
   const whereClause =
@@ -343,9 +350,9 @@ export const userCardRouter = createTRPCRouter({
     .input(
       z
         .object({
-          setId: z.string().optional(),
+          setIds: z.array(z.string()).optional(),
           search: z.string().optional(),
-          rarity: z.string().optional(),
+          rarities: z.array(z.string()).optional(),
           releaseDateFrom: z.string().optional(),
           releaseDateTo: z.string().optional(),
           excludeInSets: z.boolean().optional(),
@@ -361,14 +368,14 @@ export const userCardRouter = createTRPCRouter({
       // Build WHERE conditions
       const conditions = [eq(userCardsTable.user_id, ctx.session.user.id)];
 
-      if (input?.setId) {
-        conditions.push(eq(cardsTable.setId, input.setId));
+      if (input?.setIds?.length) {
+        conditions.push(inArray(cardsTable.setId, input.setIds));
       }
 
       const langCode = getLanguageFromLocale(ctx.language);
 
-      if (input?.rarity && input.rarity !== "all") {
-        conditions.push(sql`${cardsTable.rarity} = ${input.rarity}`);
+      if (input?.rarities?.length) {
+        conditions.push(inArray(cardsTable.rarity, input.rarities as Rarity[]));
       }
 
       if (input?.releaseDateFrom || input?.releaseDateTo) {
@@ -733,9 +740,9 @@ export const userCardRouter = createTRPCRouter({
     .input(
       z
         .object({
-          setId: z.string().optional(),
+          setIds: z.array(z.string()).optional(),
           search: z.string().optional(),
-          rarity: z.string().optional(),
+          rarities: z.array(z.string()).optional(),
           releaseDateFrom: z.string().optional(),
           releaseDateTo: z.string().optional(),
           sortBy: z
@@ -759,9 +766,9 @@ export const userCardRouter = createTRPCRouter({
     .input(
       z.object({
         token: z.string().uuid(),
-        setId: z.string().optional(),
+        setIds: z.array(z.string()).optional(),
         search: z.string().optional(),
-        rarity: z.string().optional(),
+        rarities: z.array(z.string()).optional(),
         releaseDateFrom: z.string().optional(),
         releaseDateTo: z.string().optional(),
         sortBy: z

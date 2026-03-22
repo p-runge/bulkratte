@@ -5,6 +5,7 @@ import {
   localizationsTable,
   setsTable,
 } from "@/lib/db";
+import type { Rarity } from "@/lib/db/enums";
 import { localizeRecord, localizeRecords } from "@/lib/db/localization";
 import { getLanguageFromLocale } from "@/lib/i18n";
 import { TRPCError } from "@trpc/server";
@@ -28,9 +29,9 @@ export const cardRouter = createTRPCRouter({
     .input(
       z
         .object({
-          setId: z.string().optional(),
+          setIds: z.array(z.string()).optional(),
           search: z.string().optional(),
-          rarity: z.string().optional(),
+          rarities: z.array(z.string()).optional(),
           releaseDateFrom: z.string().optional(),
           releaseDateTo: z.string().optional(),
           sortBy: z
@@ -45,14 +46,14 @@ export const cardRouter = createTRPCRouter({
       // Build WHERE conditions
       const conditions = [];
 
-      if (input?.setId) {
-        conditions.push(eq(cardsTable.setId, input.setId));
+      if (input?.setIds?.length) {
+        conditions.push(inArray(cardsTable.setId, input.setIds));
       }
 
       const langCode = getLanguageFromLocale(ctx.language);
 
-      if (input?.rarity && input.rarity !== "all") {
-        conditions.push(sql`${cardsTable.rarity} = ${input.rarity}`);
+      if (input?.rarities?.length) {
+        conditions.push(inArray(cardsTable.rarity, input.rarities as Rarity[]));
       }
 
       if (input?.releaseDateFrom || input?.releaseDateTo) {
@@ -145,7 +146,7 @@ export const cardRouter = createTRPCRouter({
               : undefined,
         )
         .orderBy(...orderByClauses)
-        .limit(input?.setId ? -1 : 100);
+        .limit(input?.setIds?.length === 1 ? -1 : 100);
 
       const results = await query;
 

@@ -19,8 +19,8 @@ export default function WantlistTab() {
   const intl = useIntl();
 
   const [filters, setFilters] = useState<CardQuery>({
-    setId: "",
-    rarity: "",
+    setIds: [],
+    rarities: [],
     search: "",
     releaseDateFrom: "",
     releaseDateTo: "",
@@ -29,10 +29,9 @@ export default function WantlistTab() {
   });
 
   const { data: wantlistData, isLoading } = api.userCard.getWantlist.useQuery({
-    setId: filters.setId && filters.setId !== "all" ? filters.setId : undefined,
+    setIds: filters.setIds.length > 0 ? filters.setIds : undefined,
     search: filters.search || undefined,
-    rarity:
-      filters.rarity && filters.rarity !== "all" ? filters.rarity : undefined,
+    rarities: filters.rarities.length > 0 ? filters.rarities : undefined,
     releaseDateFrom: filters.releaseDateFrom || undefined,
     releaseDateTo: filters.releaseDateTo || undefined,
     sortBy: filters.sortBy as "set-and-number" | "name" | "rarity" | "price",

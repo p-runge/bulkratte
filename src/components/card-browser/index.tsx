@@ -43,8 +43,10 @@ function applyClientFilters(
     );
   }
 
-  if (filters.rarity && filters.rarity !== "all") {
-    result = result.filter((c) => c.rarity === filters.rarity);
+  if (filters.rarities.length > 0) {
+    result = result.filter(
+      (c) => c.rarity != null && filters.rarities.includes(c.rarity),
+    );
   }
 
   const dir = filters.sortOrder === "desc" ? -1 : 1;
@@ -79,8 +81,8 @@ export function CardBrowser(props: CardBrowserProps) {
   } = useUiPreferences();
 
   const [filters, setFilters] = useState<CardQuery>({
-    setId: "",
-    rarity: "",
+    setIds: [],
+    rarities: [],
     search: "",
     releaseDateFrom: "",
     releaseDateTo: "",
@@ -94,12 +96,13 @@ export function CardBrowser(props: CardBrowserProps) {
     isFetching,
   } = api.card.getList.useQuery(
     {
-      setId:
-        props.setId ||
-        (filters.setId && filters.setId !== "all" ? filters.setId : undefined),
+      setIds: props.setId
+        ? [props.setId]
+        : filters.setIds.length > 0
+          ? filters.setIds
+          : undefined,
       search: filters.search || undefined,
-      rarity:
-        filters.rarity && filters.rarity !== "all" ? filters.rarity : undefined,
+      rarities: filters.rarities.length > 0 ? filters.rarities : undefined,
       releaseDateFrom: filters.releaseDateFrom || undefined,
       releaseDateTo: filters.releaseDateTo || undefined,
       sortBy: filters.sortBy,

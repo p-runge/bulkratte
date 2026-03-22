@@ -15,8 +15,8 @@ type UserCardBrowserProps = {
 export function UserCardBrowser(props: UserCardBrowserProps) {
   const { cardBrowserView, setCardBrowserView } = useUiPreferences();
   const [filters, setFilters] = useState<CardQuery>({
-    setId: "",
-    rarity: "",
+    setIds: [],
+    rarities: [],
     search: "",
     releaseDateFrom: "",
     releaseDateTo: "",
@@ -30,11 +30,9 @@ export function UserCardBrowser(props: UserCardBrowserProps) {
     isFetching,
   } = api.userCard.getList.useQuery(
     {
-      setId:
-        filters.setId && filters.setId !== "all" ? filters.setId : undefined,
+      setIds: filters.setIds.length > 0 ? filters.setIds : undefined,
       search: filters.search || undefined,
-      rarity:
-        filters.rarity && filters.rarity !== "all" ? filters.rarity : undefined,
+      rarities: filters.rarities.length > 0 ? filters.rarities : undefined,
       releaseDateFrom: filters.releaseDateFrom || undefined,
       releaseDateTo: filters.releaseDateTo || undefined,
       sortBy: filters.sortBy,
