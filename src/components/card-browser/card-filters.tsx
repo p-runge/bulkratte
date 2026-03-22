@@ -206,6 +206,10 @@ export function CardFilters({
         multi
         value={filterState.setIds}
         onValueChange={(value) => updateFilter("setIds", value)}
+        countLabel={intl.formatMessage({
+          id: "card.filter.set.count_label",
+          defaultMessage: "sets",
+        })}
         options={sets.map((set) => ({ value: set.id, label: set.name }))}
         placeholder={intl.formatMessage({
           id: "card.filter.set.placeholder",
@@ -235,6 +239,10 @@ export function CardFilters({
         multi
         value={filterState.rarities}
         onValueChange={(value) => updateFilter("rarities", value)}
+        countLabel={intl.formatMessage({
+          id: "card.filter.rarity.count_label",
+          defaultMessage: "rarities",
+        })}
         options={availableRarities.map((rarity) => ({
           value: rarity,
           label: rarity,

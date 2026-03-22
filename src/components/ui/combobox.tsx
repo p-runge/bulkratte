@@ -3,7 +3,6 @@
 import * as React from "react";
 import { Check, ChevronsUpDown, X } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -43,6 +42,11 @@ type ComboboxPropsMulti = ComboboxPropsBase & {
   multi: true;
   value: string[];
   onValueChange: (value: string[]) => void;
+  /**
+   * Plural noun shown in the "N {countLabel}" summary when ≥2 items are
+   * selected (e.g. "sets", "rarities"). Defaults to "selected".
+   */
+  countLabel?: string;
 };
 
 export type ComboboxProps = ComboboxPropsSingle | ComboboxPropsMulti;
@@ -71,7 +75,7 @@ export function Combobox(props: ComboboxProps) {
         ? props.value.filter((v) => v !== optionValue)
         : [...props.value, optionValue];
       props.onValueChange(next);
-      // Stay open to allow multi-select
+      // Stay open to allow further selection
     } else {
       props.onValueChange(optionValue === props.value ? "" : optionValue);
       setOpen(false);
@@ -87,6 +91,16 @@ export function Combobox(props: ComboboxProps) {
     }
   };
 
+  /** The visible label shown in the button trigger. */
+  const visibleLabel = props.multi
+    ? props.value.length === 0
+      ? null
+      : props.value.length === 1
+        ? (options.find((o) => o.value === props.value[0])?.label ??
+          props.value[0])
+        : `${props.value.length} ${props.countLabel ?? "selected"}`
+    : (options.find((o) => o.value === props.value)?.label ?? null);
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -95,8 +109,7 @@ export function Combobox(props: ComboboxProps) {
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "justify-between bg-background font-normal",
-            props.multi ? "w-full min-h-10 h-auto items-start py-1.5" : "w-max",
+            "w-max justify-between bg-background font-normal",
             hasSelections
               ? "hover:text-foreground"
               : "text-muted-foreground hover:text-muted-foreground",
@@ -114,65 +127,33 @@ export function Combobox(props: ComboboxProps) {
             }
           }}
         >
-          {props.multi ? (
-            /* Multi: chip display */
-            <span className="flex flex-wrap gap-1 flex-1 items-center min-w-0">
-              {props.value.length > 0 ? (
-                props.value.map((v) => {
-                  const label = options.find((o) => o.value === v)?.label ?? v;
-                  return (
-                    <Badge
-                      key={v}
-                      variant="secondary"
-                      className="text-xs font-normal gap-1 pr-1 max-w-full"
-                    >
-                      <span className="truncate">{label}</span>
-                      <span
-                        role="button"
-                        aria-label={`Remove ${label}`}
-                        className="rounded opacity-60 hover:opacity-100 cursor-pointer shrink-0"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          props.onValueChange(
-                            props.value.filter((x) => x !== v),
-                          );
-                        }}
-                      >
-                        <X className="h-2.5 w-2.5" />
-                      </span>
-                    </Badge>
-                  );
-                })
-              ) : (
-                <span className="text-muted-foreground">{placeholder}</span>
-              )}
+          {/*
+           * Invisible grid stack: placeholder + all option labels occupy the
+           * same cell so the button always sizes to the widest one. The visible
+           * text is layered on top in the same cell — no layout shift on change.
+           */}
+          <span className="grid items-center">
+            <span
+              aria-hidden
+              className="invisible pointer-events-none col-start-1 row-start-1 select-none whitespace-nowrap"
+            >
+              {placeholder}
             </span>
-          ) : (
-            /* Single: invisible sizing trick */
-            <span className="grid items-center">
+            {options.map((o) => (
               <span
+                key={o.value}
                 aria-hidden
                 className="invisible pointer-events-none col-start-1 row-start-1 select-none whitespace-nowrap"
               >
-                {placeholder}
+                {o.label}
               </span>
-              {options.map((o) => (
-                <span
-                  key={o.value}
-                  aria-hidden
-                  className="invisible pointer-events-none col-start-1 row-start-1 select-none whitespace-nowrap"
-                >
-                  {o.label}
-                </span>
-              ))}
-              <span className="col-start-1 row-start-1 text-left">
-                {options.find((o) => o.value === props.value)?.label ??
-                  placeholder}
-              </span>
+            ))}
+            <span className="col-start-1 row-start-1 text-left">
+              {visibleLabel ?? placeholder}
             </span>
-          )}
+          </span>
 
-          <span className="flex items-center gap-0.5 ml-1 shrink-0 self-center">
+          <span className="flex items-center gap-0.5 ml-1 shrink-0">
             {hasSelections && (
               <span
                 role="button"
