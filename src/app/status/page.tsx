@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { db, setsTable, cardsTable, localizationsTable } from "@/lib/db";
 import { LOCALES, DEFAULT_LOCALE, getLanguageFromLocale } from "@/lib/i18n";
-import { eq, and, count, sql } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import {
   StatusTable,
   type CellStatus,
@@ -66,7 +66,7 @@ async function fetchStatusData(): Promise<{
   const sets = await db.select().from(setsTable).orderBy(setsTable.releaseDate);
 
   const cardCountRows = await db
-    .select({ setId: cardsTable.setId, total: count() })
+    .select({ setId: cardsTable.setId, total: sql<number>`count(*)::int` })
     .from(cardsTable)
     .groupBy(cardsTable.setId);
   const cardCountMap = new Map(cardCountRows.map((r) => [r.setId, r.total]));
@@ -75,7 +75,7 @@ async function fetchStatusData(): Promise<{
     .select({
       setId: cardsTable.setId,
       language: localizationsTable.language,
-      n: sql<number>`count(distinct ${localizationsTable.record_id})`,
+      n: sql<number>`count(distinct ${localizationsTable.record_id})::int`,
     })
     .from(localizationsTable)
     .innerJoin(cardsTable, eq(localizationsTable.record_id, cardsTable.id))
@@ -94,7 +94,7 @@ async function fetchStatusData(): Promise<{
     .select({
       setId: cardsTable.setId,
       language: localizationsTable.language,
-      n: sql<number>`count(distinct ${localizationsTable.record_id})`,
+      n: sql<number>`count(distinct ${localizationsTable.record_id})::int`,
     })
     .from(localizationsTable)
     .innerJoin(cardsTable, eq(localizationsTable.record_id, cardsTable.id))

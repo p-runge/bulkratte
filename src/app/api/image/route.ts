@@ -2,12 +2,7 @@
 // Prevents the user's browser from directly connecting to external pages and transferring user data.
 // Usage: /api/image?url=https%3A%2F%2Fwww.pokewiki.de%2Fimages%2F...
 
-const ALLOWED_HOSTS: Record<string, string> = {
-  "pokewiki.de": "https://www.pokewiki.de/",
-  "pokezentrum.de": "https://www.pokezentrum.de/",
-  "pokemonkarte.de": "https://www.pokemonkarte.de/",
-  "s3.cardmarket.com": "https://www.cardmarket.com/",
-};
+import { PROXY_HOSTS } from "@/lib/proxy-hosts";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -25,20 +20,24 @@ export async function GET(req: Request) {
     return new Response("Invalid url param", { status: 400 });
   }
 
+  if (parsed.protocol !== "https:") {
+    return new Response("Only HTTPS URLs are allowed", { status: 400 });
+  }
+
   const hostname = parsed.hostname.toLowerCase();
-  const referer = Object.entries(ALLOWED_HOSTS).find(([suffix]) => {
+  const isAllowed = PROXY_HOSTS.some((suffix) => {
     const normalizedSuffix = suffix.toLowerCase();
     return (
       hostname === normalizedSuffix || hostname.endsWith(`.${normalizedSuffix}`)
     );
-  })?.[1];
+  });
 
-  if (!referer) {
+  if (!isAllowed) {
     return new Response("URL not allowed", { status: 403 });
   }
 
   try {
-    const imageRes = await fetch(imageUrl);
+    const imageRes = await fetch(imageUrl, { redirect: "error" });
 
     if (!imageRes.ok) {
       return new Response("Failed to fetch image from upstream host", {
@@ -51,9 +50,7 @@ export async function GET(req: Request) {
       return new Response("Upstream resource is not an image", { status: 415 });
     }
 
-    const buffer = await imageRes.arrayBuffer();
-
-    return new Response(buffer, {
+    return new Response(imageRes.body, {
       headers: {
         "Content-Type": contentType,
         "Cache-Control": "public, max-age=604800, immutable", // 7 days

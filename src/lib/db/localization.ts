@@ -3,6 +3,7 @@ import { eq, and, sql, inArray } from "drizzle-orm";
 import type { Language } from "./enums";
 import type { Locale } from "../i18n";
 import { env } from "@/env";
+import { PROXY_HOSTS } from "@/lib/proxy-hosts";
 
 /**
  * Converts a camelCase string to snake_case.
@@ -12,17 +13,6 @@ import { env } from "@/env";
 function toSnakeCase(str: string): string {
   return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
 }
-
-/**
- * Hosts whose images must be fetched via the internal proxy endpoint because
- * they block direct hotlinking / CORS from the browser.
- */
-const PROXY_HOSTS = [
-  "pokewiki.de",
-  "pokezentrum.de",
-  "pokemonkarte.de",
-  "s3.cardmarket.com",
-];
 
 /**
  * Wraps card-image URLs that require hotlink protection through the internal

@@ -58,7 +58,7 @@ export const STATUS_LABEL: Record<CellStatus, string> = {
   missing_images: "Missing card images",
   missing_names: "Missing card names",
   not_seeded: "Not available",
-  nonexistent: "Not existent",
+  nonexistent: "Nonexistent",
 };
 
 const ALL_STATUSES: CellStatus[] = [
@@ -226,6 +226,7 @@ export function StatusTable({
           {search && (
             <button
               onClick={() => setSearch("")}
+              aria-label="Clear search"
               className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
             >
               ✕
