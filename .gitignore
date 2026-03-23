@@ -53,25 +53,3 @@ src/lib/i18n/compiled/
 backups/
 .github/copilot-instructions.md
 
-# local-only scripts and generated data (not part of the app)
-scripts/check-de-vs-tcgdex.ts
-scripts/cleanup-bad-de-images.ts
-scripts/cleanup-de-overshoot.ts
-scripts/cleanup-gym-de-localizations.ts
-scripts/db/analyze-de-missing.ts
-scripts/db/analyze-ecard1-mapping.ts
-scripts/db/check-base1-energies.ts
-scripts/db/db-20260319-105434.sql
-scripts/db/regenerate-still-missing.ts
-scripts/patch-pokewiki-missing-names.ts
-scripts/scan-and-seed-pokewiki-sets.ts
-scripts/seed-from-cardmarket-s3.ts
-scripts/seed-from-crossset.ts
-scripts/seed-from-holo.ts
-scripts/seed-from-pokemonkarte-de.ts
-scripts/seed-german-names.ts
-scripts/seed-hardcoded-s3.ts
-scripts/seed-pokezentrum-basep.ts
-scripts/seed-remaining-names-and-images.ts
-scripts/sync-basep-de.ts
-public/still-missing.json
