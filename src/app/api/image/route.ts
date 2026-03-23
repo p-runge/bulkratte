@@ -31,25 +31,48 @@ export async function GET(req: Request) {
   }
 
   try {
-    const imageRes = await fetch(imageUrl, {
-      redirect: "follow",
-      signal: AbortSignal.timeout(10_000),
-    });
-
-    // Re-validate the final URL after following redirects to prevent open proxy abuse.
-    let finalUrl: URL;
-    try {
-      finalUrl = new URL(imageRes.url);
-    } catch {
-      return new Response("Invalid redirect URL from upstream host", {
-        status: 502,
+    // Manually follow redirects so every hop is validated against the allowlist,
+    // preventing an allowlisted host with an open redirect from routing through
+    // a disallowed or internal address as an intermediate hop.
+    const maxRedirects = 5;
+    let currentUrl = imageUrl;
+    let redirectCount = 0;
+    let imageRes: Response;
+    while (true) {
+      imageRes = await fetch(currentUrl, {
+        redirect: "manual",
+        signal: AbortSignal.timeout(10_000),
       });
-    }
-    if (finalUrl.protocol !== "https:") {
-      return new Response("Only HTTPS URLs are allowed", { status: 400 });
-    }
-    if (!isProxyHost(finalUrl.hostname)) {
-      return new Response("URL not allowed", { status: 403 });
+      if (imageRes.status < 300 || imageRes.status >= 400) {
+        break;
+      }
+      const location = imageRes.headers.get("Location");
+      if (!location) {
+        return new Response("Redirect response missing Location header", {
+          status: 502,
+        });
+      }
+      let nextUrl: URL;
+      try {
+        nextUrl = new URL(location, currentUrl);
+      } catch {
+        return new Response("Invalid redirect URL from upstream host", {
+          status: 502,
+        });
+      }
+      if (nextUrl.protocol !== "https:") {
+        return new Response("Only HTTPS URLs are allowed", { status: 400 });
+      }
+      if (!isProxyHost(nextUrl.hostname)) {
+        return new Response("URL not allowed", { status: 403 });
+      }
+      redirectCount += 1;
+      if (redirectCount > maxRedirects) {
+        return new Response("Too many redirects from upstream host", {
+          status: 502,
+        });
+      }
+      currentUrl = nextUrl.toString();
     }
 
     if (!imageRes.ok) {
