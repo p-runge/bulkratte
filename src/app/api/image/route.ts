@@ -1,6 +1,6 @@
-// Proxy route for fetching card images from Pokewiki, Pokezentrum and pokemonkarte.de.
-// Required because these sites block direct hotlinking and CORS from the browser.
-// Usage: /api/pokewiki-image?url=https%3A%2F%2Fwww.pokewiki.de%2Fimages%2F...
+// Proxy route for fetching card images from third-party sources.
+// Prevents the user's browser from directly connecting to external pages and transferring user data.
+// Usage: /api/image?url=https%3A%2F%2Fwww.pokewiki.de%2Fimages%2F...
 
 const ALLOWED_HOSTS: Record<string, string> = {
   "pokewiki.de": "https://www.pokewiki.de/",
@@ -39,14 +39,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const imageRes = await fetch(imageUrl, {
-      headers: {
-        "User-Agent": "Bulkratte/1.0 (card image proxy)",
-        Referer: referer,
-      },
-      // Ensure the upstream response is not cached by Vercel Edge unexpectedly
-      cache: "no-store",
-    });
+    const imageRes = await fetch(imageUrl);
 
     if (!imageRes.ok) {
       return new Response("Failed to fetch image from upstream host", {
@@ -69,6 +62,6 @@ export async function GET(req: Request) {
       },
     });
   } catch {
-    return new Response("Internal error fetching image", { status: 502 });
+    return new Response("Internal error fetching image", { status: 500 });
   }
 }

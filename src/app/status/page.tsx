@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { db, setsTable, cardsTable, localizationsTable } from "@/lib/db";
 import { LOCALES, DEFAULT_LOCALE, getLanguageFromLocale } from "@/lib/i18n";
-import { eq, and, count, not, sql } from "drizzle-orm";
+import { eq, and, count, sql } from "drizzle-orm";
 import {
   StatusTable,
   type CellStatus,
@@ -63,11 +63,7 @@ async function fetchStatusData(): Promise<{
   rows: SetRow[];
   languages: LanguageInfo[];
 }> {
-  const sets = await db
-    .select()
-    .from(setsTable)
-    .where(not(eq(setsTable.series, "Pokémon TCG Pocket")))
-    .orderBy(setsTable.releaseDate);
+  const sets = await db.select().from(setsTable).orderBy(setsTable.releaseDate);
 
   const cardCountRows = await db
     .select({ setId: cardsTable.setId, total: count() })

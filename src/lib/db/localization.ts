@@ -58,7 +58,7 @@ function applyImageProxy(url: string, columnName: string): string {
   const rawBase = process.env.NEXT_PUBLIC_APP_URL ?? "";
   const base = rawBase.replace(/\/+$/, "");
 
-  return `${base}/api/pokewiki-image?url=${encodeURIComponent(url)}`;
+  return `${base}/api/image?url=${encodeURIComponent(url)}`;
 }
 
 /**

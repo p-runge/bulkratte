@@ -4,7 +4,7 @@
 // Source: https://pokezentrum.de/blog/alle-wizards-black-star-promo-pokemon-karten-in-der-ubersicht/
 //
 // 24 of the 53 basep cards were released in German. English-only promos are skipped.
-// Images are proxied through /api/pokewiki-image at read time (see applyImageProxy
+// Images are proxied through /api/image at read time (see applyImageProxy
 // in src/lib/db/localization.ts).
 
 import { config } from "dotenv";
