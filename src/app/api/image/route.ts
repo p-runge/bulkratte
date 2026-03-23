@@ -68,7 +68,20 @@ export async function GET(req: Request) {
       return new Response("Upstream resource is not an image", { status: 415 });
     }
 
-    return new Response(imageRes.body, {
+    // Enforce the size cap on the actual stream bytes regardless of Content-Length.
+    let bytesReceived = 0;
+    const limiter = new TransformStream<Uint8Array, Uint8Array>({
+      transform(chunk, controller) {
+        bytesReceived += chunk.byteLength;
+        if (bytesReceived > MAX_IMAGE_BYTES) {
+          controller.error(new Error("SizeLimitExceeded"));
+        } else {
+          controller.enqueue(chunk);
+        }
+      },
+    });
+
+    return new Response(imageRes.body!.pipeThrough(limiter), {
       headers: {
         "Content-Type": contentType,
         "Cache-Control": "public, max-age=604800, immutable", // 7 days
