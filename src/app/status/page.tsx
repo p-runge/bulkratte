@@ -9,7 +9,7 @@ import {
   type LanguageInfo,
 } from "./_components/status-table";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 // ── Language list (derived from LOCALES — add a locale → gets a column) ──────
 

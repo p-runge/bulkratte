@@ -12,3 +12,11 @@ export const PROXY_HOSTS = [
   "pokemonkarte.de",
   "s3.cardmarket.com",
 ];
+
+/** Returns true if the given hostname (or a subdomain of it) is in the proxy allowlist. */
+export function isProxyHost(hostname: string): boolean {
+  const lower = hostname.toLowerCase();
+  return PROXY_HOSTS.some(
+    (suffix) => lower === suffix || lower.endsWith(`.${suffix}`),
+  );
+}

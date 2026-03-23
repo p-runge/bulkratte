@@ -3,7 +3,7 @@ import { eq, and, sql, inArray } from "drizzle-orm";
 import type { Language } from "./enums";
 import type { Locale } from "../i18n";
 import { env } from "@/env";
-import { PROXY_HOSTS } from "@/lib/proxy-hosts";
+import { isProxyHost } from "@/lib/proxy-hosts";
 
 /**
  * Converts a camelCase string to snake_case.
@@ -38,16 +38,7 @@ function applyImageProxy(url: string, columnName: string): string {
     return url;
   }
 
-  const hostnameLower = hostname?.toLowerCase() ?? null;
-
-  const shouldProxy =
-    hostnameLower != null &&
-    PROXY_HOSTS.some((host) => {
-      const hostLower = host.toLowerCase();
-      return (
-        hostnameLower === hostLower || hostnameLower.endsWith(`.${hostLower}`)
-      );
-    });
+  const shouldProxy = hostname != null && isProxyHost(hostname);
 
   if (!shouldProxy) {
     return url;

@@ -2,7 +2,9 @@
 // Prevents the user's browser from directly connecting to external pages and transferring user data.
 // Usage: /api/image?url=https%3A%2F%2Fwww.pokewiki.de%2Fimages%2F...
 
-import { PROXY_HOSTS } from "@/lib/proxy-hosts";
+import { isProxyHost } from "@/lib/proxy-hosts";
+
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10 MB
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -24,10 +26,7 @@ export async function GET(req: Request) {
     return new Response("Only HTTPS URLs are allowed", { status: 400 });
   }
 
-  const isAllowedHost = (h: string) =>
-    PROXY_HOSTS.some((suffix) => h === suffix || h.endsWith(`.${suffix}`));
-
-  if (!isAllowedHost(parsed.hostname.toLowerCase())) {
+  if (!isProxyHost(parsed.hostname)) {
     return new Response("URL not allowed", { status: 403 });
   }
 
@@ -42,12 +41,14 @@ export async function GET(req: Request) {
     try {
       finalUrl = new URL(imageRes.url);
     } catch {
-      return new Response("Invalid redirect URL from upstream host", { status: 502 });
+      return new Response("Invalid redirect URL from upstream host", {
+        status: 502,
+      });
     }
     if (finalUrl.protocol !== "https:") {
       return new Response("Only HTTPS URLs are allowed", { status: 400 });
     }
-    if (!isAllowedHost(finalUrl.hostname.toLowerCase())) {
+    if (!isProxyHost(finalUrl.hostname)) {
       return new Response("URL not allowed", { status: 403 });
     }
 
@@ -55,6 +56,11 @@ export async function GET(req: Request) {
       return new Response("Failed to fetch image from upstream host", {
         status: imageRes.status,
       });
+    }
+
+    const contentLength = imageRes.headers.get("Content-Length");
+    if (contentLength && parseInt(contentLength, 10) > MAX_IMAGE_BYTES) {
+      return new Response("Upstream image exceeds size limit", { status: 502 });
     }
 
     const contentType = imageRes.headers.get("Content-Type");
