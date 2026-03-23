@@ -37,7 +37,10 @@ export async function GET(req: Request) {
   }
 
   try {
-    const imageRes = await fetch(imageUrl, { redirect: "error" });
+    const imageRes = await fetch(imageUrl, {
+      redirect: "error",
+      signal: AbortSignal.timeout(10_000),
+    });
 
     if (!imageRes.ok) {
       return new Response("Failed to fetch image from upstream host", {
@@ -57,7 +60,10 @@ export async function GET(req: Request) {
         "X-Content-Type-Options": "nosniff",
       },
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof Error && err.name === "TimeoutError") {
+      return new Response("Upstream host timed out", { status: 504 });
+    }
     return new Response("Internal error fetching image", { status: 500 });
   }
 }
