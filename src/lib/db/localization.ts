@@ -2,6 +2,7 @@ import { db, localizationsTable } from "./index";
 import { eq, and, sql, inArray } from "drizzle-orm";
 import type { Language } from "./enums";
 import type { Locale } from "../i18n";
+import { env } from "@/env";
 
 /**
  * Converts a camelCase string to snake_case.
@@ -56,7 +57,7 @@ function applyImageProxy(url: string, columnName: string): string {
     return url;
   }
 
-  const rawBase = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  const rawBase = env.NEXT_PUBLIC_APP_URL ?? "";
   const base = rawBase.replace(/\/+$/, "");
 
   return `${base}/api/image?url=${encodeURIComponent(url)}`;
