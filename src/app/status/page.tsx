@@ -1,5 +1,3 @@
-export const dynamic = "force-dynamic";
-
 import { db, setsTable, cardsTable, localizationsTable } from "@/lib/db";
 import { LOCALES, DEFAULT_LOCALE, getLanguageFromLocale } from "@/lib/i18n";
 import { eq, and, sql } from "drizzle-orm";
@@ -10,6 +8,8 @@ import {
   type SetRow,
   type LanguageInfo,
 } from "./_components/status-table";
+
+export const dynamic = "force-dynamic";
 
 // ── Language list (derived from LOCALES — add a locale → gets a column) ──────
 
