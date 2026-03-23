@@ -72,7 +72,9 @@ export async function GET(req: Request) {
     // return a proper error status (rather than a 200 that truncates mid-stream).
     const reader = imageRes.body?.getReader();
     if (!reader) {
-      return new Response("Upstream image has no readable body", { status: 502 });
+      return new Response("Upstream image has no readable body", {
+        status: 502,
+      });
     }
     const chunks: Uint8Array[] = [];
     let bytesReceived = 0;
@@ -82,8 +84,14 @@ export async function GET(req: Request) {
       if (!value) continue;
       bytesReceived += value.byteLength;
       if (bytesReceived > MAX_IMAGE_BYTES) {
-        try { await reader.cancel(); } catch { /* ignore */ }
-        return new Response("Upstream image exceeds size limit", { status: 502 });
+        try {
+          await reader.cancel();
+        } catch {
+          /* ignore */
+        }
+        return new Response("Upstream image exceeds size limit", {
+          status: 502,
+        });
       }
       chunks.push(value);
     }
