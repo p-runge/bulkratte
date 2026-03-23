@@ -160,6 +160,8 @@ export function StatusTable({
             return (
               <button
                 key={status}
+                type="button"
+                aria-pressed={active}
                 onClick={(e) => {
                   if (e.shiftKey) {
                     toggleFilter(status);

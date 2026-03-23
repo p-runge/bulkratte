@@ -68,20 +68,33 @@ export async function GET(req: Request) {
       return new Response("Upstream resource is not an image", { status: 415 });
     }
 
-    // Enforce the size cap on the actual stream bytes regardless of Content-Length.
+    // Buffer the stream before responding so we can enforce the size cap and
+    // return a proper error status (rather than a 200 that truncates mid-stream).
+    const reader = imageRes.body?.getReader();
+    if (!reader) {
+      return new Response("Upstream image has no readable body", { status: 502 });
+    }
+    const chunks: Uint8Array[] = [];
     let bytesReceived = 0;
-    const limiter = new TransformStream<Uint8Array, Uint8Array>({
-      transform(chunk, controller) {
-        bytesReceived += chunk.byteLength;
-        if (bytesReceived > MAX_IMAGE_BYTES) {
-          controller.error(new Error("SizeLimitExceeded"));
-        } else {
-          controller.enqueue(chunk);
-        }
-      },
-    });
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+      bytesReceived += value.byteLength;
+      if (bytesReceived > MAX_IMAGE_BYTES) {
+        try { await reader.cancel(); } catch { /* ignore */ }
+        return new Response("Upstream image exceeds size limit", { status: 502 });
+      }
+      chunks.push(value);
+    }
+    const body = new Uint8Array(bytesReceived);
+    let offset = 0;
+    for (const chunk of chunks) {
+      body.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
 
-    return new Response(imageRes.body!.pipeThrough(limiter), {
+    return new Response(body, {
       headers: {
         "Content-Type": contentType,
         "Cache-Control": "public, max-age=604800, immutable", // 7 days
