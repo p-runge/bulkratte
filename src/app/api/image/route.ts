@@ -24,23 +24,32 @@ export async function GET(req: Request) {
     return new Response("Only HTTPS URLs are allowed", { status: 400 });
   }
 
-  const hostname = parsed.hostname.toLowerCase();
-  const isAllowed = PROXY_HOSTS.some((suffix) => {
-    const normalizedSuffix = suffix.toLowerCase();
-    return (
-      hostname === normalizedSuffix || hostname.endsWith(`.${normalizedSuffix}`)
-    );
-  });
+  const isAllowedHost = (h: string) =>
+    PROXY_HOSTS.some((suffix) => h === suffix || h.endsWith(`.${suffix}`));
 
-  if (!isAllowed) {
+  if (!isAllowedHost(parsed.hostname.toLowerCase())) {
     return new Response("URL not allowed", { status: 403 });
   }
 
   try {
     const imageRes = await fetch(imageUrl, {
-      redirect: "error",
+      redirect: "follow",
       signal: AbortSignal.timeout(10_000),
     });
+
+    // Re-validate the final URL after following redirects to prevent open proxy abuse.
+    let finalUrl: URL;
+    try {
+      finalUrl = new URL(imageRes.url);
+    } catch {
+      return new Response("Invalid redirect URL from upstream host", { status: 502 });
+    }
+    if (finalUrl.protocol !== "https:") {
+      return new Response("Only HTTPS URLs are allowed", { status: 400 });
+    }
+    if (!isAllowedHost(finalUrl.hostname.toLowerCase())) {
+      return new Response("URL not allowed", { status: 403 });
+    }
 
     if (!imageRes.ok) {
       return new Response("Failed to fetch image from upstream host", {
