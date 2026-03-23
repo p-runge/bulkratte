@@ -38,11 +38,16 @@ function applyImageProxy(url: string, columnName: string): string {
     return url;
   }
 
+  const hostnameLower = hostname?.toLowerCase() ?? null;
+
   const shouldProxy =
-    hostname != null &&
-    PROXY_HOSTS.some(
-      (host) => hostname === host || hostname.endsWith(`.${host}`),
-    );
+    hostnameLower != null &&
+    PROXY_HOSTS.some((host) => {
+      const hostLower = host.toLowerCase();
+      return (
+        hostnameLower === hostLower || hostnameLower.endsWith(`.${hostLower}`)
+      );
+    });
 
   if (!shouldProxy) {
     return url;
