@@ -29,8 +29,7 @@ export async function GET(req: Request) {
   const referer = Object.entries(ALLOWED_HOSTS).find(([suffix]) => {
     const normalizedSuffix = suffix.toLowerCase();
     return (
-      hostname === normalizedSuffix ||
-      hostname.endsWith(`.${normalizedSuffix}`)
+      hostname === normalizedSuffix || hostname.endsWith(`.${normalizedSuffix}`)
     );
   })?.[1];
 

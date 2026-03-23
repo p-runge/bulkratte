@@ -46,7 +46,8 @@ function applyImageProxy(url: string, columnName: string): string {
     return url;
   }
 
-  const shouldProxy = hostname != null &&
+  const shouldProxy =
+    hostname != null &&
     PROXY_HOSTS.some(
       (host) => hostname === host || hostname.endsWith(`.${host}`),
     );
