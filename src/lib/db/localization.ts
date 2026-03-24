@@ -2,7 +2,6 @@ import { db, localizationsTable } from "./index";
 import { eq, and, sql, inArray } from "drizzle-orm";
 import type { Language } from "./enums";
 import type { Locale } from "../i18n";
-import { env } from "@/env";
 import { isProxyHost } from "@/lib/proxy-hosts";
 
 /**
@@ -44,10 +43,7 @@ function applyImageProxy(url: string, columnName: string): string {
     return url;
   }
 
-  const rawBase = env.NEXT_PUBLIC_APP_URL ?? "";
-  const base = rawBase.replace(/\/+$/, "");
-
-  return `${base}/api/image?url=${encodeURIComponent(url)}`;
+  return `/api/image?url=${encodeURIComponent(url)}`;
 }
 
 /**

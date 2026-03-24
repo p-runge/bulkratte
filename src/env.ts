@@ -2,7 +2,6 @@ import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 import { config } from "dotenv";
 
-config({ path: ".env.local" });
 config();
 
 export const env = createEnv({
@@ -23,13 +22,5 @@ export const env = createEnv({
     R2_BUCKET_NAME: z.string(),
     R2_ENDPOINT: z.string().url().optional(),
   },
-  client: {
-    // NEXT_PUBLIC_PUBLISHABLE_KEY: z.string().min(1),
-    NEXT_PUBLIC_APP_URL: z.string().url().optional(),
-  },
-  // For Next.js >= 13.4.4, you only need to destructure client variables:
-  experimental__runtimeEnv: {
-    // NEXT_PUBLIC_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_PUBLISHABLE_KEY,
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-  },
+  experimental__runtimeEnv: {},
 });

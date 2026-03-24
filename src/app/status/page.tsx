@@ -1,4 +1,5 @@
 import { db, setsTable, cardsTable, localizationsTable } from "@/lib/db";
+import type { Language } from "@/lib/db/enums";
 import { LOCALES, DEFAULT_LOCALE, getLanguageFromLocale } from "@/lib/i18n";
 import { eq, and, sql } from "drizzle-orm";
 import {
@@ -13,7 +14,7 @@ export const revalidate = 60;
 
 // ── Language list (derived from LOCALES — add a locale → gets a column) ──────
 
-const LANG_META: Record<string, { name: string; flag: string }> = {
+const LANG_META: Record<Language, { name: string; flag: string }> = {
   en: { name: "English", flag: "🇺🇸" },
   es: { name: "Spanish", flag: "🇪🇸" },
   fr: { name: "French", flag: "🇫🇷" },
