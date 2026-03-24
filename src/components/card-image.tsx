@@ -3,6 +3,7 @@
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { CARD_BORDER_RADIUS } from "@/lib/card-config";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 
 type CardImageDialogProps = {
   large: string;
@@ -17,10 +18,32 @@ export function CardImageDialog({
   open,
   onOpenChange,
 }: CardImageDialogProps) {
+  const [naturalSize, setNaturalSize] = useState<{
+    w: number;
+    h: number;
+  } | null>(null);
+  const [isZoomed, setIsZoomed] = useState(false);
+
+  // Reset zoom when dialog closes
+  useEffect(() => {
+    if (!open) setIsZoomed(false);
+  }, [open]);
+
+  // naturalSize is null until the image loads in the browser, so window is
+  // only accessed client-side (never during SSR).
+  const isZoomable =
+    naturalSize != null &&
+    (naturalSize.w > window.innerWidth || naturalSize.h > window.innerHeight);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="w-screen h-screen flex items-center justify-center bg-black/50 p-0 sm:max-w-none border-none"
+        className={[
+          "w-screen h-screen bg-black/50 p-0 sm:max-w-none border-none",
+          isZoomed
+            ? "overflow-auto flex items-start justify-center"
+            : "flex items-center justify-center overflow-hidden",
+        ].join(" ")}
         style={{ borderRadius: 0 }}
         onClick={(e) => {
           // Close when clicking outside the image
@@ -36,7 +59,20 @@ export function CardImageDialog({
           width={600}
           height={825}
           unoptimized
-          className="w-auto h-auto max-h-full max-w-full object-contain"
+          onLoad={(e) => {
+            const img = e.currentTarget;
+            setNaturalSize({ w: img.naturalWidth, h: img.naturalHeight });
+          }}
+          onClick={() => {
+            if (isZoomable) setIsZoomed((z) => !z);
+          }}
+          className={[
+            "w-auto h-auto object-contain",
+            !isZoomed && "max-h-full max-w-full",
+            isZoomable && (isZoomed ? "cursor-zoom-out" : "cursor-zoom-in"),
+          ]
+            .filter(Boolean)
+            .join(" ")}
           style={{ borderRadius: CARD_BORDER_RADIUS }}
           draggable={false}
           priority
