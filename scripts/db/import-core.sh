@@ -1,13 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Load environment variables from .env.local or .env
-if [ -f .env.local ]; then
-  set -a
-  # shellcheck disable=SC1091
-  source .env.local
-  set +a
-elif [ -f .env ]; then
+# Load environment variables from .env
+if [ -f .env ]; then
   set -a
   # shellcheck disable=SC1091
   source .env
@@ -56,7 +51,7 @@ if [ "$IS_LOCAL" = false ]; then
   echo "   ${DB_USER}@${DB_HOST}"
   echo ""
   read -r -p "Do you want to proceed? (y/N): " answer
-  if [[ "${answer,,}" != "y" ]]; then
+  if [[ "$(echo "$answer" | tr '[:upper:]' '[:lower:]')" != "y" ]]; then
     echo "❌  Import cancelled."
     exit 0
   fi
@@ -139,9 +134,11 @@ _psql -q -c "
 # CASCADE clears user_set_cards (cards FK), but user_cards, user_sets, and user
 # accounts are not affected.
 _psql -c "TRUNCATE sets, cards, card_prices, localizations RESTART IDENTITY CASCADE;"
-_pg_restore \
-  --data-only --no-privileges --no-owner --disable-triggers \
-  "${TABLE_FLAGS[@]}"
+# --disable-triggers requires superuser; skip it for remote DBs (Neon etc.).
+# It's safe to omit here because the tables are empty after TRUNCATE CASCADE.
+RESTORE_FLAGS=(--data-only --no-privileges --no-owner)
+[ "$IS_LOCAL" = true ] && RESTORE_FLAGS+=(--disable-triggers)
+_pg_restore "${RESTORE_FLAGS[@]}" "${TABLE_FLAGS[@]}"
 
 # ─── Diff and report ───────────────────────────────────────────────────────────
 DIFF_SQL_FILE=$(mktemp /tmp/import-diff.XXXXXX.sql)
