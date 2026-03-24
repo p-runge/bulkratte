@@ -52,3 +52,4 @@ src/lib/i18n/compiled/
 # db backups
 backups/
 .github/copilot-instructions.md
+

@@ -2,6 +2,7 @@ import { db, localizationsTable } from "./index";
 import { eq, and, sql, inArray } from "drizzle-orm";
 import type { Language } from "./enums";
 import type { Locale } from "../i18n";
+import { isProxyHost } from "@/lib/proxy-hosts";
 
 /**
  * Converts a camelCase string to snake_case.
@@ -10,6 +11,33 @@ import type { Locale } from "../i18n";
  */
 function toSnakeCase(str: string): string {
   return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+}
+
+/**
+ * Wraps card-image URLs that require hotlink protection through the internal
+ * proxy endpoint. Returns a root-relative URL (e.g. "/api/image?...").
+ */
+function applyImageProxy(url: string, columnName: string): string {
+  if (columnName !== "image_small" && columnName !== "image_large") {
+    return url;
+  }
+
+  let hostname: string | null = null;
+  try {
+    const parsed = new URL(url);
+    hostname = parsed.hostname;
+  } catch {
+    // If the URL cannot be parsed (e.g. relative or invalid), do not proxy.
+    return url;
+  }
+
+  const shouldProxy = hostname != null && isProxyHost(hostname);
+
+  if (!shouldProxy) {
+    return url;
+  }
+
+  return `/api/image?url=${encodeURIComponent(url)}`;
 }
 
 /**
@@ -74,7 +102,10 @@ export async function localizeRecord<T extends Record<string, any>>(
       (c) => toSnakeCase(c as string) === translation.column_name,
     );
     if (tsKey !== undefined) {
-      localized[tsKey] = translation.value as any;
+      localized[tsKey] = applyImageProxy(
+        translation.value,
+        translation.column_name,
+      ) as any;
     }
   }
 
@@ -132,7 +163,7 @@ export async function localizeRecords<T extends Record<string, any>>(
       const dbColumnName = toSnakeCase(column as string);
       const translation = recordTranslations.get(dbColumnName);
       if (translation) {
-        localized[column] = translation as any;
+        localized[column] = applyImageProxy(translation, dbColumnName) as any;
       }
     }
     return localized;

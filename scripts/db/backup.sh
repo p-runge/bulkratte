@@ -46,7 +46,29 @@ if docker inspect postgres_db &>/dev/null 2>&1; then
   docker cp postgres_db:/tmp/backup.dump "$FILENAME"
   docker exec postgres_db rm /tmp/backup.dump
 else
-  pg_dump --format=custom "$DATABASE_URL" -f "$FILENAME"
+  # pg_dump may not be on PATH (e.g. installed via Homebrew or Postgres.app on macOS).
+  # Search common locations before giving up.
+  PG_DUMP_BIN=""
+  for candidate in \
+    "$(command -v pg_dump 2>/dev/null)" \
+    /opt/homebrew/bin/pg_dump \
+    /usr/local/bin/pg_dump \
+    /Applications/Postgres.app/Contents/Versions/latest/bin/pg_dump \
+    $(ls /opt/homebrew/opt/postgresql@*/bin/pg_dump 2>/dev/null | tail -1) \
+    $(ls /Applications/Postgres.app/Contents/Versions/*/bin/pg_dump 2>/dev/null | tail -1); do
+    if [ -x "$candidate" ]; then
+      PG_DUMP_BIN="$candidate"
+      break
+    fi
+  done
+
+  if [ -z "$PG_DUMP_BIN" ]; then
+    echo "❌  pg_dump not found and Docker container 'postgres_db' is not running."
+    echo "    Either start Docker ('docker compose up -d db') or install PostgreSQL client tools."
+    exit 1
+  fi
+
+  "$PG_DUMP_BIN" --format=custom "$DATABASE_URL" -f "$FILENAME"
 fi
 
 echo "✅ Backup saved to ${FILENAME}"
