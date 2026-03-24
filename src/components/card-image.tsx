@@ -36,7 +36,7 @@ export function CardImageDialog({
           width={600}
           height={825}
           unoptimized
-          className="w-auto h-auto object-contain"
+          className="w-auto h-auto max-h-full max-w-full object-contain"
           style={{ borderRadius: CARD_BORDER_RADIUS }}
           draggable={false}
           priority
