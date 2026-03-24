@@ -15,13 +15,7 @@ function toSnakeCase(str: string): string {
 
 /**
  * Wraps card-image URLs that require hotlink protection through the internal
- * proxy endpoint. The resulting URL will be absolute when NEXT_PUBLIC_APP_URL
- * is set, or root-relative (e.g. "/api/image?...") when it is not.
- *
- * The base is read from NEXT_PUBLIC_APP_URL (e.g. "https://bulkratte.com").
- * When the env var is not set, it falls back to an empty string, which
- * produces a root-relative URL suitable for standard browser rendering but
- * may not be appropriate for all contexts (e.g. some server-side consumers).
+ * proxy endpoint. Returns a root-relative URL (e.g. "/api/image?...").
  */
 function applyImageProxy(url: string, columnName: string): string {
   if (columnName !== "image_small" && columnName !== "image_large") {
