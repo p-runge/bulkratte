@@ -6,8 +6,14 @@ export default async function CollectionPage() {
     api.userSet.getList.prefetch(),
     // MyCardsTab (empty-state check) and UserCardBrowser (filtered view) use different query keys
     api.userCard.getList.prefetch(),
-    api.userCard.getList.prefetch({ sortBy: "set-and-number", sortOrder: "asc" }),
-    api.userCard.getWantlist.prefetch({ sortBy: "set-and-number", sortOrder: "asc" }),
+    api.userCard.getList.prefetch({
+      sortBy: "set-and-number",
+      sortOrder: "asc",
+    }),
+    api.userCard.getWantlist.prefetch({
+      sortBy: "set-and-number",
+      sortOrder: "asc",
+    }),
     api.card.getFilterOptions.prefetch(),
   ]);
 
