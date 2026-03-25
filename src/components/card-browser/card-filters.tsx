@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
+import { SearchInput } from "@/components/ui/search-input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -429,14 +430,14 @@ export function CardFilters({
               defaultMessage: "Search",
             })}
           </Label>
-          <Input
+          <SearchInput
             id="search"
             placeholder={intl.formatMessage({
               id: "card.filter.search.placeholder",
               defaultMessage: "Card name or number…",
             })}
             value={filterState.search}
-            onChange={(e) => updateFilter("search", e.target.value)}
+            onChange={(value) => updateFilter("search", value)}
             className="bg-background"
           />
         </div>
