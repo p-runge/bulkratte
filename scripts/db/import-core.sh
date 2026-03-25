@@ -58,13 +58,51 @@ if [ "$IS_LOCAL" = false ]; then
 fi
 
 # ─── Docker detection ──────────────────────────────────────────────────────────
+# Only use Docker when targeting a local database. When the user switches
+# DATABASE_URL to a remote host (e.g. Neon), we must call psql/pg_restore
+# directly so the connection actually reaches the remote server.
 USE_DOCKER=false
 CONTAINER_DB_URL=""
-if docker inspect postgres_db &>/dev/null 2>&1; then
+if [ "$IS_LOCAL" = true ] && docker inspect postgres_db &>/dev/null 2>&1; then
   USE_DOCKER=true
   # DATABASE_URL contains the host-mapped port which is unreachable from inside
   # the container — replace it with the internal PostgreSQL port 5432.
   CONTAINER_DB_URL=$(echo "$DATABASE_URL" | sed -E 's|@[^/]+/|@localhost:5432/|')
+fi
+
+# Neon's pooled endpoint (PgBouncer) may have an empty search_path and doesn't
+# support startup parameters like "options=-c search_path=public". Switch to the
+# direct (non-pooled) endpoint by stripping "-pooler" from the hostname.
+if [ "$IS_LOCAL" = false ]; then
+  DATABASE_URL=$(echo "$DATABASE_URL" | sed 's|-pooler\.|.|')
+fi
+
+# ─── Find local binaries (macOS may not have them on PATH) ────────────────────
+_find_pg_bin() {
+  local name="$1"
+  for candidate in \
+    "$(command -v "$name" 2>/dev/null)" \
+    /opt/homebrew/bin/"$name" \
+    /usr/local/bin/"$name" \
+    /Applications/Postgres.app/Contents/Versions/latest/bin/"$name" \
+    $(ls /opt/homebrew/opt/postgresql@*/bin/"$name" 2>/dev/null | tail -1) \
+    $(ls /Applications/Postgres.app/Contents/Versions/*/bin/"$name" 2>/dev/null | tail -1); do
+    if [ -x "$candidate" ]; then
+      echo "$candidate"
+      return
+    fi
+  done
+  echo ""
+}
+
+if [ "$USE_DOCKER" = false ]; then
+  PSQL_BIN=$(_find_pg_bin psql)
+  PG_RESTORE_BIN=$(_find_pg_bin pg_restore)
+  if [ -z "$PSQL_BIN" ] || [ -z "$PG_RESTORE_BIN" ]; then
+    echo "❌  psql or pg_restore not found and Docker container 'postgres_db' is not available."
+    echo "    Install PostgreSQL client tools (e.g. 'brew install libpq')."
+    exit 1
+  fi
 fi
 
 # ─── Database helpers ──────────────────────────────────────────────────────────
@@ -72,7 +110,7 @@ _psql() {
   if [ "$USE_DOCKER" = true ]; then
     docker exec postgres_db psql "$CONTAINER_DB_URL" "$@"
   else
-    psql "$DATABASE_URL" "$@"
+    "$PSQL_BIN" "$DATABASE_URL" "$@"
   fi
 }
 
@@ -85,7 +123,7 @@ _psql_file_tuples() {
     docker exec postgres_db psql -t -A -q "$CONTAINER_DB_URL" -f "$remote"
     docker exec postgres_db rm -f "$remote"
   else
-    psql -t -A -q "$DATABASE_URL" -f "$sql_file"
+    "$PSQL_BIN" -t -A -q "$DATABASE_URL" -f "$sql_file"
   fi
 }
 
@@ -95,16 +133,12 @@ _pg_restore() {
     docker exec postgres_db pg_restore "$@" -d "$CONTAINER_DB_URL" /tmp/import-core.dump
     docker exec postgres_db rm -f /tmp/import-core.dump
   else
-    pg_restore "$@" -d "$DATABASE_URL" "$BACKUP_FILE"
+    "$PG_RESTORE_BIN" "$@" -d "$DATABASE_URL" "$BACKUP_FILE"
   fi
 }
 
 # ─── Core tables ───────────────────────────────────────────────────────────────
 CORE_TABLES=(sets cards card_prices localizations)
-TABLE_FLAGS=()
-for table in "${CORE_TABLES[@]}"; do
-  TABLE_FLAGS+=(--table "$table")
-done
 
 echo ""
 echo "📥 Importing core tables from ${BACKUP_FILE}..."
@@ -138,7 +172,14 @@ _psql -c "TRUNCATE sets, cards, card_prices, localizations RESTART IDENTITY CASC
 # It's safe to omit here because the tables are empty after TRUNCATE CASCADE.
 RESTORE_FLAGS=(--data-only --no-privileges --no-owner)
 [ "$IS_LOCAL" = true ] && RESTORE_FLAGS+=(--disable-triggers)
-_pg_restore "${RESTORE_FLAGS[@]}" "${TABLE_FLAGS[@]}"
+# Restore tables one at a time in dependency order so FK constraints are never
+# violated (e.g. cards.set_id → sets.id). Passing all --table flags at once
+# lets pg_restore follow its internal TOC order (alphabetical), which can put
+# "cards" before "sets" and trigger FK errors on remote DBs where
+# --disable-triggers is not available.
+for table in "${CORE_TABLES[@]}"; do
+  _pg_restore "${RESTORE_FLAGS[@]}" --table "$table"
+done
 
 # ─── Diff and report ───────────────────────────────────────────────────────────
 DIFF_SQL_FILE=$(mktemp /tmp/import-diff.XXXXXX.sql)
