@@ -2,6 +2,7 @@
 
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { CARD_BORDER_RADIUS } from "@/lib/card-config";
+import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
@@ -38,12 +39,12 @@ export function CardImageDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className={[
+        className={cn(
           "w-screen h-screen bg-black/50 p-0 sm:max-w-none border-none",
           isZoomed
-            ? "overflow-auto flex items-start justify-center"
+            ? "overflow-auto grid place-items-center"
             : "flex items-center justify-center overflow-hidden",
-        ].join(" ")}
+        )}
         style={{ borderRadius: 0 }}
         onClick={(e) => {
           // Close when clicking outside the image
@@ -66,13 +67,11 @@ export function CardImageDialog({
           onClick={() => {
             if (isZoomable) setIsZoomed((z) => !z);
           }}
-          className={[
+          className={cn(
             "w-auto h-auto object-contain",
             !isZoomed && "max-h-full max-w-full",
             isZoomable && (isZoomed ? "cursor-zoom-out" : "cursor-zoom-in"),
-          ]
-            .filter(Boolean)
-            .join(" ")}
+          )}
           style={{ borderRadius: CARD_BORDER_RADIUS }}
           draggable={false}
           priority
