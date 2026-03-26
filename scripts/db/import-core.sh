@@ -14,7 +14,12 @@ if [ -z "${DATABASE_URL:-}" ]; then
   exit 1
 fi
 
-# Determine if the database is local or remote
+# Use DATABASE_URL_CORE (restricted role) when available; fall back to DATABASE_URL.
+# DATABASE_URL_CORE should only have access to the four core tables, providing a
+# DB-level safeguard against accidental writes to user data.
+CONN_URL="${DATABASE_URL_CORE:-$DATABASE_URL}"
+
+# Determine if the database is local or remote (always from DATABASE_URL)
 DB_HOST=$(echo "$DATABASE_URL" | sed -E 's|.*@([^:/]+).*|\1|')
 if [[ "$DB_HOST" == "localhost" || "$DB_HOST" == "127.0.0.1" || "$DB_HOST" == "::1" ]]; then
   ENV_LABEL="local"
@@ -45,7 +50,7 @@ fi
 
 # Safety confirmation for non-local databases
 if [ "$IS_LOCAL" = false ]; then
-  DB_USER=$(echo "$DATABASE_URL" | sed -E 's|.*://([^:@]+).*|\1|')
+  DB_USER=$(echo "$CONN_URL" | sed -E 's|.*://([^:@]+).*|\1|')
   echo ""
   echo "⚠️  WARNING: You are about to import into a non-local database"
   echo "   ${DB_USER}@${DB_HOST}"
@@ -65,9 +70,9 @@ USE_DOCKER=false
 CONTAINER_DB_URL=""
 if [ "$IS_LOCAL" = true ] && docker inspect postgres_db &>/dev/null 2>&1; then
   USE_DOCKER=true
-  # DATABASE_URL contains the host-mapped port which is unreachable from inside
+  # CONN_URL contains the host-mapped port which is unreachable from inside
   # the container — replace it with the internal PostgreSQL port 5432.
-  CONTAINER_DB_URL=$(echo "$DATABASE_URL" | sed -E 's|@[^/]+/|@localhost:5432/|')
+  CONTAINER_DB_URL=$(echo "$CONN_URL" | sed -E 's|@[^/]+/|@localhost:5432/|')
 fi
 
 # Neon's pooled endpoint (PgBouncer) may have an empty search_path and doesn't
