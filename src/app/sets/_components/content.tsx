@@ -14,6 +14,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useIntl } from "react-intl";
+import { SearchInput } from "@/components/ui/search-input";
 
 type Props = {
   sets: PokemonSet[];
@@ -66,16 +67,15 @@ export default function Content({ sets }: Props) {
               })}
             </p>
             {/* --- Search Bar --- */}
-            <input
-              type="text"
+            <SearchInput
               autoFocus
               placeholder={intl.formatMessage({
                 id: "page.sets.search.placeholder",
                 defaultMessage: "Search set names...",
               })}
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="mt-4 w-full max-w-md px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring"
+              onChange={setSearch}
+              className="mt-4 w-full max-w-md"
             />
           </div>
         </div>
