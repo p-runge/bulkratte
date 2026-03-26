@@ -75,7 +75,7 @@ export function CardImageDialog({
           <div
             className={cn(
               "flex items-center justify-center",
-              isZoomed ? "min-w-full min-h-full" : "w-full h-full",
+              isZoomed ? "w-max min-w-full min-h-full" : "w-full h-full",
             )}
             onClick={(e) => {
               if (e.target === e.currentTarget) onOpenChange(false);
