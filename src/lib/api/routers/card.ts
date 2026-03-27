@@ -272,4 +272,61 @@ export const cardRouter = createTRPCRouter({
         ctx.language,
       );
     }),
+
+  findByOcr: publicProcedure
+    .input(
+      z.object({
+        name: z.string().optional(),
+        number: z.string().optional(),
+        setTotal: z.number().int().optional(),
+      }),
+    )
+    .query(async ({ input, ctx }) => {
+      const conditions = [];
+
+      if (input.name) {
+        // Split into words and require each word to appear somewhere in the name.
+        // This tolerates OCR noise and partial reads (e.g. "Bellibolt" still matches "Bellibolt ex").
+        const words = input.name
+          .trim()
+          .split(/\s+/)
+          .filter((w) => w.length > 1);
+        if (words.length > 0) {
+          conditions.push(
+            and(...words.map((w) => ilike(cardsTable.name, `%${w}%`)))!,
+          );
+        }
+      }
+      if (input.number) {
+        // Normalize: strip leading zeros for comparison
+        const normalized = input.number.replace(/^0+/, "") || "0";
+        conditions.push(
+          or(
+            ilike(cardsTable.number, input.number.trim()),
+            sql`CAST(NULLIF(regexp_replace(${cardsTable.number}, '^0+', ''), '') AS TEXT) = ${normalized}`,
+          ),
+        );
+      }
+      if (input.setTotal !== undefined) {
+        conditions.push(eq(setsTable.total, input.setTotal));
+      }
+
+      if (conditions.length === 0) return [];
+
+      const results = await db
+        .select({ card: cardsTable, set: setsTable })
+        .from(cardsTable)
+        .innerJoin(setsTable, eq(cardsTable.setId, setsTable.id))
+        .where(and(...conditions))
+        .limit(10);
+
+      const cards = results.map(({ card, set }) => ({ ...card, set }));
+
+      return localizeRecords(
+        cards,
+        "cards",
+        ["name", "imageSmall", "imageLarge"],
+        ctx.language,
+      );
+    }),
 });
