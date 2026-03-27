@@ -12,7 +12,8 @@ import Fuse from "fuse.js";
 import { Calendar } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useMemo, useCallback, useEffect, useState } from "react";
 import { useIntl } from "react-intl";
 import { SearchInput } from "@/components/ui/search-input";
 
@@ -20,7 +21,26 @@ type Props = {
   sets: PokemonSet[];
 };
 export default function Content({ sets }: Props) {
-  const [search, setSearch] = useState("");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  // Local state drives the input instantly; URL is updated after a short delay.
+  const [search, setSearch] = useState(searchParams.get("s") ?? "");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (search) {
+        params.set("s", search);
+      } else {
+        params.delete("s");
+      }
+      router.replace(`/sets?${params.toString()}`, { scroll: false });
+    }, 300);
+    return () => clearTimeout(timer);
+    // searchParams is intentionally excluded — we only want to react to search changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, router]);
+
   const intl = useIntl();
 
   const fuse = useMemo(() => {
