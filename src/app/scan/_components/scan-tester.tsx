@@ -5,32 +5,34 @@
  *
  * How it works:
  *
- * 1. The user picks a sample card or uploads their own image.
+ * 0. jscanify (OpenCV.js) detects the card boundary in the image:
+ *    a. Edge detection (Canny) + contour finding → largest contour = card
+ *    b. Corner point extraction → perspective warp to a flat, straight card
  *
- * 2. The image is split into two targeted strips:
+ * 1. The corrected image is split into two targeted strips:
  *    - Top 12%  → where the card name always appears
  *    - Bottom 15% → where the card number (e.g. "025/165") always appears,
  *                   whether it is in the bottom-left or bottom-right corner
  *
- * 3. Each strip is prepared for OCR:
+ * 2. Each strip is prepared for OCR:
  *    - First cropped at 1:1 scale so the raw region is visible
  *    - Then upscaled (3–4×), converted to grayscale and contrast-boosted
  *
- * 4. Tesseract.js reads both processed strips:
+ * 3. Tesseract.js reads both processed strips:
  *    - Bottom strip uses PSM 6 (block mode) to handle varying layouts
  *    - Top strip uses PSM 7 (single-line mode) for the card name
  *
- * 5. The raw text is parsed:
+ * 4. The raw text is parsed:
  *    - Number/total: regex looks for the "NNN/NNN" pattern, tolerating
  *      OCR noise on the slash character ( / \ | )
  *    - Name: lines are cleaned, noise words are filtered, and the longest
  *      remaining line is chosen as the most likely card name
  *
- * 6. The parsed values (name, number, set total) are sent to the
+ * 5. The parsed values (name, number, set total) are sent to the
  *    `card.findByOcr` tRPC endpoint, which does a fuzzy word-by-word
  *    DB lookup and returns matching cards.
  *
- * 7. Each step is rendered visually as it completes so the user can
+ * 6. Each step is rendered visually as it completes so the user can
  *    follow the full pipeline in real time.
  */
 
@@ -67,6 +69,8 @@ type ImageStep = {
   label: string;
   dataUrl: string;
   description: string;
+  /** "card" renders taller; "strip" renders short. Default: "strip" */
+  size?: "card" | "strip";
 };
 
 type TextStep = {
@@ -94,6 +98,34 @@ type ScanStepInput =
   | Omit<ImageStep, "stepNumber">
   | Omit<TextStep, "stepNumber">
   | Omit<ParsedStep, "stepNumber">;
+
+/** Module-level promise — OpenCV.js is only loaded once per page session. */
+let opencvLoadPromise: Promise<void> | null = null;
+
+function loadOpenCV(): Promise<void> {
+  if (opencvLoadPromise) return opencvLoadPromise;
+  opencvLoadPromise = new Promise<void>((resolve, reject) => {
+    const w = window as Window & { cv?: { Mat?: unknown } };
+    if (w.cv?.Mat) {
+      resolve();
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "/opencv.js";
+    script.async = true;
+    script.onload = () => {
+      // OpenCV WASM initialises asynchronously after the script loads
+      const poll = () =>
+        (w.cv as { Mat?: unknown } | undefined)?.Mat
+          ? resolve()
+          : setTimeout(poll, 50);
+      poll();
+    };
+    script.onerror = () => reject(new Error("Failed to load OpenCV.js"));
+    document.head.appendChild(script);
+  });
+  return opencvLoadPromise;
+}
 
 export function ScanTester({ samples }: Props) {
   const [activeImage, setActiveImage] = useState<string | null>(null);
@@ -133,9 +165,48 @@ export function ScanTester({ samples }: Props) {
     try {
       const img = await loadImage(imageUrl);
 
+      // ── jscanify: card detection & perspective correction ─────────────────
+
+      await loadOpenCV();
+
+      const { default: JscanifyClass } = await import("jscanify/client");
+      const scanner = new JscanifyClass();
+
+      // Step 1: highlight detected card boundary on the original image
+      const highlightCanvas = scanner.highlightPaper(img, {
+        color: "orange",
+        thickness: 6,
+      });
+      pushStep({
+        kind: "image",
+        label: "jscanify: card boundary detection",
+        dataUrl: highlightCanvas.toDataURL(),
+        description:
+          "OpenCV edge detection (Canny) finds the largest contour in the image. The detected card boundary is drawn in orange. This is what jscanify will warp into a flat rectangle.",
+        size: "card",
+      });
+
+      // Step 2: perspective warp → flat, undistorted card
+      const extractedCanvas = scanner.extractPaper(
+        img,
+        img.naturalWidth,
+        img.naturalHeight,
+      );
+      const cardSource: HTMLImageElement | HTMLCanvasElement =
+        extractedCanvas ?? img;
+      pushStep({
+        kind: "image",
+        label: "jscanify: perspective correction",
+        dataUrl: (extractedCanvas ?? cropFull(img)).toDataURL(),
+        description: extractedCanvas
+          ? "The four detected corners are used as control points for a perspective warp (cv.warpPerspective), producing a straight, undistorted card ready for OCR."
+          : "No card boundary detected — using the original image as-is for the remaining steps.",
+        size: "card",
+      });
+
       // ── Name strip ──────────────────────────────────────────────────────
 
-      const nameCrop = cropImage(img, 0, 0, 1, 0.12);
+      const nameCrop = cropImage(cardSource, 0, 0, 1, 0.12);
       pushStep({
         kind: "image",
         label: "Crop: name strip (top 12%)",
@@ -155,7 +226,7 @@ export function ScanTester({ samples }: Props) {
 
       // ── Number strip ────────────────────────────────────────────────────
 
-      const numberCrop = cropImage(img, 0, 0.85, 1, 0.15);
+      const numberCrop = cropImage(cardSource, 0, 0.85, 1, 0.15);
       pushStep({
         kind: "image",
         label: "Crop: number strip (bottom 15%)",
@@ -456,7 +527,11 @@ function StepRow({
             <img
               src={step.dataUrl}
               alt={step.label}
-              className="max-h-16 w-auto rounded border"
+              className={
+                step.size === "card"
+                  ? "max-h-48 w-auto rounded border"
+                  : "max-h-16 w-auto rounded border"
+              }
             />
           </button>
         )}
@@ -496,24 +571,36 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
-/** Crops a proportional region from an image at 1:1 scale. */
+/** Renders the entire image onto a canvas at its natural size. */
+function cropFull(img: HTMLImageElement): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  canvas.getContext("2d")!.drawImage(img, 0, 0);
+  return canvas;
+}
+
+/** Crops a proportional region from an image or canvas at 1:1 scale. */
 function cropImage(
-  img: HTMLImageElement,
+  source: HTMLImageElement | HTMLCanvasElement,
   xRatio: number,
   yRatio: number,
   wRatio: number,
   hRatio: number,
 ): HTMLCanvasElement {
-  const sx = Math.round(img.naturalWidth * xRatio);
-  const sy = Math.round(img.naturalHeight * yRatio);
-  const sw = Math.round(img.naturalWidth * wRatio);
-  const sh = Math.round(img.naturalHeight * hRatio);
+  const sw =
+    source instanceof HTMLImageElement ? source.naturalWidth : source.width;
+  const sh =
+    source instanceof HTMLImageElement ? source.naturalHeight : source.height;
+  const sx = Math.round(sw * xRatio);
+  const sy = Math.round(sh * yRatio);
+  const cw = Math.round(sw * wRatio);
+  const ch = Math.round(sh * hRatio);
 
   const canvas = document.createElement("canvas");
-  canvas.width = sw;
-  canvas.height = sh;
-  const ctx = canvas.getContext("2d")!;
-  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+  canvas.width = cw;
+  canvas.height = ch;
+  canvas.getContext("2d")!.drawImage(source, sx, sy, cw, ch, 0, 0, cw, ch);
   return canvas;
 }
 
