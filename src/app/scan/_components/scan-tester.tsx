@@ -12,11 +12,11 @@
  *    - Bottom 15% → where the card number (e.g. "025/165") always appears,
  *                   whether it is in the bottom-left or bottom-right corner
  *
- * 3. Each strip is prepared for OCR via `prepareForOcr`:
- *    - Upscaled (3–4×) so characters are large enough for Tesseract to read
- *    - Converted to grayscale and contrast-boosted so text stands out clearly
+ * 3. Each strip is prepared for OCR:
+ *    - First cropped at 1:1 scale so the raw region is visible
+ *    - Then upscaled (3–4×), converted to grayscale and contrast-boosted
  *
- * 4. Tesseract.js reads both strips:
+ * 4. Tesseract.js reads both processed strips:
  *    - Bottom strip uses PSM 6 (block mode) to handle varying layouts
  *    - Top strip uses PSM 7 (single-line mode) for the card name
  *
@@ -30,8 +30,8 @@
  *    `card.findByOcr` tRPC endpoint, which does a fuzzy word-by-word
  *    DB lookup and returns matching cards.
  *
- * 7. Matches are shown with a thumbnail. Both the scanned image and any
- *    match thumbnail can be clicked to open a zoomable full-screen view.
+ * 7. Each step is rendered visually as it completes so the user can
+ *    follow the full pipeline in real time.
  */
 
 import { api } from "@/lib/api/react";
@@ -61,10 +61,45 @@ type Props = {
   samples: Sample[];
 };
 
+type ImageStep = {
+  kind: "image";
+  stepNumber: number;
+  label: string;
+  dataUrl: string;
+  description: string;
+};
+
+type TextStep = {
+  kind: "text";
+  stepNumber: number;
+  label: string;
+  text: string;
+  description: string;
+};
+
+type ParsedStep = {
+  kind: "parsed";
+  stepNumber: number;
+  label: string;
+  name: string | null;
+  number: string | null;
+  total: number | null;
+  description: string;
+};
+
+type ScanStep = ImageStep | TextStep | ParsedStep;
+
+// Distributes Omit over each member of the union so discriminants are preserved
+type ScanStepInput =
+  | Omit<ImageStep, "stepNumber">
+  | Omit<TextStep, "stepNumber">
+  | Omit<ParsedStep, "stepNumber">;
+
 export function ScanTester({ samples }: Props) {
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [ocrResult, setOcrResult] = useState<OcrResult | null>(null);
+  const [scanSteps, setScanSteps] = useState<ScanStep[]>([]);
   const [zoomImage, setZoomImage] = useState<{
     src: string;
     alt: string;
@@ -83,26 +118,88 @@ export function ScanTester({ samples }: Props) {
   async function runOcr(imageUrl: string) {
     setIsScanning(true);
     setOcrResult(null);
+    setScanSteps([]);
+
+    const steps: ScanStep[] = [];
+    let n = 0;
+
+    function pushStep(step: ScanStepInput) {
+      n++;
+      const s = { ...step, stepNumber: n } as ScanStep;
+      steps.push(s);
+      setScanSteps([...steps]);
+    }
 
     try {
       const img = await loadImage(imageUrl);
 
-      // Number/total: always in the bottom strip (left or right corner).
-      // 15% height covers all card eras, 4× scale + contrast for small text.
-      const numberCanvas = prepareForOcr(img, 0, 0.85, 1, 0.15, 4);
+      // ── Name strip ──────────────────────────────────────────────────────
 
-      // Name: top 12% of the card — consistent across all layouts.
-      const nameCanvas = prepareForOcr(img, 0, 0, 1, 0.12, 3);
+      const nameCrop = cropImage(img, 0, 0, 1, 0.12);
+      pushStep({
+        kind: "image",
+        label: "Crop: name strip (top 12%)",
+        dataUrl: nameCrop.toDataURL(),
+        description:
+          "The Pokémon name is always in the top 12% of the card. This region is isolated first at its natural resolution.",
+      });
+
+      const nameProcessed = applyProcessing(nameCrop, 3);
+      pushStep({
+        kind: "image",
+        label: "Process: upscale 3× · grayscale · contrast boost",
+        dataUrl: nameProcessed.toDataURL(),
+        description:
+          "The strip is upscaled 3× so Tesseract can read small text, then converted to grayscale and contrast-stretched (factor 1.8) so the text stands out from the artwork.",
+      });
+
+      // ── Number strip ────────────────────────────────────────────────────
+
+      const numberCrop = cropImage(img, 0, 0.85, 1, 0.15);
+      pushStep({
+        kind: "image",
+        label: "Crop: number strip (bottom 15%)",
+        dataUrl: numberCrop.toDataURL(),
+        description:
+          'The card number (e.g. "025/165") is always in the bottom 15%, whether in the bottom-left or bottom-right corner depending on the card era.',
+      });
+
+      const numberProcessed = applyProcessing(numberCrop, 4);
+      pushStep({
+        kind: "image",
+        label: "Process: upscale 4× · grayscale · contrast boost",
+        dataUrl: numberProcessed.toDataURL(),
+        description:
+          "Upscaled 4× (one more than the name strip) because the number text tends to be smaller. Same grayscale and contrast processing applies.",
+      });
+
+      // ── OCR ─────────────────────────────────────────────────────────────
 
       const worker = await createWorker("eng");
 
       await worker.setParameters({ tessedit_pageseg_mode: "6" as never });
-      const numberResult = await worker.recognize(numberCanvas);
+      const numberResult = await worker.recognize(numberProcessed);
+      pushStep({
+        kind: "text",
+        label: "Tesseract OCR: number strip (PSM 6 — block mode)",
+        text: numberResult.data.text || "(no text detected)",
+        description:
+          "Raw text output from Tesseract on the number strip. Block mode (PSM 6) handles the number appearing in different corners across card eras.",
+      });
 
       await worker.setParameters({ tessedit_pageseg_mode: "7" as never });
-      const nameResult = await worker.recognize(nameCanvas);
+      const nameResult = await worker.recognize(nameProcessed);
+      pushStep({
+        kind: "text",
+        label: "Tesseract OCR: name strip (PSM 7 — single-line mode)",
+        text: nameResult.data.text || "(no text detected)",
+        description:
+          "Raw text output from Tesseract on the name strip. Single-line mode (PSM 7) is more accurate when exactly one line of text is expected.",
+      });
 
       await worker.terminate();
+
+      // ── Parse ────────────────────────────────────────────────────────────
 
       // Extract NNN/NNN — tolerates OCR noise on the slash character
       const numberMatch = numberResult.data.text.match(
@@ -122,6 +219,16 @@ export function ScanTester({ samples }: Props) {
           .filter((l) => l.length > 2 && !ignoredPatterns.test(l))
           .sort((a, b) => b.length - a.length)[0] ?? null;
 
+      pushStep({
+        kind: "parsed",
+        label: "Parsed values",
+        name: parsedName,
+        number: parsedNumber,
+        total: parsedTotal,
+        description:
+          'Number/total: regex finds the "NNN/NNN" pattern, tolerating OCR noise on the slash ( / \\ | ). Name: lines are cleaned, noise words filtered (©, illus, HP, ex, v), and the longest remaining line wins.',
+      });
+
       setOcrResult({ parsedName, parsedNumber, parsedTotal });
     } finally {
       setIsScanning(false);
@@ -131,7 +238,7 @@ export function ScanTester({ samples }: Props) {
   function handleSampleClick(sample: Sample) {
     if (!sample.imageLarge) return;
     setActiveImage(sample.imageLarge);
-    runOcr(sample.imageLarge);
+    void runOcr(sample.imageLarge);
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -139,7 +246,7 @@ export function ScanTester({ samples }: Props) {
     if (!file) return;
     const url = URL.createObjectURL(file);
     setActiveImage(url);
-    runOcr(url);
+    void runOcr(url);
   }
 
   return (
@@ -202,38 +309,31 @@ export function ScanTester({ samples }: Props) {
             />
           </button>
 
-          {/* OCR results */}
+          {/* Step-by-step pipeline */}
           <div className="space-y-5">
+            {scanSteps.map((step) => (
+              <StepRow
+                key={step.stepNumber}
+                step={step}
+                onZoom={(src, alt) => setZoomImage({ src, alt })}
+              />
+            ))}
+
             {isScanning && (
-              <p className="text-sm text-muted-foreground animate-pulse">
-                Scanning…
+              <p className="text-sm text-muted-foreground animate-pulse pl-7">
+                Processing…
               </p>
             )}
 
+            {/* DB lookup — rendered as the final step once OCR is done */}
             {ocrResult && !isScanning && (
-              <>
-                <div>
-                  <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">
-                    Detected
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary">
-                      Name: {ocrResult.parsedName ?? "—"}
-                    </Badge>
-                    <Badge variant="secondary">
-                      Number: {ocrResult.parsedNumber ?? "—"}
-                    </Badge>
-                    <Badge variant="secondary">
-                      Set total: {ocrResult.parsedTotal ?? "—"}
-                    </Badge>
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">
-                    DB matches{" "}
-                    {lookupQuery.data ? `(${lookupQuery.data.length})` : ""}
-                  </p>
+              <div className="space-y-2">
+                <StepHeader
+                  number={scanSteps.length + 1}
+                  label="Database lookup"
+                  description={`Fuzzy word-by-word search for name "${ocrResult.parsedName ?? "—"}", number "${ocrResult.parsedNumber ?? "—"}", set total ${ocrResult.parsedTotal ?? "—"}. Returns up to 10 matches.`}
+                />
+                <div className="pl-7">
                   {lookupQuery.isLoading && (
                     <p className="text-sm text-muted-foreground">Looking up…</p>
                   )}
@@ -289,7 +389,7 @@ export function ScanTester({ samples }: Props) {
                     </div>
                   )}
                 </div>
-              </>
+              </div>
             )}
           </div>
         </section>
@@ -308,7 +408,82 @@ export function ScanTester({ samples }: Props) {
   );
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function StepHeader({
+  number,
+  label,
+  description,
+}: {
+  number: number;
+  label: string;
+  description: string;
+}) {
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center gap-2">
+        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+          {number}
+        </span>
+        <p className="font-semibold text-sm">{label}</p>
+      </div>
+      <p className="text-xs text-muted-foreground pl-7">{description}</p>
+    </div>
+  );
+}
+
+function StepRow({
+  step,
+  onZoom,
+}: {
+  step: ScanStep;
+  onZoom: (src: string, alt: string) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <StepHeader
+        number={step.stepNumber}
+        label={step.label}
+        description={step.description}
+      />
+      <div className="pl-7">
+        {step.kind === "image" && (
+          <button
+            className="cursor-zoom-in"
+            onClick={() => onZoom(step.dataUrl, step.label)}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={step.dataUrl}
+              alt={step.label}
+              className="max-h-16 w-auto rounded border"
+            />
+          </button>
+        )}
+        {step.kind === "text" && (
+          <pre className="text-xs font-mono bg-muted p-3 rounded whitespace-pre-wrap break-all">
+            {step.text}
+          </pre>
+        )}
+        {step.kind === "parsed" && (
+          <div className="flex flex-wrap gap-2">
+            <Badge variant={step.name ? "default" : "secondary"}>
+              Name: {step.name ?? "—"}
+            </Badge>
+            <Badge variant={step.number ? "default" : "secondary"}>
+              Number: {step.number ?? "—"}
+            </Badge>
+            <Badge variant={step.total !== null ? "default" : "secondary"}>
+              Set total: {step.total ?? "—"}
+            </Badge>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 /** Loads a URL into an HTMLImageElement, resolving once it's ready. */
 function loadImage(src: string): Promise<HTMLImageElement> {
@@ -321,19 +496,13 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
-/**
- * Prepares a region of the card image for Tesseract:
- * - Crops the specified area (all values 0–1, proportional to image size)
- * - Scales it up by `scale` factor so Tesseract can read small text
- * - Converts to grayscale and boosts contrast so text stands out from artwork
- */
-function prepareForOcr(
+/** Crops a proportional region from an image at 1:1 scale. */
+function cropImage(
   img: HTMLImageElement,
   xRatio: number,
   yRatio: number,
   wRatio: number,
   hRatio: number,
-  scale = 3,
 ): HTMLCanvasElement {
   const sx = Math.round(img.naturalWidth * xRatio);
   const sy = Math.round(img.naturalHeight * yRatio);
@@ -341,20 +510,36 @@ function prepareForOcr(
   const sh = Math.round(img.naturalHeight * hRatio);
 
   const canvas = document.createElement("canvas");
-  canvas.width = sw * scale;
-  canvas.height = sh * scale;
+  canvas.width = sw;
+  canvas.height = sh;
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+  return canvas;
+}
+
+/**
+ * Upscales a canvas by `scale`, converts to grayscale and boosts contrast
+ * so Tesseract can read small text reliably.
+ */
+function applyProcessing(
+  source: HTMLCanvasElement,
+  scale = 3,
+): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  canvas.width = source.width * scale;
+  canvas.height = source.height * scale;
   const ctx = canvas.getContext("2d")!;
 
-  // Draw scaled region
-  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+  ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
 
-  // Apply grayscale + contrast boost via pixel manipulation
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const d = imageData.data;
   for (let i = 0; i < d.length; i += 4) {
     // Grayscale
     const gray =
-      0.299 * (d[i] ?? 0) + 0.587 * (d[i + 1] ?? 0) + 0.114 * (d[i + 2] ?? 0);
+      0.299 * (d[i] ?? 0) +
+      0.587 * (d[i + 1] ?? 0) +
+      0.114 * (d[i + 2] ?? 0);
     // Contrast stretch: push toward black/white
     const contrasted = Math.min(255, Math.max(0, (gray - 128) * 1.8 + 128));
     d[i] = d[i + 1] = d[i + 2] = contrasted;
