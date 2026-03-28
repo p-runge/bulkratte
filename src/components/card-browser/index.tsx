@@ -3,7 +3,12 @@
 import { api } from "@/lib/api/react";
 import { useUiPreferences } from "@/providers/ui-preferences-provider";
 import { useMemo, useState } from "react";
-import { CardFilters, type CardQuery } from "./card-filters";
+import {
+  CardFilters,
+  DEFAULT_SORT_STATE,
+  EMPTY_FILTER_STATE,
+  type CardQuery,
+} from "./card-filters";
 import { CardGrid, type CardWithPrice } from "./card-grid";
 type CardBrowserSingleProps = {
   selectionMode: "single";
@@ -81,11 +86,7 @@ export function CardBrowser(props: CardBrowserProps) {
   } = useUiPreferences();
 
   const [filters, setFilters] = useState<CardQuery>({
-    setIds: [],
-    rarities: [],
-    search: "",
-    releaseDateFrom: "",
-    releaseDateTo: "",
+    ...EMPTY_FILTER_STATE,
     sortBy: cardBrowserSort.sortBy,
     sortOrder: cardBrowserSort.sortOrder,
   });

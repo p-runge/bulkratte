@@ -353,6 +353,9 @@ export const userCardRouter = createTRPCRouter({
           setIds: z.array(z.string()).optional(),
           search: z.string().optional(),
           rarities: z.array(z.string()).optional(),
+          languages: z.array(z.enum(languageEnum.enumValues)).optional(),
+          variants: z.array(z.enum(variantEnum.enumValues)).optional(),
+          conditions: z.array(z.enum(conditionEnum.enumValues)).optional(),
           releaseDateFrom: z.string().optional(),
           releaseDateTo: z.string().optional(),
           excludeInSets: z.boolean().optional(),
@@ -376,6 +379,18 @@ export const userCardRouter = createTRPCRouter({
 
       if (input?.rarities?.length) {
         conditions.push(inArray(cardsTable.rarity, input.rarities as Rarity[]));
+      }
+
+      if (input?.languages?.length) {
+        conditions.push(inArray(userCardsTable.language, input.languages));
+      }
+
+      if (input?.variants?.length) {
+        conditions.push(inArray(userCardsTable.variant, input.variants));
+      }
+
+      if (input?.conditions?.length) {
+        conditions.push(inArray(userCardsTable.condition, input.conditions));
       }
 
       if (input?.releaseDateFrom || input?.releaseDateTo) {

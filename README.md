@@ -27,14 +27,15 @@ Bulkratte is a web application designed to help users manage and organize their 
 
 ### Environment variables
 
-| Variable | Required | Description |
-|---|---|---|
-| `DATABASE_URL` | ✅ | PostgreSQL connection string for the app (full access) |
-| `DATABASE_URL_CORE` | — | Restricted connection string used by `db:import-core`. Falls back to `DATABASE_URL` if unset. |
+| Variable            | Required | Description                                                                                   |
+| ------------------- | -------- | --------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`      | ✅       | PostgreSQL connection string for the app (full access)                                        |
+| `DATABASE_URL_CORE` | —        | Restricted connection string used by `db:import-core`. Falls back to `DATABASE_URL` if unset. |
 
 `DATABASE_URL_CORE` connects as the `core_importer` role, which only has access to `sets`, `cards`, `card_prices`, and `localizations`. This prevents import scripts from accidentally touching user data.
 
 Local default (created automatically by Docker init script):
+
 ```
 DATABASE_URL_CORE=postgres://core_importer:core_importer_pw@localhost:5469/mydatabase
 ```
@@ -53,4 +54,3 @@ GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE
 ```
 
 Then add `DATABASE_URL_CORE` to your environment with the `core_importer` credentials.
-

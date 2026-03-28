@@ -369,10 +369,70 @@
       "value": "Filter"
     }
   ],
+  "card.filter.condition.count_label": [
+    {
+      "type": 0,
+      "value": "Zustände"
+    }
+  ],
+  "card.filter.condition.empty": [
+    {
+      "type": 0,
+      "value": "Keine Zustände gefunden"
+    }
+  ],
+  "card.filter.condition.label": [
+    {
+      "type": 0,
+      "value": "Zustand"
+    }
+  ],
+  "card.filter.condition.placeholder": [
+    {
+      "type": 0,
+      "value": "Alle Zustände"
+    }
+  ],
+  "card.filter.condition.search": [
+    {
+      "type": 0,
+      "value": "Zustände suchen..."
+    }
+  ],
   "card.filter.date.label": [
     {
       "type": 0,
       "value": "Erscheinungszeitraum"
+    }
+  ],
+  "card.filter.language.count_label": [
+    {
+      "type": 0,
+      "value": "Sprachen"
+    }
+  ],
+  "card.filter.language.empty": [
+    {
+      "type": 0,
+      "value": "Keine Sprachen gefunden"
+    }
+  ],
+  "card.filter.language.label": [
+    {
+      "type": 0,
+      "value": "Sprache"
+    }
+  ],
+  "card.filter.language.placeholder": [
+    {
+      "type": 0,
+      "value": "Alle Sprachen"
+    }
+  ],
+  "card.filter.language.search": [
+    {
+      "type": 0,
+      "value": "Sprachen suchen..."
     }
   ],
   "card.filter.order.asc": [
@@ -505,6 +565,36 @@
     {
       "type": 0,
       "value": "Set → Nummer"
+    }
+  ],
+  "card.filter.variant.count_label": [
+    {
+      "type": 0,
+      "value": "Varianten"
+    }
+  ],
+  "card.filter.variant.empty": [
+    {
+      "type": 0,
+      "value": "Keine Varianten gefunden"
+    }
+  ],
+  "card.filter.variant.label": [
+    {
+      "type": 0,
+      "value": "Variante"
+    }
+  ],
+  "card.filter.variant.placeholder": [
+    {
+      "type": 0,
+      "value": "Alle Varianten"
+    }
+  ],
+  "card.filter.variant.search": [
+    {
+      "type": 0,
+      "value": "Varianten suchen..."
     }
   ],
   "card.filter.view.grid": [

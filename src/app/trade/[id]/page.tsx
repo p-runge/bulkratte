@@ -2,6 +2,8 @@
 
 import {
   CardFilters,
+  DEFAULT_SORT_STATE,
+  EMPTY_FILTER_STATE,
   type CardQuery,
 } from "@/components/card-browser/card-filters";
 import { UserCardGrid } from "@/components/card-browser/user-card-grid";
@@ -18,13 +20,8 @@ import { use, useMemo, useState } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 
 const defaultFilters: CardQuery = {
-  setIds: [],
-  rarities: [],
-  search: "",
-  releaseDateFrom: "",
-  releaseDateTo: "",
-  sortBy: "set-and-number",
-  sortOrder: "asc",
+  ...EMPTY_FILTER_STATE,
+  ...DEFAULT_SORT_STATE,
 };
 
 function buildQueryArgs(filters: CardQuery) {

@@ -2,6 +2,8 @@
 
 import {
   CardFilters,
+  DEFAULT_SORT_STATE,
+  EMPTY_FILTER_STATE,
   type CardQuery,
 } from "@/components/card-browser/card-filters";
 import { UserCardGrid } from "@/components/card-browser/user-card-grid";
@@ -24,13 +26,8 @@ export default function UserWantlistPage({
   const intl = useIntl();
 
   const [filters, setFilters] = useState<CardQuery>({
-    setIds: [],
-    rarities: [],
-    search: "",
-    releaseDateFrom: "",
-    releaseDateTo: "",
-    sortBy: "set-and-number",
-    sortOrder: "asc",
+    ...EMPTY_FILTER_STATE,
+    ...DEFAULT_SORT_STATE,
   });
 
   const { data: currentUser, isLoading: isLoadingUser } =

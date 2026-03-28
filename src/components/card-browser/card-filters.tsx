@@ -22,6 +22,8 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { api } from "@/lib/api/react";
+import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
+import pokemonAPI from "@/lib/pokemon-api";
 import { cn } from "@/lib/utils";
 import { LayoutGrid, LayoutList, SlidersHorizontal, X } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -49,6 +51,9 @@ function monthIndexToEndDateString(monthIndex: number): string {
 export type FilterState = {
   setIds: string[];
   rarities: string[];
+  languages: string[];
+  variants: string[];
+  conditions: string[];
   search: string;
   releaseDateFrom: string;
   releaseDateTo: string;
@@ -61,15 +66,18 @@ export type SortState = {
 
 export type CardQuery = FilterState & SortState;
 
-const EMPTY_FILTER_STATE: FilterState = {
+export const EMPTY_FILTER_STATE: FilterState = {
   setIds: [],
   rarities: [],
+  languages: [],
+  variants: [],
+  conditions: [],
   search: "",
   releaseDateFrom: "",
   releaseDateTo: "",
 };
 
-const DEFAULT_SORT_STATE: SortState = {
+export const DEFAULT_SORT_STATE: SortState = {
   sortBy: "set-and-number",
   sortOrder: "asc",
 };
@@ -81,6 +89,7 @@ type CardFiltersProps = {
   onViewChange?: (view: CardBrowserView) => void;
   disableSetFilter?: boolean;
   disableReleaseDateFilter?: boolean;
+  enableUserCardFilters?: boolean;
   filterOptions?: {
     setIds: string[];
     rarities: string[];
@@ -95,6 +104,7 @@ export function CardFilters({
   onViewChange,
   disableSetFilter = false,
   disableReleaseDateFilter = false,
+  enableUserCardFilters = false,
   filterOptions,
   initialSort,
 }: CardFiltersProps) {
@@ -178,6 +188,9 @@ export function CardFilters({
   const hasActiveFilters =
     filterState.setIds.length > 0 ||
     filterState.rarities.length > 0 ||
+    filterState.languages.length > 0 ||
+    filterState.variants.length > 0 ||
+    filterState.conditions.length > 0 ||
     filterState.search !== "" ||
     filterState.releaseDateFrom !== "" ||
     filterState.releaseDateTo !== "";
@@ -186,6 +199,9 @@ export function CardFilters({
   const activeSecondaryFilterCount = [
     filterState.setIds.length > 0 ? "sets" : "",
     filterState.rarities.length > 0 ? "rarities" : "",
+    filterState.languages.length > 0 ? "languages" : "",
+    filterState.variants.length > 0 ? "variants" : "",
+    filterState.conditions.length > 0 ? "conditions" : "",
     filterState.releaseDateFrom || filterState.releaseDateTo ? "date" : "",
     sortState.sortBy !== DEFAULT_SORT_STATE.sortBy ||
     sortState.sortOrder !== DEFAULT_SORT_STATE.sortOrder
@@ -263,6 +279,108 @@ export function CardFilters({
       />
     </div>
   );
+
+  const languageCombobox = enableUserCardFilters ? (
+    <div className="flex flex-col gap-1.5">
+      <Label className="text-xs text-muted-foreground">
+        {intl.formatMessage({
+          id: "card.filter.language.label",
+          defaultMessage: "Language",
+        })}
+      </Label>
+      <Combobox
+        multi
+        value={filterState.languages}
+        onValueChange={(value) => updateFilter("languages", value)}
+        countLabel={intl.formatMessage({
+          id: "card.filter.language.count_label",
+          defaultMessage: "languages",
+        })}
+        options={languageEnum.enumValues.map((lang) => {
+          const info = pokemonAPI.getCardLanguageInfo(lang);
+          return { value: lang, label: `${info.flag} ${info.name}` };
+        })}
+        placeholder={intl.formatMessage({
+          id: "card.filter.language.placeholder",
+          defaultMessage: "All languages",
+        })}
+        searchPlaceholder={intl.formatMessage({
+          id: "card.filter.language.search",
+          defaultMessage: "Search languages...",
+        })}
+        emptyMessage={intl.formatMessage({
+          id: "card.filter.language.empty",
+          defaultMessage: "No languages found",
+        })}
+      />
+    </div>
+  ) : null;
+
+  const variantCombobox = enableUserCardFilters ? (
+    <div className="flex flex-col gap-1.5">
+      <Label className="text-xs text-muted-foreground">
+        {intl.formatMessage({
+          id: "card.filter.variant.label",
+          defaultMessage: "Variant",
+        })}
+      </Label>
+      <Combobox
+        multi
+        value={filterState.variants}
+        onValueChange={(value) => updateFilter("variants", value)}
+        countLabel={intl.formatMessage({
+          id: "card.filter.variant.count_label",
+          defaultMessage: "variants",
+        })}
+        options={variantEnum.enumValues.map((v) => ({ value: v, label: v }))}
+        placeholder={intl.formatMessage({
+          id: "card.filter.variant.placeholder",
+          defaultMessage: "All variants",
+        })}
+        searchPlaceholder={intl.formatMessage({
+          id: "card.filter.variant.search",
+          defaultMessage: "Search variants...",
+        })}
+        emptyMessage={intl.formatMessage({
+          id: "card.filter.variant.empty",
+          defaultMessage: "No variants found",
+        })}
+      />
+    </div>
+  ) : null;
+
+  const conditionCombobox = enableUserCardFilters ? (
+    <div className="flex flex-col gap-1.5">
+      <Label className="text-xs text-muted-foreground">
+        {intl.formatMessage({
+          id: "card.filter.condition.label",
+          defaultMessage: "Condition",
+        })}
+      </Label>
+      <Combobox
+        multi
+        value={filterState.conditions}
+        onValueChange={(value) => updateFilter("conditions", value)}
+        countLabel={intl.formatMessage({
+          id: "card.filter.condition.count_label",
+          defaultMessage: "conditions",
+        })}
+        options={conditionEnum.enumValues.map((c) => ({ value: c, label: c }))}
+        placeholder={intl.formatMessage({
+          id: "card.filter.condition.placeholder",
+          defaultMessage: "All conditions",
+        })}
+        searchPlaceholder={intl.formatMessage({
+          id: "card.filter.condition.search",
+          defaultMessage: "Search conditions...",
+        })}
+        emptyMessage={intl.formatMessage({
+          id: "card.filter.condition.empty",
+          defaultMessage: "No conditions found",
+        })}
+      />
+    </div>
+  ) : null;
 
   const sortControls = (
     <div className="flex gap-2">
@@ -446,6 +564,9 @@ export function CardFilters({
         <div className="hidden sm:contents">
           {setCombobox}
           {rarityCombobox}
+          {languageCombobox}
+          {variantCombobox}
+          {conditionCombobox}
           {sortControls}
           {viewToggle}
         </div>
@@ -487,6 +608,9 @@ export function CardFilters({
               <div className="flex flex-col gap-5 pb-6">
                 {setCombobox}
                 {rarityCombobox}
+                {languageCombobox}
+                {variantCombobox}
+                {conditionCombobox}
                 {releaseDateSlider}
                 {sortControls}
                 {viewToggle}

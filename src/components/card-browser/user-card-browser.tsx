@@ -1,9 +1,15 @@
 "use client";
 
 import { api } from "@/lib/api/react";
+import type { Condition, Language, Variant } from "@/lib/db/enums";
 import { useUiPreferences } from "@/providers/ui-preferences-provider";
 import { useState } from "react";
-import { CardFilters, type CardQuery } from "./card-filters";
+import {
+  CardFilters,
+  DEFAULT_SORT_STATE,
+  EMPTY_FILTER_STATE,
+  type CardQuery,
+} from "./card-filters";
 import { UserCardGrid } from "./user-card-grid";
 import type { UserCard } from "@/components/binder/types";
 
@@ -15,13 +21,8 @@ type UserCardBrowserProps = {
 export function UserCardBrowser(props: UserCardBrowserProps) {
   const { cardBrowserView, setCardBrowserView } = useUiPreferences();
   const [filters, setFilters] = useState<CardQuery>({
-    setIds: [],
-    rarities: [],
-    search: "",
-    releaseDateFrom: "",
-    releaseDateTo: "",
-    sortBy: "set-and-number",
-    sortOrder: "asc",
+    ...EMPTY_FILTER_STATE,
+    ...DEFAULT_SORT_STATE,
   });
 
   const {
@@ -33,6 +34,18 @@ export function UserCardBrowser(props: UserCardBrowserProps) {
       setIds: filters.setIds.length > 0 ? filters.setIds : undefined,
       search: filters.search || undefined,
       rarities: filters.rarities.length > 0 ? filters.rarities : undefined,
+      languages:
+        filters.languages.length > 0
+          ? (filters.languages as Language[])
+          : undefined,
+      variants:
+        filters.variants.length > 0
+          ? (filters.variants as Variant[])
+          : undefined,
+      conditions:
+        filters.conditions.length > 0
+          ? (filters.conditions as Condition[])
+          : undefined,
       releaseDateFrom: filters.releaseDateFrom || undefined,
       releaseDateTo: filters.releaseDateTo || undefined,
       sortBy: filters.sortBy,
@@ -50,6 +63,7 @@ export function UserCardBrowser(props: UserCardBrowserProps) {
       <CardFilters
         onFilterChange={setFilters}
         filterOptions={filterOptions}
+        enableUserCardFilters
         view={cardBrowserView}
         onViewChange={setCardBrowserView}
       />
