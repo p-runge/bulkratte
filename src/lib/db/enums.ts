@@ -1,5 +1,8 @@
 import { pgEnum } from "drizzle-orm/pg-core";
 
+/** Sentinel value used in filter arrays to match rows where the column is NULL. */
+export const UNSET_FILTER_VALUE = "__unset__" as const;
+
 export const rarityEnum = pgEnum("rarity", [
   "Common",
   "Uncommon",

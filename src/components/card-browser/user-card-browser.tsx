@@ -1,7 +1,6 @@
 "use client";
 
 import { api } from "@/lib/api/react";
-import type { Condition, Language, Variant } from "@/lib/db/enums";
 import { useUiPreferences } from "@/providers/ui-preferences-provider";
 import { useState } from "react";
 import {
@@ -34,18 +33,10 @@ export function UserCardBrowser(props: UserCardBrowserProps) {
       setIds: filters.setIds.length > 0 ? filters.setIds : undefined,
       search: filters.search || undefined,
       rarities: filters.rarities.length > 0 ? filters.rarities : undefined,
-      languages:
-        filters.languages.length > 0
-          ? (filters.languages as Language[])
-          : undefined,
-      variants:
-        filters.variants.length > 0
-          ? (filters.variants as Variant[])
-          : undefined,
+      languages: filters.languages.length > 0 ? filters.languages : undefined,
+      variants: filters.variants.length > 0 ? filters.variants : undefined,
       conditions:
-        filters.conditions.length > 0
-          ? (filters.conditions as Condition[])
-          : undefined,
+        filters.conditions.length > 0 ? filters.conditions : undefined,
       releaseDateFrom: filters.releaseDateFrom || undefined,
       releaseDateTo: filters.releaseDateTo || undefined,
       sortBy: filters.sortBy,

@@ -14,6 +14,7 @@ import {
   conditionEnum,
   languageEnum,
   type Rarity,
+  UNSET_FILTER_VALUE,
   variantEnum,
 } from "@/lib/db/enums";
 import { localizeRecords } from "@/lib/db/localization";
@@ -28,6 +29,7 @@ import {
   gte,
   ilike,
   inArray,
+  isNull,
   lte,
   or,
   sql,
@@ -353,9 +355,9 @@ export const userCardRouter = createTRPCRouter({
           setIds: z.array(z.string()).optional(),
           search: z.string().optional(),
           rarities: z.array(z.string()).optional(),
-          languages: z.array(z.enum(languageEnum.enumValues)).optional(),
-          variants: z.array(z.enum(variantEnum.enumValues)).optional(),
-          conditions: z.array(z.enum(conditionEnum.enumValues)).optional(),
+          languages: z.array(z.string()).optional(),
+          variants: z.array(z.string()).optional(),
+          conditions: z.array(z.string()).optional(),
           releaseDateFrom: z.string().optional(),
           releaseDateTo: z.string().optional(),
           excludeInSets: z.boolean().optional(),
@@ -382,15 +384,42 @@ export const userCardRouter = createTRPCRouter({
       }
 
       if (input?.languages?.length) {
-        conditions.push(inArray(userCardsTable.language, input.languages));
+        const actual = input.languages.filter(
+          (l) => l !== UNSET_FILTER_VALUE,
+        ) as (typeof languageEnum.enumValues)[number][];
+        const includeUnset = input.languages.includes(UNSET_FILTER_VALUE);
+        const parts = [
+          ...(actual.length ? [inArray(userCardsTable.language, actual)] : []),
+          ...(includeUnset ? [isNull(userCardsTable.language)] : []),
+        ];
+        if (parts.length === 1) conditions.push(parts[0]!);
+        else if (parts.length > 1) conditions.push(or(...parts)!);
       }
 
       if (input?.variants?.length) {
-        conditions.push(inArray(userCardsTable.variant, input.variants));
+        const actual = input.variants.filter(
+          (v) => v !== UNSET_FILTER_VALUE,
+        ) as (typeof variantEnum.enumValues)[number][];
+        const includeUnset = input.variants.includes(UNSET_FILTER_VALUE);
+        const parts = [
+          ...(actual.length ? [inArray(userCardsTable.variant, actual)] : []),
+          ...(includeUnset ? [isNull(userCardsTable.variant)] : []),
+        ];
+        if (parts.length === 1) conditions.push(parts[0]!);
+        else if (parts.length > 1) conditions.push(or(...parts)!);
       }
 
       if (input?.conditions?.length) {
-        conditions.push(inArray(userCardsTable.condition, input.conditions));
+        const actual = input.conditions.filter(
+          (c) => c !== UNSET_FILTER_VALUE,
+        ) as (typeof conditionEnum.enumValues)[number][];
+        const includeUnset = input.conditions.includes(UNSET_FILTER_VALUE);
+        const parts = [
+          ...(actual.length ? [inArray(userCardsTable.condition, actual)] : []),
+          ...(includeUnset ? [isNull(userCardsTable.condition)] : []),
+        ];
+        if (parts.length === 1) conditions.push(parts[0]!);
+        else if (parts.length > 1) conditions.push(or(...parts)!);
       }
 
       if (input?.releaseDateFrom || input?.releaseDateTo) {

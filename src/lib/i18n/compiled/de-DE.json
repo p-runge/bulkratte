@@ -567,6 +567,12 @@
       "value": "Set → Nummer"
     }
   ],
+  "card.filter.unset": [
+    {
+      "type": 0,
+      "value": "Nicht gesetzt"
+    }
+  ],
   "card.filter.variant.count_label": [
     {
       "type": 0,
@@ -685,6 +691,42 @@
     {
       "type": 0,
       "value": "Speichern..."
+    }
+  ],
+  "common.language.de": [
+    {
+      "type": 0,
+      "value": "Deutsch"
+    }
+  ],
+  "common.language.en": [
+    {
+      "type": 0,
+      "value": "Englisch"
+    }
+  ],
+  "common.language.es": [
+    {
+      "type": 0,
+      "value": "Spanisch"
+    }
+  ],
+  "common.language.fr": [
+    {
+      "type": 0,
+      "value": "Französisch"
+    }
+  ],
+  "common.language.it": [
+    {
+      "type": 0,
+      "value": "Italienisch"
+    }
+  ],
+  "common.language.pt": [
+    {
+      "type": 0,
+      "value": "Portugiesisch"
     }
   ],
   "confirm.button.cancel.label": [

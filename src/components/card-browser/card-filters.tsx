@@ -22,7 +22,12 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { api } from "@/lib/api/react";
-import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
+import {
+  conditionEnum,
+  languageEnum,
+  UNSET_FILTER_VALUE,
+  variantEnum,
+} from "@/lib/db/enums";
 import pokemonAPI from "@/lib/pokemon-api";
 import { cn } from "@/lib/utils";
 import { LayoutGrid, LayoutList, SlidersHorizontal, X } from "lucide-react";
@@ -296,10 +301,39 @@ export function CardFilters({
           id: "card.filter.language.count_label",
           defaultMessage: "languages",
         })}
-        options={languageEnum.enumValues.map((lang) => {
-          const info = pokemonAPI.getCardLanguageInfo(lang);
-          return { value: lang, label: `${info.flag} ${info.name}` };
-        })}
+        options={[
+          {
+            value: "en",
+            label: `${pokemonAPI.getCardLanguageInfo("en").flag} ${intl.formatMessage({ id: "common.language.en", defaultMessage: "English" })}`,
+          },
+          {
+            value: "fr",
+            label: `${pokemonAPI.getCardLanguageInfo("fr").flag} ${intl.formatMessage({ id: "common.language.fr", defaultMessage: "French" })}`,
+          },
+          {
+            value: "de",
+            label: `${pokemonAPI.getCardLanguageInfo("de").flag} ${intl.formatMessage({ id: "common.language.de", defaultMessage: "German" })}`,
+          },
+          {
+            value: "it",
+            label: `${pokemonAPI.getCardLanguageInfo("it").flag} ${intl.formatMessage({ id: "common.language.it", defaultMessage: "Italian" })}`,
+          },
+          {
+            value: "es",
+            label: `${pokemonAPI.getCardLanguageInfo("es").flag} ${intl.formatMessage({ id: "common.language.es", defaultMessage: "Spanish" })}`,
+          },
+          {
+            value: "pt",
+            label: `${pokemonAPI.getCardLanguageInfo("pt").flag} ${intl.formatMessage({ id: "common.language.pt", defaultMessage: "Portuguese" })}`,
+          },
+          {
+            value: UNSET_FILTER_VALUE,
+            label: intl.formatMessage({
+              id: "card.filter.unset",
+              defaultMessage: "Not set",
+            }),
+          },
+        ]}
         placeholder={intl.formatMessage({
           id: "card.filter.language.placeholder",
           defaultMessage: "All languages",
@@ -332,7 +366,16 @@ export function CardFilters({
           id: "card.filter.variant.count_label",
           defaultMessage: "variants",
         })}
-        options={variantEnum.enumValues.map((v) => ({ value: v, label: v }))}
+        options={[
+          ...variantEnum.enumValues.map((v) => ({ value: v, label: v })),
+          {
+            value: UNSET_FILTER_VALUE,
+            label: intl.formatMessage({
+              id: "card.filter.unset",
+              defaultMessage: "Not set",
+            }),
+          },
+        ]}
         placeholder={intl.formatMessage({
           id: "card.filter.variant.placeholder",
           defaultMessage: "All variants",
@@ -365,7 +408,16 @@ export function CardFilters({
           id: "card.filter.condition.count_label",
           defaultMessage: "conditions",
         })}
-        options={conditionEnum.enumValues.map((c) => ({ value: c, label: c }))}
+        options={[
+          ...conditionEnum.enumValues.map((c) => ({ value: c, label: c })),
+          {
+            value: UNSET_FILTER_VALUE,
+            label: intl.formatMessage({
+              id: "card.filter.unset",
+              defaultMessage: "Not set",
+            }),
+          },
+        ]}
         placeholder={intl.formatMessage({
           id: "card.filter.condition.placeholder",
           defaultMessage: "All conditions",
