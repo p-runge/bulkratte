@@ -1,13 +1,12 @@
 import { api } from "@/lib/api/server";
 import Content from "./_components/content";
-import { Suspense } from "react";
 
-export default async function SetsPage() {
-  const sets = await api.set.getList();
+export default async function SetsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ s?: string }>;
+}) {
+  const [sets, { s }] = await Promise.all([api.set.getList(), searchParams]);
 
-  return (
-    <Suspense>
-      <Content sets={sets} />
-    </Suspense>
-  );
+  return <Content sets={sets} initialSearch={s ?? ""} />;
 }
