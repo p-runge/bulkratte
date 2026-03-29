@@ -3,6 +3,10 @@ import "./src/env";
 
 const nextConfig: NextConfig = {
   images: {
+    localPatterns: [
+      { pathname: "/**" }, // static files from public/
+      { pathname: "/api/image", search: "url=**" }, // image proxy route
+    ],
     remotePatterns: [
       {
         protocol: "https",
