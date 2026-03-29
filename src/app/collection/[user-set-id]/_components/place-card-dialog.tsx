@@ -177,31 +177,108 @@ export function PlaceCardDialog({
     : [];
 
   const handleSelectUserCard = async (userCardId: string) => {
-    try {
-      // Check if this card is already placed elsewhere
-      const placement = placedCardsMap.get(userCardId);
-      if (placement && placement.userSetId !== userSetId) {
-        // Unplace it from the old set first
-        await unplaceCard({ userSetCardId: placement.userSetCardId });
-        // Invalidate the old set's cache
-        await apiUtils.userSet.getById.invalidate({ id: placement.userSetId });
-      }
+    const placement = placedCardsMap.get(userCardId);
+    const setName = userSet.set.name;
 
+    // Snapshot for rollback
+    const prevById = apiUtils.userSet.getById.getData({ id: userSetId });
+    const prevPlaced = apiUtils.userSet.getPlacedUserCardIds.getData();
+
+    // Optimistic: update this slot's userCardId
+    apiUtils.userSet.getById.setData({ id: userSetId }, (old) =>
+      old
+        ? {
+            ...old,
+            cards: old.cards.map((c) =>
+              c.id === userSetCardId ? { ...c, userCardId } : c,
+            ),
+          }
+        : old,
+    );
+
+    // Optimistic: update placed IDs (remove old placement of this card, add new)
+    apiUtils.userSet.getPlacedUserCardIds.setData(undefined, (old) => {
+      const filtered = (old ?? []).filter(
+        (p) => p.userSetCardId !== userSetCardId && p.userCardId !== userCardId,
+      );
+      return [...filtered, { userCardId, userSetId, userSetCardId, setName }];
+    });
+
+    // If card was placed elsewhere, optimistically clear that slot too
+    if (placement && placement.userSetId !== userSetId) {
+      apiUtils.userSet.getById.setData({ id: placement.userSetId }, (old) =>
+        old
+          ? {
+              ...old,
+              cards: old.cards.map((c) =>
+                c.id === placement.userSetCardId
+                  ? { ...c, userCardId: null }
+                  : c,
+              ),
+            }
+          : old,
+      );
+    }
+
+    onSuccess();
+
+    try {
+      if (placement && placement.userSetId !== userSetId) {
+        await unplaceCard({ userSetCardId: placement.userSetCardId });
+        void apiUtils.userSet.getById.invalidate({ id: placement.userSetId });
+      }
       await placeCard({ userSetCardId, userCardId });
-      await apiUtils.userSet.getById.invalidate({ id: userSetId });
-      await apiUtils.userSet.getPlacedUserCardIds.invalidate();
-      onSuccess();
     } catch (error: any) {
-      // Error will be shown by tRPC, just log it
+      // Rollback on error
+      if (prevById !== undefined) {
+        apiUtils.userSet.getById.setData({ id: userSetId }, prevById);
+      }
+      if (prevPlaced !== undefined) {
+        apiUtils.userSet.getPlacedUserCardIds.setData(undefined, prevPlaced);
+      }
       console.error("Failed to place card:", error.message);
+    } finally {
+      void apiUtils.userSet.getById.invalidate({ id: userSetId });
+      void apiUtils.userSet.getPlacedUserCardIds.invalidate();
     }
   };
 
   const handleUnplace = async () => {
-    await unplaceCard({ userSetCardId });
-    await apiUtils.userSet.getById.invalidate({ id: userSetId });
-    await apiUtils.userSet.getPlacedUserCardIds.invalidate();
+    const prevById = apiUtils.userSet.getById.getData({ id: userSetId });
+    const prevPlaced = apiUtils.userSet.getPlacedUserCardIds.getData();
+
+    // Optimistic: clear the slot
+    apiUtils.userSet.getById.setData({ id: userSetId }, (old) =>
+      old
+        ? {
+            ...old,
+            cards: old.cards.map((c) =>
+              c.id === userSetCardId ? { ...c, userCardId: null } : c,
+            ),
+          }
+        : old,
+    );
+
+    // Optimistic: remove from placed IDs
+    apiUtils.userSet.getPlacedUserCardIds.setData(undefined, (old) =>
+      old?.filter((p) => p.userSetCardId !== userSetCardId),
+    );
+
     onSuccess();
+
+    try {
+      await unplaceCard({ userSetCardId });
+    } catch (error) {
+      if (prevById !== undefined) {
+        apiUtils.userSet.getById.setData({ id: userSetId }, prevById);
+      }
+      if (prevPlaced !== undefined) {
+        apiUtils.userSet.getPlacedUserCardIds.setData(undefined, prevPlaced);
+      }
+    } finally {
+      void apiUtils.userSet.getById.invalidate({ id: userSetId });
+      void apiUtils.userSet.getPlacedUserCardIds.invalidate();
+    }
   };
 
   const handleCreateAndPlace = async (
@@ -220,17 +297,48 @@ export function PlaceCardDialog({
       coverCrop,
     });
 
+    const setName = userSet.set.name;
+    const prevById = apiUtils.userSet.getById.getData({ id: userSetId });
+    const prevPlaced = apiUtils.userSet.getPlacedUserCardIds.getData();
+
+    // Optimistic: place the new card in the slot
+    apiUtils.userSet.getById.setData({ id: userSetId }, (old) =>
+      old
+        ? {
+            ...old,
+            cards: old.cards.map((c) =>
+              c.id === userSetCardId ? { ...c, userCardId: newUserCard.id } : c,
+            ),
+          }
+        : old,
+    );
+
+    apiUtils.userSet.getPlacedUserCardIds.setData(undefined, (old) => [
+      ...(old ?? []).filter((p) => p.userSetCardId !== userSetCardId),
+      {
+        userCardId: newUserCard.id,
+        userSetId,
+        userSetCardId,
+        setName,
+      },
+    ]);
+
+    onSuccess();
+
     try {
       await placeCard({ userSetCardId, userCardId: newUserCard.id });
-      await apiUtils.userSet.getById.invalidate({ id: userSetId });
-      await apiUtils.userSet.getPlacedUserCardIds.invalidate();
-      await apiUtils.userCard.getList.invalidate();
-      onSuccess();
     } catch (error: any) {
-      // If placing fails, we still created the card, so just close
+      if (prevById !== undefined) {
+        apiUtils.userSet.getById.setData({ id: userSetId }, prevById);
+      }
+      if (prevPlaced !== undefined) {
+        apiUtils.userSet.getPlacedUserCardIds.setData(undefined, prevPlaced);
+      }
       console.error("Failed to place card:", error.message);
-      await apiUtils.userCard.getList.invalidate();
-      onSuccess();
+    } finally {
+      void apiUtils.userSet.getById.invalidate({ id: userSetId });
+      void apiUtils.userSet.getPlacedUserCardIds.invalidate();
+      void apiUtils.userCard.getList.invalidate();
     }
   };
 

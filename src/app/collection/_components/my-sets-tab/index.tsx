@@ -26,7 +26,6 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, LayoutGridIcon, Plus } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
 import { useIntl } from "react-intl";
 
 type UserSet = RouterOutputs["userSet"]["getList"][number];
@@ -118,14 +117,27 @@ function SortableSetCard({ userSet }: { userSet: UserSet }) {
 export default function MySetsTab() {
   const intl = useIntl();
 
+  const utils = api.useUtils();
   const { data, isLoading } = api.userSet.getList.useQuery();
-  const [items, setItems] = useState<UserSet[]>([]);
 
-  useEffect(() => {
-    if (data) setItems(data);
-  }, [data]);
-
-  const reorderMutation = api.userSet.reorder.useMutation();
+  const reorderMutation = api.userSet.reorder.useMutation({
+    onMutate: async ({ ids }) => {
+      await utils.userSet.getList.cancel();
+      const previous = utils.userSet.getList.getData();
+      utils.userSet.getList.setData(undefined, (old) => {
+        if (!old) return old;
+        const map = new Map(old.map((s) => [s.id, s]));
+        return ids.map((id) => map.get(id)!).filter(Boolean);
+      });
+      return { previous };
+    },
+    onError: (_err, _input, ctx) => {
+      if (ctx?.previous !== undefined) {
+        utils.userSet.getList.setData(undefined, ctx.previous);
+      }
+    },
+    onSettled: () => void utils.userSet.getList.invalidate(),
+  });
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -135,13 +147,11 @@ export default function MySetsTab() {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
-    setItems((prev) => {
-      const oldIndex = prev.findIndex((s) => s.id === active.id);
-      const newIndex = prev.findIndex((s) => s.id === over.id);
-      const next = arrayMove(prev, oldIndex, newIndex);
-      reorderMutation.mutate({ ids: next.map((s) => s.id) });
-      return next;
-    });
+    const currentItems = data ?? [];
+    const oldIndex = currentItems.findIndex((s) => s.id === active.id);
+    const newIndex = currentItems.findIndex((s) => s.id === over.id);
+    const next = arrayMove(currentItems, oldIndex, newIndex);
+    reorderMutation.mutate({ ids: next.map((s) => s.id) });
   }
 
   if (isLoading) {
@@ -165,7 +175,7 @@ export default function MySetsTab() {
           </Button>
         </Link>
       </div>
-      {items.length === 0 ? (
+      {(data ?? []).length === 0 ? (
         // No sets
         <Card className="text-center py-12">
           <CardContent>
@@ -200,11 +210,11 @@ export default function MySetsTab() {
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={items.map((s) => s.id)}
+            items={(data ?? []).map((s) => s.id)}
             strategy={rectSortingStrategy}
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {items.map((userSet) => (
+              {(data ?? []).map((userSet) => (
                 <SortableSetCard key={userSet.id} userSet={userSet} />
               ))}
             </div>

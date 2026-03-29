@@ -54,9 +54,88 @@ export default function UserCardDialog({
     },
   );
 
-  const { mutateAsync: createUserCard } = api.userCard.create.useMutation();
-  const { mutateAsync: updateUserCard } = api.userCard.update.useMutation();
-  const { mutateAsync: deleteUserCard } = api.userCard.delete.useMutation();
+  const { mutate: createUserCard } = api.userCard.create.useMutation({
+    onMutate: async (input) => {
+      if (!card) return;
+      await apiUtils.userCard.getList.cancel();
+      const previous = apiUtils.userCard.getList.getData();
+      const tempId = `temp-${Date.now()}`;
+      const now = new Date().toISOString();
+      apiUtils.userCard.getList.setData(undefined, (old) => [
+        {
+          id: tempId,
+          language: input.language ?? null,
+          variant: input.variant ?? null,
+          condition: input.condition ?? null,
+          notes: input.notes ?? null,
+          card: {
+            ...card,
+            created_at: now,
+            updated_at: now,
+            price: undefined,
+          },
+          localizedName: null,
+          photos: input.photos ?? [],
+          coverPhoto: input.coverPhotoUrl ?? null,
+          coverCrop: input.coverCrop ?? null,
+        },
+        ...(old ?? []),
+      ]);
+      return { previous };
+    },
+    onError: (_err, _input, ctx) => {
+      if (ctx?.previous !== undefined) {
+        apiUtils.userCard.getList.setData(undefined, ctx.previous);
+      }
+    },
+    onSettled: () => void apiUtils.userCard.getList.invalidate(),
+  });
+  const { mutate: updateUserCard } = api.userCard.update.useMutation({
+    onMutate: async (input) => {
+      if (!userCard) return;
+      await apiUtils.userCard.getList.cancel();
+      const previous = apiUtils.userCard.getList.getData();
+      apiUtils.userCard.getList.setData(undefined, (old) =>
+        old?.map((c) =>
+          c.id === userCard.id
+            ? {
+                ...c,
+                language: input.language ?? null,
+                variant: input.variant ?? null,
+                condition: input.condition ?? null,
+                notes: input.notes ?? null,
+                photos: input.photos ?? c.photos,
+                coverPhoto: input.coverPhotoUrl ?? null,
+                coverCrop: input.coverCrop ?? null,
+              }
+            : c,
+        ),
+      );
+      return { previous };
+    },
+    onError: (_err, _input, ctx) => {
+      if (ctx?.previous !== undefined) {
+        apiUtils.userCard.getList.setData(undefined, ctx.previous);
+      }
+    },
+    onSettled: () => void apiUtils.userCard.getList.invalidate(),
+  });
+  const { mutate: deleteUserCard } = api.userCard.delete.useMutation({
+    onMutate: async ({ id }) => {
+      await apiUtils.userCard.getList.cancel();
+      const previous = apiUtils.userCard.getList.getData();
+      apiUtils.userCard.getList.setData(undefined, (old) =>
+        old?.filter((c) => c.id !== id),
+      );
+      return { previous };
+    },
+    onError: (_err, _input, ctx) => {
+      if (ctx?.previous !== undefined) {
+        apiUtils.userCard.getList.setData(undefined, ctx.previous);
+      }
+    },
+    onSettled: () => void apiUtils.userCard.getList.invalidate(),
+  });
   const apiUtils = api.useUtils();
 
   // Get placement status for edit mode
@@ -101,7 +180,7 @@ export default function UserCardDialog({
       await photoUpload.uploadPending();
 
     if (mode === "create") {
-      await createUserCard({
+      createUserCard({
         cardId: card.id,
         language: data.language ?? undefined,
         variant: data.variant ?? undefined,
@@ -112,7 +191,7 @@ export default function UserCardDialog({
         coverCrop,
       });
     } else if (mode === "edit" && userCard) {
-      await updateUserCard({
+      updateUserCard({
         id: userCard.id,
         language: data.language,
         variant: data.variant,
@@ -124,16 +203,14 @@ export default function UserCardDialog({
       });
     }
 
-    await apiUtils.userCard.getList.invalidate();
     onClose();
   }
 
-  async function handleDelete() {
+  function handleDelete() {
     if (!userCard) return;
 
-    await deleteUserCard({ id: userCard.id });
-    await apiUtils.userCard.getList.invalidate();
     onClose();
+    deleteUserCard({ id: userCard.id });
   }
 
   return (

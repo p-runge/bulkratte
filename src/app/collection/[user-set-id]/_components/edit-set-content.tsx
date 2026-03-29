@@ -16,6 +16,8 @@ import { api } from "@/lib/api/react";
 import { Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FormattedMessage, useIntl } from "react-intl";
+import { useState } from "react";
+import { toast } from "sonner";
 import z from "zod";
 
 interface EditSetContentProps {
@@ -37,8 +39,43 @@ function Content({ userSet }: { userSet: UserSet }) {
   const { form } = useBinderContext();
 
   const apiUtils = api.useUtils();
-  const { mutateAsync: updateUserSet, isPending } =
-    api.userSet.update.useMutation();
+  const { mutate: updateUserSet } = api.userSet.update.useMutation({
+    onMutate: async (input) => {
+      await apiUtils.userSet.getList.cancel();
+      const previousList = apiUtils.userSet.getList.getData();
+      apiUtils.userSet.getList.setData(undefined, (old) =>
+        old?.map((s) =>
+          s.id === input.id
+            ? {
+                ...s,
+                name: input.name,
+                image: input.image ?? s.image,
+                preferredLanguage: input.preferredLanguage ?? null,
+                preferredVariant: input.preferredVariant ?? null,
+                preferredCondition: input.preferredCondition ?? null,
+              }
+            : s,
+        ),
+      );
+      return { previousList };
+    },
+    onError: (_err, _input, ctx) => {
+      if (ctx?.previousList !== undefined) {
+        apiUtils.userSet.getList.setData(undefined, ctx.previousList);
+      }
+      toast.error(
+        intl.formatMessage({
+          id: "page.set.action.save.error",
+          defaultMessage: "Failed to save set.",
+        }),
+      );
+    },
+    onSettled: (_data, _err, input) => {
+      void apiUtils.userSet.getList.invalidate();
+      void apiUtils.userSet.getById.invalidate({ id: input.id });
+    },
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const imageValue = form.watch("image");
   const nameValue = form.watch("name");
@@ -53,35 +90,42 @@ function Content({ userSet }: { userSet: UserSet }) {
   } = useImageUpload(imageValue ?? null);
 
   async function onSubmit(data: z.infer<typeof BinderFormSchema>) {
-    const imageUrl = await uploadImage();
+    setIsSubmitting(true);
+    try {
+      const imageUrl = await uploadImage();
 
-    const existingCardMap = new Map(
-      userSet.cards.map((card) => [card.order, card.id]),
-    );
+      const existingCardMap = new Map(
+        userSet.cards.map((card) => [card.order, card.id]),
+      );
 
-    const cards = data.cardData.map((cd) => ({
-      userSetCardId: existingCardMap.get(cd.order) ?? null,
-      cardId: cd.cardId,
-      order: cd.order,
-      preferredLanguage: cd.preferredLanguage ?? null,
-      preferredVariant: cd.preferredVariant ?? null,
-      preferredCondition: cd.preferredCondition ?? null,
-    }));
+      const cards = data.cardData.map((cd) => ({
+        userSetCardId: existingCardMap.get(cd.order) ?? null,
+        cardId: cd.cardId,
+        order: cd.order,
+        preferredLanguage: cd.preferredLanguage ?? null,
+        preferredVariant: cd.preferredVariant ?? null,
+        preferredCondition: cd.preferredCondition ?? null,
+      }));
 
-    await updateUserSet({
-      id: userSet.set.id,
-      name: data.name,
-      image: imageUrl ?? undefined,
-      cards,
-      preferredLanguage: data.preferredLanguage,
-      preferredVariant: data.preferredVariant,
-      preferredCondition: data.preferredCondition,
-    });
-
-    await apiUtils.userSet.getById.invalidate({ id: userSet.set.id });
-    await apiUtils.userSet.getList.invalidate();
-
-    router.push(`/collection/${userSet.set.id}`);
+      router.push(`/collection/${userSet.set.id}`);
+      updateUserSet({
+        id: userSet.set.id,
+        name: data.name,
+        image: imageUrl ?? undefined,
+        cards,
+        preferredLanguage: data.preferredLanguage,
+        preferredVariant: data.preferredVariant,
+        preferredCondition: data.preferredCondition,
+      });
+    } catch {
+      setIsSubmitting(false);
+      toast.error(
+        intl.formatMessage({
+          id: "page.set.action.save.error",
+          defaultMessage: "Failed to save set.",
+        }),
+      );
+    }
   }
 
   const handleRemoveImage = () => {
@@ -139,7 +183,7 @@ function Content({ userSet }: { userSet: UserSet }) {
             </div>
             <Button
               type="submit"
-              disabled={!nameValue.trim() || isPending}
+              disabled={!nameValue.trim() || isSubmitting}
               className="whitespace-nowrap w-full sm:w-auto"
             >
               <Save className="h-4 w-4 mr-2" />

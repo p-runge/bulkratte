@@ -16,7 +16,7 @@ import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormattedMessage, useIntl } from "react-intl";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import z from "zod";
 
@@ -66,8 +66,40 @@ function Content() {
   }, []);
 
   const apiUtils = api.useUtils();
-  const { mutateAsync: createUserSet, isPending } =
-    api.userSet.create.useMutation();
+  const { mutate: createUserSet } = api.userSet.create.useMutation({
+    onMutate: async (input) => {
+      await apiUtils.userSet.getList.cancel();
+      const previous = apiUtils.userSet.getList.getData();
+      const tempId = `temp-${Date.now()}`;
+      apiUtils.userSet.getList.setData(undefined, (old) => [
+        {
+          id: tempId,
+          name: input.name,
+          image: input.image ?? null,
+          preferredLanguage: input.preferredLanguage ?? null,
+          preferredVariant: input.preferredVariant ?? null,
+          preferredCondition: input.preferredCondition ?? null,
+          totalCards: input.cardData.length,
+          placedCards: 0,
+        },
+        ...(old ?? []),
+      ]);
+      return { previous };
+    },
+    onError: (_err, _input, ctx) => {
+      if (ctx?.previous !== undefined) {
+        apiUtils.userSet.getList.setData(undefined, ctx.previous);
+      }
+      toast.error(
+        intl.formatMessage({
+          id: "page.set.action.create.error",
+          defaultMessage: "Failed to create set.",
+        }),
+      );
+    },
+    onSettled: () => void apiUtils.userSet.getList.invalidate(),
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const imageValue = form.watch("image");
   const nameValue = form.watch("name");
@@ -82,23 +114,33 @@ function Content() {
   } = useImageUpload(imageValue ?? null);
 
   async function onSubmit(data: z.infer<typeof BinderFormSchema>) {
-    const imageUrl = await uploadImage();
-    await createUserSet({
-      name: data.name,
-      image: imageUrl ?? undefined,
-      cardData: data.cardData.map((cd) => ({
-        cardId: cd.cardId,
-        order: cd.order,
-        preferredLanguage: cd.preferredLanguage ?? null,
-        preferredVariant: cd.preferredVariant ?? null,
-        preferredCondition: cd.preferredCondition ?? null,
-      })),
-      preferredLanguage: data.preferredLanguage,
-      preferredVariant: data.preferredVariant,
-      preferredCondition: data.preferredCondition,
-    });
-    await apiUtils.userSet.getList.invalidate();
-    router.push("/collection");
+    setIsSubmitting(true);
+    try {
+      const imageUrl = await uploadImage();
+      router.push("/collection");
+      createUserSet({
+        name: data.name,
+        image: imageUrl ?? undefined,
+        cardData: data.cardData.map((cd) => ({
+          cardId: cd.cardId,
+          order: cd.order,
+          preferredLanguage: cd.preferredLanguage ?? null,
+          preferredVariant: cd.preferredVariant ?? null,
+          preferredCondition: cd.preferredCondition ?? null,
+        })),
+        preferredLanguage: data.preferredLanguage,
+        preferredVariant: data.preferredVariant,
+        preferredCondition: data.preferredCondition,
+      });
+    } catch {
+      setIsSubmitting(false);
+      toast.error(
+        intl.formatMessage({
+          id: "page.set.action.create.error",
+          defaultMessage: "Failed to create set.",
+        }),
+      );
+    }
   }
 
   const handleRemoveImage = () => {
@@ -178,7 +220,7 @@ function Content() {
             </div>
             <Button
               type="submit"
-              disabled={!nameValue.trim() || isPending}
+              disabled={!nameValue.trim() || isSubmitting}
               className="whitespace-nowrap w-full sm:w-auto"
             >
               <Save className="h-4 w-4 mr-2" />
