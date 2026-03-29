@@ -132,15 +132,6 @@ _psql_file_tuples() {
   fi
 }
 
-_pg_restore() {
-  if [ "$USE_DOCKER" = true ]; then
-    docker cp "$BACKUP_FILE" postgres_db:/tmp/import-core.dump
-    docker exec postgres_db pg_restore "$@" -d "$CONTAINER_DB_URL" /tmp/import-core.dump
-    docker exec postgres_db rm -f /tmp/import-core.dump
-  else
-    "$PG_RESTORE_BIN" "$@" -d "$DATABASE_URL" "$BACKUP_FILE"
-  fi
-}
 
 # ─── Core tables ───────────────────────────────────────────────────────────────
 CORE_TABLES=(sets cards card_prices localizations)
@@ -148,15 +139,20 @@ CORE_TABLES=(sets cards card_prices localizations)
 echo ""
 echo "📥 Importing core tables from ${BACKUP_FILE}..."
 echo "   Tables: ${CORE_TABLES[*]}"
-echo "   ℹ️  user_set_cards will also be cleared (FK dependency on cards)"
 echo ""
 
 # ─── Cleanup handler ───────────────────────────────────────────────────────────
 DIFF_SQL_FILE=""
+IMPORT_SQL=""
+IMPORT_SQL_REDIR=""
 cleanup() {
-  [ -n "$DIFF_SQL_FILE" ] && rm -f "$DIFF_SQL_FILE" 2>/dev/null || true
-  _psql -q -c "DROP TABLE IF EXISTS _pre_sets, _pre_cards, _pre_card_prices, _pre_localizations;" \
-    > /dev/null 2>&1 || true
+  [ -n "$DIFF_SQL_FILE" ]    && rm -f "$DIFF_SQL_FILE"    2>/dev/null || true
+  [ -n "$IMPORT_SQL" ]       && rm -f "$IMPORT_SQL"       2>/dev/null || true
+  [ -n "$IMPORT_SQL_REDIR" ] && rm -f "$IMPORT_SQL_REDIR" 2>/dev/null || true
+  _psql -q -c "
+    DROP SCHEMA IF EXISTS _import CASCADE;
+    DROP TABLE IF EXISTS _pre_sets, _pre_cards, _pre_card_prices, _pre_localizations;
+  " > /dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
@@ -169,22 +165,149 @@ _psql -q -c "
   CREATE TABLE _pre_localizations AS SELECT * FROM localizations;
 " > /dev/null 2>&1
 
-# ─── Truncate + restore ────────────────────────────────────────────────────────
-# CASCADE clears user_set_cards (cards FK), but user_cards, user_sets, and user
-# accounts are not affected.
-_psql -c "TRUNCATE sets, cards, card_prices, localizations RESTART IDENTITY CASCADE;"
-# --disable-triggers requires superuser; skip it for remote DBs (Neon etc.).
-# It's safe to omit here because the tables are empty after TRUNCATE CASCADE.
-RESTORE_FLAGS=(--data-only --no-privileges --no-owner)
-[ "$IS_LOCAL" = true ] && RESTORE_FLAGS+=(--disable-triggers)
-# Restore tables one at a time in dependency order so FK constraints are never
-# violated (e.g. cards.set_id → sets.id). Passing all --table flags at once
-# lets pg_restore follow its internal TOC order (alphabetical), which can put
-# "cards" before "sets" and trigger FK errors on remote DBs where
-# --disable-triggers is not available.
-for table in "${CORE_TABLES[@]}"; do
-  _pg_restore "${RESTORE_FLAGS[@]}" --table "$table"
-done
+# ─── Create staging schema ─────────────────────────────────────────────────────
+# Data is loaded here first so the live tables and user_set_cards are never touched
+# during the load phase. The upsert transaction below is the only write to live data.
+_psql -q -c "
+  DROP SCHEMA IF EXISTS _import CASCADE;
+  CREATE SCHEMA _import;
+  CREATE TABLE _import.sets          (LIKE public.sets);
+  CREATE TABLE _import.cards         (LIKE public.cards);
+  CREATE TABLE _import.card_prices   (LIKE public.card_prices);
+  CREATE TABLE _import.localizations (LIKE public.localizations);
+" > /dev/null 2>&1
+
+# ─── Load staging tables from dump ────────────────────────────────────────────
+# pg_restore -f emits plain-SQL COPY statements; sed redirects them to _import.*.
+IMPORT_SQL=$(mktemp /tmp/import.XXXXXX.sql)
+IMPORT_SQL_REDIR=$(mktemp /tmp/import-redir.XXXXXX.sql)
+_REDIR='s/^COPY (public\.)?(sets|cards|card_prices|localizations) /COPY _import.\2 /g'
+
+if [ "$USE_DOCKER" = true ]; then
+  docker cp "$BACKUP_FILE" postgres_db:/tmp/import-core.dump
+  docker exec postgres_db pg_restore --data-only \
+    --table sets --table cards --table card_prices --table localizations \
+    -f /tmp/import.sql /tmp/import-core.dump
+  docker cp postgres_db:/tmp/import.sql "$IMPORT_SQL"
+  docker exec postgres_db rm -f /tmp/import.sql /tmp/import-core.dump
+else
+  "$PG_RESTORE_BIN" --data-only \
+    --table sets --table cards --table card_prices --table localizations \
+    -f "$IMPORT_SQL" "$BACKUP_FILE"
+fi
+
+sed -E "$_REDIR" "$IMPORT_SQL" > "$IMPORT_SQL_REDIR"
+
+if [ "$USE_DOCKER" = true ]; then
+  docker cp "$IMPORT_SQL_REDIR" postgres_db:/tmp/import-redir.sql
+  docker exec postgres_db psql "$CONTAINER_DB_URL" -f /tmp/import-redir.sql
+  docker exec postgres_db rm -f /tmp/import-redir.sql
+else
+  "$PSQL_BIN" "$DATABASE_URL" -f "$IMPORT_SQL_REDIR"
+fi
+
+rm -f "$IMPORT_SQL" "$IMPORT_SQL_REDIR"
+IMPORT_SQL=""
+IMPORT_SQL_REDIR=""
+
+# ─── Backup rows that will be deleted ─────────────────────────────────────────
+# Created outside the transaction so it survives even if the upsert is rolled back.
+BACKUP_SCHEMA="_backup_$(date +%Y%m%d_%H%M%S)"
+_psql -q -c "
+  CREATE SCHEMA \"${BACKUP_SCHEMA}\";
+  CREATE TABLE \"${BACKUP_SCHEMA}\".deleted_user_set_cards AS
+    SELECT * FROM user_set_cards
+    WHERE card_id NOT IN (SELECT id FROM _import.cards);
+  CREATE TABLE \"${BACKUP_SCHEMA}\".deleted_cards AS
+    SELECT * FROM cards WHERE id NOT IN (SELECT id FROM _import.cards);
+  CREATE TABLE \"${BACKUP_SCHEMA}\".deleted_sets AS
+    SELECT * FROM sets WHERE id NOT IN (SELECT id FROM _import.sets);
+  CREATE TABLE \"${BACKUP_SCHEMA}\".deleted_card_prices AS
+    SELECT * FROM card_prices WHERE card_id NOT IN (SELECT card_id FROM _import.card_prices);
+  CREATE TABLE \"${BACKUP_SCHEMA}\".deleted_localizations AS
+    SELECT * FROM localizations WHERE id NOT IN (SELECT id FROM _import.localizations);
+" > /dev/null 2>&1
+
+# Count backed-up rows per table; drop the schema if nothing was going to be deleted.
+read -r BAK_USC BAK_CARDS BAK_SETS BAK_PRICES BAK_LOCS < <(
+  _psql -t -A -c "SELECT
+    (SELECT COUNT(*) FROM \"${BACKUP_SCHEMA}\".deleted_user_set_cards),
+    (SELECT COUNT(*) FROM \"${BACKUP_SCHEMA}\".deleted_cards),
+    (SELECT COUNT(*) FROM \"${BACKUP_SCHEMA}\".deleted_sets),
+    (SELECT COUNT(*) FROM \"${BACKUP_SCHEMA}\".deleted_card_prices),
+    (SELECT COUNT(*) FROM \"${BACKUP_SCHEMA}\".deleted_localizations);" \
+  | tr '|' ' '
+)
+BACKUP_TOTAL=$(( BAK_USC + BAK_CARDS + BAK_SETS + BAK_PRICES + BAK_LOCS ))
+
+if [ "${BACKUP_TOTAL}" -gt 0 ] 2>/dev/null; then
+  echo "   💾 Deletion backup → schema \"${BACKUP_SCHEMA}\":"
+  [ "${BAK_SETS}"   -gt 0 ] && echo "      - ${BAK_SETS}   set(s)"
+  [ "${BAK_CARDS}"  -gt 0 ] && echo "      - ${BAK_CARDS}   card(s)"
+  [ "${BAK_USC}"    -gt 0 ] && echo "      - ${BAK_USC}   user_set_card(s)"
+  [ "${BAK_PRICES}" -gt 0 ] && echo "      - ${BAK_PRICES}   card_price(s)"
+  [ "${BAK_LOCS}"   -gt 0 ] && echo "      - ${BAK_LOCS}   localization(s)"
+  echo "      Recover: SELECT * FROM \"${BACKUP_SCHEMA}\".deleted_cards"
+  echo ""
+else
+  _psql -q -c "DROP SCHEMA \"${BACKUP_SCHEMA}\" CASCADE;" > /dev/null 2>&1 || true
+  BACKUP_SCHEMA=""
+fi
+
+# ─── Upsert from staging into live tables (single transaction) ────────────────
+# user_set_cards is never deleted unless a card is genuinely gone from the import.
+_psql -q -c "
+BEGIN;
+
+  -- Sets: upsert on id (stable varchar PK from TCGDex)
+  INSERT INTO sets SELECT * FROM _import.sets
+  ON CONFLICT (id) DO UPDATE SET
+    name                    = EXCLUDED.name,
+    logo                    = EXCLUDED.logo,
+    abbreviation            = EXCLUDED.abbreviation,
+    symbol                  = EXCLUDED.symbol,
+    release_date            = EXCLUDED.release_date,
+    total                   = EXCLUDED.total,
+    total_with_secret_rares = EXCLUDED.total_with_secret_rares,
+    series                  = EXCLUDED.series,
+    updated_at              = EXCLUDED.updated_at;
+
+  -- Cards: upsert on id (stable varchar PK from TCGDex)
+  -- set_id FK is satisfied because sets were upserted above.
+  INSERT INTO cards SELECT * FROM _import.cards
+  ON CONFLICT (id) DO UPDATE SET
+    name        = EXCLUDED.name,
+    number      = EXCLUDED.number,
+    rarity      = EXCLUDED.rarity,
+    image_small = EXCLUDED.image_small,
+    image_large = EXCLUDED.image_large,
+    set_id      = EXCLUDED.set_id,
+    updated_at  = EXCLUDED.updated_at;
+
+  -- Card prices: upsert on card_id (the natural key; id is a generated UUID)
+  INSERT INTO card_prices SELECT * FROM _import.card_prices
+  ON CONFLICT (card_id) DO UPDATE SET
+    price      = EXCLUDED.price,
+    updated_at = EXCLUDED.updated_at;
+
+  -- Localizations: upsert on id (composite key has no unique constraint)
+  INSERT INTO localizations SELECT * FROM _import.localizations
+  ON CONFLICT (id) DO UPDATE SET
+    value      = EXCLUDED.value,
+    updated_at = EXCLUDED.updated_at;
+
+  -- Deletions (rare: data genuinely removed from the game).
+  -- user_set_cards rows for removed cards must be cleared first because the FK
+  -- is NO ACTION (not CASCADE), so DELETE from cards would otherwise be rejected.
+  DELETE FROM user_set_cards WHERE card_id NOT IN (SELECT id   FROM _import.cards);
+  DELETE FROM cards          WHERE id      NOT IN (SELECT id   FROM _import.cards);
+  -- Sets can only be deleted after their cards are gone (RESTRICT FK on cards.set_id).
+  DELETE FROM sets           WHERE id      NOT IN (SELECT id   FROM _import.sets);
+  DELETE FROM card_prices    WHERE card_id NOT IN (SELECT card_id FROM _import.card_prices);
+  DELETE FROM localizations  WHERE id      NOT IN (SELECT id   FROM _import.localizations);
+
+COMMIT;
+"
 
 # ─── Diff and report ───────────────────────────────────────────────────────────
 DIFF_SQL_FILE=$(mktemp /tmp/import-diff.XXXXXX.sql)
