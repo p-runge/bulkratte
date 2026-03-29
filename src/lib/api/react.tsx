@@ -1,6 +1,8 @@
 "use client";
 
-import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
+import { type QueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { httpBatchStreamLink, loggerLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
 import { type inferRouterInputs, type inferRouterOutputs } from "@trpc/server";
@@ -9,6 +11,14 @@ import SuperJSON from "superjson";
 
 import { type AppRouter } from "./routers/_app";
 import { createQueryClient } from "./query-client";
+import pkg from "../../../package.json";
+
+// Only persist these queries to localStorage for instant hydration on page reload.
+const PERSISTED_PATHS = new Set([
+  "card.getFilterOptions",
+  "userSet.getList",
+  "userCard.getList",
+]);
 
 let clientQueryClientSingleton: QueryClient | undefined = undefined;
 const getQueryClient = () => {
@@ -41,6 +51,12 @@ export type RouterOutputs = inferRouterOutputs<AppRouter>;
 export function TRPCReactProvider(props: { children: React.ReactNode }) {
   const queryClient = getQueryClient();
 
+  const [persister] = useState(() =>
+    createAsyncStoragePersister({
+      storage: typeof window !== "undefined" ? window.localStorage : undefined,
+    }),
+  );
+
   const [trpcClient] = useState(() =>
     api.createClient({
       links: [
@@ -63,11 +79,24 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{
+        persister,
+        buster: pkg.version,
+        dehydrateOptions: {
+          shouldDehydrateQuery: (query) => {
+            const [pathParts] = query.queryKey as [string[], ...unknown[]];
+            if (!Array.isArray(pathParts)) return false;
+            return PERSISTED_PATHS.has(pathParts.join("."));
+          },
+        },
+      }}
+    >
       <api.Provider client={trpcClient} queryClient={queryClient}>
         {props.children}
       </api.Provider>
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   );
 }
 
