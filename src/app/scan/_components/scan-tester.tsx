@@ -1,39 +1,18 @@
 "use client";
 
 /**
- * ScanTester — OCR-based card recognition tool
+ * ScanTester — OCR + symbol-matching card recognition tool
  *
- * How it works:
- *
- * 0. jscanify (OpenCV.js) detects the card boundary in the image:
- *    a. Edge detection (Canny) + contour finding → largest contour = card
- *    b. Corner point extraction → perspective warp to a flat, straight card
- *
- * 1. The corrected image is split into two targeted strips:
- *    - Top 12%  → where the card name always appears
- *    - Bottom 15% → where the card number (e.g. "025/165") always appears,
- *                   whether it is in the bottom-left or bottom-right corner
- *
- * 2. Each strip is prepared for OCR:
- *    - First cropped at 1:1 scale so the raw region is visible
- *    - Then upscaled (3–4×), converted to grayscale and contrast-boosted
- *
- * 3. Tesseract.js reads both processed strips:
- *    - Bottom strip uses PSM 6 (block mode) to handle varying layouts
- *    - Top strip uses PSM 7 (single-line mode) for the card name
- *
- * 4. The raw text is parsed:
- *    - Number/total: regex looks for the "NNN/NNN" pattern, tolerating
- *      OCR noise on the slash character ( / \ | )
- *    - Name: lines are cleaned, noise words are filtered, and the longest
- *      remaining line is chosen as the most likely card name
- *
- * 5. The parsed values (name, number, set total) are sent to the
- *    `card.findByOcr` tRPC endpoint, which does a fuzzy word-by-word
- *    DB lookup and returns matching cards.
- *
- * 6. Each step is rendered visually as it completes so the user can
- *    follow the full pipeline in real time.
+ * Pipeline:
+ * 0. jscanify (OpenCV.js): perspective-correct the scanned card image.
+ * 1. Symbol matching: crop the set-logo region, compute a 64-bit perceptual
+ *    hash (dHash), find the closest match in the pre-fetched symbol index.
+ *    → Identifies the exact set with no name OCR needed.
+ * 2. Number OCR: scan priority regions in the card footer for the card
+ *    number (e.g. “025/165”), with a digit-whitelist fallback pass.
+ * 3. Name OCR: three preprocessing variants with PSM 7 + letter whitelist.
+ *    Used only as a disambiguation fallback when symbol matching is uncertain.
+ * 4. DB lookup: setId (from symbol) + number (from OCR) → exact card.
  */
 
 import { api } from "@/lib/api/react";
@@ -41,7 +20,7 @@ import { CardImageDialog } from "@/components/card-image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createWorker } from "tesseract.js";
 
 type Sample = {
@@ -54,9 +33,10 @@ type Sample = {
 };
 
 type OcrResult = {
-  parsedName: string | null;
   parsedNumber: string | null;
   parsedTotal: number | null;
+  /** Set ID resolved by symbol matching. When set, the DB query uses setId + number. */
+  matchedSetId: string | null;
 };
 
 type Props = {
@@ -85,19 +65,168 @@ type ParsedStep = {
   kind: "parsed";
   stepNumber: number;
   label: string;
-  name: string | null;
   number: string | null;
+  numberError: string | null;
   total: number | null;
   description: string;
 };
 
-type ScanStep = ImageStep | TextStep | ParsedStep;
+type RegionScanAttempt = {
+  region: string;
+  dataUrl: string;
+  rawText: string;
+  confText: string;
+  matched: boolean;
+  matchedPattern?: string;
+};
+
+type RegionScanStep = {
+  kind: "region-scan";
+  stepNumber: number;
+  label: string;
+  description: string;
+  attempts: RegionScanAttempt[];
+};
+
+type SymbolMatch = {
+  setId: string;
+  symbolUrl: string;
+  /** Hamming distance 0 (identical) – 64 (opposite). */
+  distance: number;
+};
+
+type SymbolMatchStep = {
+  kind: "symbol-match";
+  stepNumber: number;
+  label: string;
+  description: string;
+  cropDataUrl: string;
+  matches: SymbolMatch[];
+  winnerSetId: string | null;
+};
+
+type ScanStep =
+  | ImageStep
+  | TextStep
+  | ParsedStep
+  | RegionScanStep
+  | SymbolMatchStep;
 
 // Distributes Omit over each member of the union so discriminants are preserved
 type ScanStepInput =
   | Omit<ImageStep, "stepNumber">
   | Omit<TextStep, "stepNumber">
-  | Omit<ParsedStep, "stepNumber">;
+  | Omit<ParsedStep, "stepNumber">
+  | Omit<RegionScanStep, "stepNumber">
+  | Omit<SymbolMatchStep, "stepNumber">;
+
+// ── Set symbol: scan regions (ordered by probability) ─────────────────────
+/**
+ * Regions where the set symbol may appear, tried in order.
+ * Modern cards (SV, SWSH, SM, XY): symbol is in the bottom strip, to the
+ * right of the card number.  Older sets may place it bottom-left or center.
+ */
+const SYMBOL_REGIONS = [
+  {
+    label: "Bottom-right (SV/SWSH/SM/XY)",
+    x: 0.55,
+    y: 0.88,
+    w: 0.38,
+    h: 0.1,
+  },
+  {
+    label: "Bottom-center (BW and some older)",
+    x: 0.3,
+    y: 0.87,
+    w: 0.6,
+    h: 0.11,
+  },
+  {
+    label: "Full bottom strip (fallback)",
+    x: 0.05,
+    y: 0.86,
+    w: 0.9,
+    h: 0.12,
+  },
+] as const;
+
+/**
+ * Confidence threshold: a cosine distance ≤ this value is considered a match.
+ * Range 0 (identical) – 1 (completely different). 0.12 means ≥88% cosine similarity.
+ */
+const SYMBOL_DISTANCE_THRESHOLD = 0.12;
+
+// ── Card number: scan regions (ordered by probability) ─────────────────────
+/**
+ * Regions to scan for the card number, tried in order.
+ * Scanning stops at the first region where a valid pattern is found.
+ */
+const NUMBER_REGIONS = [
+  {
+    // Card number is in the bottom copyright/legal strip, BELOW the
+    // weakness-resistance-retreat row (~y:0.83-0.92) and the rules text.
+    // y:0.93 safely clears all card body text on standard-sized cards.
+    label: "Bottom-left corner",
+    description: "Most modern sets (SV, SWSH, SM, XY) print the number here.",
+    x: 0,
+    y: 0.93,
+    w: 0.45,
+    h: 0.07,
+  },
+  {
+    label: "Bottom-right corner",
+    description: "Some older sets (BW, early XY) and certain Full Art prints.",
+    x: 0.5,
+    y: 0.93,
+    w: 0.5,
+    h: 0.07,
+  },
+  {
+    label: "Full bottom strip (fallback)",
+    description:
+      "Scans the entire bottom 9% when the number isn't in a corner.",
+    x: 0,
+    y: 0.91,
+    w: 1.0,
+    h: 0.09,
+  },
+] as const;
+
+/**
+ * Card number format patterns, from most to least specific.
+ * Each pattern includes a human-readable label shown in the UI on a match.
+ */
+const NUMBER_PATTERNS: {
+  label: string;
+  re: RegExp;
+  extract: (m: RegExpMatchArray) => { number: string; total: number | null };
+}[] = [
+  {
+    label: "Trainer Gallery (TG01/TG30)",
+    re: /TG\s*(\d{2})\s*[/\\|]\s*TG\s*(\d{2})/i,
+    extract: (m) => ({ number: `TG${m[1]}`, total: parseInt(m[2]!, 10) }),
+  },
+  {
+    label: "Alternate Art (GG01/GG70)",
+    re: /GG\s*(\d{2})\s*[/\\|]\s*GG\s*(\d{2})/i,
+    extract: (m) => ({ number: `GG${m[1]}`, total: parseInt(m[2]!, 10) }),
+  },
+  {
+    label: "Modern Promo (SWSH001, SV001, BW-P …)",
+    re: /\b(SWSH|BW|XY|SM|SV|SVP)\s*-?\s*(\d{1,4})\b/i,
+    extract: (m) => ({ number: `${m[1]!.toUpperCase()}${m[2]}`, total: null }),
+  },
+  {
+    label: "Standard (025/165)",
+    re: /(\d{1,4})\s*[/\\|]\s*(\d{1,4})/,
+    extract: (m) => ({ number: m[1]!, total: parseInt(m[2]!, 10) }),
+  },
+  {
+    label: "Standalone promo number (e.g. 014)",
+    re: /^\s*(\d{1,3})\s*$/,
+    extract: (m) => ({ number: m[1]!, total: null }),
+  },
+];
 
 /** Module-level promise — OpenCV.js is only loaded once per page session. */
 let opencvLoadPromise: Promise<void> | null = null;
@@ -129,6 +258,7 @@ function loadOpenCV(): Promise<void> {
 
 export function ScanTester({ samples }: Props) {
   const [activeImage, setActiveImage] = useState<string | null>(null);
+  const [activeSample, setActiveSample] = useState<Sample | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [ocrResult, setOcrResult] = useState<OcrResult | null>(null);
   const [scanSteps, setScanSteps] = useState<ScanStep[]>([]);
@@ -138,9 +268,65 @@ export function ScanTester({ samples }: Props) {
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // ── Symbol index pre-fetch ───────────────────────────────────────────
+  // Each set symbol image is downloaded, drawn to a 32×32 canvas, and stored
+  // as a 1024-element normalised grayscale vector.  At scan time, cosine
+  // distance against all ~150 vectors takes <1 ms.
+  const symbolHashMap = useRef<
+    Map<string, { hash: number[]; symbolUrl: string }>
+  >(new Map());
+  const [symbolsLoaded, setSymbolsLoaded] = useState(0);
+  const [symbolsTotal, setSymbolsTotal] = useState(0);
+
+  const symbolIndex = api.set.getSymbolIndex.useQuery();
+
+  useEffect(() => {
+    if (!symbolIndex.data) return;
+    const items = symbolIndex.data.filter(
+      (s): s is typeof s & { symbol: string } => !!s.symbol,
+    );
+    setSymbolsTotal(items.length);
+
+    const map = new Map<string, { hash: number[]; symbolUrl: string }>();
+    let done = 0;
+
+    // Process in parallel batches of 20 to stay fast without hammering the CDN
+    async function processAll() {
+      const BATCH = 20;
+      for (let i = 0; i < items.length; i += BATCH) {
+        await Promise.all(
+          items.slice(i, i + BATCH).map(async (s) => {
+            try {
+              // crossOrigin="anonymous" required for canvas drawing.
+              // assets.tcgdex.net is a public CDN that sends CORS headers.
+              const img = await loadImage(s.symbol, true);
+              const canvas = document.createElement("canvas");
+              canvas.width = img.naturalWidth || 64;
+              canvas.height = img.naturalHeight || 64;
+              canvas.getContext("2d")!.drawImage(img, 0, 0);
+              map.set(s.id, {
+                hash: imgFingerprint(canvas),
+                symbolUrl: s.symbol,
+              });
+            } catch {
+              // CORS or load failure — skip this symbol silently
+            }
+            done++;
+            setSymbolsLoaded(done);
+          }),
+        );
+      }
+      symbolHashMap.current = map;
+    }
+
+    void processAll();
+  }, [symbolIndex.data]);
+
+  const utils = api.useUtils();
+
   const lookupQuery = api.card.findByOcr.useQuery(
     {
-      name: ocrResult?.parsedName ?? undefined,
+      setId: ocrResult?.matchedSetId ?? undefined,
       number: ocrResult?.parsedNumber ?? undefined,
       setTotal: ocrResult?.parsedTotal ?? undefined,
     },
@@ -204,103 +390,320 @@ export function ScanTester({ samples }: Props) {
         size: "card",
       });
 
-      // ── Name strip ──────────────────────────────────────────────────────
+      // ── Number: scan priority regions ──────────────────────────────────────
 
-      const nameCrop = cropImage(cardSource, 0, 0, 1, 0.12);
-      pushStep({
-        kind: "image",
-        label: "Crop: name strip (top 12%)",
-        dataUrl: nameCrop.toDataURL(),
-        description:
-          "The Pokémon name is always in the top 12% of the card. This region is isolated first at its natural resolution.",
-      });
-
-      const nameProcessed = applyProcessing(nameCrop, 3);
-      pushStep({
-        kind: "image",
-        label: "Process: upscale 3× · grayscale · contrast boost",
-        dataUrl: nameProcessed.toDataURL(),
-        description:
-          "The strip is upscaled 3× so Tesseract can read small text, then converted to grayscale and contrast-stretched (factor 1.8) so the text stands out from the artwork.",
-      });
-
-      // ── Number strip ────────────────────────────────────────────────────
-
-      const numberCrop = cropImage(cardSource, 0, 0.85, 1, 0.15);
-      pushStep({
-        kind: "image",
-        label: "Crop: number strip (bottom 15%)",
-        dataUrl: numberCrop.toDataURL(),
-        description:
-          'The card number (e.g. "025/165") is always in the bottom 15%, whether in the bottom-left or bottom-right corner depending on the card era.',
-      });
-
-      const numberProcessed = applyProcessing(numberCrop, 4);
-      pushStep({
-        kind: "image",
-        label: "Process: upscale 4× · grayscale · contrast boost",
-        dataUrl: numberProcessed.toDataURL(),
-        description:
-          "Upscaled 4× (one more than the name strip) because the number text tends to be smaller. Same grayscale and contrast processing applies.",
-      });
-
-      // ── OCR ─────────────────────────────────────────────────────────────
+      type TWord = { text: string; confidence: number };
+      type TLine = { words: TWord[] };
+      type TData = { lines: TLine[] };
 
       const worker = await createWorker("eng");
-
       await worker.setParameters({ tessedit_pageseg_mode: "6" as never });
-      const numberResult = await worker.recognize(numberProcessed);
+
+      let parsedNumber: string | null = null;
+      let parsedTotal: number | null = null;
+      let numberError: string | null = null;
+      const regionAttempts: RegionScanAttempt[] = [];
+
+      for (const region of NUMBER_REGIONS) {
+        // Stop as soon as we have a valid number
+        if (parsedNumber !== null) break;
+
+        const regionCrop = cropImage(
+          cardSource,
+          region.x,
+          region.y,
+          region.w,
+          region.h,
+        );
+        const regionProcessed = applyProcessing(regionCrop, 4);
+        const regionResult = await worker.recognize(regionProcessed);
+
+        // Confidence-filtered text used first; raw text as fallback
+        const regionWords: TWord[] =
+          (regionResult.data as unknown as TData).lines?.flatMap(
+            (l) => l.words,
+          ) ?? [];
+        const confText = regionWords
+          .filter((w) => w.confidence >= 70)
+          .map((w) => w.text)
+          .join(" ");
+        const rawText = regionResult.data.text?.trim() ?? "";
+
+        let matched = false;
+        for (const pattern of NUMBER_PATTERNS) {
+          const m = confText.match(pattern.re) ?? rawText.match(pattern.re);
+          if (m) {
+            const extracted = pattern.extract(m);
+            parsedNumber = extracted.number;
+            parsedTotal = extracted.total;
+            matched = true;
+            regionAttempts.push({
+              region: region.label,
+              dataUrl: regionProcessed.toDataURL(),
+              rawText,
+              confText,
+              matched: true,
+              matchedPattern: pattern.label,
+            });
+            break;
+          }
+        }
+
+        if (!matched) {
+          regionAttempts.push({
+            region: region.label,
+            dataUrl: regionProcessed.toDataURL(),
+            rawText,
+            confText,
+            matched: false,
+          });
+        }
+      }
+
+      if (parsedNumber === null) {
+        const allRaw = regionAttempts
+          .map((a) => a.rawText)
+          .filter(Boolean)
+          .join(" | ");
+        numberError = allRaw
+          ? `No known format matched. Raw OCR: "${allRaw.slice(0, 120)}"`
+          : "No text detected in any region.";
+      }
+
       pushStep({
-        kind: "text",
-        label: "Tesseract OCR: number strip (PSM 6 — block mode)",
-        text: numberResult.data.text || "(no text detected)",
+        kind: "region-scan",
+        label: "Number: scan priority regions",
         description:
-          "Raw text output from Tesseract on the number strip. Block mode (PSM 6) handles the number appearing in different corners across card eras.",
+          "Regions are scanned in priority order — scanning stops at the first match. Confidence-filtered text (≥70%) is tried first, raw OCR is used as fallback.",
+        attempts: regionAttempts,
       });
 
-      await worker.setParameters({ tessedit_pageseg_mode: "7" as never });
-      const nameResult = await worker.recognize(nameProcessed);
-      pushStep({
-        kind: "text",
-        label: "Tesseract OCR: name strip (PSM 7 — single-line mode)",
-        text: nameResult.data.text || "(no text detected)",
-        description:
-          "Raw text output from Tesseract on the name strip. Single-line mode (PSM 7) is more accurate when exactly one line of text is expected.",
-      });
+      // ── Number fallback: digit whitelist ────────────────────────────────
+      // When all regions fail (artwork noise confuses Tesseract), run the full
+      // bottom strip once more with a digit+slash-only whitelist.  This strips
+      // every artwork character so only meaningful digit pairs survive.
+      if (parsedNumber === null) {
+        const digitCrop = cropImage(cardSource, 0, 0.91, 1, 0.09);
+        // Binary threshold for digits: black ink on light background.
+        // Include A-Z so promo prefixes like XY, SWSH, SM survive the whitelist.
+        const digitBinary = binarize(digitCrop, 4, false);
+        await worker.setParameters({
+          tessedit_pageseg_mode: "6" as never,
+          tessedit_char_whitelist:
+            "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz/ " as never,
+        });
+        const digitResult = await worker.recognize(digitBinary);
+        const digitText = digitResult.data.text?.trim() ?? "";
+
+        // Try standard patterns first; then a lenient two-group match for
+        // when the slash was read as a space (common with digit whitelist).
+        // Guard: for NNN/NNN matches, require total >= 5 to reject noise
+        // like "4/4" that can appear in rules text ("takes 2 Prize cards").
+        let digitMatched = false;
+        for (const pattern of NUMBER_PATTERNS) {
+          const m = digitText.match(pattern.re);
+          if (m) {
+            const extracted = pattern.extract(m);
+            // Sanity: if we got a total, it must be plausible (≥5 cards in any set)
+            if (extracted.total !== null && extracted.total < 5) continue;
+            parsedNumber = extracted.number;
+            parsedTotal = extracted.total;
+            numberError = null;
+            digitMatched = true;
+            break;
+          }
+        }
+        if (!digitMatched) {
+          // e.g. "90 131" when slash was lost
+          const m2 = digitText.match(/(\d{1,4})\s+(\d{2,4})/);
+          if (m2) {
+            const candidateTotal = parseInt(m2[2]!, 10);
+            if (candidateTotal >= 5) {
+              parsedNumber = m2[1]!;
+              parsedTotal = candidateTotal;
+              numberError = null;
+              digitMatched = true;
+            }
+          }
+        }
+
+        pushStep({
+          kind: "text",
+          label: "Number fallback: digit whitelist OCR",
+          text: digitText || "(no digits detected)",
+          description: digitMatched
+            ? `Digit whitelist fallback succeeded: matched “${parsedNumber}/${parsedTotal}”.`
+            : "Digit whitelist fallback found no number pattern either.",
+        });
+
+        if (!digitMatched) {
+          numberError = digitText
+            ? `No number pattern in digit-only pass: “${digitText.slice(0, 80)}”`
+            : "No digits detected in bottom strip.";
+        }
+      }
 
       await worker.terminate();
 
-      // ── Parse ────────────────────────────────────────────────────────────
+      // ── Candidate set lookup ───────────────────────────────────────────────────
+      // Query DB with number + total to find which sets contain this card.
+      //   1 match  → uniquely identified, symbol scan skipped.
+      //   >1 match → ambiguous, compare symbol only against those candidates.
+      //   0 match  → number OCR likely wrong, fall back to global symbol scan.
+      let matchedSetId: string | null = null;
+      let candidateSetIds: string[] = [];
 
-      // Extract NNN/NNN — tolerates OCR noise on the slash character
-      const numberMatch = numberResult.data.text.match(
-        /(\d{1,4})\s*[/\\|]\s*(\d{1,4})/,
-      );
-      const parsedNumber: string | null = numberMatch?.[1] ?? null;
-      const parsedTotal = numberMatch?.[2]
-        ? parseInt(numberMatch[2], 10)
-        : null;
+      if (parsedNumber !== null) {
+        try {
+          const candidates = await utils.card.findByOcr.fetch({
+            number: parsedNumber,
+            ...(parsedTotal !== null ? { setTotal: parsedTotal } : {}),
+          });
+          candidateSetIds = [
+            ...new Set(
+              candidates
+                .map((c) => (c as { set?: { id?: string } }).set?.id)
+                .filter((id): id is string => !!id),
+            ),
+          ];
+        } catch {
+          // DB unavailable — continue without candidates
+        }
+      }
 
-      // Pick the longest clean line from the name strip, ignoring noise
-      const ignoredPatterns = /©|illus|hp|\bex\b|\bv\b/i;
-      const parsedName: string | null =
-        nameResult.data.text
-          .split("\n")
-          .map((l) => l.replace(/[^a-zA-Z0-9 '\-éè]/g, "").trim())
-          .filter((l) => l.length > 2 && !ignoredPatterns.test(l))
-          .sort((a, b) => b.length - a.length)[0] ?? null;
+      pushStep({
+        kind: "text",
+        label: `Candidate sets: ${candidateSetIds.length}`,
+        text:
+          candidateSetIds.length > 0 ? candidateSetIds.join(", ") : "(none)",
+        description:
+          candidateSetIds.length === 1
+            ? `Number ${parsedNumber}/${parsedTotal} uniquely identifies set "${candidateSetIds[0]}". Skipping symbol scan.`
+            : candidateSetIds.length > 1
+              ? `Number ${parsedNumber}/${parsedTotal} exists in ${candidateSetIds.length} sets: ${candidateSetIds.join(", ")}. Symbol matching will pick the right one.`
+              : `No DB match for number ${parsedNumber ?? "?"}/${parsedTotal ?? "?"}. Falling back to global symbol scan.`,
+      });
+
+      if (candidateSetIds.length === 1) {
+        // Unique match — no symbol scan needed
+        matchedSetId = candidateSetIds[0]!;
+      } else if (candidateSetIds.length > 1 && symbolHashMap.current.size > 0) {
+        // ── Targeted symbol matching ─────────────────────────────────────────
+        // Build a sub-map with only the ambiguous candidate sets.
+        const searchTargets = new Map(
+          candidateSetIds.flatMap((id) => {
+            const entry = symbolHashMap.current.get(id);
+            return entry ? [[id, entry] as const] : [];
+          }),
+        );
+
+        if (searchTargets.size > 0) {
+          let bestStep: Omit<SymbolMatchStep, "stepNumber"> | null = null;
+          for (const region of SYMBOL_REGIONS) {
+            if (matchedSetId !== null) break;
+
+            const symCrop = cropImage(
+              cardSource,
+              region.x,
+              region.y,
+              region.w,
+              region.h,
+            );
+            const symBin = binarize(symCrop, 2, false);
+            const hash = imgFingerprint(symBin);
+
+            // No threshold when comparing a known candidate set — just pick closest.
+            const scored: SymbolMatch[] = Array.from(searchTargets.entries())
+              .map(([setId, { hash: refHash, symbolUrl }]) => ({
+                setId,
+                symbolUrl,
+                distance: cosineDistance(hash, refHash),
+              }))
+              .sort((a, b) => a.distance - b.distance);
+
+            const winner = scored[0]?.setId ?? null;
+            if (
+              !bestStep ||
+              (scored[0] &&
+                scored[0].distance < (bestStep.matches[0]?.distance ?? 1))
+            ) {
+              bestStep = {
+                kind: "symbol-match",
+                label: `Symbol: disambiguating ${candidateSetIds.join(" vs ")}`,
+                description: `Comparing symbol crop against ${searchTargets.size} candidate set(s) only. Closest match wins.`,
+                cropDataUrl: symBin.toDataURL(),
+                matches: scored.slice(0, 5),
+                winnerSetId: winner,
+              };
+            }
+            if (winner) matchedSetId = winner;
+          }
+          if (bestStep) pushStep(bestStep);
+        }
+      } else if (symbolHashMap.current.size > 0) {
+        // ── Global symbol fallback ───────────────────────────────────────────
+        // Number OCR found no DB candidates. Compare against all sets with
+        // a confidence threshold as a best-effort identification.
+        let bestStep: Omit<SymbolMatchStep, "stepNumber"> | null = null;
+        for (const region of SYMBOL_REGIONS) {
+          if (matchedSetId !== null) break;
+
+          const symCrop = cropImage(
+            cardSource,
+            region.x,
+            region.y,
+            region.w,
+            region.h,
+          );
+          const symBin = binarize(symCrop, 2, false);
+          const hash = imgFingerprint(symBin);
+
+          const scored: SymbolMatch[] = Array.from(
+            symbolHashMap.current.entries(),
+          )
+            .map(([setId, { hash: refHash, symbolUrl }]) => ({
+              setId,
+              symbolUrl,
+              distance: cosineDistance(hash, refHash),
+            }))
+            .sort((a, b) => a.distance - b.distance)
+            .slice(0, 5);
+
+          const top = scored[0];
+          const winner =
+            top && top.distance <= SYMBOL_DISTANCE_THRESHOLD ? top.setId : null;
+          if (
+            !bestStep ||
+            (top && top.distance < (bestStep.matches[0]?.distance ?? 1))
+          ) {
+            bestStep = {
+              kind: "symbol-match",
+              label: `Symbol match (fallback) — ${region.label}`,
+              description: `No DB candidates found. Comparing against all ${symbolHashMap.current.size} sets. Distance ≤ ${SYMBOL_DISTANCE_THRESHOLD} is a confident match.`,
+              cropDataUrl: symBin.toDataURL(),
+              matches: scored,
+              winnerSetId: winner,
+            };
+          }
+          if (winner) matchedSetId = winner;
+        }
+        if (bestStep) pushStep(bestStep);
+      }
 
       pushStep({
         kind: "parsed",
         label: "Parsed values",
-        name: parsedName,
         number: parsedNumber,
+        numberError,
         total: parsedTotal,
-        description:
-          'Number/total: regex finds the "NNN/NNN" pattern, tolerating OCR noise on the slash ( / \\ | ). Name: lines are cleaned, noise words filtered (©, illus, HP, ex, v), and the longest remaining line wins.',
+        description: matchedSetId
+          ? candidateSetIds.length === 1
+            ? `Number uniquely identified set "${matchedSetId}". DB lookup: setId + number.`
+            : `Symbol matching resolved set to "${matchedSetId}". DB lookup: setId + number.`
+          : `Could not identify set. DB lookup: number + set total (may return multiple candidates).`,
       });
 
-      setOcrResult({ parsedName, parsedNumber, parsedTotal });
+      setOcrResult({ parsedNumber, parsedTotal, matchedSetId });
     } finally {
       setIsScanning(false);
     }
@@ -308,6 +711,7 @@ export function ScanTester({ samples }: Props) {
 
   function handleSampleClick(sample: Sample) {
     if (!sample.imageLarge) return;
+    setActiveSample(sample);
     setActiveImage(sample.imageLarge);
     void runOcr(sample.imageLarge);
   }
@@ -316,12 +720,30 @@ export function ScanTester({ samples }: Props) {
     const file = e.target.files?.[0];
     if (!file) return;
     const url = URL.createObjectURL(file);
+    setActiveSample(null);
     setActiveImage(url);
     void runOcr(url);
   }
 
   return (
     <div className="space-y-8">
+      {/* Symbol index status */}
+      {symbolsTotal > 0 && (
+        <div className="text-xs text-muted-foreground flex items-center gap-2">
+          {symbolsLoaded < symbolsTotal ? (
+            <>
+              <span className="animate-pulse">●</span>
+              Loading symbol index… {symbolsLoaded} / {symbolsTotal}
+            </>
+          ) : (
+            <>
+              <span className="text-green-500">●</span>
+              Symbol index ready — {symbolsLoaded} sets
+            </>
+          )}
+        </div>
+      )}
+
       {/* Sample grid */}
       <section>
         <h2 className="font-semibold mb-3">Sample cards — click to scan</h2>
@@ -402,7 +824,7 @@ export function ScanTester({ samples }: Props) {
                 <StepHeader
                   number={scanSteps.length + 1}
                   label="Database lookup"
-                  description={`Fuzzy word-by-word search for name "${ocrResult.parsedName ?? "—"}", number "${ocrResult.parsedNumber ?? "—"}", set total ${ocrResult.parsedTotal ?? "—"}. Returns up to 10 matches.`}
+                  description={`DB lookup: number "${ocrResult.parsedNumber ?? "—"}", set total ${ocrResult.parsedTotal ?? "—"}${ocrResult.matchedSetId ? `, set "${ocrResult.matchedSetId}"` : ""}. Returns up to 10 matches.`}
                 />
                 <div className="pl-7">
                   {lookupQuery.isLoading && (
@@ -459,6 +881,53 @@ export function ScanTester({ samples }: Props) {
                       ))}
                     </div>
                   )}
+
+                  {/* Accuracy badge — only shown when scanning a known sample card */}
+                  {activeSample &&
+                    lookupQuery.data &&
+                    !lookupQuery.isLoading &&
+                    (() => {
+                      const matches = lookupQuery.data as Array<{
+                        id: string;
+                        name: string;
+                        number: string;
+                      }>;
+                      const expectedId = activeSample.id;
+                      const hit = matches.some((c) => c.id === expectedId);
+                      const score = !hit
+                        ? 0
+                        : matches[0]?.id === expectedId
+                          ? 100
+                          : Math.round(
+                              (1 -
+                                matches.findIndex((c) => c.id === expectedId) /
+                                  matches.length) *
+                                100,
+                            );
+                      return (
+                        <div
+                          className={`mt-3 p-3 rounded-lg border text-sm font-semibold ${
+                            score === 100
+                              ? "bg-green-500/10 border-green-500 text-green-600"
+                              : score > 0
+                                ? "bg-yellow-500/10 border-yellow-500 text-yellow-600"
+                                : "bg-red-500/10 border-red-500 text-red-600"
+                          }`}
+                        >
+                          {score === 100 &&
+                            `✓ Correct card found as first match (100%)`}
+                          {score > 0 &&
+                            score < 100 &&
+                            `~ Correct card found but not first (${score}%)`}
+                          {score === 0 &&
+                            `✗ Correct card not found in results (0%)`}
+                          <span className="block font-normal text-xs mt-0.5 opacity-70">
+                            Expected: {activeSample.name} #{activeSample.number}
+                            /{activeSample.setTotal}
+                          </span>
+                        </div>
+                      );
+                    })()}
                 </div>
               </div>
             )}
@@ -466,7 +935,6 @@ export function ScanTester({ samples }: Props) {
         </section>
       )}
 
-      {/* Zoom dialog */}
       {zoomImage && (
         <CardImageDialog
           large={zoomImage.src}
@@ -541,16 +1009,138 @@ function StepRow({
           </pre>
         )}
         {step.kind === "parsed" && (
-          <div className="flex flex-wrap gap-2">
-            <Badge variant={step.name ? "default" : "secondary"}>
-              Name: {step.name ?? "—"}
-            </Badge>
-            <Badge variant={step.number ? "default" : "secondary"}>
-              Number: {step.number ?? "—"}
-            </Badge>
-            <Badge variant={step.total !== null ? "default" : "secondary"}>
-              Set total: {step.total ?? "—"}
-            </Badge>
+          <div className="space-y-2">
+            <div className="flex flex-wrap gap-2">
+              <Badge variant={step.number ? "default" : "destructive"}>
+                Number: {step.number ?? "—"}
+              </Badge>
+              <Badge variant={step.total !== null ? "default" : "secondary"}>
+                Set total: {step.total ?? "—"}
+              </Badge>
+            </div>
+            {step.numberError && (
+              <div className="space-y-1">
+                {step.numberError && (
+                  <p className="text-xs text-destructive">
+                    <span className="font-semibold">Number error:</span>{" "}
+                    {step.numberError}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+        {step.kind === "symbol-match" && (
+          <div className="space-y-2">
+            {/* Cropped symbol region */}
+            <button
+              className="cursor-zoom-in"
+              onClick={() => onZoom(step.cropDataUrl, "Symbol region crop")}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={step.cropDataUrl}
+                alt="Symbol region"
+                className="max-h-12 w-auto rounded border"
+              />
+            </button>
+            {/* Top matches table */}
+            <div className="space-y-1">
+              {step.matches.map((m, i) => (
+                <div
+                  key={m.setId}
+                  className={`flex items-center gap-2 text-xs rounded px-2 py-1 ${
+                    m.setId === step.winnerSetId
+                      ? "bg-green-500/10 border border-green-500"
+                      : "bg-muted"
+                  }`}
+                >
+                  <span className="font-mono w-4 text-muted-foreground">
+                    {i + 1}.
+                  </span>
+                  {/* Reference symbol thumbnail */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={m.symbolUrl}
+                    alt={m.setId}
+                    className="h-5 w-5 object-contain"
+                  />
+                  <span className="font-medium">{m.setId}</span>
+                  <Badge
+                    variant={
+                      m.distance <= SYMBOL_DISTANCE_THRESHOLD
+                        ? "default"
+                        : "secondary"
+                    }
+                    className="ml-auto text-[10px] py-0 h-4"
+                  >
+                    d={m.distance.toFixed(3)}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+            {step.winnerSetId ? (
+              <p className="text-xs text-green-600 font-semibold">
+                ✓ Matched set: {step.winnerSetId}
+              </p>
+            ) : (
+              <p className="text-xs text-destructive">
+                No confident match (best distance &gt;{" "}
+                {SYMBOL_DISTANCE_THRESHOLD.toFixed(2)})
+              </p>
+            )}
+          </div>
+        )}
+        {step.kind === "region-scan" && (
+          <div className="space-y-2">
+            {step.attempts.map((attempt, i) => (
+              <div
+                key={i}
+                className={`rounded border p-2 ${
+                  attempt.matched
+                    ? "border-green-500 bg-green-500/5"
+                    : "border-border bg-muted/40"
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <button
+                    className="cursor-zoom-in shrink-0"
+                    onClick={() => onZoom(attempt.dataUrl, attempt.region)}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={attempt.dataUrl}
+                      alt={attempt.region}
+                      className="max-h-10 w-auto rounded border"
+                    />
+                  </button>
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span
+                        className={`text-xs font-semibold ${
+                          attempt.matched
+                            ? "text-green-600"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        {attempt.matched ? "✓" : "✗"} {attempt.region}
+                      </span>
+                      {attempt.matchedPattern && (
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] py-0 h-4"
+                        >
+                          {attempt.matchedPattern}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-[11px] font-mono text-muted-foreground truncate">
+                      {attempt.confText || attempt.rawText || "(no text)"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -560,11 +1150,14 @@ function StepRow({
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-/** Loads a URL into an HTMLImageElement, resolving once it's ready. */
-function loadImage(src: string): Promise<HTMLImageElement> {
+/** Loads a URL into an HTMLImageElement, resolving once it's ready.
+ * crossOrigin defaults to true because all images drawn to a canvas
+ * (jscanify, symbol hashing, OCR) require CORS headers. Pass false only
+ * for display-only images that are never drawn to a canvas. */
+function loadImage(src: string, crossOrigin = true): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new window.Image();
-    img.crossOrigin = "anonymous";
+    if (crossOrigin) img.crossOrigin = "anonymous";
     img.onload = () => resolve(img);
     img.onerror = reject;
     img.src = src;
@@ -605,6 +1198,83 @@ function cropImage(
 }
 
 /**
+ * Image fingerprint — resizes to 32×32, converts to grayscale, and returns
+ * the 1024 pixel values normalised to the range [0, 1].  This gives 16× more
+ * information than a 64-bit dHash and preserves actual shape detail rather
+ * than just horizontal gradient direction.
+ */
+function imgFingerprint(source: HTMLCanvasElement): number[] {
+  const SIZE = 32;
+  const c = document.createElement("canvas");
+  c.width = SIZE;
+  c.height = SIZE;
+  c.getContext("2d")!.drawImage(source, 0, 0, SIZE, SIZE);
+  const { data } = c.getContext("2d")!.getImageData(0, 0, SIZE, SIZE);
+  const pixels: number[] = [];
+  for (let i = 0; i < SIZE * SIZE; i++) {
+    const idx = i * 4;
+    const gray =
+      0.299 * (data[idx] ?? 0) +
+      0.587 * (data[idx + 1] ?? 0) +
+      0.114 * (data[idx + 2] ?? 0);
+    pixels.push(gray / 255);
+  }
+  return pixels;
+}
+
+/**
+ * Cosine distance between two fingerprint vectors (0 = identical, 1 = opposite).
+ * Invariant to overall brightness, so a darker scan still matches a bright reference.
+ */
+function cosineDistance(a: number[], b: number[]): number {
+  let dot = 0,
+    magA = 0,
+    magB = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += (a[i] ?? 0) * (b[i] ?? 0);
+    magA += (a[i] ?? 0) ** 2;
+    magB += (b[i] ?? 0) ** 2;
+  }
+  if (magA === 0 || magB === 0) return 1;
+  return 1 - dot / (Math.sqrt(magA) * Math.sqrt(magB));
+}
+
+/**
+ * Upscales a canvas by `scale`, converts to grayscale, then binarises it:
+ * every pixel becomes either pure black or pure white.
+ *
+ * - invert=false (default): dark text on light background  (most standard cards)
+ * - invert=true:            light text on dark background  (holo / full art)
+ */
+function binarize(
+  source: HTMLCanvasElement,
+  scale: number,
+  invert: boolean,
+): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  canvas.width = source.width * scale;
+  canvas.height = source.height * scale;
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const d = imageData.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const gray = Math.round(
+      0.299 * (d[i] ?? 0) + 0.587 * (d[i + 1] ?? 0) + 0.114 * (d[i + 2] ?? 0),
+    );
+    // invert=false: pixels darker than threshold are text (→ black), rest → white
+    // invert=true : pixels brighter than threshold are text (→ black), rest → white
+    const isText = invert ? gray > 140 : gray < 140;
+    const val = isText ? 0 : 255;
+    d[i] = d[i + 1] = d[i + 2] = val;
+    d[i + 3] = 255; // fully opaque
+  }
+  ctx.putImageData(imageData, 0, 0);
+  return canvas;
+}
+
+/**
  * Upscales a canvas by `scale`, converts to grayscale and boosts contrast
  * so Tesseract can read small text reliably.
  */
@@ -624,9 +1294,7 @@ function applyProcessing(
   for (let i = 0; i < d.length; i += 4) {
     // Grayscale
     const gray =
-      0.299 * (d[i] ?? 0) +
-      0.587 * (d[i + 1] ?? 0) +
-      0.114 * (d[i + 2] ?? 0);
+      0.299 * (d[i] ?? 0) + 0.587 * (d[i + 1] ?? 0) + 0.114 * (d[i + 2] ?? 0);
     // Contrast stretch: push toward black/white
     const contrasted = Math.min(255, Math.max(0, (gray - 128) * 1.8 + 128));
     d[i] = d[i + 1] = d[i + 2] = contrasted;

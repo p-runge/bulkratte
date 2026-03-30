@@ -1,4 +1,4 @@
-import { desc, eq, not } from "drizzle-orm";
+import { desc, eq, isNotNull, not, and } from "drizzle-orm";
 import { db, setsTable } from "@/lib/db";
 import { localizeRecords, localizeRecord } from "@/lib/db/localization";
 import { createTRPCRouter, publicProcedure } from "../trpc";
@@ -18,6 +18,28 @@ export const setRouter = createTRPCRouter({
       .orderBy(desc(setsTable.releaseDate));
 
     return localizeRecords(sets, "sets", ["name", "series"], ctx.language);
+  }),
+
+  /**
+   * Lightweight symbol index used by the scan tool.
+   * Returns the set ID, symbol URL, and official total for every set that has
+   * a symbol image.  The client downloads each symbol, computes a perceptual
+   * hash (dHash), and uses Hamming distance to identify a scanned card's set.
+   */
+  getSymbolIndex: publicProcedure.query(async () => {
+    return db
+      .select({
+        id: setsTable.id,
+        symbol: setsTable.symbol,
+        total: setsTable.total,
+      })
+      .from(setsTable)
+      .where(
+        and(
+          isNotNull(setsTable.symbol),
+          not(eq(setsTable.series, "Pokémon TCG Pocket")),
+        ),
+      );
   }),
 
   getById: publicProcedure.input(z.string()).query(async ({ input, ctx }) => {

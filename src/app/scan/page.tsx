@@ -15,7 +15,12 @@ export default async function ScanPage() {
     })
     .from(cardsTable)
     .innerJoin(setsTable, eq(cardsTable.setId, setsTable.id))
-    .where(sql`${cardsTable.imageLarge} IS NOT NULL AND ${setsTable.name} NOT LIKE '%trainer Kit%' AND ${setsTable.name} NOT LIKE '%McDonald%'`)
+    .where(
+      sql`${cardsTable.imageLarge} IS NOT NULL
+        AND ${setsTable.name} NOT LIKE '%trainer Kit%'
+        AND ${setsTable.name} NOT LIKE '%McDonald%'
+        AND ${setsTable.series} != 'Pokémon TCG Pocket'`,
+    )
     .orderBy(sql`RANDOM()`)
     .limit(10);
 

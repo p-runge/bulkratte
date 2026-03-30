@@ -276,7 +276,9 @@ export const cardRouter = createTRPCRouter({
   findByOcr: publicProcedure
     .input(
       z.object({
-        name: z.string().optional(),
+        /** When provided (from symbol matching), used as the primary set filter.
+         *  This replaces fuzzy name / total matching entirely. */
+        setId: z.string().optional(),
         number: z.string().optional(),
         setTotal: z.number().int().optional(),
       }),
@@ -284,21 +286,18 @@ export const cardRouter = createTRPCRouter({
     .query(async ({ input, ctx }) => {
       const conditions = [];
 
-      if (input.name) {
-        // Split into words and require each word to appear somewhere in the name.
-        // This tolerates OCR noise and partial reads (e.g. "Bellibolt" still matches "Bellibolt ex").
-        const words = input.name
-          .trim()
-          .split(/\s+/)
-          .filter((w) => w.length > 1);
-        if (words.length > 0) {
-          conditions.push(
-            and(...words.map((w) => ilike(cardsTable.name, `%${w}%`)))!,
-          );
+      if (input.setId) {
+        // Exact set match from symbol recognition — most precise signal.
+        conditions.push(eq(cardsTable.setId, input.setId));
+      } else {
+        // Fallback: set total when symbol matching didn't find a set.
+        if (input.setTotal !== undefined) {
+          conditions.push(eq(setsTable.total, input.setTotal));
         }
       }
+
+      // Card number always narrows the results regardless of how we identified the set.
       if (input.number) {
-        // Normalize: strip leading zeros for comparison
         const normalized = input.number.replace(/^0+/, "") || "0";
         conditions.push(
           or(
@@ -306,9 +305,6 @@ export const cardRouter = createTRPCRouter({
             sql`CAST(NULLIF(regexp_replace(${cardsTable.number}, '^0+', ''), '') AS TEXT) = ${normalized}`,
           ),
         );
-      }
-      if (input.setTotal !== undefined) {
-        conditions.push(eq(setsTable.total, input.setTotal));
       }
 
       if (conditions.length === 0) return [];
