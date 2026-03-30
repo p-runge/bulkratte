@@ -2,8 +2,12 @@
 
 import { Binder } from "@/components/binder";
 import { BinderProvider } from "@/components/binder/binder-context";
-import { UserSet } from "@/components/binder/types";
-import Loader from "@/components/loader";
+import {
+  BinderCard,
+  PlacedUserCardIds,
+  UserCardList,
+  UserSet,
+} from "@/components/binder/types";
 import { api } from "@/lib/api/react";
 import { useState } from "react";
 import { PlaceCardDialog } from "./place-card-dialog";
@@ -11,6 +15,8 @@ import { SetInfo } from "./set-info";
 
 interface UserSetContentProps {
   userSet: UserSet;
+  initialUserCards: UserCardList;
+  initialPlacedUserCardIds: PlacedUserCardIds;
 }
 
 function BinderContent({
@@ -32,6 +38,7 @@ function BinderContent({
         <PlaceCardDialog
           userSetId={dialogState.userSetId}
           userSet={dialogState.userSet}
+          card={dialogState.card}
           cardId={dialogState.cardId}
           userSetCardId={dialogState.userSetCardId}
           hasUserCard={dialogState.hasUserCard}
@@ -48,19 +55,25 @@ function BinderContent({
 
 export function UserSetContent({
   userSet: initialUserSet,
+  initialUserCards,
+  initialPlacedUserCardIds,
 }: UserSetContentProps) {
   const { data: userSet } = api.userSet.getById.useQuery(
     { id: initialUserSet.set.id },
-    {
-      initialData: initialUserSet,
-    },
+    { initialData: initialUserSet },
   );
-  const { data: userCards, isLoading } = api.userCard.getList.useQuery();
-  const { data: placedUserCards } = api.userSet.getPlacedUserCardIds.useQuery();
+  const { data: userCards } = api.userCard.getList.useQuery(undefined, {
+    initialData: initialUserCards,
+  });
+  const { data: placedUserCards } = api.userSet.getPlacedUserCardIds.useQuery(
+    undefined,
+    { initialData: initialPlacedUserCardIds },
+  );
 
   const [dialogState, setDialogState] = useState<{
     open: boolean;
     cardId: string;
+    card: BinderCard | undefined;
     userSetCardId: string;
     hasUserCard: boolean;
     isPlaced: boolean;
@@ -75,10 +88,12 @@ export function UserSetContent({
     hasUserCard: boolean,
     isPlaced: boolean,
     currentUserCardId: string | null,
+    card: BinderCard | undefined,
   ) => {
     setDialogState({
       open: true,
       cardId,
+      card,
       userSetCardId,
       hasUserCard,
       isPlaced,
@@ -91,18 +106,6 @@ export function UserSetContent({
   const handleCloseDialog = () => {
     setDialogState(null);
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center py-12">
-        <Loader />
-      </div>
-    );
-  }
-
-  if (!userCards) {
-    return null;
-  }
 
   return (
     <>

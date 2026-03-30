@@ -161,6 +161,7 @@ export function CardSlot({
           hasUserCard,
           isPlaced,
           currentUserCardId,
+          card,
         );
       }
     };

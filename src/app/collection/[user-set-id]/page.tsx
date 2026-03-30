@@ -36,6 +36,11 @@ export default async function UserSetPage({
     throw error;
   }
 
+  const [userCards, placedUserCardIds] = await Promise.all([
+    api.userCard.getList(),
+    api.userSet.getPlacedUserCardIds(),
+  ]);
+
   return (
     <>
       <div className="flex items-center gap-4 mb-6">
@@ -79,7 +84,11 @@ export default async function UserSetPage({
         </div>
       </div>
 
-      <UserSetContent userSet={userSet} />
+      <UserSetContent
+        userSet={userSet}
+        initialUserCards={userCards}
+        initialPlacedUserCardIds={placedUserCardIds}
+      />
     </>
   );
 }

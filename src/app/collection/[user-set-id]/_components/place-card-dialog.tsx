@@ -10,6 +10,7 @@ import {
 } from "@/components/image-upload";
 import { InfoTooltip } from "@/components/info-tooltip";
 import { LanguageBadge } from "@/components/language-badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +25,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api/react";
 import { AppRouter } from "@/lib/api/routers/_app";
+import { BinderCard } from "@/components/binder/types";
 import { CARD_BORDER_RADIUS } from "@/lib/card-config";
 import { RHFForm, useRHFForm } from "@/lib/form/utils";
 import { userCardFormSchema } from "@/lib/schemas/user-card";
@@ -41,6 +43,7 @@ type UserSet = Awaited<ReturnType<AppRouter["userSet"]["getById"]>>;
 interface PlaceCardDialogProps {
   userSetId: string;
   userSet: UserSet;
+  card: BinderCard | undefined;
   cardId: string;
   userSetCardId: string;
   hasUserCard: boolean;
@@ -54,6 +57,7 @@ interface PlaceCardDialogProps {
 export function PlaceCardDialog({
   userSetId,
   userSet,
+  card,
   cardId,
   userSetCardId,
   hasUserCard,
@@ -70,14 +74,12 @@ export function PlaceCardDialog({
   const [showCardsFromOtherSets, setShowCardsFromOtherSets] = useState(false);
   const [editingUserCard, setEditingUserCard] = useState<UserCard | null>(null);
 
-  const { data: card } = api.card.getById.useQuery({ cardId });
   const { data: placedUserCards } = api.userSet.getPlacedUserCardIds.useQuery();
   const { mutateAsync: placeCard, isPending: isPlacing } =
     api.userSet.placeCard.useMutation();
   const { mutateAsync: unplaceCard, isPending: isUnplacing } =
     api.userSet.unplaceCard.useMutation();
-  const { mutateAsync: createUserCard, isPending: isCreating } =
-    api.userCard.create.useMutation();
+  const { mutateAsync: createUserCard } = api.userCard.create.useMutation();
   const apiUtils = api.useUtils();
 
   const form = useRHFForm(userCardFormSchema, {
@@ -284,67 +286,139 @@ export function PlaceCardDialog({
   const handleCreateAndPlace = async (
     data: z.infer<typeof userCardFormSchema>,
   ) => {
-    const { photos, coverPhotoUrl, coverCrop } =
-      await photoUpload.uploadPending();
-    const newUserCard = await createUserCard({
-      cardId,
-      condition: data.condition ?? undefined,
-      language: data.language ?? undefined,
-      variant: data.variant ?? undefined,
-      notes: data.notes || undefined,
-      photos: photos.length > 0 ? photos : undefined,
-      coverPhotoUrl: coverPhotoUrl ?? undefined,
-      coverCrop,
-    });
-
+    const tempId = crypto.randomUUID();
     const setName = userSet.set.name;
+
+    const prevUserCards = apiUtils.userCard.getList.getData();
     const prevById = apiUtils.userSet.getById.getData({ id: userSetId });
     const prevPlaced = apiUtils.userSet.getPlacedUserCardIds.getData();
 
-    // Optimistic: place the new card in the slot
+    // Optimistic: add the new user card to the local collection list
+    if (card) {
+      apiUtils.userCard.getList.setData(undefined, (old) => {
+        if (!old) return old;
+        return [
+          ...old,
+          {
+            id: tempId,
+            language: data.language ?? null,
+            variant: data.variant ?? null,
+            condition: data.condition ?? null,
+            notes: data.notes || null,
+            card: {
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              id: card.id,
+              name: card.name,
+              number: card.number,
+              rarity: card.rarity ?? null,
+              imageSmall: card.imageSmall,
+              imageLarge: card.imageLarge,
+              setId: card.setId,
+              price: undefined,
+            },
+            localizedName: null,
+            photos: [],
+            coverPhoto: null,
+            coverCrop: null,
+          } as unknown as UserCard,
+        ];
+      });
+    }
+
+    // Optimistic: place the temp card in the slot
     apiUtils.userSet.getById.setData({ id: userSetId }, (old) =>
       old
         ? {
             ...old,
             cards: old.cards.map((c) =>
-              c.id === userSetCardId ? { ...c, userCardId: newUserCard.id } : c,
+              c.id === userSetCardId ? { ...c, userCardId: tempId } : c,
             ),
           }
         : old,
     );
 
+    // Optimistic: add to placed IDs
     apiUtils.userSet.getPlacedUserCardIds.setData(undefined, (old) => [
       ...(old ?? []).filter((p) => p.userSetCardId !== userSetCardId),
-      {
-        userCardId: newUserCard.id,
-        userSetId,
-        userSetCardId,
-        setName,
-      },
+      { userCardId: tempId, userSetId, userSetCardId, setName },
     ]);
 
+    // Close dialog immediately
     onSuccess();
 
     try {
+      const { photos, coverPhotoUrl, coverCrop } =
+        await photoUpload.uploadPending();
+      const newUserCard = await createUserCard({
+        cardId,
+        condition: data.condition ?? undefined,
+        language: data.language ?? undefined,
+        variant: data.variant ?? undefined,
+        notes: data.notes || undefined,
+        photos: photos.length > 0 ? photos : undefined,
+        coverPhotoUrl: coverPhotoUrl ?? undefined,
+        coverCrop,
+      });
+
+      // Replace temp ID with the real ID from the server
+      apiUtils.userCard.getList.setData(undefined, (old) =>
+        old
+          ? old.map((uc) =>
+              uc.id === tempId
+                ? {
+                    ...uc,
+                    id: newUserCard.id,
+                    photos,
+                    coverPhoto: coverPhotoUrl ?? null,
+                    coverCrop: coverCrop ?? null,
+                  }
+                : uc,
+            )
+          : old,
+      );
+
+      apiUtils.userSet.getById.setData({ id: userSetId }, (old) =>
+        old
+          ? {
+              ...old,
+              cards: old.cards.map((c) =>
+                c.id === userSetCardId
+                  ? { ...c, userCardId: newUserCard.id }
+                  : c,
+              ),
+            }
+          : old,
+      );
+
+      apiUtils.userSet.getPlacedUserCardIds.setData(undefined, (old) =>
+        old
+          ? old.map((p) =>
+              p.userCardId === tempId
+                ? { ...p, userCardId: newUserCard.id }
+                : p,
+            )
+          : old,
+      );
+
       await placeCard({ userSetCardId, userCardId: newUserCard.id });
     } catch (error: any) {
+      if (prevUserCards !== undefined) {
+        apiUtils.userCard.getList.setData(undefined, prevUserCards);
+      }
       if (prevById !== undefined) {
         apiUtils.userSet.getById.setData({ id: userSetId }, prevById);
       }
       if (prevPlaced !== undefined) {
         apiUtils.userSet.getPlacedUserCardIds.setData(undefined, prevPlaced);
       }
-      console.error("Failed to place card:", error.message);
+      console.error("Failed to create and place card:", error.message);
     } finally {
       void apiUtils.userSet.getById.invalidate({ id: userSetId });
       void apiUtils.userSet.getPlacedUserCardIds.invalidate();
       void apiUtils.userCard.getList.invalidate();
     }
   };
-
-  if (!card) {
-    return null;
-  }
 
   if (editingUserCard) {
     return (
@@ -533,81 +607,95 @@ export function PlaceCardDialog({
                 </div>
               )}
 
-              <CardFormSection
-                card={card}
-                control={form.control}
-                mediaSlot={
-                  <MultiPhotoUpload
-                    photos={photoUpload.photos}
-                    coverIndex={photoUpload.coverIndex}
-                    coverCrop={photoUpload.coverCrop}
-                    fileInputRef={photoUpload.fileInputRef}
-                    onAddPhotos={photoUpload.handleAddPhotos}
-                    onAddFiles={photoUpload.addFiles}
-                    onRemovePhoto={photoUpload.handleRemovePhoto}
-                    onSetCover={photoUpload.handleSetCover}
-                    onSetCoverCrop={photoUpload.handleSetCoverCrop}
-                    fallbackSrc={card.imageSmall}
-                    fallbackAlt={card.name}
-                  />
-                }
-              >
-                {/* Notes */}
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="place-notes"
-                    className="flex items-center gap-1.5"
-                  >
-                    {intl.formatMessage({
-                      id: "form.field.notes.label",
-                      defaultMessage: "Notes",
-                    })}
-                    <InfoTooltip
-                      content={intl.formatMessage({
-                        id: "form.field.notes.placeholder",
-                        defaultMessage:
-                          "Self-pulled\nReceived from John\nCreased corner\nScratched foil\nSwirl on the right\n…",
-                      })}
+              {card ? (
+                <CardFormSection
+                  card={card}
+                  control={form.control}
+                  mediaSlot={
+                    <MultiPhotoUpload
+                      photos={photoUpload.photos}
+                      coverIndex={photoUpload.coverIndex}
+                      coverCrop={photoUpload.coverCrop}
+                      fileInputRef={photoUpload.fileInputRef}
+                      onAddPhotos={photoUpload.handleAddPhotos}
+                      onAddFiles={photoUpload.addFiles}
+                      onRemovePhoto={photoUpload.handleRemovePhoto}
+                      onSetCover={photoUpload.handleSetCover}
+                      onSetCoverCrop={photoUpload.handleSetCoverCrop}
+                      fallbackSrc={card.imageSmall}
+                      fallbackAlt={card.name}
                     />
-                  </Label>
-                  <Controller
-                    control={form.control}
-                    name="notes"
-                    render={({ field }) => (
-                      <Textarea
-                        id="place-notes"
-                        className="resize-none"
-                        rows={3}
-                        {...field}
+                  }
+                >
+                  {/* Notes */}
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="place-notes"
+                      className="flex items-center gap-1.5"
+                    >
+                      {intl.formatMessage({
+                        id: "form.field.notes.label",
+                        defaultMessage: "Notes",
+                      })}
+                      <InfoTooltip
+                        content={intl.formatMessage({
+                          id: "form.field.notes.placeholder",
+                          defaultMessage:
+                            "Self-pulled\nReceived from John\nCreased corner\nScratched foil\nSwirl on the right\n…",
+                        })}
                       />
-                    )}
+                    </Label>
+                    <Controller
+                      control={form.control}
+                      name="notes"
+                      render={({ field }) => (
+                        <Textarea
+                          id="place-notes"
+                          className="resize-none"
+                          rows={3}
+                          {...field}
+                        />
+                      )}
+                    />
+                  </div>
+                </CardFormSection>
+              ) : (
+                <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start">
+                  <Skeleton
+                    className="w-full sm:w-48 sm:flex-shrink-0 aspect-5/7 mx-auto sm:mx-0"
+                    style={{ borderRadius: CARD_BORDER_RADIUS }}
                   />
+                  <div className="flex-1 space-y-4 sm:space-y-6 w-full">
+                    <Skeleton className="h-7 w-48" />
+                    <div className="space-y-3">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-9 w-full" />
+                    </div>
+                    <div className="space-y-3">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-9 w-full" />
+                    </div>
+                    <div className="space-y-3">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-9 w-full" />
+                    </div>
+                  </div>
                 </div>
-              </CardFormSection>
+              )}
             </div>
 
             <DialogFooter className="pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                disabled={isCreating}
-              >
+              <Button type="button" variant="outline" onClick={onClose}>
                 {intl.formatMessage({
                   id: "common.button.cancel",
                   defaultMessage: "Cancel",
                 })}
               </Button>
-              <Button type="submit" disabled={isCreating}>
-                {isCreating
-                  ? intl.formatMessage({
-                      id: "common.button.saving",
-                      defaultMessage: "Saving...",
-                    })
-                  : intl.formatMessage({
-                      id: "dialog.place_card.action.add_and_place",
-                      defaultMessage: "Add New Card to Collection & Place It",
-                    })}
+              <Button type="submit" disabled={!card}>
+                {intl.formatMessage({
+                  id: "dialog.place_card.action.add_and_place",
+                  defaultMessage: "Add New Card to Collection & Place It",
+                })}
               </Button>
             </DialogFooter>
           </RHFForm>

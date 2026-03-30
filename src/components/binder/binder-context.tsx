@@ -7,7 +7,7 @@ import React, { createContext, useContext, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { IntlShape, useIntl } from "react-intl";
 import z from "zod";
-import { BinderCardData, UserSet } from "./types";
+import { BinderCard, BinderCardData, UserSet } from "./types";
 
 export const PAGE_DIMENSIONS = { columns: 3, rows: 3 };
 export const PAGE_SIZE = PAGE_DIMENSIONS.columns * PAGE_DIMENSIONS.rows;
@@ -45,6 +45,7 @@ type BinderContextValue = {
         hasUserCard: boolean,
         isPlaced: boolean,
         currentUserCardId: string | null,
+        card: BinderCard | undefined,
       ) => void)
     | null;
   initialUserSet: UserSet; // Store original user set data for place mode
@@ -89,6 +90,7 @@ export function BinderProvider({
         hasUserCard: boolean,
         isPlaced: boolean,
         currentUserCardId: string | null,
+        card: BinderCard | undefined,
       ) => void)
     | null;
 }) {
