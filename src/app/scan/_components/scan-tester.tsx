@@ -30,6 +30,7 @@ type Sample = {
   imageLarge: string | null;
   setName: string;
   setTotal: number | null;
+  setSeries: string;
 };
 
 type OcrResult = {
@@ -91,7 +92,7 @@ type RegionScanStep = {
 type SymbolMatch = {
   setId: string;
   symbolUrl: string;
-  /** Hamming distance 0 (identical) – 64 (opposite). */
+  /** Cosine distance 0 (identical) – 1 (completely different). */
   distance: number;
 };
 
@@ -121,32 +122,98 @@ type ScanStepInput =
   | Omit<SymbolMatchStep, "stepNumber">;
 
 // ── Set symbol: scan regions (ordered by probability) ─────────────────────
+// ── Symbol position groups ────────────────────────────────────────────────
 /**
- * Regions where the set symbol may appear, tried in order.
- * Modern cards (SV, SWSH, SM, XY): symbol is in the bottom strip, to the
- * right of the card number.  Older sets may place it bottom-left or center.
+ * Era-specific crop regions for the set symbol, derived from a pixel-level
+ * scan of 181 sets (3 cards each) using right→left column-gap detection.
+ * Run:  pnpm tsx --tsconfig tsconfig.scripts.json scripts/db/scan-symbol-positions.ts
+ *
+ * Two main layouts observed:
+ *   "classic"  – tiny symbol squeezed into the far bottom-right corner
+ *                (Base through Platinum/HGSS era). x1 ≈ 0.86–0.94, w ≈ 0.01–0.04
+ *   "modern"   – larger symbol sitting centre-right in the strip
+ *                (Sun & Moon, Sword & Shield, SV). x1 ≈ 0.40–0.55, w ≈ 0.05–0.09
+ *
+ * BW/XY/SV sets mostly failed detection because dark-artwork cards bleed into
+ * the strip. For those eras the generic fallback regions are used.
  */
+const SYMBOL_POSITION_GROUPS = [
+  {
+    id: "sv-swsh",
+    label: "Scarlet & Violet / Sword & Shield",
+    // cel25/fut2020 empirical: x=[0.415–0.935] → use centre-right band with padding
+    region: { x: 0.38, y: 0.905, w: 0.61, h: 0.085 },
+  },
+  {
+    id: "sun-moon",
+    label: "Sun & Moon",
+    // 9 sets, median x=[0.453–0.942] y=[0.903–0.965]
+    region: { x: 0.42, y: 0.896, w: 0.57, h: 0.076 },
+  },
+  {
+    id: "xy-bw",
+    label: "XY / Black & White",
+    // BW/XY mostly failed pixel detection (dark artwork); use a generous band
+    region: { x: 0.38, y: 0.9, w: 0.61, h: 0.09 },
+  },
+  {
+    id: "hgss",
+    label: "HeartGold & SoulSilver",
+    // 5 sets, median x=[0.865–0.976] y=[0.933–0.987] — wide variance, use generous crop
+    region: { x: 0.83, y: 0.92, w: 0.165, h: 0.075 },
+  },
+  {
+    id: "platinum",
+    label: "Platinum",
+    // 5 sets, median x=[0.933–0.957] y=[0.958–0.972] — classic tiny corner symbol
+    region: { x: 0.905, y: 0.948, w: 0.09, h: 0.042 },
+  },
+  {
+    id: "dp",
+    label: "Diamond & Pearl",
+    // 8 sets, median x=[0.932–0.961] y=[0.953–0.973]
+    region: { x: 0.905, y: 0.944, w: 0.09, h: 0.042 },
+  },
+  {
+    id: "ex-era",
+    label: "EX Series",
+    // 16 sets, median x=[0.932–0.956] y=[0.953–0.971]
+    region: { x: 0.905, y: 0.944, w: 0.09, h: 0.038 },
+  },
+  {
+    id: "classic",
+    label: "Classic WotC (Base / Gym / Neo / e-Card)",
+    // Base/Neo/Gym median x=[0.935–0.953] y=[0.956–0.966]; e-Card x=[0.868–0.928]
+    // Using wider x-start to cover e-Card outlier
+    region: { x: 0.84, y: 0.944, w: 0.155, h: 0.038 },
+  },
+] as const;
+
+/** Fallback symbol regions tried when no era group is known, in order. */
 const SYMBOL_REGIONS = [
   {
-    label: "Bottom-right (SV/SWSH/SM/XY)",
-    x: 0.55,
-    y: 0.88,
-    w: 0.38,
-    h: 0.1,
+    // Modern sets: symbol is centre-right in the strip
+    label: "Centre-right strip (modern)",
+    x: 0.38,
+    y: 0.9,
+    w: 0.61,
+    h: 0.09,
   },
   {
-    label: "Bottom-center (BW and some older)",
-    x: 0.3,
-    y: 0.87,
-    w: 0.6,
-    h: 0.11,
+    // Classic sets: symbol is a tiny icon in the far bottom-right corner
+    label: "Far right corner (classic)",
+    x: 0.83,
+    y: 0.9,
+    w: 0.16,
+    h: 0.09,
   },
   {
+    // Full-width fallback: entire info strip
     label: "Full bottom strip (fallback)",
     x: 0.05,
-    y: 0.86,
+    y: 0.895,
     w: 0.9,
-    h: 0.12,
+    h: 0.1,
   },
 ] as const;
 
@@ -156,6 +223,219 @@ const SYMBOL_REGIONS = [
  */
 const SYMBOL_DISTANCE_THRESHOLD = 0.12;
 
+/**
+ * Per-set symbol bounding boxes (x1, x2, y1, y2 as fractions of card dimensions).
+ * Derived from scan-symbol-positions.ts run against 181 sets (3 cards each).
+ * 109/181 sets have clean detections; the rest fall back to era-group regions.
+ *
+ * Re-run:  pnpm tsx --tsconfig tsconfig.scripts.json scripts/db/scan-symbol-positions.ts
+ */
+const SET_SYMBOL_POSITIONS: Record<
+  string,
+  { x1: number; x2: number; y1: number; y2: number }
+> = {
+  base1: { x1: 0.9417, x2: 0.9533, y1: 0.9552, y2: 0.9648 },
+  base2: { x1: 0.94, x2: 0.9517, y1: 0.9588, y2: 0.9673 },
+  basep: { x1: 0.9317, x2: 0.9517, y1: 0.9564, y2: 0.9661 },
+  base3: { x1: 0.94, x2: 0.9533, y1: 0.9624, y2: 0.9709 },
+  base4: { x1: 0.9417, x2: 0.9533, y1: 0.9564, y2: 0.9661 },
+  base5: { x1: 0.9417, x2: 0.9533, y1: 0.9576, y2: 0.9661 },
+  gym1: { x1: 0.9383, x2: 0.9517, y1: 0.9576, y2: 0.9673 },
+  gym2: { x1: 0.9367, x2: 0.9517, y1: 0.9588, y2: 0.9685 },
+  neo1: { x1: 0.935, x2: 0.9483, y1: 0.9564, y2: 0.9661 },
+  neo2: { x1: 0.9333, x2: 0.9483, y1: 0.9552, y2: 0.9648 },
+  si1: { x1: 0.6883, x2: 0.9233, y1: 0.9018, y2: 0.9661 },
+  neo3: { x1: 0.9367, x2: 0.95, y1: 0.9564, y2: 0.9648 },
+  neo4: { x1: 0.9383, x2: 0.9483, y1: 0.9588, y2: 0.9685 },
+  lc: { x1: 0.9367, x2: 0.95, y1: 0.9564, y2: 0.9661 },
+  ecard1: { x1: 0.8325, x2: 0.9567, y1: 0.9006, y2: 0.9436 },
+  ecard2: { x1: 0.9, x2: 0.9283, y1: 0.9006, y2: 0.9297 },
+  ecard3: { x1: 0.8683, x2: 0.8992, y1: 0.9091, y2: 0.9521 },
+  ex1: { x1: 0.925, x2: 0.9433, y1: 0.9491, y2: 0.9655 },
+  ex2: { x1: 0.875, x2: 0.9325, y1: 0.9, y2: 0.9382 },
+  ex3: { x1: 0.9025, x2: 0.9387, y1: 0.9027, y2: 0.9609 },
+  ex4: { x1: 0.935, x2: 0.9525, y1: 0.9582, y2: 0.9709 },
+  ex5: { x1: 0.9283, x2: 0.9617, y1: 0.9545, y2: 0.9737 },
+  ex6: { x1: 0.925, x2: 0.955, y1: 0.9545, y2: 0.9745 },
+  ex7: { x1: 0.9383, x2: 0.9533, y1: 0.9521, y2: 0.9713 },
+  ex8: { x1: 0.935, x2: 0.96, y1: 0.9527, y2: 0.9685 },
+  ex9: { x1: 0.9267, x2: 0.9583, y1: 0.9564, y2: 0.9733 },
+  ex10: { x1: 0.9333, x2: 0.9583, y1: 0.9539, y2: 0.9709 },
+  ex11: { x1: 0.9333, x2: 0.9567, y1: 0.9564, y2: 0.9733 },
+  ex12: { x1: 0.93, x2: 0.9533, y1: 0.9503, y2: 0.9697 },
+  ex13: { x1: 0.935, x2: 0.96, y1: 0.9564, y2: 0.9721 },
+  ex14: { x1: 0.9483, x2: 0.955, y1: 0.9564, y2: 0.9673 },
+  ex15: { x1: 0.9317, x2: 0.9567, y1: 0.9527, y2: 0.9636 },
+  ex16: { x1: 0.9317, x2: 0.9617, y1: 0.9515, y2: 0.9733 },
+  np: { x1: 0.925, x2: 0.9533, y1: 0.9539, y2: 0.9733 },
+  pop1: { x1: 0.9183, x2: 0.9617, y1: 0.9545, y2: 0.9725 },
+  pop2: { x1: 0.925, x2: 0.9633, y1: 0.9564, y2: 0.9709 },
+  pop3: { x1: 0.925, x2: 0.96, y1: 0.9539, y2: 0.9673 },
+  pop4: { x1: 0.9233, x2: 0.9683, y1: 0.9539, y2: 0.9745 },
+  pop5: { x1: 0.9233, x2: 0.9617, y1: 0.9552, y2: 0.9709 },
+  pop6: { x1: 0.925, x2: 0.9658, y1: 0.96, y2: 0.9733 },
+  pop7: { x1: 0.925, x2: 0.965, y1: 0.96, y2: 0.9782 },
+  pop8: { x1: 0.915, x2: 0.965, y1: 0.9588, y2: 0.977 },
+  pop9: { x1: 0.9183, x2: 0.9667, y1: 0.9588, y2: 0.9782 },
+  dpp: { x1: 0.93, x2: 0.96, y1: 0.9527, y2: 0.9733 },
+  dp1: { x1: 0.9367, x2: 0.96, y1: 0.9539, y2: 0.9721 },
+  dp2: { x1: 0.9317, x2: 0.96, y1: 0.9527, y2: 0.9733 },
+  dp3: { x1: 0.9383, x2: 0.9583, y1: 0.9539, y2: 0.9733 },
+  dp4: { x1: 0.93, x2: 0.9633, y1: 0.9527, y2: 0.9733 },
+  dp5: { x1: 0.9333, x2: 0.965, y1: 0.9527, y2: 0.9758 },
+  dp6: { x1: 0.93, x2: 0.9633, y1: 0.9527, y2: 0.9733 },
+  dp7: { x1: 0.9333, x2: 0.9617, y1: 0.9515, y2: 0.9721 },
+  pl1: { x1: 0.93, x2: 0.955, y1: 0.9612, y2: 0.9709 },
+  pl2: { x1: 0.9367, x2: 0.9567, y1: 0.9576, y2: 0.9745 },
+  pl3: { x1: 0.9367, x2: 0.95, y1: 0.9552, y2: 0.9636 },
+  pl4: { x1: 0.9333, x2: 0.9583, y1: 0.9576, y2: 0.9721 },
+  ru1: { x1: 0.9283, x2: 0.9567, y1: 0.9576, y2: 0.977 },
+  hgss1: { x1: 0.865, x2: 0.9443, y1: 0.9379, y2: 0.9818 },
+  hgssp: { x1: 0.8242, x2: 0.9683, y1: 0.9333, y2: 0.9891 },
+  hgss2: { x1: 0.9343, x2: 0.9786, y1: 0.9081, y2: 0.9869 },
+  hgss3: { x1: 0.4429, x2: 0.9757, y1: 0.904, y2: 0.9869 },
+  hgss4: { x1: 0.9286, x2: 0.9786, y1: 0.9545, y2: 0.9869 },
+  col1: { x1: 0.9386, x2: 0.9786, y1: 0.9535, y2: 0.9869 },
+  bwp: { x1: 0.92, x2: 0.9586, y1: 0.9491, y2: 0.9768 },
+  bw8: { x1: 0.9583, x2: 0.9983, y1: 0.9006, y2: 0.9988 },
+  bw9: { x1: 0.9733, x2: 0.9983, y1: 0.9818, y2: 0.9988 },
+  xy4: { x1: 0.8833, x2: 0.9983, y1: 0.9006, y2: 0.9988 },
+  xy7: { x1: 0.7386, x2: 0.9986, y1: 0.9, y2: 0.999 },
+  xy9: { x1: 0.9617, x2: 0.9983, y1: 0.9006, y2: 0.9988 },
+  xy11: { x1: 0.9733, x2: 0.9983, y1: 0.9091, y2: 0.9988 },
+  smp: { x1: 0.6959, x2: 0.9986, y1: 0.9461, y2: 0.999 },
+  sm1: { x1: 0.4529, x2: 0.9457, y1: 0.9051, y2: 0.9747 },
+  sm2: { x1: 0.4514, x2: 0.93, y1: 0.903, y2: 0.9758 },
+  sm3: { x1: 0.4529, x2: 0.9329, y1: 0.903, y2: 0.9758 },
+  sm4: { x1: 0.4003, x2: 0.9463, y1: 0.9, y2: 0.96 },
+  sm5: { x1: 0.4529, x2: 0.9314, y1: 0.9172, y2: 0.9636 },
+  sm6: { x1: 0.4, x2: 0.9986, y1: 0.9, y2: 0.999 },
+  sm7: { x1: 0.8343, x2: 0.9557, y1: 0.9, y2: 0.9121 },
+  sm8: { x1: 0.4003, x2: 0.9632, y1: 0.9, y2: 0.971 },
+  sm9: { x1: 0.8543, x2: 0.942, y1: 0.915, y2: 0.947 },
+  det1: { x1: 0.4537, x2: 0.9373, y1: 0.9023, y2: 0.9653 },
+  sm10: { x1: 0.9918, x2: 0.9986, y1: 0.9922, y2: 0.999 },
+  sm11: { x1: 0.9918, x2: 0.9986, y1: 0.9756, y2: 0.999 },
+  sma: { x1: 0.9918, x2: 0.9986, y1: 0.9922, y2: 0.999 },
+  sm115: { x1: 0.9918, x2: 0.9986, y1: 0.9922, y2: 0.999 },
+  swshp: { x1: 0.6583, x2: 0.9983, y1: 0.9121, y2: 0.9988 },
+  swsh1: { x1: 0.9217, x2: 0.9983, y1: 0.92, y2: 0.9988 },
+  swsh2: { x1: 0.9117, x2: 0.9983, y1: 0.9115, y2: 0.9988 },
+  fut2020: { x1: 0.4251, x2: 0.9346, y1: 0.9043, y2: 0.9854 },
+  "swsh3.5": { x1: 0.66, x2: 0.9983, y1: 0.9061, y2: 0.9988 },
+  swsh4: { x1: 0.92, x2: 0.9983, y1: 0.9115, y2: 0.9988 },
+  "swsh4.5": { x1: 0.4, x2: 0.9983, y1: 0.9006, y2: 0.9988 },
+  swsh5: { x1: 0.4, x2: 0.9983, y1: 0.9006, y2: 0.9988 },
+  swsh6: { x1: 0.4, x2: 0.9983, y1: 0.9006, y2: 0.9988 },
+  swsh7: { x1: 0.4, x2: 0.9983, y1: 0.9006, y2: 0.9988 },
+  cel25: { x1: 0.405, x2: 0.935, y1: 0.9152, y2: 0.9855 },
+  swsh9: { x1: 0.4, x2: 0.9983, y1: 0.9006, y2: 0.9988 },
+  swsh10: { x1: 0.4, x2: 0.9983, y1: 0.9006, y2: 0.9988 },
+  "swsh10.5": { x1: 0.9133, x2: 0.9983, y1: 0.9115, y2: 0.9988 },
+  swsh11: { x1: 0.4, x2: 0.9983, y1: 0.9006, y2: 0.9988 },
+  swsh12: { x1: 0.4, x2: 0.9983, y1: 0.9006, y2: 0.9988 },
+  "swsh12.5": { x1: 0.4, x2: 0.9983, y1: 0.9006, y2: 0.9988 },
+  sv01: { x1: 0.9558, x2: 0.9983, y1: 0.9073, y2: 0.9988 },
+  svp: { x1: 0.9617, x2: 0.9983, y1: 0.9103, y2: 0.9988 },
+  "sv03.5": { x1: 0.9533, x2: 0.9983, y1: 0.9115, y2: 0.9988 },
+  sv07: { x1: 0.9533, x2: 0.9983, y1: 0.9055, y2: 0.9988 },
+  sv08: { x1: 0.9733, x2: 0.9983, y1: 0.9103, y2: 0.9988 },
+  "sv08.5": { x1: 0.905, x2: 0.9983, y1: 0.9091, y2: 0.9988 },
+  sv09: { x1: 0.9533, x2: 0.9983, y1: 0.9091, y2: 0.9988 },
+  "sv10.5b": { x1: 0.4, x2: 0.9983, y1: 0.9006, y2: 0.9988 },
+};
+
+// ── Number position groups ────────────────────────────────────────────────
+/**
+ * Every card era uses a distinct info-strip layout.  Once a set is identified
+ * the scanner can skip the generic wide regions and go straight to the exact
+ * crop for that era, improving OCR accuracy and speed.
+ *
+ * Values derived from a pixel-level scan of 181 sets (2 cards each) using
+ * column-gap detection across multiple brightness thresholds.
+ * Run:  pnpm tsx --tsconfig tsconfig.scripts.json scripts/db/scan-set-positions.ts
+ */
+const NUMBER_POSITION_GROUPS = [
+  {
+    id: "sv-swsh",
+    label: "Scarlet & Violet / Sword & Shield",
+    // Strip position from cel25/fut2020 (SWSH) empirical: y1≈0.918, y2≈0.986
+    // SV uses same design; x starts just past the card edge; width covers longest format
+    region: { x: 0.025, y: 0.92, w: 0.2, h: 0.066 },
+  },
+  {
+    id: "sun-moon",
+    label: "Sun & Moon",
+    // Empirical: sm7 x=[0.032–0.123] y=[0.918–0.984]; sm9 x=[0.037–0.110] y=[0.916–0.980]
+    region: { x: 0.02, y: 0.912, w: 0.215, h: 0.076 },
+  },
+  {
+    id: "xy-bw",
+    label: "XY / Black & White",
+    // BW promo empirical: x=[0.055–0.151] y=[0.939–0.976]; XY estimated same era design
+    region: { x: 0.025, y: 0.926, w: 0.205, h: 0.062 },
+  },
+  {
+    id: "hgss",
+    label: "HeartGold & SoulSilver",
+    // Empirical: hgss1–4 x1≈0.076–0.136, y1≈0.912–0.949, y2≈0.939–0.972; col1 y1≈0.934
+    // Using x=0.055 to capture the full range observed across all HGSS sets
+    region: { x: 0.055, y: 0.906, w: 0.21, h: 0.072 },
+  },
+  {
+    id: "platinum",
+    label: "Platinum",
+    // Empirical: pl1–4 x1≈0.147–0.156, y1≈0.910–0.912, y2≈0.948–0.952
+    // Number starts at x≈0.15 (after the Pokémon-level badge area at far left)
+    region: { x: 0.115, y: 0.904, w: 0.19, h: 0.054 },
+  },
+  {
+    id: "dp",
+    label: "Diamond & Pearl",
+    // Empirical: dp1–6 x1≈0.078–0.087, y1≈0.910–0.912, y2≈0.967–0.975
+    region: { x: 0.055, y: 0.904, w: 0.25, h: 0.074 },
+  },
+  {
+    id: "ex-era",
+    label: "EX Series",
+    // Empirical: median x1≈0.121, y1≈0.919, y2≈0.963 across 16 sets
+    // Using x=0.020 because some early EX sets (ex3, ex16) start at x≈0.043–0.048
+    region: { x: 0.02, y: 0.904, w: 0.295, h: 0.082 },
+  },
+  {
+    id: "classic",
+    label: "Classic WotC (Base / Gym / Neo / e-Card)",
+    // Empirical: Base/Gym/Neo consensus x1≈0.043–0.050, y1≈0.927–0.935, y2≈0.966–0.968
+    region: { x: 0.03, y: 0.918, w: 0.295, h: 0.062 },
+  },
+] as const;
+
+type ScanGroupId = (typeof NUMBER_POSITION_GROUPS)[number]["id"];
+
+/**
+ * Maps every TCGdex series name to the scan-group that best covers its
+ * info-strip layout.  Series not listed here fall back to generic regions.
+ */
+const SERIES_TO_SCAN_GROUP: Record<string, ScanGroupId> = {
+  "Scarlet & Violet": "sv-swsh",
+  "Sword & Shield": "sv-swsh",
+  "Mega Evolution": "sv-swsh", // Japanese XY-era promos follow similar layout
+  "Sun & Moon": "sun-moon",
+  XY: "xy-bw",
+  "Black & White": "xy-bw",
+  "HeartGold & SoulSilver": "hgss",
+  "Call of Legends": "hgss",
+  Platinum: "platinum",
+  "Diamond & Pearl": "dp",
+  POP: "dp", // POP Series promo sets use DP-era design
+  EX: "ex-era",
+  "E-Card": "classic",
+  Neo: "classic",
+  Gym: "classic",
+  Base: "classic",
+  "Legendary Collection": "classic",
+};
+
 // ── Card number: scan regions (ordered by probability) ─────────────────────
 /**
  * Regions to scan for the card number, tried in order.
@@ -163,32 +443,36 @@ const SYMBOL_DISTANCE_THRESHOLD = 0.12;
  */
 const NUMBER_REGIONS = [
   {
-    // Card number is in the bottom copyright/legal strip, BELOW the
-    // weakness-resistance-retreat row (~y:0.83-0.92) and the rules text.
-    // y:0.93 safely clears all card body text on standard-sized cards.
-    label: "Bottom-left corner",
-    description: "Most modern sets (SV, SWSH, SM, XY) print the number here.",
+    // Number is bottom-left. Pixel analysis shows digits start at x≈0.02 and
+    // span up to x≈0.29 (EX/DP era, widest format). Strip starts at y≈0.930
+    // for classic sets; widening from the old y=0.942 captures the full digit
+    // height (EX text spans y=[0.931–0.984], i.e. ~5% of card height).
+    label: "Bottom-left strip",
+    description: "Number is bottom-left on the vast majority of sets.",
     x: 0,
     y: 0.93,
-    w: 0.45,
+    w: 0.3,
     h: 0.07,
   },
   {
-    label: "Bottom-right corner",
-    description: "Some older sets (BW, early XY) and certain Full Art prints.",
-    x: 0.5,
+    // Full Art / Trainer Gallery / Rainbow Rare prints place the number
+    // bottom-right. x=0.65 skips centre content and focuses on that corner.
+    label: "Bottom-right strip",
+    description: "Full Art / Trainer Gallery / Rainbow Rare prints.",
+    x: 0.65,
     y: 0.93,
-    w: 0.5,
+    w: 0.32,
     h: 0.07,
   },
   {
+    // Full-width sweep as last resort. Excludes the top of the card body
+    // (y<0.925) where HP/damage numbers live.
     label: "Full bottom strip (fallback)",
-    description:
-      "Scans the entire bottom 9% when the number isn't in a corner.",
+    description: "Full-width sweep of the info strip.",
     x: 0,
-    y: 0.91,
-    w: 1.0,
-    h: 0.09,
+    y: 0.925,
+    w: 0.9,
+    h: 0.075,
   },
 ] as const;
 
@@ -228,34 +512,6 @@ const NUMBER_PATTERNS: {
   },
 ];
 
-/** Module-level promise — OpenCV.js is only loaded once per page session. */
-let opencvLoadPromise: Promise<void> | null = null;
-
-function loadOpenCV(): Promise<void> {
-  if (opencvLoadPromise) return opencvLoadPromise;
-  opencvLoadPromise = new Promise<void>((resolve, reject) => {
-    const w = window as Window & { cv?: { Mat?: unknown } };
-    if (w.cv?.Mat) {
-      resolve();
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = "/opencv.js";
-    script.async = true;
-    script.onload = () => {
-      // OpenCV WASM initialises asynchronously after the script loads
-      const poll = () =>
-        (w.cv as { Mat?: unknown } | undefined)?.Mat
-          ? resolve()
-          : setTimeout(poll, 50);
-      poll();
-    };
-    script.onerror = () => reject(new Error("Failed to load OpenCV.js"));
-    document.head.appendChild(script);
-  });
-  return opencvLoadPromise;
-}
-
 export function ScanTester({ samples }: Props) {
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [activeSample, setActiveSample] = useState<Sample | null>(null);
@@ -266,6 +522,14 @@ export function ScanTester({ samples }: Props) {
     src: string;
     alt: string;
   } | null>(null);
+  /**
+   * The series name of the most-recently identified set.  When set, the
+   * scanner will try that era's precise crop region first before falling
+   * back to the generic NUMBER_REGIONS sweep.
+   */
+  const [persistedSetSeries, setPersistedSetSeries] = useState<string | null>(
+    null,
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ── Symbol index pre-fetch ───────────────────────────────────────────
@@ -279,6 +543,18 @@ export function ScanTester({ samples }: Props) {
   const [symbolsTotal, setSymbolsTotal] = useState(0);
 
   const symbolIndex = api.set.getSymbolIndex.useQuery();
+
+  /** setId → series name, built once the symbol index arrives. */
+  const setSeriesMap = useRef<Map<string, string>>(new Map());
+
+  useEffect(() => {
+    if (!symbolIndex.data) return;
+    const map = new Map<string, string>();
+    symbolIndex.data.forEach((s) => {
+      if (s.series) map.set(s.id, s.series);
+    });
+    setSeriesMap.current = map;
+  }, [symbolIndex.data]);
 
   useEffect(() => {
     if (!symbolIndex.data) return;
@@ -303,9 +579,19 @@ export function ScanTester({ samples }: Props) {
               const canvas = document.createElement("canvas");
               canvas.width = img.naturalWidth || 64;
               canvas.height = img.naturalHeight || 64;
-              canvas.getContext("2d")!.drawImage(img, 0, 0);
+              const ctx = canvas.getContext("2d")!;
+              // Fill white first so transparent pixels become white, not black.
+              // Without this, transparent backgrounds read as r=g=b=0 and the
+              // entire fingerprint collapses to near-zero, making every symbol
+              // look identical to the cosine distance function.
+              ctx.fillStyle = "#fff";
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+              ctx.drawImage(img, 0, 0);
+              // Binarize and isolate (same pipeline as the card crop).
+              const refBin = binarize(canvas, 1, false);
+              const refNorm = isolateSymbol(refBin, 0);
               map.set(s.id, {
-                hash: imgFingerprint(canvas),
+                hash: imgFingerprint(refNorm),
                 symbolUrl: s.symbol,
               });
             } catch {
@@ -351,46 +637,29 @@ export function ScanTester({ samples }: Props) {
     try {
       const img = await loadImage(imageUrl);
 
-      // ── jscanify: card detection & perspective correction ─────────────────
+      // ── jscanify: card detection & perspective correction (DISABLED) ───────
+      // TODO: re-enable once perspective warp behaviour is verified.
+      // The warp currently degrades more scans than it helps, so we skip it
+      // and always use the original image directly.
 
-      await loadOpenCV();
-
-      const { default: JscanifyClass } = await import("jscanify/client");
-      const scanner = new JscanifyClass();
-
-      // Step 1: highlight detected card boundary on the original image
-      const highlightCanvas = scanner.highlightPaper(img, {
-        color: "orange",
-        thickness: 6,
-      });
+      const cardSource: HTMLImageElement | HTMLCanvasElement = img;
       pushStep({
         kind: "image",
-        label: "jscanify: card boundary detection",
-        dataUrl: highlightCanvas.toDataURL(),
+        label: "jscanify: disabled (using original image)",
+        dataUrl: cropFull(img).toDataURL(),
         description:
-          "OpenCV edge detection (Canny) finds the largest contour in the image. The detected card boundary is drawn in orange. This is what jscanify will warp into a flat rectangle.",
+          "Perspective correction is temporarily disabled. The original image is used as-is for all subsequent steps.",
         size: "card",
       });
 
-      // Step 2: perspective warp → flat, undistorted card
-      const extractedCanvas = scanner.extractPaper(
-        img,
-        img.naturalWidth,
-        img.naturalHeight,
-      );
-      const cardSource: HTMLImageElement | HTMLCanvasElement =
-        extractedCanvas ?? img;
-      pushStep({
-        kind: "image",
-        label: "jscanify: perspective correction",
-        dataUrl: (extractedCanvas ?? cropFull(img)).toDataURL(),
-        description: extractedCanvas
-          ? "The four detected corners are used as control points for a perspective warp (cv.warpPerspective), producing a straight, undistorted card ready for OCR."
-          : "No card boundary detected — using the original image as-is for the remaining steps.",
-        size: "card",
-      });
-
-      // ── Number: scan priority regions ──────────────────────────────────────
+      // ── Step 1: Number OCR ────────────────────────────────────────────────
+      // Most reliable signal. Number + total uniquely identify the set in
+      // most cases. Symbol matching is only used when multiple sets share
+      // the same number/total combination.
+      //
+      // When a series is already known from a previous scan, the targeted
+      // group's crop region is tried first.  This is narrower and more
+      // accurate than the generic wide sweep.
 
       type TWord = { text: string; confidence: number };
       type TLine = { words: TWord[] };
@@ -404,8 +673,35 @@ export function ScanTester({ samples }: Props) {
       let numberError: string | null = null;
       const regionAttempts: RegionScanAttempt[] = [];
 
-      for (const region of NUMBER_REGIONS) {
-        // Stop as soon as we have a valid number
+      // Build the ordered list of regions to try.
+      // If a series is known, prepend its era-specific crop region.
+      const activeGroupId =
+        persistedSetSeries != null
+          ? SERIES_TO_SCAN_GROUP[persistedSetSeries]
+          : undefined;
+      const activeGroup = activeGroupId
+        ? NUMBER_POSITION_GROUPS.find((g) => g.id === activeGroupId)
+        : undefined;
+
+      const regionsToScan: ReadonlyArray<{
+        label: string;
+        description: string;
+        x: number;
+        y: number;
+        w: number;
+        h: number;
+      }> = activeGroup
+        ? [
+            {
+              label: `Focused: ${activeGroup.label}`,
+              description: `Era-specific crop for ${activeGroup.label} (series: ${persistedSetSeries ?? ""}).`,
+              ...activeGroup.region,
+            },
+            ...NUMBER_REGIONS,
+          ]
+        : [...NUMBER_REGIONS];
+
+      for (const region of regionsToScan) {
         if (parsedNumber !== null) break;
 
         const regionCrop = cropImage(
@@ -418,7 +714,6 @@ export function ScanTester({ samples }: Props) {
         const regionProcessed = applyProcessing(regionCrop, 4);
         const regionResult = await worker.recognize(regionProcessed);
 
-        // Confidence-filtered text used first; raw text as fallback
         const regionWords: TWord[] =
           (regionResult.data as unknown as TData).lines?.flatMap(
             (l) => l.words,
@@ -473,19 +768,15 @@ export function ScanTester({ samples }: Props) {
       pushStep({
         kind: "region-scan",
         label: "Number: scan priority regions",
-        description:
-          "Regions are scanned in priority order — scanning stops at the first match. Confidence-filtered text (≥70%) is tried first, raw OCR is used as fallback.",
+        description: activeGroup
+          ? `Era-specific region for "${activeGroup.label}" tried first, then generic fallbacks. Stops at first match.`
+          : "Regions are scanned in priority order — scanning stops at the first match. Confidence-filtered text (>=70%) is tried first, raw OCR is used as fallback.",
         attempts: regionAttempts,
       });
 
-      // ── Number fallback: digit whitelist ────────────────────────────────
-      // When all regions fail (artwork noise confuses Tesseract), run the full
-      // bottom strip once more with a digit+slash-only whitelist.  This strips
-      // every artwork character so only meaningful digit pairs survive.
+      // ── Number fallback: digit whitelist ─────────────────────────────────
       if (parsedNumber === null) {
-        const digitCrop = cropImage(cardSource, 0, 0.91, 1, 0.09);
-        // Binary threshold for digits: black ink on light background.
-        // Include A-Z so promo prefixes like XY, SWSH, SM survive the whitelist.
+        const digitCrop = cropImage(cardSource, 0, 0.938, 0.9, 0.062);
         const digitBinary = binarize(digitCrop, 4, false);
         await worker.setParameters({
           tessedit_pageseg_mode: "6" as never,
@@ -495,16 +786,11 @@ export function ScanTester({ samples }: Props) {
         const digitResult = await worker.recognize(digitBinary);
         const digitText = digitResult.data.text?.trim() ?? "";
 
-        // Try standard patterns first; then a lenient two-group match for
-        // when the slash was read as a space (common with digit whitelist).
-        // Guard: for NNN/NNN matches, require total >= 5 to reject noise
-        // like "4/4" that can appear in rules text ("takes 2 Prize cards").
         let digitMatched = false;
         for (const pattern of NUMBER_PATTERNS) {
           const m = digitText.match(pattern.re);
           if (m) {
             const extracted = pattern.extract(m);
-            // Sanity: if we got a total, it must be plausible (≥5 cards in any set)
             if (extracted.total !== null && extracted.total < 5) continue;
             parsedNumber = extracted.number;
             parsedTotal = extracted.total;
@@ -514,7 +800,6 @@ export function ScanTester({ samples }: Props) {
           }
         }
         if (!digitMatched) {
-          // e.g. "90 131" when slash was lost
           const m2 = digitText.match(/(\d{1,4})\s+(\d{2,4})/);
           if (m2) {
             const candidateTotal = parseInt(m2[2]!, 10);
@@ -532,24 +817,24 @@ export function ScanTester({ samples }: Props) {
           label: "Number fallback: digit whitelist OCR",
           text: digitText || "(no digits detected)",
           description: digitMatched
-            ? `Digit whitelist fallback succeeded: matched “${parsedNumber}/${parsedTotal}”.`
+            ? `Digit whitelist fallback succeeded: matched "${parsedNumber}/${parsedTotal}".`
             : "Digit whitelist fallback found no number pattern either.",
         });
 
         if (!digitMatched) {
           numberError = digitText
-            ? `No number pattern in digit-only pass: “${digitText.slice(0, 80)}”`
+            ? `No number pattern in digit-only pass: "${digitText.slice(0, 80)}"`
             : "No digits detected in bottom strip.";
         }
       }
 
       await worker.terminate();
 
-      // ── Candidate set lookup ───────────────────────────────────────────────────
-      // Query DB with number + total to find which sets contain this card.
-      //   1 match  → uniquely identified, symbol scan skipped.
-      //   >1 match → ambiguous, compare symbol only against those candidates.
-      //   0 match  → number OCR likely wrong, fall back to global symbol scan.
+      // ── Step 2: DB candidate lookup ───────────────────────────────────────
+      // Find which sets contain a card with this number + total.
+      //   1 candidate  -> uniquely identified, no symbol scan needed.
+      //   2+ candidates -> compare symbol only against those few sets.
+      //   0 candidates -> OCR likely failed; try global symbol scan as last resort.
       let matchedSetId: string | null = null;
       let candidateSetIds: string[] = [];
 
@@ -578,28 +863,119 @@ export function ScanTester({ samples }: Props) {
           candidateSetIds.length > 0 ? candidateSetIds.join(", ") : "(none)",
         description:
           candidateSetIds.length === 1
-            ? `Number ${parsedNumber}/${parsedTotal} uniquely identifies set "${candidateSetIds[0]}". Skipping symbol scan.`
+            ? `Number ${parsedNumber}/${parsedTotal} uniquely identifies set "${candidateSetIds[0]}". Symbol scan skipped.`
             : candidateSetIds.length > 1
-              ? `Number ${parsedNumber}/${parsedTotal} exists in ${candidateSetIds.length} sets: ${candidateSetIds.join(", ")}. Symbol matching will pick the right one.`
+              ? `Number ${parsedNumber}/${parsedTotal} exists in ${candidateSetIds.length} sets: ${candidateSetIds.join(", ")}. Symbol scan will pick the right one.`
               : `No DB match for number ${parsedNumber ?? "?"}/${parsedTotal ?? "?"}. Falling back to global symbol scan.`,
       });
 
       if (candidateSetIds.length === 1) {
-        // Unique match — no symbol scan needed
+        // Uniquely identified — done, no symbol work needed.
         matchedSetId = candidateSetIds[0]!;
-      } else if (candidateSetIds.length > 1 && symbolHashMap.current.size > 0) {
-        // ── Targeted symbol matching ─────────────────────────────────────────
-        // Build a sub-map with only the ambiguous candidate sets.
-        const searchTargets = new Map(
-          candidateSetIds.flatMap((id) => {
-            const entry = symbolHashMap.current.get(id);
-            return entry ? [[id, entry] as const] : [];
-          }),
-        );
+      } else if (symbolHashMap.current.size > 0) {
+        const isGlobal = candidateSetIds.length === 0;
 
-        if (searchTargets.size > 0) {
+        // Determine era group for fallback when no per-set position is available.
+        const symActiveGroup = activeGroupId
+          ? SYMBOL_POSITION_GROUPS.find((g) => g.id === activeGroupId)
+          : undefined;
+
+        if (!isGlobal) {
+          // ── Targeted per-set symbol scan ─────────────────────────────────
+          // For each candidate set, crop the card at that set's specific known
+          // symbol position (from SET_SYMBOL_POSITIONS), then compare 1:1 with
+          // its reference fingerprint.  This is far more accurate than scanning
+          // one generic region and diffing against all candidates at once.
+          const scored: SymbolMatch[] = [];
+          const cropsBySetId = new Map<string, string>();
+
+          for (const candidateSetId of candidateSetIds) {
+            const entry = symbolHashMap.current.get(candidateSetId);
+            if (!entry) continue;
+
+            // Determine the most specific crop we can use for this set.
+            const pos = SET_SYMBOL_POSITIONS[candidateSetId];
+            let cropX: number, cropY: number, cropW: number, cropH: number;
+
+            if (pos && pos.x2 - pos.x1 >= 0.01) {
+              // Use the empirically measured position with generous padding so
+              // minor alignment differences in the photo are tolerated.
+              const padX = 0.02,
+                padY = 0.015;
+              cropX = Math.max(0, pos.x1 - padX);
+              cropY = Math.max(0, pos.y1 - padY);
+              cropW = Math.min(1 - cropX, pos.x2 - pos.x1 + 2 * padX);
+              cropH = Math.min(1 - cropY, pos.y2 - pos.y1 + 2 * padY);
+            } else if (symActiveGroup) {
+              // Fall back to era-level group region.
+              ({
+                x: cropX,
+                y: cropY,
+                w: cropW,
+                h: cropH,
+              } = symActiveGroup.region);
+            } else {
+              // Last-resort: generic centre-right strip.
+              const fb = SYMBOL_REGIONS[0];
+              cropX = fb.x;
+              cropY = fb.y;
+              cropW = fb.w;
+              cropH = fb.h;
+            }
+
+            const symCrop = cropImage(cardSource, cropX, cropY, cropW, cropH);
+            const symBin = binarize(symCrop, 2, false);
+            // Only apply the left-exclusion fraction when the crop starts far
+            // enough left that the card number could appear in it.
+            const rightStartFrac = cropX > 0.35 ? 0 : 0.35;
+            const symNorm = isolateSymbol(symBin, rightStartFrac);
+            const hash = imgFingerprint(symNorm);
+            const distance = cosineDistance(hash, entry.hash);
+
+            scored.push({
+              setId: candidateSetId,
+              symbolUrl: entry.symbolUrl,
+              distance,
+            });
+            cropsBySetId.set(candidateSetId, symNorm.toDataURL());
+          }
+
+          scored.sort((a, b) => a.distance - b.distance);
+          const top = scored[0];
+          if (top) matchedSetId = top.setId;
+
+          pushStep({
+            kind: "symbol-match",
+            label: `Symbol: per-set scan (${scored.length} candidate${scored.length === 1 ? "" : "s"})`,
+            description: `Each candidate cropped at its specific known symbol position. Closest match wins.`,
+            cropDataUrl: matchedSetId
+              ? (cropsBySetId.get(matchedSetId) ?? "")
+              : "",
+            matches: scored.slice(0, 5),
+            winnerSetId: matchedSetId,
+          });
+        } else {
+          // ── Global fallback symbol scan ───────────────────────────────────
+          // No DB candidates at all (number OCR failed).  Scan using era regions
+          // in priority order, compare one fingerprint against every set.
+          const symbolRegionsToScan: ReadonlyArray<{
+            label: string;
+            x: number;
+            y: number;
+            w: number;
+            h: number;
+          }> = symActiveGroup
+            ? [
+                {
+                  label: `Focused: ${symActiveGroup.label}`,
+                  ...symActiveGroup.region,
+                },
+                ...SYMBOL_REGIONS,
+              ]
+            : [...SYMBOL_REGIONS];
+
           let bestStep: Omit<SymbolMatchStep, "stepNumber"> | null = null;
-          for (const region of SYMBOL_REGIONS) {
+          for (const region of symbolRegionsToScan) {
             if (matchedSetId !== null) break;
 
             const symCrop = cropImage(
@@ -610,29 +986,36 @@ export function ScanTester({ samples }: Props) {
               region.h,
             );
             const symBin = binarize(symCrop, 2, false);
-            const hash = imgFingerprint(symBin);
+            const symNorm = isolateSymbol(symBin, 0.35);
+            const hash = imgFingerprint(symNorm);
 
-            // No threshold when comparing a known candidate set — just pick closest.
-            const scored: SymbolMatch[] = Array.from(searchTargets.entries())
+            const scored: SymbolMatch[] = Array.from(
+              symbolHashMap.current.entries(),
+            )
               .map(([setId, { hash: refHash, symbolUrl }]) => ({
                 setId,
                 symbolUrl,
                 distance: cosineDistance(hash, refHash),
               }))
-              .sort((a, b) => a.distance - b.distance);
+              .sort((a, b) => a.distance - b.distance)
+              .slice(0, 5);
 
-            const winner = scored[0]?.setId ?? null;
+            const top = scored[0];
+            const winner =
+              top && top.distance <= SYMBOL_DISTANCE_THRESHOLD
+                ? top.setId
+                : null;
+
             if (
               !bestStep ||
-              (scored[0] &&
-                scored[0].distance < (bestStep.matches[0]?.distance ?? 1))
+              (top && top.distance < (bestStep.matches[0]?.distance ?? 1))
             ) {
               bestStep = {
                 kind: "symbol-match",
-                label: `Symbol: disambiguating ${candidateSetIds.join(" vs ")}`,
-                description: `Comparing symbol crop against ${searchTargets.size} candidate set(s) only. Closest match wins.`,
-                cropDataUrl: symBin.toDataURL(),
-                matches: scored.slice(0, 5),
+                label: `Symbol: global fallback — ${region.label}`,
+                description: `No DB candidates. Comparing against all ${symbolHashMap.current.size} sets (threshold ≤ ${SYMBOL_DISTANCE_THRESHOLD}).`,
+                cropDataUrl: symNorm.toDataURL(),
+                matches: scored,
                 winnerSetId: winner,
               };
             }
@@ -640,54 +1023,6 @@ export function ScanTester({ samples }: Props) {
           }
           if (bestStep) pushStep(bestStep);
         }
-      } else if (symbolHashMap.current.size > 0) {
-        // ── Global symbol fallback ───────────────────────────────────────────
-        // Number OCR found no DB candidates. Compare against all sets with
-        // a confidence threshold as a best-effort identification.
-        let bestStep: Omit<SymbolMatchStep, "stepNumber"> | null = null;
-        for (const region of SYMBOL_REGIONS) {
-          if (matchedSetId !== null) break;
-
-          const symCrop = cropImage(
-            cardSource,
-            region.x,
-            region.y,
-            region.w,
-            region.h,
-          );
-          const symBin = binarize(symCrop, 2, false);
-          const hash = imgFingerprint(symBin);
-
-          const scored: SymbolMatch[] = Array.from(
-            symbolHashMap.current.entries(),
-          )
-            .map(([setId, { hash: refHash, symbolUrl }]) => ({
-              setId,
-              symbolUrl,
-              distance: cosineDistance(hash, refHash),
-            }))
-            .sort((a, b) => a.distance - b.distance)
-            .slice(0, 5);
-
-          const top = scored[0];
-          const winner =
-            top && top.distance <= SYMBOL_DISTANCE_THRESHOLD ? top.setId : null;
-          if (
-            !bestStep ||
-            (top && top.distance < (bestStep.matches[0]?.distance ?? 1))
-          ) {
-            bestStep = {
-              kind: "symbol-match",
-              label: `Symbol match (fallback) — ${region.label}`,
-              description: `No DB candidates found. Comparing against all ${symbolHashMap.current.size} sets. Distance ≤ ${SYMBOL_DISTANCE_THRESHOLD} is a confident match.`,
-              cropDataUrl: symBin.toDataURL(),
-              matches: scored,
-              winnerSetId: winner,
-            };
-          }
-          if (winner) matchedSetId = winner;
-        }
-        if (bestStep) pushStep(bestStep);
       }
 
       pushStep({
@@ -699,11 +1034,18 @@ export function ScanTester({ samples }: Props) {
         description: matchedSetId
           ? candidateSetIds.length === 1
             ? `Number uniquely identified set "${matchedSetId}". DB lookup: setId + number.`
-            : `Symbol matching resolved set to "${matchedSetId}". DB lookup: setId + number.`
-          : `Could not identify set. DB lookup: number + set total (may return multiple candidates).`,
+            : `Symbol scan resolved set to "${matchedSetId}". DB lookup: setId + number.`
+          : `Could not identify set. DB lookup: number + total (may return multiple candidates).`,
       });
 
       setOcrResult({ parsedNumber, parsedTotal, matchedSetId });
+
+      // Persist the identified series so the next scan of a card from the
+      // same set uses the era-specific crop region immediately.
+      if (matchedSetId) {
+        const resolvedSeries = setSeriesMap.current.get(matchedSetId);
+        if (resolvedSeries) setPersistedSetSeries(resolvedSeries);
+      }
     } finally {
       setIsScanning(false);
     }
@@ -713,6 +1055,9 @@ export function ScanTester({ samples }: Props) {
     if (!sample.imageLarge) return;
     setActiveSample(sample);
     setActiveImage(sample.imageLarge);
+    // When a sample card is selected, the series is already known — set it
+    // now so the very first OCR attempt uses the era-specific crop region.
+    setPersistedSetSeries(sample.setSeries);
     void runOcr(sample.imageLarge);
   }
 
@@ -743,6 +1088,49 @@ export function ScanTester({ samples }: Props) {
           )}
         </div>
       )}
+
+      {/* Card era selector — pick this before scanning so the correct number
+           crop region is used immediately, without needing a prior successful scan. */}
+      <div className="flex items-center gap-3">
+        <label className="text-sm font-medium whitespace-nowrap">
+          Card era
+        </label>
+        <select
+          className="text-sm border rounded px-2 py-1 bg-background"
+          value={persistedSetSeries ?? ""}
+          onChange={(e) => setPersistedSetSeries(e.target.value || null)}
+        >
+          <option value="">— unknown / auto-detect —</option>
+          {Object.entries(SERIES_TO_SCAN_GROUP)
+            // Group by scan group so each era label appears once, with its series names
+            .reduce<
+              Array<{ groupId: string; label: string; series: string[] }>
+            >((acc, [series, groupId]) => {
+              const existing = acc.find((g) => g.groupId === groupId);
+              if (existing) {
+                existing.series.push(series);
+              } else {
+                const group = NUMBER_POSITION_GROUPS.find(
+                  (g) => g.id === groupId,
+                );
+                if (group)
+                  acc.push({ groupId, label: group.label, series: [series] });
+              }
+              return acc;
+            }, [])
+            .map(({ groupId, label, series }) => (
+              // Use the first series name in the group as the option value
+              <option key={groupId} value={series[0]}>
+                {label}
+              </option>
+            ))}
+        </select>
+        {persistedSetSeries && (
+          <span className="text-xs text-muted-foreground">
+            ✓ using focused crop region
+          </span>
+        )}
+      </div>
 
       {/* Sample grid */}
       <section>
@@ -1152,7 +1540,7 @@ function StepRow({
 
 /** Loads a URL into an HTMLImageElement, resolving once it's ready.
  * crossOrigin defaults to true because all images drawn to a canvas
- * (jscanify, symbol hashing, OCR) require CORS headers. Pass false only
+ * (symbol hashing, OCR) require CORS headers. Pass false only
  * for display-only images that are never drawn to a canvas. */
 function loadImage(src: string, crossOrigin = true): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -1198,10 +1586,72 @@ function cropImage(
 }
 
 /**
+ * Find the bounding box of dark pixels (value < 128) in a binarized canvas,
+ * optionally restricted to the right portion of the canvas (to skip the
+ * card number on the left side of the info strip).
+ * Returns null when no dark pixels are found.
+ */
+function findDarkBounds(
+  canvas: HTMLCanvasElement,
+  rightStartFrac = 0,
+): { x: number; y: number; w: number; h: number } | null {
+  const { data, width, height } = canvas
+    .getContext("2d")!
+    .getImageData(0, 0, canvas.width, canvas.height);
+  const startX = Math.floor(width * rightStartFrac);
+  let minX = width,
+    maxX = 0,
+    minY = height,
+    maxY = 0,
+    found = false;
+  for (let y = 0; y < height; y++) {
+    for (let x = startX; x < width; x++) {
+      if ((data[(y * width + x) * 4] ?? 255) < 128) {
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+        found = true;
+      }
+    }
+  }
+  return found
+    ? { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 }
+    : null;
+}
+
+/**
+ * Crops a binarized canvas to the bounding box of its dark pixels, pads it
+ * to a square, and returns the result on a white background.  This makes
+ * the symbol fill the entire 32×32 grid when fingerprinted, rather than
+ * occupying just a few pixels inside a larger noisy crop.
+ */
+function isolateSymbol(
+  binarized: HTMLCanvasElement,
+  rightStartFrac = 0,
+): HTMLCanvasElement {
+  const bounds = findDarkBounds(binarized, rightStartFrac);
+  if (!bounds) return binarized; // nothing found — return as-is
+
+  const pad = Math.max(2, Math.round(Math.max(bounds.w, bounds.h) * 0.08));
+  const size = Math.max(bounds.w, bounds.h) + pad * 2;
+  const out = document.createElement("canvas");
+  out.width = size;
+  out.height = size;
+  const ctx = out.getContext("2d")!;
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, size, size);
+  // Centre the bounding-box content
+  const dx = Math.floor((size - bounds.w) / 2) - bounds.x;
+  const dy = Math.floor((size - bounds.h) / 2) - bounds.y;
+  ctx.drawImage(binarized, dx, dy);
+  return out;
+}
+
+/**
  * Image fingerprint — resizes to 32×32, converts to grayscale, and returns
  * the 1024 pixel values normalised to the range [0, 1].  This gives 16× more
- * information than a 64-bit dHash and preserves actual shape detail rather
- * than just horizontal gradient direction.
+ * information than a 64-bit dHash and preserves actual shape detail.
  */
 function imgFingerprint(source: HTMLCanvasElement): number[] {
   const SIZE = 32;

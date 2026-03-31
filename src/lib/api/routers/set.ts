@@ -32,6 +32,7 @@ export const setRouter = createTRPCRouter({
         id: setsTable.id,
         symbol: setsTable.symbol,
         total: setsTable.total,
+        series: setsTable.series,
       })
       .from(setsTable)
       .where(

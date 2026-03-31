@@ -318,11 +318,15 @@ export const cardRouter = createTRPCRouter({
 
       const cards = results.map(({ card, set }) => ({ ...card, set }));
 
+      // Always use English for scanner lookups. The card number and set total
+      // are language-neutral, and all scan position analysis was done on
+      // English card images. Returning English ensures the displayed image
+      // matches what the scanner was calibrated against.
       return localizeRecords(
         cards,
         "cards",
         ["name", "imageSmall", "imageLarge"],
-        ctx.language,
+        "en-US",
       );
     }),
 });
