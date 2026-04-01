@@ -6,6 +6,22 @@
 
 Bulkratte is a web application designed to help users manage and organize their Pokémon card collections efficiently. With Bulkratte, users can easily catalog their cards, track their values, and share their collections with friends.
 
+## Dev Setup
+
+Run the following command to start the development environment:
+
+```bash
+pnpm install
+docker compose up
+pnpm dev
+```
+
+If you want to set up a tunnel to your local development environment e.g. for testing with a mobile device:
+
+```bash
+pnpm dev:tunnel
+```
+
 ## Features
 
 - **Searching Cards in TCG**: Search through all cards, sets and series the TCG has to offer.
