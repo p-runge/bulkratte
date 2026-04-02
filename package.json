@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "dotenv -e .env -- next dev --turbopack",
+    "dev": "dotenv -e .env -- next dev --turbopack --hostname localhost",
     "dev:tunnel": "dotenv -e .env -- tsx --tsconfig tsconfig.scripts.json scripts/tunnel.ts",
     "build": "next build",
     "start": "dotenv -e .env -- next start",
