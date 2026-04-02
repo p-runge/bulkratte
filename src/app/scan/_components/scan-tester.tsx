@@ -150,53 +150,82 @@ type ScanStepInput =
  */
 const SYMBOL_POSITION_GROUPS = [
   {
-    id: "sv-swsh",
-    label: "Scarlet & Violet / Sword & Shield",
-    // cel25/fut2020 empirical: x=[0.415–0.935] → use centre-right band with padding
-    region: { x: 0.155, y: 0.949, w: 0.109, h: 0.02 },
-  },
-  {
-    id: "sun-moon",
-    label: "Sun & Moon",
-    // 9 sets, median x=[0.453–0.942] y=[0.903–0.965]
-    region: { x: 0.164, y: 0.941, w: 0.11, h: 0.035 },
-  },
-  {
-    id: "xy-bw",
-    label: "XY / Black & White",
-    // BW/XY mostly failed pixel detection (dark artwork); use a generous band
+    id: "sv",
+    label: "Ascended Heroes – Scarlet & Violet",
+    // ⚠ CALIBRATE: copy from swsh — set manually with debugger
     region: { x: 0.38, y: 0.9, w: 0.61, h: 0.09 },
   },
   {
-    id: "hgss",
-    label: "HeartGold & SoulSilver",
-    // 5 sets, median x=[0.865–0.976] y=[0.933–0.987] — wide variance, use generous crop
-    region: { x: 0.83, y: 0.92, w: 0.165, h: 0.075 },
+    id: "swsh",
+    label: "Crown Zenith – Sword & Shield",
+    // ⚠ CALIBRATE: set manually with debugger
+    region: { x: 0.38, y: 0.9, w: 0.61, h: 0.09 },
   },
   {
-    id: "platinum",
-    label: "Platinum",
-    // 5 sets, median x=[0.933–0.957] y=[0.958–0.972] — classic tiny corner symbol
-    region: { x: 0.905, y: 0.948, w: 0.09, h: 0.042 },
+    id: "sm-late",
+    label: "Cosmic Eclipse – Detective Pikachu",
+    // ⚠ CALIBRATE: copy from sm-early — set manually with debugger
+    region: { x: 0.38, y: 0.9, w: 0.61, h: 0.09 },
   },
   {
-    id: "dp",
-    label: "Diamond & Pearl",
-    // 8 sets, median x=[0.932–0.961] y=[0.953–0.973]
+    id: "sm-early",
+    label: "Team Up – Sun & Moon",
+    // SM confirmed median region
+    region: { x: 0.38, y: 0.9, w: 0.61, h: 0.09 },
+  },
+  {
+    id: "evolutions",
+    label: "Evolutions",
+    // ⚠ CALIBRATE: Evolutions uses XY card layout
     region: { x: 0.905, y: 0.944, w: 0.09, h: 0.042 },
   },
   {
-    id: "ex-era",
-    label: "EX Series",
-    // 16 sets, median x=[0.932–0.956] y=[0.953–0.971]
-    region: { x: 0.905, y: 0.944, w: 0.09, h: 0.038 },
+    id: "xy-bw",
+    label: "Steam Siege – Black & White",
+    // ⚠ CALIBRATE: XY/BW era, bottom-right corner
+    region: { x: 0.905, y: 0.944, w: 0.09, h: 0.042 },
   },
   {
-    id: "classic",
-    label: "Classic WotC (Base / Gym / Neo / e-Card)",
-    // Base/Neo/Gym median x=[0.935–0.953] y=[0.956–0.966]; e-Card x=[0.868–0.928]
-    // Using wider x-start to cover e-Card outlier
-    region: { x: 0.843, y: 0.955, w: 0.088, h: 0.02 },
+    id: "kalos",
+    label: "Kalos Starter Set",
+    // ⚠ CALIBRATE: unique layout
+    region: { x: 0.905, y: 0.944, w: 0.09, h: 0.042 },
+  },
+  {
+    id: "hgss",
+    label: "Call of Legends – HeartGold SoulSilver",
+    // ⚠ CALIBRATE: HGSS era, bottom-right corner
+    region: { x: 0.905, y: 0.944, w: 0.09, h: 0.042 },
+  },
+  {
+    id: "platinum",
+    label: "Arceus – Platinum",
+    // ⚠ CALIBRATE: Platinum era, bottom-right corner
+    region: { x: 0.905, y: 0.944, w: 0.09, h: 0.042 },
+  },
+  {
+    id: "ex-dp",
+    label: "Pop Series 9 – Team Magma vs Team Aqua",
+    // EX: 16 sets median x=[0.932–0.956] y=[0.953–0.971]; DP: 8 sets median x=[0.932–0.961] y=[0.953–0.973]
+    region: { x: 0.905, y: 0.944, w: 0.09, h: 0.042 },
+  },
+  {
+    id: "ex-early",
+    label: "Dragon – Expedition Base Set",
+    // EX early similar to EX era; E-Card outlier at x=0.868–0.928 — wider crop
+    region: { x: 0.754, y: 0.915, w: 0.081, h: 0.028 },
+  },
+  {
+    id: "rocket",
+    label: "Team Rocket",
+    // ⚠ CALIBRATE: set manually with debugger
+    region: { x: 0.862, y: 0.952, w: 0.071, h: 0.026 },
+  },
+  {
+    id: "wotc",
+    label: "Legendary Collection – Base Set",
+    // Base/Gym/Neo/LC median x=[0.935–0.953] y=[0.956–0.966]
+    region: { x: 0.85, y: 0.944, w: 0.072, h: 0.037 },
   },
 ] as const;
 
@@ -369,84 +398,83 @@ const SET_SYMBOL_POSITIONS: Record<
 const NUMBER_POSITION_GROUPS = [
   {
     id: "sv",
-    label: "Scarlet & Violet",
-    // ⚠ CALIBRATE: no confirmed scan data — tune with debugger
-    region: { x: 0.15, y: 0.95, w: 0.12, h: 0.02 },
+    label: "Ascended Heroes – Scarlet & Violet",
+    // ⚠ CALIBRATE: copy from swsh — set manually with debugger
+    region: { x: 0.17, y: 0.949, w: 0.1, h: 0.017 },
   },
   {
     id: "swsh",
-    label: "Sword & Shield",
-    // ⚠ CALIBRATE: only cel25/fut2020 confirmed (x1=0.072, y1=0.918, y2=0.986); most sets failed detection
-    region: { x: 0.06, y: 0.914, w: 0.22, h: 0.078 },
+    label: "Crown Zenith – Sword & Shield",
+    // Empirical: SWSH era confirmed region
+    region: { x: 0.17, y: 0.949, w: 0.1, h: 0.017 },
   },
   {
-    id: "sun-moon",
-    label: "Sun & Moon",
-    // Empirical: 6 sets (sm3,4,7,8,9…) x1=0.037, x2=0.217, y1=0.918, y2=0.984
-    region: { x: 0.03, y: 0.914, w: 0.21, h: 0.078 },
+    id: "sm-late",
+    label: "Cosmic Eclipse – Detective Pikachu",
+    // ⚠ CALIBRATE: copy from sm-early — set manually with debugger
+    region: { x: 0.109, y: 0.951, w: 0.082, h: 0.017 },
   },
   {
-    id: "xy",
-    label: "XY / Mega Evolution",
-    // ⚠ CALIBRATE: all XY sets failed position scan — tune with debugger
-    region: { x: 0.04, y: 0.926, w: 0.2, h: 0.062 },
+    id: "sm-early",
+    label: "Team Up – Sun & Moon",
+    // Empirical: 6 confirmed SM sets
+    region: { x: 0.109, y: 0.951, w: 0.082, h: 0.017 },
   },
   {
-    id: "bw",
-    label: "Black & White / McDonald's Collection",
-    // ⚠ CALIBRATE: only bwp confirmed (x1=0.055, x2=0.151, y1=0.939, y2=0.976); most BW sets failed
-    // McDonald's promos are BW/XY-era design — grouped here as best approximation
-    region: { x: 0.04, y: 0.934, w: 0.15, h: 0.05 },
+    id: "evolutions",
+    label: "Evolutions",
+    // ⚠ CALIBRATE: XY card layout, Base Set art — set manually with debugger
+    region: { x: 0.08, y: 0.908, w: 0.16, h: 0.068 },
+  },
+  {
+    id: "xy-bw",
+    label: "Steam Siege – Black & White",
+    // ⚠ CALIBRATE: XY/BW era — set manually with debugger
+    region: { x: 0.08, y: 0.908, w: 0.16, h: 0.068 },
+  },
+  {
+    id: "kalos",
+    label: "Kalos Starter Set",
+    // ⚠ CALIBRATE: unique layout — set manually with debugger
+    region: { x: 0.08, y: 0.908, w: 0.16, h: 0.068 },
   },
   {
     id: "hgss",
-    label: "HeartGold & SoulSilver / Call of Legends",
-    // Empirical: HGSS x1=0.135, y1=0.912, y2=0.956; CoL x1=0.076, y1=0.934, y2=0.971
-    // Merged: start at x=0.065 covers both; y covers full union range
-    region: { x: 0.065, y: 0.908, w: 0.21, h: 0.068 },
+    label: "Call of Legends – HeartGold SoulSilver",
+    // ⚠ CALIBRATE: HGSS era — set manually with debugger
+    region: { x: 0.08, y: 0.908, w: 0.16, h: 0.068 },
   },
   {
     id: "platinum",
-    label: "Platinum",
-    // Empirical: pl1–4, ru1 x1=0.152, x2=0.278, y1=0.911, y2=0.950
-    region: { x: 0.14, y: 0.906, w: 0.16, h: 0.05 },
+    label: "Arceus – Platinum",
+    // ⚠ CALIBRATE: Platinum era — set manually with debugger
+    region: { x: 0.08, y: 0.908, w: 0.16, h: 0.068 },
   },
   {
-    id: "dp",
-    label: "Diamond & Pearl / POP Series",
-    // Empirical: DP x1=0.087, x2=0.285, y1=0.911, y2=0.973
-    // POP x1=0.130, x2=0.222, y1=0.922, y2=0.958 — merged; crop from 0.08 covers both
-    region: { x: 0.08, y: 0.906, w: 0.23, h: 0.072 },
+    id: "ex-dp",
+    label: "Pop Series 9 – Team Magma vs Team Aqua",
+    // EX empirical (16 sets): x1=0.121, y1=0.919, y2=0.963
+    // DP empirical (8 sets): x1=0.087, y1=0.911, y2=0.973
+    region: { x: 0.08, y: 0.908, w: 0.16, h: 0.068 },
   },
   {
-    id: "ex-era",
-    label: "EX Series",
-    // Empirical: 16 sets x1=0.121, x2=0.188, y1=0.919, y2=0.963
-    region: { x: 0.11, y: 0.914, w: 0.12, h: 0.056 },
-  },
-  {
-    id: "base",
-    label: "Base / Jungle / Fossil / Team Rocket / Legendary Collection",
-    // Empirical: base1–5, lc x1≈0.043–0.050, y1≈0.932–0.935, y2≈0.966–0.968
-    region: { x: 0.04, y: 0.93, w: 0.28, h: 0.04 },
-  },
-  {
-    id: "gym",
-    label: "Gym Heroes / Gym Challenge",
-    // Empirical: gym1–2 x1≈0.043, y1≈0.927, y2≈0.968 — slightly higher strip than Base
-    region: { x: 0.04, y: 0.925, w: 0.21, h: 0.045 },
-  },
-  {
-    id: "neo",
-    label: "Neo Genesis / Discovery / Revelation / Destiny",
-    // Empirical: neo2–4, si1 x1≈0.046, y1≈0.935, y2≈0.968 — virtually identical to Base
-    region: { x: 0.04, y: 0.93, w: 0.28, h: 0.04 },
-  },
-  {
-    id: "ecard",
-    label: "E-Card (Expedition / Aquapolis / Skyridge)",
-    // ⚠ CALIBRATE: ecard1 confirmed x1=0.041–0.049, y1=0.945–0.961; ecard2/3 failed — tune with debugger
+    id: "ex-early",
+    label: "Dragon – Expedition Base Set",
+    // E-Card empirical: x1=0.065, y1=0.944; EX early (ex1–3) follows EX layout
+    // ⚠ CALIBRATE: two different layouts merged — tune each sub-era with debugger
     region: { x: 0.04, y: 0.935, w: 0.28, h: 0.04 },
+  },
+  {
+    id: "rocket",
+    label: "Team Rocket",
+    // ⚠ CALIBRATE: set manually with debugger
+    region: { x: 0.863, y: 0.954, w: 0.071, h: 0.025 },
+  },
+  {
+    id: "wotc",
+    label: "Legendary Collection – Base Set",
+    // Empirical: Base x1=0.043 y1=0.935; Gym x1=0.043 y1=0.927; Neo x1=0.046 y1=0.935; LC x1=0.050 y1=0.932
+    region: { x: 0.862, y: 0.925, w: 0.071, h: 0.026 },
   },
 ] as const;
 
@@ -457,30 +485,36 @@ type ScanGroupId = (typeof NUMBER_POSITION_GROUPS)[number]["id"];
  * info-strip layout.  Series not listed here fall back to generic regions.
  */
 const SERIES_TO_SCAN_GROUP: Record<string, ScanGroupId | undefined> = {
-  // — Modern era —
+  // — Scarlet & Violet + Mega Evolution era —
   "Scarlet & Violet": "sv",
+  "Mega Evolution": "sv", // Japanese 2025–26 sets (me02, me02.5)
+  // — Sword & Shield era —
   "Sword & Shield": "swsh",
-  "Sun & Moon": "sun-moon",
-  XY: "xy",
-  "Mega Evolution": "xy", // Japanese XY-era promos (MEP, me01)
-  "Black & White": "bw",
-  "McDonald's Collection": "bw", // BW/XY-era promo cards; ⚠ region approximate
-  // — Mid era —
+  // — Sun & Moon era (sm-early covers the majority) —
+  "Sun & Moon": "sm-early",
+  // — XY + Black & White era —
+  XY: "xy-bw",
+  "Black & White": "xy-bw",
+  // — HeartGold & SoulSilver era —
   "HeartGold & SoulSilver": "hgss",
   "Call of Legends": "hgss",
+  // — Platinum era —
   Platinum: "platinum",
-  "Diamond & Pearl": "dp",
-  POP: "dp",
-  EX: "ex-era",
+  // — EX + DP + POP era —
+  EX: "ex-dp", // ex4–ex16 are the majority; ex1–3 are ex-early
+  "Diamond & Pearl": "ex-dp",
+  POP: "ex-dp",
+  // — E-Card + early EX —
+  "E-Card": "ex-early",
   // — Classic WotC era —
-  "E-Card": "ecard",
-  "Legendary Collection": "base",
-  Neo: "neo",
-  Gym: "gym",
-  Base: "base",
-  // — No number position (skip / fallback to generic regions) —
-  "Trainer kits": undefined, // all sets failed detection
-  Miscellaneous: undefined, // only Jumbo oversized cards
+  Base: "wotc",
+  Gym: "wotc",
+  Neo: "wotc",
+  "Legendary Collection": "wotc",
+  // — Excluded / unclassifiable —
+  "McDonald's Collection": undefined,
+  "Trainer kits": undefined,
+  Miscellaneous: undefined,
 } as Record<string, ScanGroupId | undefined>;
 
 // ── Card number: scan regions (ordered by probability) ─────────────────────
@@ -589,24 +623,6 @@ export function ScanTester() {
   const [debugCropUrl, setDebugCropUrl] = useState<string | null>(null);
   const [debugOcrText, setDebugOcrText] = useState<string | null>(null);
   const [debugOcrRunning, setDebugOcrRunning] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<
-    "idle" | "saving" | "ok" | "error"
-  >("idle");
-
-  async function saveRegionToCode() {
-    setSaveStatus("saving");
-    try {
-      const res = await fetch("/api/dev/patch-region", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ groupId: debugGroupId, region: debugRegion }),
-      });
-      setSaveStatus(res.ok ? "ok" : "error");
-    } catch {
-      setSaveStatus("error");
-    }
-    setTimeout(() => setSaveStatus("idle"), 2500);
-  }
 
   // Rebuild the crop preview whenever the region or active image changes.
   useEffect(() => {
@@ -1175,6 +1191,15 @@ export function ScanTester() {
     if (!sample.imageLarge) return;
     setActiveSample(sample);
     setActiveImage(sample.imageLarge);
+    // Auto-select the debugger group matching this card's series.
+    const gId = SERIES_TO_SCAN_GROUP[sample.setSeries];
+    if (gId) {
+      const g = NUMBER_POSITION_GROUPS.find((g) => g.id === gId);
+      if (g) {
+        setDebugGroupId(g.id);
+        setDebugRegion({ ...g.region });
+      }
+    }
     void runOcr(sample.imageLarge);
   }
 
@@ -1373,27 +1398,6 @@ export function ScanTester() {
                 )}
               </div>
 
-              {/* Save + copy values */}
-              <div className="flex items-center gap-3">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => void saveRegionToCode()}
-                  disabled={saveStatus === "saving"}
-                >
-                  {saveStatus === "saving"
-                    ? "Saving…"
-                    : saveStatus === "ok"
-                      ? "Saved ✓"
-                      : saveStatus === "error"
-                        ? "Error ✗"
-                        : "Save to code"}
-                </Button>
-                <span className="text-xs text-muted-foreground">
-                  → updates{" "}
-                  <code>NUMBER_POSITION_GROUPS["{debugGroupId}"]</code>
-                </span>
-              </div>
               <p className="text-xs text-muted-foreground font-mono select-all">
                 {`{ x: ${debugRegion.x}, y: ${debugRegion.y}, w: ${debugRegion.w}, h: ${debugRegion.h} }`}
               </p>

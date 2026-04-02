@@ -19,6 +19,7 @@ import {
   inArray,
   isNotNull,
   lte,
+  not,
   or,
   sql,
 } from "drizzle-orm";
@@ -342,42 +343,98 @@ export const cardRouter = createTRPCRouter({
           "all",
           "sv",
           "swsh",
-          "sun-moon",
-          "xy",
-          "bw",
+          "sm-late",
+          "sm-early",
+          "evolutions",
+          "xy-bw",
+          "kalos",
           "hgss",
           "platinum",
-          "dp",
-          "ex-era",
-          "base",
-          "gym",
-          "neo",
-          "ecard",
+          "ex-dp",
+          "ex-early",
+          "rocket",
+          "wotc",
         ])
         .optional(),
     )
     .query(async ({ input }) => {
-      const SERIES_FOR_GROUP: Record<string, string[]> = {
-        sv: ["Scarlet & Violet"],
-        swsh: ["Sword & Shield"],
-        "sun-moon": ["Sun & Moon"],
-        xy: ["XY", "Mega Evolution"],
-        bw: ["Black & White", "McDonald's Collection"],
-        hgss: ["HeartGold & SoulSilver", "Call of Legends"],
-        platinum: ["Platinum"],
-        dp: ["Diamond & Pearl", "POP"],
-        "ex-era": ["EX"],
-        base: ["Base", "Legendary Collection"],
-        gym: ["Gym"],
-        neo: ["Neo"],
-        ecard: ["E-Card"],
+      type GroupFilter =
+        | { mode: "series"; values: string[] }
+        | { mode: "sets"; values: string[] };
+
+      const FILTER: Record<string, GroupFilter> = {
+        sv: {
+          mode: "series",
+          values: ["Scarlet & Violet", "Mega Evolution"],
+        },
+        swsh: { mode: "series", values: ["Sword & Shield"] },
+        "sm-late": {
+          mode: "sets",
+          values: ["sm10", "sm11", "sm115", "sm12", "det1"],
+        },
+        "sm-early": {
+          mode: "sets",
+          values: [
+            "sm1", "sm2", "sm3", "sm35", "sm4", "sm5",
+            "sm6", "sm7", "sm8", "sm9", "smp",
+          ],
+        },
+        evolutions: { mode: "sets", values: ["xy12"] },
+        "xy-bw": {
+          mode: "sets",
+          values: [
+            "xy1", "xy2", "xy3", "xy4", "xy5", "xy6",
+            "xy7", "xy8", "xy9", "xy10", "xy11",
+            "bw1", "bw2", "bw3", "bw4", "bw5", "bw6",
+            "bw7", "bw8", "bw9", "bw10", "bw11", "dv1", "rc",
+          ],
+        },
+        kalos: { mode: "sets", values: ["xy0"] },
+        hgss: {
+          mode: "series",
+          values: ["HeartGold & SoulSilver", "Call of Legends"],
+        },
+        platinum: { mode: "sets", values: ["pl1", "pl2", "pl3", "pl4", "ru1"] },
+        "ex-dp": {
+          mode: "sets",
+          values: [
+            "pop1", "pop2", "pop3", "pop4", "pop5",
+            "pop6", "pop7", "pop8", "pop9",
+            "ex4", "ex5", "ex6", "ex7", "ex8", "ex9",
+            "ex10", "ex11", "ex12", "ex13", "ex14", "ex15", "ex16",
+            "dpp", "dp1", "dp2", "dp3", "dp4", "dp5", "dp6", "dp7",
+          ],
+        },
+        "ex-early": {
+          mode: "sets",
+          values: ["ecard1", "ecard2", "ecard3", "ex1", "ex2", "ex3"],
+        },
+        rocket: { mode: "sets", values: ["base5"] },
+        wotc: {
+          mode: "sets",
+          // base5 = Team Rocket (own group); np = Nintendo Black Star Promos → base group
+          values: [
+            "base1", "base2", "base3", "base4",
+            "gym1", "gym2",
+            "neo1", "neo2", "neo3", "neo4",
+            "si1", "lc", "np",
+          ],
+        },
       };
 
-      const seriesList =
-        input && input !== "all" ? SERIES_FOR_GROUP[input] : null;
+      const groupFilter = input && input !== "all" ? FILTER[input] : null;
 
-      const conditions = [isNotNull(cardsTable.imageLarge)];
-      if (seriesList) conditions.push(inArray(setsTable.series, seriesList));
+      const conditions = [
+        isNotNull(cardsTable.imageLarge),
+        not(eq(setsTable.series, "Pokémon TCG Pocket")),
+      ];
+      if (groupFilter) {
+        if (groupFilter.mode === "series") {
+          conditions.push(inArray(setsTable.series, groupFilter.values));
+        } else {
+          conditions.push(inArray(setsTable.id, groupFilter.values));
+        }
+      }
 
       return db
         .select({
