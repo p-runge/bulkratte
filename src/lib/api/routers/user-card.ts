@@ -195,6 +195,10 @@ export async function getWantlistForUser(
         imageSmall: cardsTable.imageSmall,
         imageLarge: cardsTable.imageLarge,
         setId: cardsTable.setId,
+        setAbbreviation: setsTable.abbreviation,
+        setName: setsTable.name,
+        attacks: cardsTable.attacks,
+        abilities: cardsTable.abilities,
         created_at: cardsTable.created_at,
         updated_at: cardsTable.updated_at,
         price: cardPricesTable.price,
@@ -230,6 +234,8 @@ export async function getWantlistForUser(
   ).map((card) => ({
     ...card,
     price: card.price ?? undefined,
+    // Preserve English name before localization overwrites it
+    englishName: card.name,
   }));
 
   // Localize card data
@@ -275,11 +281,16 @@ export async function getWantlistForUser(
         updated_at: card.updated_at,
         id: card.id,
         name: card.name,
+        englishName: card.englishName,
         number: card.number,
         rarity: card.rarity,
         imageSmall: card.imageSmall,
         imageLarge: card.imageLarge,
         setId: card.setId,
+        setAbbreviation: card.setAbbreviation,
+        setName: card.setName,
+        attacks: card.attacks,
+        abilities: card.abilities,
         price: card.price,
       },
       localizedName: card.localizedName,

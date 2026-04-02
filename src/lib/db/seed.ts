@@ -3,7 +3,7 @@ import { cardPricesTable, cardsTable, db, setsTable } from "@/lib/db";
 import { Rarity } from "@/lib/db/enums";
 import pokemonAPI from "@/lib/pokemon-api";
 import TCGdex from "@tcgdex/sdk";
-import { eq } from "drizzle-orm";
+import { eq, isNull, sql } from "drizzle-orm";
 
 export async function fetchAndStoreSets(withCards = true) {
   console.log("Fetching and storing sets...");
@@ -102,6 +102,8 @@ export async function fetchAndStoreCards(setId: string) {
           imageSmall: card.images.small,
           imageLarge: card.images.large,
           setId: card.set.id,
+          attacks: card.attacks.length > 0 ? card.attacks : null,
+          abilities: card.abilities.length > 0 ? card.abilities : null,
         })
         .onConflictDoUpdate({
           target: cardsTable.id,
@@ -112,6 +114,8 @@ export async function fetchAndStoreCards(setId: string) {
             imageSmall: card.images.small,
             imageLarge: card.images.large,
             setId: card.set.id,
+            attacks: card.attacks.length > 0 ? card.attacks : null,
+            abilities: card.abilities.length > 0 ? card.abilities : null,
           },
         });
       console.log(`Stored card: ${card.name} (${card.id})`);
@@ -160,6 +164,83 @@ export async function fetchAndStoreAllPrices() {
     console.log("✅ All prices have been successfully updated.");
   } catch (error) {
     console.error("Error fetching or storing prices:", error);
+    throw error;
+  }
+}
+
+const ATTACKS_BATCH_SIZE = 10;
+
+/**
+ * Backfills attacks and abilities for all cards that currently have NULL values.
+ * Processes cards grouped by set so we can reuse the set fetch per group.
+ */
+export async function backfillAttacksAndAbilities() {
+  console.log("Backfilling attacks and abilities for existing cards...");
+  try {
+    const tcgdexEn = new TCGdex("en");
+
+    // Find all sets that have at least one card missing attacks/abilities
+    const setsToUpdate = await db
+      .selectDistinct({ setId: cardsTable.setId })
+      .from(cardsTable)
+      .where(isNull(cardsTable.attacks));
+
+    console.log(
+      `Found ${setsToUpdate.length} sets with cards missing attacks/abilities.`,
+    );
+
+    let totalUpdated = 0;
+
+    for (const { setId } of setsToUpdate) {
+      console.log(`Processing set ${setId}...`);
+      try {
+        const set = await tcgdexEn.set.get(setId);
+        if (!set) {
+          console.warn(`  ⚠️  Set ${setId} not found in TCGDex, skipping.`);
+          continue;
+        }
+
+        const cardStubs = set.cards;
+        for (let i = 0; i < cardStubs.length; i += ATTACKS_BATCH_SIZE) {
+          const batch = cardStubs.slice(i, i + ATTACKS_BATCH_SIZE);
+          await Promise.all(
+            batch.map(async (stub) => {
+              try {
+                const card = await stub.getCard();
+                const attacks = (card.attacks ?? []).map((a) => a.name);
+                const abilities = (card.abilities ?? []).map((a) => a.name);
+                await db
+                  .update(cardsTable)
+                  .set({
+                    attacks: attacks.length > 0 ? attacks : sql`'[]'::jsonb`,
+                    abilities:
+                      abilities.length > 0 ? abilities : sql`'[]'::jsonb`,
+                    updated_at: new Date().toISOString(),
+                  })
+                  .where(eq(cardsTable.id, card.id));
+                totalUpdated++;
+              } catch (e) {
+                console.error(
+                  `  Error fetching card ${stub.id} in set ${setId}:`,
+                  e,
+                );
+              }
+            }),
+          );
+        }
+        console.log(
+          `  ✅ Set ${setId} done (${cardStubs.length} cards processed).`,
+        );
+      } catch (e) {
+        console.error(`  Error processing set ${setId}:`, e);
+      }
+    }
+
+    console.log(
+      `✅ Backfill complete. Updated attacks/abilities for ${totalUpdated} cards.`,
+    );
+  } catch (error) {
+    console.error("Error during attacks/abilities backfill:", error);
     throw error;
   }
 }

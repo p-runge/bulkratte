@@ -22,6 +22,8 @@ export type PokemonCard = {
   rarity: string;
   set: { id: string; name: string };
   images?: { small: string; large: string };
+  attacks: string[];
+  abilities: string[];
   // supertype: string;
   // subtypes: string[];
 };
@@ -211,6 +213,8 @@ async function fetchPokemonCards(setId: string): Promise<PokemonCard[]> {
       small: `https://assets.tcgdex.net/en/${set.serie.id}/${setId}/${card.localId}/low.webp`,
       large: `https://assets.tcgdex.net/en/${set.serie.id}/${setId}/${card.localId}/high.webp`,
     },
+    attacks: (card.attacks ?? []).map((a) => a.name),
+    abilities: (card.abilities ?? []).map((a) => a.name),
   }));
 }
 
@@ -278,6 +282,8 @@ async function fetchPokemonCardsForLanguage(
           ),
         }
       : undefined,
+    attacks: (card.attacks ?? []).map((a) => a.name),
+    abilities: (card.abilities ?? []).map((a) => a.name),
   }));
 }
 

@@ -8,14 +8,53 @@ import {
 } from "@/components/card-browser/card-filters";
 import { UserCardGrid } from "@/components/card-browser/user-card-grid";
 import Loader from "@/components/loader";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { TabsContent } from "@/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { api } from "@/lib/api/react";
-import { Share2 } from "lucide-react";
+import { Check, ClipboardList, Share2 } from "lucide-react";
 import { useState } from "react";
 import { useIntl } from "react-intl";
 import { ShareLinksDialog } from "./share-links-dialog";
-import { Button } from "@/components/ui/button";
+
+const LANGUAGE_NAMES: Record<string, string> = {
+  en: "English",
+  fr: "French",
+  de: "German",
+  it: "Italian",
+  es: "Spanish",
+  pt: "Portuguese",
+};
+
+function formatCardForCardmarket(
+  card: {
+    englishName: string;
+    attacks: string[] | null;
+    abilities: string[] | null;
+  },
+  language: string | null,
+): string {
+  const parts = ["1x", card.englishName];
+
+  // Abilities come first (Poké-Power/Poké-Body appear before attacks on the card)
+  if (card.abilities && card.abilities.length > 0) {
+    parts.push(...card.abilities);
+  }
+  if (card.attacks && card.attacks.length > 0) {
+    parts.push(...card.attacks);
+  }
+
+  if (language) {
+    parts.push(LANGUAGE_NAMES[language ?? "en"] ?? "English");
+  }
+
+  return parts.join(" ");
+}
 
 export default function WantlistTab() {
   const intl = useIntl();
@@ -24,6 +63,7 @@ export default function WantlistTab() {
     ...EMPTY_FILTER_STATE,
     ...DEFAULT_SORT_STATE,
   });
+  const [copied, setCopied] = useState(false);
 
   const { data: wantlistData, isLoading } = api.userCard.getWantlist.useQuery({
     setIds: filters.setIds.length > 0 ? filters.setIds : undefined,
@@ -38,6 +78,18 @@ export default function WantlistTab() {
 
   const { data: filterOptions } = api.card.getFilterOptions.useQuery();
 
+  async function handleCopyForCardmarket() {
+    const lines = (
+      wantlistCards as Array<{
+        language: string | null;
+        card: Parameters<typeof formatCardForCardmarket>[0];
+      }>
+    ).map((item) => formatCardForCardmarket(item.card, item.language));
+    await navigator.clipboard.writeText(lines.join("\n"));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
   return (
     <TabsContent value="wantlist">
       <div className="space-y-6">
@@ -46,15 +98,49 @@ export default function WantlistTab() {
             onFilterChange={setFilters}
             filterOptions={filterOptions}
           />
-          <ShareLinksDialog>
-            <Button size="default" className="shrink-0">
-              <Share2 className="h-4 w-4 mr-2" />
-              {intl.formatMessage({
-                id: "page.collection.wantlist.share",
-                defaultMessage: "Share Wantlist",
-              })}
-            </Button>
-          </ShareLinksDialog>
+          <div className="flex gap-2 shrink-0">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="default"
+                  variant="outline"
+                  onClick={handleCopyForCardmarket}
+                  disabled={wantlistCards.length === 0}
+                >
+                  {copied ? (
+                    <Check className="h-4 w-4 mr-2 text-green-500" />
+                  ) : (
+                    <ClipboardList className="h-4 w-4 mr-2" />
+                  )}
+                  {copied
+                    ? intl.formatMessage({
+                        id: "page.collection.wantlist.copy_cardmarket.copied",
+                        defaultMessage: "Copied!",
+                      })
+                    : intl.formatMessage({
+                        id: "page.collection.wantlist.copy_cardmarket",
+                        defaultMessage: "Copy for Cardmarket",
+                      })}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {intl.formatMessage({
+                  id: "page.collection.wantlist.copy_cardmarket.tooltip",
+                  defaultMessage:
+                    "Copies the current list as one card per line in Cardmarket's wantlist import format",
+                })}
+              </TooltipContent>
+            </Tooltip>
+            <ShareLinksDialog>
+              <Button size="default" className="shrink-0">
+                <Share2 className="h-4 w-4 mr-2" />
+                {intl.formatMessage({
+                  id: "page.collection.wantlist.share",
+                  defaultMessage: "Share Wantlist",
+                })}
+              </Button>
+            </ShareLinksDialog>
+          </div>
         </div>
 
         {isLoading ? (

@@ -687,12 +687,6 @@
       "value": "Save"
     }
   ],
-  "common.button.saving": [
-    {
-      "type": 0,
-      "value": "Saving..."
-    }
-  ],
   "common.language.de": [
     {
       "type": 0,
@@ -1201,6 +1195,24 @@
       "value": "My Collection"
     }
   ],
+  "page.collection.wantlist.copy_cardmarket": [
+    {
+      "type": 0,
+      "value": "Copy for Cardmarket"
+    }
+  ],
+  "page.collection.wantlist.copy_cardmarket.copied": [
+    {
+      "type": 0,
+      "value": "Copied!"
+    }
+  ],
+  "page.collection.wantlist.copy_cardmarket.tooltip": [
+    {
+      "type": 0,
+      "value": "Copies the current list as one card per line in Cardmarket's wantlist import format"
+    }
+  ],
   "page.collection.wantlist.empty.description": [
     {
       "type": 0,
@@ -1333,10 +1345,22 @@
       "value": "Create Set"
     }
   ],
+  "page.set.action.create.error": [
+    {
+      "type": 0,
+      "value": "Failed to create set."
+    }
+  ],
   "page.set.action.delete": [
     {
       "type": 0,
       "value": "Delete Set"
+    }
+  ],
+  "page.set.action.delete.error": [
+    {
+      "type": 0,
+      "value": "Failed to delete set."
     }
   ],
   "page.set.action.edit": [
@@ -1349,6 +1373,12 @@
     {
       "type": 0,
       "value": "Save Changes"
+    }
+  ],
+  "page.set.action.save.error": [
+    {
+      "type": 0,
+      "value": "Failed to save set."
     }
   ],
   "page.set.breadcrumb.empty": [

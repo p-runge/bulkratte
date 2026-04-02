@@ -1201,6 +1201,24 @@
       "value": "Meine Sammlung"
     }
   ],
+  "page.collection.wantlist.copy_cardmarket": [
+    {
+      "type": 0,
+      "value": "Für Cardmarket kopieren"
+    }
+  ],
+  "page.collection.wantlist.copy_cardmarket.copied": [
+    {
+      "type": 0,
+      "value": "Kopiert!"
+    }
+  ],
+  "page.collection.wantlist.copy_cardmarket.tooltip": [
+    {
+      "type": 0,
+      "value": "Kopiert die aktuelle Liste als eine Karte pro Zeile im Cardmarket-Wunschlisten-Importformat"
+    }
+  ],
   "page.collection.wantlist.empty.description": [
     {
       "type": 0,

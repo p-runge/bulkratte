@@ -59,6 +59,15 @@ export const cardsTable = pgTable("cards", {
   rarity: rarityEnum(),
   imageSmall: text("image_small").notNull(),
   imageLarge: text("image_large").notNull(),
+
+  /**
+   * We don't need these props internally, but we want to be able to generate a card list
+   * that can be used to create wantlists in Cardmarket, which uses attacks and abilities
+   * to uniquely identify cards.
+   */
+  attacks: jsonb("attacks").$type<string[]>(),
+  abilities: jsonb("abilities").$type<string[]>(),
+
   setId: varchar("set_id", { length: 16 })
     .notNull()
     .references(() => setsTable.id),

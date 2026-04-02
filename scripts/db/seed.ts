@@ -1,6 +1,6 @@
 // fetch sets from external API and insert into the database
 import { env } from "@/env";
-import { fetchAndStoreSets } from "@/lib/db/seed";
+import { backfillAttacksAndAbilities, fetchAndStoreSets } from "@/lib/db/seed";
 
 async function run() {
   const dbHost = env.DATABASE_URL
@@ -38,6 +38,7 @@ async function run() {
   );
 
   await fetchAndStoreSets();
+  await backfillAttacksAndAbilities();
   console.log("✅  Seeding completed!");
 }
 
