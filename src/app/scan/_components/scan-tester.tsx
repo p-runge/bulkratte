@@ -211,15 +211,21 @@ const SYMBOL_POSITION_GROUPS = [
   },
   {
     id: "ex-early",
-    label: "Dragon – Expedition Base Set",
-    // EX early similar to EX era; E-Card outlier at x=0.868–0.928 — wider crop
+    label: "Dragon – Ruby & Sapphire (no yellow edge)",
+    // ⚠ CALIBRATE with debugger
     region: { x: 0.754, y: 0.915, w: 0.081, h: 0.028 },
   },
   {
-    id: "rocket",
-    label: "Team Rocket",
-    // ⚠ CALIBRATE: set manually with debugger
-    region: { x: 0.862, y: 0.952, w: 0.071, h: 0.026 },
+    id: "ex-border",
+    label: "Dragon – Ruby & Sapphire (yellow edge)",
+    // ⚠ CALIBRATE with debugger
+    region: { x: 0.754, y: 0.915, w: 0.081, h: 0.028 },
+  },
+  {
+    id: "ecard",
+    label: "Skyridge – Expedition Base Set",
+    // E-Card outlier: x=0.868–0.928 — ⚠ CALIBRATE with debugger
+    region: { x: 0.754, y: 0.915, w: 0.081, h: 0.028 },
   },
   {
     id: "wotc",
@@ -400,81 +406,86 @@ const NUMBER_POSITION_GROUPS = [
     id: "sv",
     label: "Ascended Heroes – Scarlet & Violet",
     // ⚠ CALIBRATE: copy from swsh — set manually with debugger
-    region: { x: 0.17, y: 0.949, w: 0.1, h: 0.017 },
+    region: { x: 0.167, y: 0.949, w: 0.105, h: 0.017 },
   },
   {
     id: "swsh",
     label: "Crown Zenith – Sword & Shield",
     // Empirical: SWSH era confirmed region
-    region: { x: 0.17, y: 0.949, w: 0.1, h: 0.017 },
+    region: { x: 0.157, y: 0.949, w: 0.099, h: 0.017 },
   },
   {
     id: "sm-late",
     label: "Cosmic Eclipse – Detective Pikachu",
     // ⚠ CALIBRATE: copy from sm-early — set manually with debugger
-    region: { x: 0.109, y: 0.951, w: 0.082, h: 0.017 },
+    region: { x: 0.115, y: 0.934, w: 0.091, h: 0.019 },
   },
   {
     id: "sm-early",
     label: "Team Up – Sun & Moon",
     // Empirical: 6 confirmed SM sets
-    region: { x: 0.109, y: 0.951, w: 0.082, h: 0.017 },
+    region: { x: 0.1, y: 0.951, w: 0.092, h: 0.017 },
   },
   {
     id: "evolutions",
     label: "Evolutions",
     // ⚠ CALIBRATE: XY card layout, Base Set art — set manually with debugger
-    region: { x: 0.08, y: 0.908, w: 0.16, h: 0.068 },
+    region: { x: 0.81, y: 0.95, w: 0.075, h: 0.017 },
   },
   {
     id: "xy-bw",
     label: "Steam Siege – Black & White",
     // ⚠ CALIBRATE: XY/BW era — set manually with debugger
-    region: { x: 0.08, y: 0.908, w: 0.16, h: 0.068 },
+    region: { x: 0.771, y: 0.946, w: 0.088, h: 0.017 },
   },
   {
     id: "kalos",
     label: "Kalos Starter Set",
     // ⚠ CALIBRATE: unique layout — set manually with debugger
-    region: { x: 0.08, y: 0.908, w: 0.16, h: 0.068 },
+    region: { x: 0.815, y: 0.946, w: 0.067, h: 0.017 },
   },
   {
     id: "hgss",
     label: "Call of Legends – HeartGold SoulSilver",
     // ⚠ CALIBRATE: HGSS era — set manually with debugger
-    region: { x: 0.08, y: 0.908, w: 0.16, h: 0.068 },
+    region: { x: 0.815, y: 0.965, w: 0.078, h: 0.015 },
   },
   {
     id: "platinum",
     label: "Arceus – Platinum",
     // ⚠ CALIBRATE: Platinum era — set manually with debugger
-    region: { x: 0.08, y: 0.908, w: 0.16, h: 0.068 },
+    region: { x: 0.807, y: 0.961, w: 0.091, h: 0.017 },
   },
   {
     id: "ex-dp",
     label: "Pop Series 9 – Team Magma vs Team Aqua",
     // EX empirical (16 sets): x1=0.121, y1=0.919, y2=0.963
     // DP empirical (8 sets): x1=0.087, y1=0.911, y2=0.973
-    region: { x: 0.08, y: 0.908, w: 0.16, h: 0.068 },
+    region: { x: 0.797, y: 0.962, w: 0.096, h: 0.017 },
   },
   {
     id: "ex-early",
-    label: "Dragon – Expedition Base Set",
-    // E-Card empirical: x1=0.065, y1=0.944; EX early (ex1–3) follows EX layout
-    // ⚠ CALIBRATE: two different layouts merged — tune each sub-era with debugger
-    region: { x: 0.04, y: 0.935, w: 0.28, h: 0.04 },
+    label: "Dragon – Ruby & Sapphire (no yellow edge)",
+    // ⚠ CALIBRATE with debugger
+    region: { x: 0.728, y: 0.952, w: 0.093, h: 0.017 },
   },
   {
-    id: "rocket",
-    label: "Team Rocket",
-    // ⚠ CALIBRATE: set manually with debugger
-    region: { x: 0.863, y: 0.954, w: 0.071, h: 0.025 },
+    id: "ex-border",
+    label: "Dragon – Ruby & Sapphire (yellow edge)",
+    // ⚠ CALIBRATE with debugger
+    region: { x: 0.811, y: 0.922, w: 0.087, h: 0.017 },
+  },
+  {
+    id: "ecard",
+    label: "Skyridge – Expedition Base Set",
+    // E-Card empirical: x1=0.065, y1=0.944 — ⚠ CALIBRATE with debugger
+    region: { x: 0.744, y: 0.92, w: 0.088, h: 0.017 },
   },
   {
     id: "wotc",
     label: "Legendary Collection – Base Set",
     // Empirical: Base x1=0.043 y1=0.935; Gym x1=0.043 y1=0.927; Neo x1=0.046 y1=0.935; LC x1=0.050 y1=0.932
-    region: { x: 0.862, y: 0.925, w: 0.071, h: 0.026 },
+    region: { x: 0.849, y: 0.951, w: 0.083, h: 0.017 },
   },
 ] as const;
 
@@ -504,8 +515,8 @@ const SERIES_TO_SCAN_GROUP: Record<string, ScanGroupId | undefined> = {
   EX: "ex-dp", // ex4–ex16 are the majority; ex1–3 are ex-early
   "Diamond & Pearl": "ex-dp",
   POP: "ex-dp",
-  // — E-Card + early EX —
-  "E-Card": "ex-early",
+  // — E-Card era —
+  "E-Card": "ecard",
   // — Classic WotC era —
   Base: "wotc",
   Gym: "wotc",
@@ -763,7 +774,7 @@ export function ScanTester() {
     { enabled: ocrResult !== null },
   );
 
-  async function runOcr(imageUrl: string) {
+  async function runOcr(imageUrl: string, priorityGroupId?: ScanGroupId) {
     setIsScanning(true);
     setOcrResult(null);
     setScanSteps([]);
@@ -817,7 +828,11 @@ export function ScanTester() {
       let numberError: string | null = null;
       const regionAttempts: RegionScanAttempt[] = [];
 
-      // All era-specific positions tried newest → oldest, then generic fallbacks.
+      // All era-specific positions tried: priority group first (when known),
+      // then remaining groups newest → oldest, then generic fallbacks.
+      const priorityGroup = priorityGroupId
+        ? NUMBER_POSITION_GROUPS.find((g) => g.id === priorityGroupId)
+        : undefined;
       const regionsToScan: ReadonlyArray<{
         label: string;
         description: string;
@@ -826,11 +841,22 @@ export function ScanTester() {
         w: number;
         h: number;
       }> = [
-        ...NUMBER_POSITION_GROUPS.map((g) => ({
-          label: g.label,
-          description: `Card layout: ${g.label}`,
-          ...g.region,
-        })),
+        ...(priorityGroup
+          ? [
+              {
+                label: priorityGroup.label,
+                description: `Card layout: ${priorityGroup.label} (priority)`,
+                ...priorityGroup.region,
+              },
+            ]
+          : []),
+        ...NUMBER_POSITION_GROUPS.filter((g) => g.id !== priorityGroupId).map(
+          (g) => ({
+            label: g.label,
+            description: `Card layout: ${g.label}`,
+            ...g.region,
+          }),
+        ),
         ...NUMBER_REGIONS,
       ];
 
@@ -1200,7 +1226,7 @@ export function ScanTester() {
         setDebugRegion({ ...g.region });
       }
     }
-    void runOcr(sample.imageLarge);
+    void runOcr(sample.imageLarge, gId ?? undefined);
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
