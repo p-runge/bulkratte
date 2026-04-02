@@ -3,26 +3,6 @@ import { eq, sql } from "drizzle-orm";
 import { ScanTester } from "./_components/scan-tester";
 
 export default async function ScanPage() {
-  // Pick 10 diverse sample cards from different sets for testing
-  const samples = await db
-    .select({
-      id: cardsTable.id,
-      name: cardsTable.name,
-      number: cardsTable.number,
-      imageLarge: cardsTable.imageLarge,
-      setName: setsTable.name,
-      setTotal: setsTable.total,
-      setSeries: setsTable.series,
-    })
-    .from(cardsTable)
-    .innerJoin(setsTable, eq(cardsTable.setId, setsTable.id))
-    .where(
-      sql`${cardsTable.imageLarge} IS NOT NULL
-        AND ${setsTable.series} IN ('Scarlet & Violet', 'Sword & Shield')`,
-    )
-    .orderBy(sql`RANDOM()`)
-    .limit(10);
-
   return (
     <div className="container mx-auto p-4 max-w-4xl">
       <h1 className="text-2xl font-bold mb-2">Card Scanner — OCR Test</h1>
@@ -31,7 +11,7 @@ export default async function ScanPage() {
         The scanner reads the card name (top) and number/total (bottom), then
         looks up the match in the database.
       </p>
-      <ScanTester samples={samples} />
+      <ScanTester />
     </div>
   );
 }

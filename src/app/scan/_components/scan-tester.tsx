@@ -3,16 +3,27 @@
 /**
  * ScanTester — OCR + symbol-matching card recognition tool
  *
- * Pipeline:
- * 0. jscanify (OpenCV.js): perspective-correct the scanned card image.
- * 1. Symbol matching: crop the set-logo region, compute a 64-bit perceptual
- *    hash (dHash), find the closest match in the pre-fetched symbol index.
- *    → Identifies the exact set with no name OCR needed.
- * 2. Number OCR: scan priority regions in the card footer for the card
- *    number (e.g. “025/165”), with a digit-whitelist fallback pass.
- * 3. Name OCR: three preprocessing variants with PSM 7 + letter whitelist.
- *    Used only as a disambiguation fallback when symbol matching is uncertain.
- * 4. DB lookup: setId (from symbol) + number (from OCR) → exact card.
+ * Pipeline (fully automatic):
+ *
+ * 1. Number OCR
+ *    All known card layout positions are tried in order (newest era → oldest),
+ *    followed by generic fallbacks. Each region is cropped, binarized, and
+ *    sent to Tesseract.js. Scanning stops at the first crop that yields a
+ *    valid ID pattern (e.g. "025/165", "SWSH112", "014").
+ *
+ * 2. Set lookup
+ *    The parsed number + total are looked up in the DB.
+ *    • 1 candidate  → set uniquely identified, done.
+ *    • 2+ candidates → symbol comparison picks the right one.
+ *    • 0 candidates  → global symbol scan as last resort.
+ *
+ * 2.5 Symbol comparison (only when needed)
+ *    For each candidate set the card is cropped at that set's specific known
+ *    symbol position (SET_SYMBOL_POSITIONS), hashed, and compared 1:1 against
+ *    its reference fingerprint. Closest cosine distance wins.
+ *
+ * 3. Card lookup
+ *    setId + number → exact card record from the DB.
  */
 
 import { api } from "@/lib/api/react";
@@ -41,7 +52,7 @@ type OcrResult = {
 };
 
 type Props = {
-  samples: Sample[];
+  // no props needed — samples are fetched client-side via tRPC
 };
 
 type ImageStep = {
@@ -142,13 +153,13 @@ const SYMBOL_POSITION_GROUPS = [
     id: "sv-swsh",
     label: "Scarlet & Violet / Sword & Shield",
     // cel25/fut2020 empirical: x=[0.415–0.935] → use centre-right band with padding
-    region: { x: 0.38, y: 0.905, w: 0.61, h: 0.085 },
+    region: { x: 0.155, y: 0.949, w: 0.109, h: 0.02 },
   },
   {
     id: "sun-moon",
     label: "Sun & Moon",
     // 9 sets, median x=[0.453–0.942] y=[0.903–0.965]
-    region: { x: 0.42, y: 0.896, w: 0.57, h: 0.076 },
+    region: { x: 0.164, y: 0.941, w: 0.11, h: 0.035 },
   },
   {
     id: "xy-bw",
@@ -185,7 +196,7 @@ const SYMBOL_POSITION_GROUPS = [
     label: "Classic WotC (Base / Gym / Neo / e-Card)",
     // Base/Neo/Gym median x=[0.935–0.953] y=[0.956–0.966]; e-Card x=[0.868–0.928]
     // Using wider x-start to cover e-Card outlier
-    region: { x: 0.84, y: 0.944, w: 0.155, h: 0.038 },
+    region: { x: 0.843, y: 0.955, w: 0.088, h: 0.02 },
   },
 ] as const;
 
@@ -357,56 +368,85 @@ const SET_SYMBOL_POSITIONS: Record<
  */
 const NUMBER_POSITION_GROUPS = [
   {
-    id: "sv-swsh",
-    label: "Scarlet & Violet / Sword & Shield",
-    // Strip position from cel25/fut2020 (SWSH) empirical: y1≈0.918, y2≈0.986
-    // SV uses same design; x starts just past the card edge; width covers longest format
-    region: { x: 0.025, y: 0.92, w: 0.2, h: 0.066 },
+    id: "sv",
+    label: "Scarlet & Violet",
+    // ⚠ CALIBRATE: no confirmed scan data — tune with debugger
+    region: { x: 0.15, y: 0.95, w: 0.12, h: 0.02 },
+  },
+  {
+    id: "swsh",
+    label: "Sword & Shield",
+    // ⚠ CALIBRATE: only cel25/fut2020 confirmed (x1=0.072, y1=0.918, y2=0.986); most sets failed detection
+    region: { x: 0.06, y: 0.914, w: 0.22, h: 0.078 },
   },
   {
     id: "sun-moon",
     label: "Sun & Moon",
-    // Empirical: sm7 x=[0.032–0.123] y=[0.918–0.984]; sm9 x=[0.037–0.110] y=[0.916–0.980]
-    region: { x: 0.02, y: 0.912, w: 0.215, h: 0.076 },
+    // Empirical: 6 sets (sm3,4,7,8,9…) x1=0.037, x2=0.217, y1=0.918, y2=0.984
+    region: { x: 0.03, y: 0.914, w: 0.21, h: 0.078 },
   },
   {
-    id: "xy-bw",
-    label: "XY / Black & White",
-    // BW promo empirical: x=[0.055–0.151] y=[0.939–0.976]; XY estimated same era design
-    region: { x: 0.025, y: 0.926, w: 0.205, h: 0.062 },
+    id: "xy",
+    label: "XY / Mega Evolution",
+    // ⚠ CALIBRATE: all XY sets failed position scan — tune with debugger
+    region: { x: 0.04, y: 0.926, w: 0.2, h: 0.062 },
+  },
+  {
+    id: "bw",
+    label: "Black & White / McDonald's Collection",
+    // ⚠ CALIBRATE: only bwp confirmed (x1=0.055, x2=0.151, y1=0.939, y2=0.976); most BW sets failed
+    // McDonald's promos are BW/XY-era design — grouped here as best approximation
+    region: { x: 0.04, y: 0.934, w: 0.15, h: 0.05 },
   },
   {
     id: "hgss",
-    label: "HeartGold & SoulSilver",
-    // Empirical: hgss1–4 x1≈0.076–0.136, y1≈0.912–0.949, y2≈0.939–0.972; col1 y1≈0.934
-    // Using x=0.055 to capture the full range observed across all HGSS sets
-    region: { x: 0.055, y: 0.906, w: 0.21, h: 0.072 },
+    label: "HeartGold & SoulSilver / Call of Legends",
+    // Empirical: HGSS x1=0.135, y1=0.912, y2=0.956; CoL x1=0.076, y1=0.934, y2=0.971
+    // Merged: start at x=0.065 covers both; y covers full union range
+    region: { x: 0.065, y: 0.908, w: 0.21, h: 0.068 },
   },
   {
     id: "platinum",
     label: "Platinum",
-    // Empirical: pl1–4 x1≈0.147–0.156, y1≈0.910–0.912, y2≈0.948–0.952
-    // Number starts at x≈0.15 (after the Pokémon-level badge area at far left)
-    region: { x: 0.115, y: 0.904, w: 0.19, h: 0.054 },
+    // Empirical: pl1–4, ru1 x1=0.152, x2=0.278, y1=0.911, y2=0.950
+    region: { x: 0.14, y: 0.906, w: 0.16, h: 0.05 },
   },
   {
     id: "dp",
-    label: "Diamond & Pearl",
-    // Empirical: dp1–6 x1≈0.078–0.087, y1≈0.910–0.912, y2≈0.967–0.975
-    region: { x: 0.055, y: 0.904, w: 0.25, h: 0.074 },
+    label: "Diamond & Pearl / POP Series",
+    // Empirical: DP x1=0.087, x2=0.285, y1=0.911, y2=0.973
+    // POP x1=0.130, x2=0.222, y1=0.922, y2=0.958 — merged; crop from 0.08 covers both
+    region: { x: 0.08, y: 0.906, w: 0.23, h: 0.072 },
   },
   {
     id: "ex-era",
     label: "EX Series",
-    // Empirical: median x1≈0.121, y1≈0.919, y2≈0.963 across 16 sets
-    // Using x=0.020 because some early EX sets (ex3, ex16) start at x≈0.043–0.048
-    region: { x: 0.02, y: 0.904, w: 0.295, h: 0.082 },
+    // Empirical: 16 sets x1=0.121, x2=0.188, y1=0.919, y2=0.963
+    region: { x: 0.11, y: 0.914, w: 0.12, h: 0.056 },
   },
   {
-    id: "classic",
-    label: "Classic WotC (Base / Gym / Neo / e-Card)",
-    // Empirical: Base/Gym/Neo consensus x1≈0.043–0.050, y1≈0.927–0.935, y2≈0.966–0.968
-    region: { x: 0.03, y: 0.918, w: 0.295, h: 0.062 },
+    id: "base",
+    label: "Base / Jungle / Fossil / Team Rocket / Legendary Collection",
+    // Empirical: base1–5, lc x1≈0.043–0.050, y1≈0.932–0.935, y2≈0.966–0.968
+    region: { x: 0.04, y: 0.93, w: 0.28, h: 0.04 },
+  },
+  {
+    id: "gym",
+    label: "Gym Heroes / Gym Challenge",
+    // Empirical: gym1–2 x1≈0.043, y1≈0.927, y2≈0.968 — slightly higher strip than Base
+    region: { x: 0.04, y: 0.925, w: 0.21, h: 0.045 },
+  },
+  {
+    id: "neo",
+    label: "Neo Genesis / Discovery / Revelation / Destiny",
+    // Empirical: neo2–4, si1 x1≈0.046, y1≈0.935, y2≈0.968 — virtually identical to Base
+    region: { x: 0.04, y: 0.93, w: 0.28, h: 0.04 },
+  },
+  {
+    id: "ecard",
+    label: "E-Card (Expedition / Aquapolis / Skyridge)",
+    // ⚠ CALIBRATE: ecard1 confirmed x1=0.041–0.049, y1=0.945–0.961; ecard2/3 failed — tune with debugger
+    region: { x: 0.04, y: 0.935, w: 0.28, h: 0.04 },
   },
 ] as const;
 
@@ -416,25 +456,32 @@ type ScanGroupId = (typeof NUMBER_POSITION_GROUPS)[number]["id"];
  * Maps every TCGdex series name to the scan-group that best covers its
  * info-strip layout.  Series not listed here fall back to generic regions.
  */
-const SERIES_TO_SCAN_GROUP: Record<string, ScanGroupId> = {
-  "Scarlet & Violet": "sv-swsh",
-  "Sword & Shield": "sv-swsh",
-  "Mega Evolution": "sv-swsh", // Japanese XY-era promos follow similar layout
+const SERIES_TO_SCAN_GROUP: Record<string, ScanGroupId | undefined> = {
+  // — Modern era —
+  "Scarlet & Violet": "sv",
+  "Sword & Shield": "swsh",
   "Sun & Moon": "sun-moon",
-  XY: "xy-bw",
-  "Black & White": "xy-bw",
+  XY: "xy",
+  "Mega Evolution": "xy", // Japanese XY-era promos (MEP, me01)
+  "Black & White": "bw",
+  "McDonald's Collection": "bw", // BW/XY-era promo cards; ⚠ region approximate
+  // — Mid era —
   "HeartGold & SoulSilver": "hgss",
   "Call of Legends": "hgss",
   Platinum: "platinum",
   "Diamond & Pearl": "dp",
-  POP: "dp", // POP Series promo sets use DP-era design
+  POP: "dp",
   EX: "ex-era",
-  "E-Card": "classic",
-  Neo: "classic",
-  Gym: "classic",
-  Base: "classic",
-  "Legendary Collection": "classic",
-};
+  // — Classic WotC era —
+  "E-Card": "ecard",
+  "Legendary Collection": "base",
+  Neo: "neo",
+  Gym: "gym",
+  Base: "base",
+  // — No number position (skip / fallback to generic regions) —
+  "Trainer kits": undefined, // all sets failed detection
+  Miscellaneous: undefined, // only Jumbo oversized cards
+} as Record<string, ScanGroupId | undefined>;
 
 // ── Card number: scan regions (ordered by probability) ─────────────────────
 /**
@@ -512,9 +559,13 @@ const NUMBER_PATTERNS: {
   },
 ];
 
-export function ScanTester({ samples }: Props) {
+export function ScanTester() {
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [activeSample, setActiveSample] = useState<Sample | null>(null);
+  const [sampleFilter, setSampleFilter] = useState<ScanGroupId | "all">("all");
+
+  const samplesQuery = api.card.getScanSamples.useQuery(sampleFilter);
+  const filteredSamples = samplesQuery.data ?? [];
   const [isScanning, setIsScanning] = useState(false);
   const [ocrResult, setOcrResult] = useState<OcrResult | null>(null);
   const [scanSteps, setScanSteps] = useState<ScanStep[]>([]);
@@ -522,15 +573,92 @@ export function ScanTester({ samples }: Props) {
     src: string;
     alt: string;
   } | null>(null);
-  /**
-   * The series name of the most-recently identified set.  When set, the
-   * scanner will try that era's precise crop region first before falling
-   * back to the generic NUMBER_REGIONS sweep.
-   */
-  const [persistedSetSeries, setPersistedSetSeries] = useState<string | null>(
-    null,
-  );
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ── Crop debugger state ─────────────────────────────────────────
+  const [debugOpen, setDebugOpen] = useState(false);
+  const [debugGroupId, setDebugGroupId] = useState<ScanGroupId>(
+    NUMBER_POSITION_GROUPS[0].id,
+  );
+  const [debugRegion, setDebugRegion] = useState<{
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  }>(() => ({ ...NUMBER_POSITION_GROUPS[0].region }));
+  const [debugCropUrl, setDebugCropUrl] = useState<string | null>(null);
+  const [debugOcrText, setDebugOcrText] = useState<string | null>(null);
+  const [debugOcrRunning, setDebugOcrRunning] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<
+    "idle" | "saving" | "ok" | "error"
+  >("idle");
+
+  async function saveRegionToCode() {
+    setSaveStatus("saving");
+    try {
+      const res = await fetch("/api/dev/patch-region", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ groupId: debugGroupId, region: debugRegion }),
+      });
+      setSaveStatus(res.ok ? "ok" : "error");
+    } catch {
+      setSaveStatus("error");
+    }
+    setTimeout(() => setSaveStatus("idle"), 2500);
+  }
+
+  // Rebuild the crop preview whenever the region or active image changes.
+  useEffect(() => {
+    if (!debugOpen || !activeImage) return;
+    let cancelled = false;
+    void (async () => {
+      const img = await loadImage(activeImage);
+      if (cancelled) return;
+      const crop = cropImage(
+        img,
+        debugRegion.x,
+        debugRegion.y,
+        debugRegion.w,
+        debugRegion.h,
+      );
+      const processed = applyProcessing(crop, 4);
+      setDebugCropUrl(processed.toDataURL());
+      setDebugOcrText(null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    debugOpen,
+    activeImage,
+    debugRegion.x,
+    debugRegion.y,
+    debugRegion.w,
+    debugRegion.h,
+  ]);
+
+  async function runDebugOcr() {
+    if (!activeImage) return;
+    setDebugOcrRunning(true);
+    setDebugOcrText(null);
+    const img = await loadImage(activeImage);
+    const crop = cropImage(
+      img,
+      debugRegion.x,
+      debugRegion.y,
+      debugRegion.w,
+      debugRegion.h,
+    );
+    const processed = applyProcessing(crop, 4);
+    const w = await createWorker("eng");
+    await w.setParameters({ tessedit_pageseg_mode: "6" as never });
+    const result = await w.recognize(processed);
+    await w.terminate();
+    setDebugOcrText(result.data.text?.trim() || "(nothing detected)");
+    setDebugOcrRunning(false);
+  }
 
   // ── Symbol index pre-fetch ───────────────────────────────────────────
   // Each set symbol image is downloaded, drawn to a 32×32 canvas, and stored
@@ -673,16 +801,7 @@ export function ScanTester({ samples }: Props) {
       let numberError: string | null = null;
       const regionAttempts: RegionScanAttempt[] = [];
 
-      // Build the ordered list of regions to try.
-      // If a series is known, prepend its era-specific crop region.
-      const activeGroupId =
-        persistedSetSeries != null
-          ? SERIES_TO_SCAN_GROUP[persistedSetSeries]
-          : undefined;
-      const activeGroup = activeGroupId
-        ? NUMBER_POSITION_GROUPS.find((g) => g.id === activeGroupId)
-        : undefined;
-
+      // All era-specific positions tried newest → oldest, then generic fallbacks.
       const regionsToScan: ReadonlyArray<{
         label: string;
         description: string;
@@ -690,16 +809,14 @@ export function ScanTester({ samples }: Props) {
         y: number;
         w: number;
         h: number;
-      }> = activeGroup
-        ? [
-            {
-              label: `Focused: ${activeGroup.label}`,
-              description: `Era-specific crop for ${activeGroup.label} (series: ${persistedSetSeries ?? ""}).`,
-              ...activeGroup.region,
-            },
-            ...NUMBER_REGIONS,
-          ]
-        : [...NUMBER_REGIONS];
+      }> = [
+        ...NUMBER_POSITION_GROUPS.map((g) => ({
+          label: g.label,
+          description: `Card layout: ${g.label}`,
+          ...g.region,
+        })),
+        ...NUMBER_REGIONS,
+      ];
 
       for (const region of regionsToScan) {
         if (parsedNumber !== null) break;
@@ -767,10 +884,9 @@ export function ScanTester({ samples }: Props) {
 
       pushStep({
         kind: "region-scan",
-        label: "Number: scan priority regions",
-        description: activeGroup
-          ? `Era-specific region for "${activeGroup.label}" tried first, then generic fallbacks. Stops at first match.`
-          : "Regions are scanned in priority order — scanning stops at the first match. Confidence-filtered text (>=70%) is tried first, raw OCR is used as fallback.",
+        label: "Number: scan all layout regions",
+        description:
+          "All era-specific layouts tried in order (newest → oldest), then generic fallbacks. Stops at first match. Confidence-filtered text (≥70%) is tried first; raw OCR is the fallback.",
         attempts: regionAttempts,
       });
 
@@ -875,9 +991,20 @@ export function ScanTester({ samples }: Props) {
       } else if (symbolHashMap.current.size > 0) {
         const isGlobal = candidateSetIds.length === 0;
 
-        // Determine era group for fallback when no per-set position is available.
-        const symActiveGroup = activeGroupId
-          ? SYMBOL_POSITION_GROUPS.find((g) => g.id === activeGroupId)
+        // Infer era group from the candidate sets (for the symbol crop fallback
+        // when no per-set position is available).
+        const candidateGroupId = (() => {
+          for (const id of candidateSetIds) {
+            const series = setSeriesMap.current.get(id);
+            if (series) {
+              const gId = SERIES_TO_SCAN_GROUP[series];
+              if (gId) return gId;
+            }
+          }
+          return undefined;
+        })();
+        const symActiveGroup = candidateGroupId
+          ? SYMBOL_POSITION_GROUPS.find((g) => g.id === candidateGroupId)
           : undefined;
 
         if (!isGlobal) {
@@ -1039,13 +1166,6 @@ export function ScanTester({ samples }: Props) {
       });
 
       setOcrResult({ parsedNumber, parsedTotal, matchedSetId });
-
-      // Persist the identified series so the next scan of a card from the
-      // same set uses the era-specific crop region immediately.
-      if (matchedSetId) {
-        const resolvedSeries = setSeriesMap.current.get(matchedSetId);
-        if (resolvedSeries) setPersistedSetSeries(resolvedSeries);
-      }
     } finally {
       setIsScanning(false);
     }
@@ -1055,9 +1175,6 @@ export function ScanTester({ samples }: Props) {
     if (!sample.imageLarge) return;
     setActiveSample(sample);
     setActiveImage(sample.imageLarge);
-    // When a sample card is selected, the series is already known — set it
-    // now so the very first OCR attempt uses the era-specific crop region.
-    setPersistedSetSeries(sample.setSeries);
     void runOcr(sample.imageLarge);
   }
 
@@ -1089,71 +1206,51 @@ export function ScanTester({ samples }: Props) {
         </div>
       )}
 
-      {/* Card era selector — pick this before scanning so the correct number
-           crop region is used immediately, without needing a prior successful scan. */}
-      <div className="flex items-center gap-3">
-        <label className="text-sm font-medium whitespace-nowrap">
-          Card era
-        </label>
-        <select
-          className="text-sm border rounded px-2 py-1 bg-background"
-          value={persistedSetSeries ?? ""}
-          onChange={(e) => setPersistedSetSeries(e.target.value || null)}
-        >
-          <option value="">— unknown / auto-detect —</option>
-          {Object.entries(SERIES_TO_SCAN_GROUP)
-            // Group by scan group so each era label appears once, with its series names
-            .reduce<
-              Array<{ groupId: string; label: string; series: string[] }>
-            >((acc, [series, groupId]) => {
-              const existing = acc.find((g) => g.groupId === groupId);
-              if (existing) {
-                existing.series.push(series);
-              } else {
-                const group = NUMBER_POSITION_GROUPS.find(
-                  (g) => g.id === groupId,
-                );
-                if (group)
-                  acc.push({ groupId, label: group.label, series: [series] });
-              }
-              return acc;
-            }, [])
-            .map(({ groupId, label, series }) => (
-              // Use the first series name in the group as the option value
-              <option key={groupId} value={series[0]}>
-                {label}
-              </option>
-            ))}
-        </select>
-        {persistedSetSeries && (
-          <span className="text-xs text-muted-foreground">
-            ✓ using focused crop region
-          </span>
-        )}
-      </div>
-
       {/* Sample grid */}
       <section>
-        <h2 className="font-semibold mb-3">Sample cards — click to scan</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-semibold">Sample cards — click to scan</h2>
+          <select
+            value={sampleFilter}
+            onChange={(e) =>
+              setSampleFilter(e.target.value as ScanGroupId | "all")
+            }
+            className="text-xs border rounded px-1 py-0.5 bg-background"
+          >
+            <option value="all">All sets</option>
+            {NUMBER_POSITION_GROUPS.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.label}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className="grid grid-cols-5 gap-2">
-          {samples.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => handleSampleClick(s)}
-              className="relative rounded overflow-hidden border-2 border-transparent hover:border-primary transition-all aspect-2.5/3.5 bg-muted"
-              title={`${s.name} — ${s.setName}`}
-            >
-              {s.imageLarge && (
-                <Image
-                  src={s.imageLarge}
-                  alt={s.name}
-                  fill
-                  unoptimized
-                  className="object-cover"
+          {samplesQuery.isFetching
+            ? Array.from({ length: 10 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="relative rounded aspect-2.5/3.5 bg-muted animate-pulse"
                 />
-              )}
-            </button>
-          ))}
+              ))
+            : filteredSamples.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => handleSampleClick(s)}
+                  className="relative rounded overflow-hidden border-2 border-transparent hover:border-primary transition-all aspect-2.5/3.5 bg-muted"
+                  title={`${s.name} — ${s.setName}`}
+                >
+                  {s.imageLarge && (
+                    <Image
+                      src={s.imageLarge}
+                      alt={s.name}
+                      fill
+                      unoptimized
+                      className="object-cover"
+                    />
+                  )}
+                </button>
+              ))}
         </div>
       </section>
 
@@ -1170,6 +1267,140 @@ export function ScanTester({ samples }: Props) {
           onChange={handleFileChange}
         />
       </section>
+
+      {/* Crop debugger */}
+      {activeImage && (
+        <section className="border rounded-lg p-4 space-y-4">
+          <button
+            className="text-sm font-semibold flex items-center gap-2"
+            onClick={() => setDebugOpen((o) => !o)}
+          >
+            <span>{debugOpen ? "▼" : "▶"}</span> Crop debugger
+          </button>
+
+          {debugOpen && (
+            <div className="space-y-4">
+              {/* Group selector */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  Era group:
+                </span>
+                <select
+                  value={debugGroupId}
+                  onChange={(e) => {
+                    const g = NUMBER_POSITION_GROUPS.find(
+                      (g) => g.id === e.target.value,
+                    );
+                    if (g) {
+                      setDebugGroupId(g.id);
+                      setDebugRegion({ ...g.region });
+                    }
+                  }}
+                  className="text-xs border rounded px-1 py-0.5 bg-background"
+                >
+                  {NUMBER_POSITION_GROUPS.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {g.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Sliders */}
+              {(["x", "y", "w", "h"] as const).map((key) => (
+                <div key={key} className="flex items-center gap-3">
+                  <span className="text-xs font-mono w-4">{key}</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.001}
+                    value={debugRegion[key]}
+                    onChange={(e) =>
+                      setDebugRegion((r) => ({
+                        ...r,
+                        [key]: parseFloat(e.target.value),
+                      }))
+                    }
+                    className="flex-1"
+                  />
+                  <input
+                    type="number"
+                    min={0}
+                    max={1}
+                    step={0.001}
+                    value={debugRegion[key]}
+                    onChange={(e) =>
+                      setDebugRegion((r) => ({
+                        ...r,
+                        [key]: parseFloat(e.target.value) || 0,
+                      }))
+                    }
+                    className="w-20 text-xs font-mono border rounded px-1 py-0.5"
+                  />
+                </div>
+              ))}
+
+              {/* Live crop preview */}
+              {debugCropUrl && (
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">
+                    Crop preview (binarized):
+                  </p>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={debugCropUrl}
+                    alt="crop preview"
+                    className="max-h-16 rounded border"
+                  />
+                </div>
+              )}
+
+              {/* Test OCR button */}
+              <div className="flex items-center gap-3">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => void runDebugOcr()}
+                  disabled={debugOcrRunning}
+                >
+                  {debugOcrRunning ? "Running…" : "Test OCR on this crop"}
+                </Button>
+                {debugOcrText !== null && (
+                  <span className="text-xs font-mono bg-muted px-2 py-1 rounded">
+                    {debugOcrText}
+                  </span>
+                )}
+              </div>
+
+              {/* Save + copy values */}
+              <div className="flex items-center gap-3">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => void saveRegionToCode()}
+                  disabled={saveStatus === "saving"}
+                >
+                  {saveStatus === "saving"
+                    ? "Saving…"
+                    : saveStatus === "ok"
+                      ? "Saved ✓"
+                      : saveStatus === "error"
+                        ? "Error ✗"
+                        : "Save to code"}
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  → updates{" "}
+                  <code>NUMBER_POSITION_GROUPS["{debugGroupId}"]</code>
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground font-mono select-all">
+                {`{ x: ${debugRegion.x}, y: ${debugRegion.y}, w: ${debugRegion.w}, h: ${debugRegion.h} }`}
+              </p>
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Results */}
       {activeImage && (

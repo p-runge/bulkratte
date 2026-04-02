@@ -17,6 +17,7 @@ import {
   gte,
   ilike,
   inArray,
+  isNotNull,
   lte,
   or,
   sql,
@@ -328,5 +329,70 @@ export const cardRouter = createTRPCRouter({
         ["name", "imageSmall", "imageLarge"],
         "en-US",
       );
+    }),
+
+  /**
+   * Returns 10 random sample cards for the scan tester.
+   * When groupId is provided, only cards from the matching era series are returned.
+   */
+  getScanSamples: publicProcedure
+    .input(
+      z
+        .enum([
+          "all",
+          "sv",
+          "swsh",
+          "sun-moon",
+          "xy",
+          "bw",
+          "hgss",
+          "platinum",
+          "dp",
+          "ex-era",
+          "base",
+          "gym",
+          "neo",
+          "ecard",
+        ])
+        .optional(),
+    )
+    .query(async ({ input }) => {
+      const SERIES_FOR_GROUP: Record<string, string[]> = {
+        sv: ["Scarlet & Violet"],
+        swsh: ["Sword & Shield"],
+        "sun-moon": ["Sun & Moon"],
+        xy: ["XY", "Mega Evolution"],
+        bw: ["Black & White", "McDonald's Collection"],
+        hgss: ["HeartGold & SoulSilver", "Call of Legends"],
+        platinum: ["Platinum"],
+        dp: ["Diamond & Pearl", "POP"],
+        "ex-era": ["EX"],
+        base: ["Base", "Legendary Collection"],
+        gym: ["Gym"],
+        neo: ["Neo"],
+        ecard: ["E-Card"],
+      };
+
+      const seriesList =
+        input && input !== "all" ? SERIES_FOR_GROUP[input] : null;
+
+      const conditions = [isNotNull(cardsTable.imageLarge)];
+      if (seriesList) conditions.push(inArray(setsTable.series, seriesList));
+
+      return db
+        .select({
+          id: cardsTable.id,
+          name: cardsTable.name,
+          number: cardsTable.number,
+          imageLarge: cardsTable.imageLarge,
+          setName: setsTable.name,
+          setTotal: setsTable.total,
+          setSeries: setsTable.series,
+        })
+        .from(cardsTable)
+        .innerJoin(setsTable, eq(cardsTable.setId, setsTable.id))
+        .where(and(...conditions))
+        .orderBy(sql`RANDOM()`)
+        .limit(10);
     }),
 });

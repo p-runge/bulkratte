@@ -92,10 +92,10 @@ async function fetchRaw(url: string, stripFrac: number) {
 /** Brightness histogram of left 30% to understand text brightness in modern cards */
 async function analyzeHist(era: string, url: string) {
   const { raw, width, height, stripH } = await fetchRaw(url, 0.935);
-  const hist = new Array(256).fill(0);
+  const hist = new Array<number>(256).fill(0);
   const maxCol = Math.round(width * 0.3);
   for (let r = 0; r < stripH; r++)
-    for (let c = 0; c < maxCol; c++) hist[raw[r * width + c]]++;
+    for (let c = 0; c < maxCol; c++) hist[raw[r * width + c] ?? 0]!++;
 
   const total = stripH * maxCol;
   const cum = (t: number) =>
@@ -106,7 +106,7 @@ async function analyzeHist(era: string, url: string) {
   let cumPx = 0,
     textThresh = 0;
   for (let i = 0; i < 256; i++) {
-    cumPx += hist[i];
+    cumPx += hist[i] ?? 0;
     if (cumPx / total >= 0.02 && textThresh === 0) textThresh = i;
   }
 
@@ -124,7 +124,8 @@ async function analyzeGap(era: string, url: string) {
 
   const colDark = new Array(width).fill(0);
   for (let r = 0; r < stripH; r++)
-    for (let c = 0; c < width; c++) if (raw[r * width + c] < DARK) colDark[c]++;
+    for (let c = 0; c < width; c++)
+      if ((raw[r * width + c] ?? 255) < DARK) colDark[c]++;
 
   let firstDark = -1;
   for (let c = 0; c < width; c++) {
@@ -151,7 +152,7 @@ async function analyzeGap(era: string, url: string) {
     rowMax = 0;
   for (let r = 0; r < stripH; r++)
     for (let c = firstDark; c <= numRight; c++)
-      if (raw[r * width + c] < DARK) {
+      if ((raw[r * width + c] ?? 255) < DARK) {
         if (r < rowMin) rowMin = r;
         if (r > rowMax) rowMax = r;
       }
