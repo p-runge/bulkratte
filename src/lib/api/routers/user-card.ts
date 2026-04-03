@@ -115,53 +115,102 @@ export async function getWantlistForUser(
       break;
   }
 
-  // Get all card IDs that are in user's sets but don't have a user_card_id
-  // Also get the preferred properties from the user set and card-level overrides
-  const missingCardsWithPrefs = await db
-    .selectDistinct({
-      cardId: userSetCardsTable.card_id,
-      cardPreferredLanguage: userSetCardsTable.preferred_language,
-      cardPreferredVariant: userSetCardsTable.preferred_variant,
-      cardPreferredCondition: userSetCardsTable.preferred_condition,
-      setPreferredLanguage: userSetsTable.preferred_language,
-      setPreferredVariant: userSetsTable.preferred_variant,
-      setPreferredCondition: userSetsTable.preferred_condition,
-    })
+  const setIdFilter = options?.userSetIds?.length
+    ? inArray(userSetsTable.id, options.userSetIds)
+    : undefined;
+
+  const prefColumns = {
+    cardPreferredLanguage: userSetCardsTable.preferred_language,
+    cardPreferredVariant: userSetCardsTable.preferred_variant,
+    cardPreferredCondition: userSetCardsTable.preferred_condition,
+    setPreferredLanguage: userSetsTable.preferred_language,
+    setPreferredVariant: userSetsTable.preferred_variant,
+    setPreferredCondition: userSetsTable.preferred_condition,
+  };
+
+  // Cards in user's sets that are not yet placed
+  const unplacedCardsWithPrefs = await db
+    .selectDistinct({ cardId: userSetCardsTable.card_id, ...prefColumns })
     .from(userSetCardsTable)
-    .innerJoin(
-      userSetsTable,
-      eq(userSetCardsTable.user_set_id, userSetsTable.id),
-    )
+    .innerJoin(userSetsTable, eq(userSetCardsTable.user_set_id, userSetsTable.id))
     .where(
       and(
         eq(userSetsTable.user_id, userId),
-        sql`${userSetCardsTable.user_card_id} IS NULL`,
-        options?.userSetIds?.length
-          ? inArray(userSetsTable.id, options.userSetIds)
-          : undefined,
+        isNull(userSetCardsTable.user_card_id),
+        setIdFilter,
       ),
     );
 
-  const missingCardIds = missingCardsWithPrefs.map((row) => row.cardId);
+  // Cards in user's sets that ARE placed — fetch with placed card's actual attributes
+  // to detect when the placed card doesn't satisfy the effective preference
+  const placedCardsWithPrefs = await db
+    .selectDistinct({
+      cardId: userSetCardsTable.card_id,
+      ...prefColumns,
+      placedLanguage: userCardsTable.language,
+      placedVariant: userCardsTable.variant,
+      placedCondition: userCardsTable.condition,
+    })
+    .from(userSetCardsTable)
+    .innerJoin(userSetsTable, eq(userSetCardsTable.user_set_id, userSetsTable.id))
+    .innerJoin(userCardsTable, eq(userSetCardsTable.user_card_id, userCardsTable.id))
+    .where(
+      and(
+        eq(userSetsTable.user_id, userId),
+        sql`${userSetCardsTable.user_card_id} IS NOT NULL`,
+        setIdFilter,
+      ),
+    );
 
-  // If no missing cards, return empty array
-  if (missingCardIds.length === 0) {
-    return [];
-  }
+  // A placed card still belongs on the wantlist if its actual attributes don't
+  // satisfy the effective preference (card-level overrides set-level)
+  const mismatchedPlacedCards = placedCardsWithPrefs.filter((row) => {
+    const effectiveLanguage = row.cardPreferredLanguage ?? row.setPreferredLanguage;
+    const effectiveVariant = row.cardPreferredVariant ?? row.setPreferredVariant;
+    const effectiveCondition = row.cardPreferredCondition ?? row.setPreferredCondition;
+    return (
+      (effectiveLanguage !== null && row.placedLanguage !== effectiveLanguage) ||
+      (effectiveVariant !== null && row.placedVariant !== effectiveVariant) ||
+      (effectiveCondition !== null && row.placedCondition !== effectiveCondition)
+    );
+  });
+
+  // Merged prefs rows (without placed* columns) used to build the prefs map later
+  type PrefsRow = {
+    cardId: string;
+    cardPreferredLanguage: (typeof prefColumns.cardPreferredLanguage)["_"]["data"] | null;
+    cardPreferredVariant: (typeof prefColumns.cardPreferredVariant)["_"]["data"] | null;
+    cardPreferredCondition: (typeof prefColumns.cardPreferredCondition)["_"]["data"] | null;
+    setPreferredLanguage: (typeof prefColumns.setPreferredLanguage)["_"]["data"] | null;
+    setPreferredVariant: (typeof prefColumns.setPreferredVariant)["_"]["data"] | null;
+    setPreferredCondition: (typeof prefColumns.setPreferredCondition)["_"]["data"] | null;
+  };
+  const allCardsWithPrefs: PrefsRow[] = [
+    ...unplacedCardsWithPrefs,
+    ...mismatchedPlacedCards,
+  ];
 
   // Get card IDs that are already in the user's collection
-  const userCardIds = await db
-    .select({ cardId: userCardsTable.card_id })
-    .from(userCardsTable)
-    .where(eq(userCardsTable.user_id, userId))
-    .then((res) => res.map((row) => row.cardId));
+  const unplacedCardIds = unplacedCardsWithPrefs.map((row) => row.cardId);
+  const userCardIds = unplacedCardIds.length
+    ? await db
+        .select({ cardId: userCardsTable.card_id })
+        .from(userCardsTable)
+        .where(eq(userCardsTable.user_id, userId))
+        .then((res) => res.map((row) => row.cardId))
+    : [];
 
-  // Filter out cards that are already in the user's collection
-  const wantlistCardIds = missingCardIds.filter(
+  // Unplaced cards that the user doesn't already own
+  const unplacedWantlistIds = unplacedCardIds.filter(
     (cardId) => !userCardIds.includes(cardId),
   );
 
-  // If all missing cards are already in collection, return empty array
+  // Combine with mismatched placed cards (deduplicated)
+  const mismatchedIds = mismatchedPlacedCards.map((row) => row.cardId);
+  const wantlistCardIds = [
+    ...new Set([...unplacedWantlistIds, ...mismatchedIds]),
+  ];
+
   if (wantlistCardIds.length === 0) {
     return [];
   }
@@ -254,12 +303,9 @@ export async function getWantlistForUser(
   // Create UserCard-like objects with preferred properties from user sets.
   // Card-level preferences override set-level preferences.
   // For cards that appear in multiple sets, prefer the entry that has a card-level override.
-  const cardPrefsMap = new Map<
-    string,
-    (typeof missingCardsWithPrefs)[number]
-  >();
+  const cardPrefsMap = new Map<string, PrefsRow>();
 
-  for (const row of missingCardsWithPrefs) {
+  for (const row of allCardsWithPrefs) {
     const existing = cardPrefsMap.get(row.cardId);
     if (!existing || (!existing.cardPreferredLanguage && row.cardPreferredLanguage)) {
       cardPrefsMap.set(row.cardId, row);
