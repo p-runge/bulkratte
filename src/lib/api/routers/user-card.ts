@@ -132,7 +132,10 @@ export async function getWantlistForUser(
   const unplacedCardsWithPrefs = await db
     .selectDistinct({ cardId: userSetCardsTable.card_id, ...prefColumns })
     .from(userSetCardsTable)
-    .innerJoin(userSetsTable, eq(userSetCardsTable.user_set_id, userSetsTable.id))
+    .innerJoin(
+      userSetsTable,
+      eq(userSetCardsTable.user_set_id, userSetsTable.id),
+    )
     .where(
       and(
         eq(userSetsTable.user_id, userId),
@@ -152,8 +155,14 @@ export async function getWantlistForUser(
       placedCondition: userCardsTable.condition,
     })
     .from(userSetCardsTable)
-    .innerJoin(userSetsTable, eq(userSetCardsTable.user_set_id, userSetsTable.id))
-    .innerJoin(userCardsTable, eq(userSetCardsTable.user_card_id, userCardsTable.id))
+    .innerJoin(
+      userSetsTable,
+      eq(userSetCardsTable.user_set_id, userSetsTable.id),
+    )
+    .innerJoin(
+      userCardsTable,
+      eq(userSetCardsTable.user_card_id, userCardsTable.id),
+    )
     .where(
       and(
         eq(userSetsTable.user_id, userId),
@@ -165,25 +174,42 @@ export async function getWantlistForUser(
   // A placed card still belongs on the wantlist if its actual attributes don't
   // satisfy the effective preference (card-level overrides set-level)
   const mismatchedPlacedCards = placedCardsWithPrefs.filter((row) => {
-    const effectiveLanguage = row.cardPreferredLanguage ?? row.setPreferredLanguage;
-    const effectiveVariant = row.cardPreferredVariant ?? row.setPreferredVariant;
-    const effectiveCondition = row.cardPreferredCondition ?? row.setPreferredCondition;
+    const effectiveLanguage =
+      row.cardPreferredLanguage ?? row.setPreferredLanguage;
+    const effectiveVariant =
+      row.cardPreferredVariant ?? row.setPreferredVariant;
+    const effectiveCondition =
+      row.cardPreferredCondition ?? row.setPreferredCondition;
     return (
-      (effectiveLanguage !== null && row.placedLanguage !== effectiveLanguage) ||
+      (effectiveLanguage !== null &&
+        row.placedLanguage !== effectiveLanguage) ||
       (effectiveVariant !== null && row.placedVariant !== effectiveVariant) ||
-      (effectiveCondition !== null && row.placedCondition !== effectiveCondition)
+      (effectiveCondition !== null &&
+        row.placedCondition !== effectiveCondition)
     );
   });
 
   // Merged prefs rows (without placed* columns) used to build the prefs map later
   type PrefsRow = {
     cardId: string;
-    cardPreferredLanguage: (typeof prefColumns.cardPreferredLanguage)["_"]["data"] | null;
-    cardPreferredVariant: (typeof prefColumns.cardPreferredVariant)["_"]["data"] | null;
-    cardPreferredCondition: (typeof prefColumns.cardPreferredCondition)["_"]["data"] | null;
-    setPreferredLanguage: (typeof prefColumns.setPreferredLanguage)["_"]["data"] | null;
-    setPreferredVariant: (typeof prefColumns.setPreferredVariant)["_"]["data"] | null;
-    setPreferredCondition: (typeof prefColumns.setPreferredCondition)["_"]["data"] | null;
+    cardPreferredLanguage:
+      | (typeof prefColumns.cardPreferredLanguage)["_"]["data"]
+      | null;
+    cardPreferredVariant:
+      | (typeof prefColumns.cardPreferredVariant)["_"]["data"]
+      | null;
+    cardPreferredCondition:
+      | (typeof prefColumns.cardPreferredCondition)["_"]["data"]
+      | null;
+    setPreferredLanguage:
+      | (typeof prefColumns.setPreferredLanguage)["_"]["data"]
+      | null;
+    setPreferredVariant:
+      | (typeof prefColumns.setPreferredVariant)["_"]["data"]
+      | null;
+    setPreferredCondition:
+      | (typeof prefColumns.setPreferredCondition)["_"]["data"]
+      | null;
   };
   const allCardsWithPrefs: PrefsRow[] = [
     ...unplacedCardsWithPrefs,
@@ -307,7 +333,10 @@ export async function getWantlistForUser(
 
   for (const row of allCardsWithPrefs) {
     const existing = cardPrefsMap.get(row.cardId);
-    if (!existing || (!existing.cardPreferredLanguage && row.cardPreferredLanguage)) {
+    if (
+      !existing ||
+      (!existing.cardPreferredLanguage && row.cardPreferredLanguage)
+    ) {
       cardPrefsMap.set(row.cardId, row);
     }
   }
@@ -317,9 +346,15 @@ export async function getWantlistForUser(
     return {
       id: `wantlist-${card.id}`, // Virtual ID for the wantlist item
       cardId: card.id,
-      language: prefs ? (prefs.cardPreferredLanguage ?? prefs.setPreferredLanguage) : null,
-      variant: prefs ? (prefs.cardPreferredVariant ?? prefs.setPreferredVariant) : null,
-      condition: prefs ? (prefs.cardPreferredCondition ?? prefs.setPreferredCondition) : null,
+      language: prefs
+        ? (prefs.cardPreferredLanguage ?? prefs.setPreferredLanguage)
+        : null,
+      variant: prefs
+        ? (prefs.cardPreferredVariant ?? prefs.setPreferredVariant)
+        : null,
+      condition: prefs
+        ? (prefs.cardPreferredCondition ?? prefs.setPreferredCondition)
+        : null,
       notes: null,
       card: {
         created_at: card.created_at,

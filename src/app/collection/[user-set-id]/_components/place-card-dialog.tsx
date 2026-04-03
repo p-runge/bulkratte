@@ -82,11 +82,20 @@ export function PlaceCardDialog({
   const { mutateAsync: createUserCard } = api.userCard.create.useMutation();
   const apiUtils = api.useUtils();
 
+  // Resolve effective preferences: card-level overrides set-level
+  const slotCard = userSet.cards.find((c) => c.id === userSetCardId);
+  const effectiveLanguage =
+    slotCard?.preferredLanguage ?? userSet.set.preferredLanguage ?? null;
+  const effectiveVariant =
+    slotCard?.preferredVariant ?? userSet.set.preferredVariant ?? null;
+  const effectiveCondition =
+    slotCard?.preferredCondition ?? userSet.set.preferredCondition ?? null;
+
   const form = useRHFForm(userCardFormSchema, {
     defaultValues: {
-      condition: userSet.set.preferredCondition ?? null,
-      language: userSet.set.preferredLanguage ?? null,
-      variant: userSet.set.preferredVariant ?? null,
+      condition: effectiveCondition,
+      language: effectiveLanguage,
+      variant: effectiveVariant,
       notes: "",
     },
   });
@@ -123,8 +132,8 @@ export function PlaceCardDialog({
     ? userCards.find((uc) => uc.id === currentUserCardId)
     : null;
 
-  // Find the specific card slot in the set
-  const userSetCard = userSet.cards.find((c) => c.id === userSetCardId);
+  // Find the specific card slot in the set (alias for use in matchesPreferences below)
+  const userSetCard = slotCard;
 
   // Helper function to check if a card matches the preferences
   const matchesPreferences = (userCard: UserCard) => {
