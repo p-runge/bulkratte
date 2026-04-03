@@ -1333,10 +1333,22 @@
       "value": "Set erstellen"
     }
   ],
+  "page.set.action.create.error": [
+    {
+      "type": 0,
+      "value": "Set konnte nicht erstellt werden."
+    }
+  ],
   "page.set.action.delete": [
     {
       "type": 0,
       "value": "Set löschen"
+    }
+  ],
+  "page.set.action.delete.error": [
+    {
+      "type": 0,
+      "value": "Set konnte nicht gelöscht werden."
     }
   ],
   "page.set.action.edit": [
@@ -1349,6 +1361,12 @@
     {
       "type": 0,
       "value": "Änderungen speichern"
+    }
+  ],
+  "page.set.action.save.error": [
+    {
+      "type": 0,
+      "value": "Set konnte nicht gespeichert werden."
     }
   ],
   "page.set.breadcrumb.empty": [
