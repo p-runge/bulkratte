@@ -116,13 +116,16 @@ export async function getWantlistForUser(
   }
 
   // Get all card IDs that are in user's sets but don't have a user_card_id
-  // Also get the preferred properties from the user set
+  // Also get the preferred properties from the user set and card-level overrides
   const missingCardsWithPrefs = await db
     .selectDistinct({
       cardId: userSetCardsTable.card_id,
-      preferredLanguage: userSetsTable.preferred_language,
-      preferredVariant: userSetsTable.preferred_variant,
-      preferredCondition: userSetsTable.preferred_condition,
+      cardPreferredLanguage: userSetCardsTable.preferred_language,
+      cardPreferredVariant: userSetCardsTable.preferred_variant,
+      cardPreferredCondition: userSetCardsTable.preferred_condition,
+      setPreferredLanguage: userSetsTable.preferred_language,
+      setPreferredVariant: userSetsTable.preferred_variant,
+      setPreferredCondition: userSetsTable.preferred_condition,
     })
     .from(userSetCardsTable)
     .innerJoin(
@@ -248,15 +251,17 @@ export async function getWantlistForUser(
     });
   }
 
-  // Create UserCard-like objects with preferred properties from user sets
-  // For cards that appear in multiple sets, pick the first set's preferences
+  // Create UserCard-like objects with preferred properties from user sets.
+  // Card-level preferences override set-level preferences.
+  // For cards that appear in multiple sets, prefer the entry that has a card-level override.
   const cardPrefsMap = new Map<
     string,
     (typeof missingCardsWithPrefs)[number]
   >();
 
   for (const row of missingCardsWithPrefs) {
-    if (!cardPrefsMap.has(row.cardId)) {
+    const existing = cardPrefsMap.get(row.cardId);
+    if (!existing || (!existing.cardPreferredLanguage && row.cardPreferredLanguage)) {
       cardPrefsMap.set(row.cardId, row);
     }
   }
@@ -266,9 +271,9 @@ export async function getWantlistForUser(
     return {
       id: `wantlist-${card.id}`, // Virtual ID for the wantlist item
       cardId: card.id,
-      language: prefs?.preferredLanguage ?? null,
-      variant: prefs?.preferredVariant ?? null,
-      condition: prefs?.preferredCondition ?? null,
+      language: prefs ? (prefs.cardPreferredLanguage ?? prefs.setPreferredLanguage) : null,
+      variant: prefs ? (prefs.cardPreferredVariant ?? prefs.setPreferredVariant) : null,
+      condition: prefs ? (prefs.cardPreferredCondition ?? prefs.setPreferredCondition) : null,
       notes: null,
       card: {
         created_at: card.created_at,
