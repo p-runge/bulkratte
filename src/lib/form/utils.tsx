@@ -9,6 +9,7 @@ import {
 } from "react-hook-form";
 import { useIntl } from "react-intl";
 import type z from "zod";
+import { env } from "@/env";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
@@ -82,7 +83,7 @@ export function RHFForm<T extends FieldValues>({
           <FormProvider {...form}>{children}</FormProvider>
         </fieldset>
       </form>
-      <DevTool control={form.control} />
+      {env.NEXT_PUBLIC_RHF_SHOW_DEVTOOLS && <DevTool control={form.control} />}
     </>
   );
 }

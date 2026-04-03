@@ -2,7 +2,14 @@ import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 import { config } from "dotenv";
 
-config();
+/**
+ * When this env schema is being used outside of Next.js (e.g. in a separate script
+ * within /scripts), the process.env variables won't be populated by Next.js, so we
+ * need to load them manually using dotenv.
+ */
+if (typeof window === "undefined") {
+  config();
+}
 
 export const env = createEnv({
   server: {
@@ -22,5 +29,10 @@ export const env = createEnv({
     R2_BUCKET_NAME: z.string(),
     R2_ENDPOINT: z.string().url().optional(),
   },
-  experimental__runtimeEnv: {},
+  client: {
+    NEXT_PUBLIC_RHF_SHOW_DEVTOOLS: z.string().optional(),
+  },
+  experimental__runtimeEnv: {
+    NEXT_PUBLIC_RHF_SHOW_DEVTOOLS: process.env.NEXT_PUBLIC_RHF_SHOW_DEVTOOLS,
+  },
 });
