@@ -1,7 +1,13 @@
 "use client";
 
 import { api } from "@/lib/api/react";
-import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
+import {
+  binderLayoutEnum,
+  conditionEnum,
+  languageEnum,
+  variantEnum,
+  type BinderLayout,
+} from "@/lib/db/enums";
 import { useRHFForm } from "@/lib/form/utils";
 import React, { createContext, useContext, useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -9,8 +15,14 @@ import { IntlShape, useIntl } from "react-intl";
 import z from "zod";
 import { BinderCard, BinderCardData, UserSet } from "./types";
 
-export const PAGE_DIMENSIONS = { columns: 3, rows: 3 };
-export const PAGE_SIZE = PAGE_DIMENSIONS.columns * PAGE_DIMENSIONS.rows;
+export const BINDER_LAYOUT_CONFIGS: Record<
+  BinderLayout,
+  { columns: number; rows: number }
+> = {
+  "3x3": { columns: 3, rows: 3 },
+  "4x3": { columns: 4, rows: 3 },
+  "2x2": { columns: 2, rows: 2 },
+};
 
 type BinderContextValue = {
   form: ReturnType<typeof useForm<z.infer<typeof BinderFormSchema>>>;
@@ -59,6 +71,9 @@ type BinderContextValue = {
   // Toggle to show detailed card preferences in place mode
   showCardPreferences?: boolean;
   setShowCardPreferences?: (value: boolean) => void;
+  // Dynamic page dimensions derived from binderLayout
+  pageDimensions: { columns: number; rows: number };
+  pageSize: number;
 };
 
 const BinderContext = createContext<BinderContextValue | undefined>(undefined);
@@ -124,8 +139,13 @@ export function BinderProvider({
       preferredLanguage: initialUserSet.set.preferredLanguage ?? null,
       preferredVariant: initialUserSet.set.preferredVariant ?? null,
       preferredCondition: initialUserSet.set.preferredCondition ?? null,
+      binderLayout: initialUserSet.set.binderLayout ?? "3x3",
     },
   });
+
+  const binderLayout = (form.watch("binderLayout") ?? "3x3") as BinderLayout;
+  const pageDimensions = BINDER_LAYOUT_CONFIGS[binderLayout];
+  const pageSize = pageDimensions.columns * pageDimensions.rows;
 
   const formCardData = form.watch("cardData");
   const { data: cards } = api.card.getByIds.useQuery(
@@ -156,20 +176,27 @@ export function BinderProvider({
     form.setValue("cardData", newCardData);
   }
 
+  const getNeededSheets = (cards: typeof formCardData, size: number) => {
+    const maxOrder =
+      cards.length > 0 ? Math.max(...cards.map((cd) => cd.order)) : -1;
+    return Math.max(Math.ceil((maxOrder + 1) / size / 2), 1);
+  };
+
   // Always keep sheetCount at least 1
-  const [sheetCount, setSheetCount] = React.useState(
-    Math.max(Math.ceil(cardData.length / PAGE_SIZE / 2), 1),
+  const [sheetCount, setSheetCount] = React.useState(() =>
+    getNeededSheets(formCardData, pageSize),
   );
+  const prevPageSizeRef = React.useRef(pageSize);
 
   function insertSheet(position: number) {
     // Insert a new sheet (2 pages) at the given position
     const insertAtPage = position * 2;
     const currentCardData = form.getValues("cardData");
 
-    // Shift all cards at or after insertAtPage by 2 pages (2 * PAGE_SIZE positions)
-    const shiftAmount = 2 * PAGE_SIZE;
+    // Shift all cards at or after insertAtPage by 2 pages (2 * pageSize positions)
+    const shiftAmount = 2 * pageSize;
     const newCardData = currentCardData.map((cd) => {
-      if (cd.order >= insertAtPage * PAGE_SIZE) {
+      if (cd.order >= insertAtPage * pageSize) {
         return { ...cd, order: cd.order + shiftAmount };
       }
       return cd;
@@ -182,8 +209,8 @@ export function BinderProvider({
   function deleteSheet(sheetIndex: number) {
     // Delete a sheet (2 pages) at the given index
     const startPage = sheetIndex * 2;
-    const startPosition = startPage * PAGE_SIZE;
-    const endPosition = startPosition + 2 * PAGE_SIZE; // 2 pages worth of positions
+    const startPosition = startPage * pageSize;
+    const endPosition = startPosition + 2 * pageSize; // 2 pages worth of positions
 
     const currentCardData = form.getValues("cardData");
 
@@ -192,7 +219,7 @@ export function BinderProvider({
       .filter((cd) => cd.order < startPosition || cd.order >= endPosition)
       .map((cd) => {
         if (cd.order >= endPosition) {
-          return { ...cd, order: cd.order - 2 * PAGE_SIZE };
+          return { ...cd, order: cd.order - 2 * pageSize };
         }
         return cd;
       });
@@ -221,15 +248,15 @@ export function BinderProvider({
     // Extract cards from the source sheet
     const sheetCards = currentCardData.filter(
       (cd) =>
-        cd.order >= fromStartPage * PAGE_SIZE &&
-        cd.order < fromEndPage * PAGE_SIZE,
+        cd.order >= fromStartPage * pageSize &&
+        cd.order < fromEndPage * pageSize,
     );
 
     // Remove cards from the source sheet
     let newCardData = currentCardData.filter(
       (cd) =>
-        cd.order < fromStartPage * PAGE_SIZE ||
-        cd.order >= fromEndPage * PAGE_SIZE,
+        cd.order < fromStartPage * pageSize ||
+        cd.order >= fromEndPage * pageSize,
     );
 
     // Determine the shift direction
@@ -237,19 +264,19 @@ export function BinderProvider({
       // Moving down: shift cards between from and to up by 2 pages
       newCardData = newCardData.map((cd) => {
         if (
-          cd.order >= fromEndPage * PAGE_SIZE &&
-          cd.order < (toStartPage + 2) * PAGE_SIZE
+          cd.order >= fromEndPage * pageSize &&
+          cd.order < (toStartPage + 2) * pageSize
         ) {
-          return { ...cd, order: cd.order - 2 * PAGE_SIZE };
+          return { ...cd, order: cd.order - 2 * pageSize };
         }
         return cd;
       });
 
       // Insert cards at new position
-      const insertPosition = toStartPage * PAGE_SIZE;
+      const insertPosition = toStartPage * pageSize;
       const reorderedSheetCards = sheetCards.map((cd) => ({
         ...cd,
-        order: cd.order - fromStartPage * PAGE_SIZE + insertPosition,
+        order: cd.order - fromStartPage * pageSize + insertPosition,
       }));
 
       newCardData = [...newCardData, ...reorderedSheetCards];
@@ -257,19 +284,19 @@ export function BinderProvider({
       // Moving up: shift cards between to and from down by 2 pages
       newCardData = newCardData.map((cd) => {
         if (
-          cd.order >= toStartPage * PAGE_SIZE &&
-          cd.order < fromStartPage * PAGE_SIZE
+          cd.order >= toStartPage * pageSize &&
+          cd.order < fromStartPage * pageSize
         ) {
-          return { ...cd, order: cd.order + 2 * PAGE_SIZE };
+          return { ...cd, order: cd.order + 2 * pageSize };
         }
         return cd;
       });
 
       // Insert cards at new position
-      const insertPosition = toStartPage * PAGE_SIZE;
+      const insertPosition = toStartPage * pageSize;
       const reorderedSheetCards = sheetCards.map((cd) => ({
         ...cd,
-        order: cd.order - fromStartPage * PAGE_SIZE + insertPosition,
+        order: cd.order - fromStartPage * pageSize + insertPosition,
       }));
 
       newCardData = [...newCardData, ...reorderedSheetCards];
@@ -295,16 +322,25 @@ export function BinderProvider({
       preferredLanguage: initialUserSet.set.preferredLanguage ?? null,
       preferredVariant: initialUserSet.set.preferredVariant ?? null,
       preferredCondition: initialUserSet.set.preferredCondition ?? null,
+      binderLayout: initialUserSet.set.binderLayout ?? "3x3",
     });
   }, [initialUserSet, form]);
 
-  // Update sheetCount when cardData length changes
+  // Recalculate sheetCount when layout changes (can shrink) or when cards
+  // exceed current capacity (only grows).
   useEffect(() => {
-    const neededSheets = Math.ceil(cardData.length / PAGE_SIZE / 2);
-    if (neededSheets > sheetCount) {
-      setSheetCount(Math.max(neededSheets, 1));
+    const neededSheets = getNeededSheets(formCardData, pageSize);
+    const layoutChanged = prevPageSizeRef.current !== pageSize;
+    prevPageSizeRef.current = pageSize;
+    if (layoutChanged) {
+      setSheetCount(neededSheets);
+      // Clamp the active spread to the new max so it doesn't point at a
+      // page that no longer exists.
+      setCurrentSpread((s) => Math.min(s, neededSheets));
+    } else if (neededSheets > sheetCount) {
+      setSheetCount(neededSheets);
     }
-  }, [cardData.length, sheetCount]);
+  }, [formCardData, pageSize, sheetCount]);
 
   return (
     <BinderContext.Provider
@@ -337,6 +373,8 @@ export function BinderProvider({
         setConsiderPreferredCondition,
         showCardPreferences,
         setShowCardPreferences,
+        pageDimensions,
+        pageSize,
       }}
     >
       {children}
@@ -380,6 +418,7 @@ export function getBinderFormSchema(intl: IntlShape) {
     preferredLanguage: z.enum(languageEnum.enumValues).nullable(),
     preferredVariant: z.enum(variantEnum.enumValues).nullable(),
     preferredCondition: z.enum(conditionEnum.enumValues).nullable(),
+    binderLayout: z.enum(binderLayoutEnum.enumValues).default("3x3"),
   });
 }
 
@@ -402,4 +441,5 @@ export const BinderFormSchema = z.object({
   preferredLanguage: z.enum(languageEnum.enumValues).nullable(),
   preferredVariant: z.enum(variantEnum.enumValues).nullable(),
   preferredCondition: z.enum(conditionEnum.enumValues).nullable(),
+  binderLayout: z.enum(binderLayoutEnum.enumValues).default("3x3"),
 });

@@ -3,9 +3,16 @@
 import { FormattedMessage } from "react-intl";
 import { CardPicker } from "../card-browser/card-picker";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
-import { useBinderContext } from "./binder-context";
+import { BINDER_LAYOUT_CONFIGS, useBinderContext } from "./binder-context";
 import { CardSlot } from "./card-slot";
-import { BinderCard } from "./types";
+import { BinderCard, BinderCardData, UserSet } from "./types";
+import type { BinderLayout } from "@/lib/db/enums";
+
+const GRID_CLASSES: Record<BinderLayout, string> = {
+  "3x3": "grid-cols-3 grid-rows-3",
+  "4x3": "grid-cols-4 grid-rows-3",
+  "2x2": "grid-cols-2 grid-rows-2",
+};
 
 export default function BinderPage({
   cards,
@@ -18,7 +25,11 @@ export default function BinderPage({
     form,
     currentPosition,
     closeCardPicker: closeDialog,
+    pageDimensions,
   } = useBinderContext();
+
+  const binderLayout = (form.watch("binderLayout") ?? "3x3") as BinderLayout;
+  const gridClass = GRID_CLASSES[binderLayout];
 
   const handleSelectCards = (selectedCardIds: Set<string>) => {
     if (currentPosition === null) return;
@@ -46,7 +57,7 @@ export default function BinderPage({
   return (
     <>
       <div className="border border-gray-500 shadow-sm p-[2%] rounded-lg flex-1 self-stretch w-full">
-        <div className="grid grid-cols-3 grid-rows-3 gap-2 flex-1">
+        <div className={`grid ${gridClass} gap-2 flex-1`}>
           {cards.map((card, index) => (
             <CardSlot
               key={index}

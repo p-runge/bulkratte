@@ -13,7 +13,7 @@ import React, { useState } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 import { Button } from "../../ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../ui/tooltip";
-import { PAGE_SIZE, useBinderContext } from "../binder-context";
+import { useBinderContext } from "../binder-context";
 import BinderPage from "../binder-page";
 import { BinderCard, BinderCardData } from "../types";
 import {
@@ -24,12 +24,18 @@ import {
 
 export function BrowseMode() {
   const intl = useIntl();
-  const { cardData, sheetCount, currentSpread, setCurrentSpread, form } =
-    useBinderContext();
+  const {
+    cardData,
+    sheetCount,
+    currentSpread,
+    setCurrentSpread,
+    form,
+    pageSize,
+  } = useBinderContext();
 
   const pagesCount = sheetCount * 2;
-  const orderedCards = generateOrderedCards(cardData, pagesCount * PAGE_SIZE);
-  const pages = splitIntoPages(orderedCards, PAGE_SIZE);
+  const orderedCards = generateOrderedCards(cardData, pagesCount * pageSize);
+  const pages = splitIntoPages(orderedCards, pageSize);
 
   // Calculate the visible double-page spread
   const maxSpread = Math.max(0, Math.ceil(pages.length / 2));
@@ -210,7 +216,7 @@ export function BrowseMode() {
                   key={pageIndex}
                   cards={page}
                   pageStartIndex={
-                    ((currentSpread - 1) * 2 + 1 + pageIndex) * PAGE_SIZE
+                    ((currentSpread - 1) * 2 + 1 + pageIndex) * pageSize
                   }
                 />
               );

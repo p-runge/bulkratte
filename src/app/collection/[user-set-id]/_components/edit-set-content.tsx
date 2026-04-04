@@ -53,6 +53,7 @@ function Content({ userSet }: { userSet: UserSet }) {
                 preferredLanguage: input.preferredLanguage ?? null,
                 preferredVariant: input.preferredVariant ?? null,
                 preferredCondition: input.preferredCondition ?? null,
+                binderLayout: input.binderLayout ?? s.binderLayout,
               }
             : s,
         ),
@@ -116,6 +117,7 @@ function Content({ userSet }: { userSet: UserSet }) {
         preferredLanguage: data.preferredLanguage,
         preferredVariant: data.preferredVariant,
         preferredCondition: data.preferredCondition,
+        binderLayout: data.binderLayout,
       });
     } catch {
       setIsSubmitting(false);

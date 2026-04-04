@@ -15,7 +15,13 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
-import { conditionEnum, languageEnum, rarityEnum, variantEnum } from "./enums";
+import {
+  conditionEnum,
+  binderLayoutEnum,
+  languageEnum,
+  rarityEnum,
+  variantEnum,
+} from "./enums";
 
 export const db = drizzle(env.DATABASE_URL);
 
@@ -272,6 +278,7 @@ export const userSetsTable = pgTable("user_sets", {
   preferred_language: languageEnum(),
   preferred_variant: variantEnum(),
   preferred_condition: conditionEnum(),
+  binder_layout: binderLayoutEnum().notNull().default("3x3"),
   order: integer("order").notNull().default(0),
 });
 

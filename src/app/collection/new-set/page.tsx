@@ -34,6 +34,7 @@ export default function NewSetPage() {
           preferredLanguage: null,
           preferredVariant: null,
           preferredCondition: null,
+          binderLayout: "3x3",
         },
         cards: [],
       }}
@@ -79,6 +80,7 @@ function Content() {
           preferredLanguage: input.preferredLanguage ?? null,
           preferredVariant: input.preferredVariant ?? null,
           preferredCondition: input.preferredCondition ?? null,
+          binderLayout: input.binderLayout ?? "3x3",
           totalCards: input.cardData.length,
           placedCards: 0,
         },
@@ -131,6 +133,7 @@ function Content() {
         preferredLanguage: data.preferredLanguage,
         preferredVariant: data.preferredVariant,
         preferredCondition: data.preferredCondition,
+        binderLayout: data.binderLayout,
       });
     } catch {
       setIsSubmitting(false);

@@ -23,12 +23,19 @@ import React, { useState } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 import ConfirmButton from "../../confirm-button";
 import { Button } from "../../ui/button";
-import { PAGE_SIZE, useBinderContext } from "../binder-context";
+import { useBinderContext } from "../binder-context";
 import { BinderCard, BinderCardData } from "../types";
 import { CARD_ASPECT_CLASS, CARD_BORDER_RADIUS } from "@/lib/card-config";
+import type { BinderLayout } from "@/lib/db/enums";
+
+const GRID_CLASSES: Record<BinderLayout, string> = {
+  "3x3": "grid-cols-3 grid-rows-3",
+  "4x3": "grid-cols-4 grid-rows-3",
+  "2x2": "grid-cols-2 grid-rows-2",
+};
 
 export function SheetManagement() {
-  const { cardData, sheetCount, reorderSheet } = useBinderContext();
+  const { cardData, sheetCount, reorderSheet, pageSize } = useBinderContext();
 
   const sheets = Array.from({ length: sheetCount }, (_, i) => ({
     id: `sheet-${i}`,
@@ -87,7 +94,7 @@ export function SheetManagement() {
             values={{
               sheetCount,
               pageCount: sheetCount * 2,
-              maxCardCount: sheetCount * 2 * PAGE_SIZE,
+              maxCardCount: sheetCount * 2 * pageSize,
             }}
           />
         </p>
@@ -172,7 +179,9 @@ function SheetPreview({
   isDragging?: boolean;
 }) {
   const intl = useIntl();
-  const { sheetCount, deleteSheet } = useBinderContext();
+  const { sheetCount, deleteSheet, pageSize, form } = useBinderContext();
+
+  const binderLayout = (form.watch("binderLayout") ?? "3x3") as BinderLayout;
 
   // Calculate page indices for this sheet
   const frontPageIndex = sheetIndex * 2;
@@ -180,9 +189,9 @@ function SheetPreview({
 
   // Get cards for each page
   const getFrontPageCards = () => {
-    const start = frontPageIndex * PAGE_SIZE;
+    const start = frontPageIndex * pageSize;
     const cards: (BinderCard | null | undefined)[] = [];
-    for (let i = 0; i < PAGE_SIZE; i++) {
+    for (let i = 0; i < pageSize; i++) {
       const cardEntry = cardData.find((cd) => cd.order === start + i);
       cards.push(cardEntry?.card);
     }
@@ -190,9 +199,9 @@ function SheetPreview({
   };
 
   const getBackPageCards = () => {
-    const start = backPageIndex * PAGE_SIZE;
+    const start = backPageIndex * pageSize;
     const cards: (BinderCard | null | undefined)[] = [];
-    for (let i = 0; i < PAGE_SIZE; i++) {
+    for (let i = 0; i < pageSize; i++) {
       const cardEntry = cardData.find((cd) => cd.order === start + i);
       cards.push(cardEntry?.card);
     }
@@ -203,6 +212,7 @@ function SheetPreview({
   const backCards = getBackPageCards();
 
   const hasCards = [...frontCards, ...backCards].some(Boolean);
+  const gridClass = GRID_CLASSES[binderLayout];
 
   return (
     <div
@@ -230,7 +240,7 @@ function SheetPreview({
                 defaultMessage="Front Site"
               />
             </div>
-            <MiniPage cards={frontCards} />
+            <MiniPage cards={frontCards} gridClass={gridClass} />
           </div>
 
           <div className="flex-1">
@@ -240,7 +250,7 @@ function SheetPreview({
                 defaultMessage="Back Site"
               />
             </div>
-            <MiniPage cards={backCards} />
+            <MiniPage cards={backCards} gridClass={gridClass} />
           </div>
         </div>
 
@@ -280,10 +290,16 @@ function SheetPreview({
   );
 }
 
-function MiniPage({ cards }: { cards: (BinderCard | null | undefined)[] }) {
+function MiniPage({
+  cards,
+  gridClass,
+}: {
+  cards: (BinderCard | null | undefined)[];
+  gridClass: string;
+}) {
   return (
     <div className="border border-gray-300 rounded p-1 bg-background">
-      <div className="grid grid-cols-3 grid-rows-3 gap-0.5">
+      <div className={`grid ${gridClass} gap-0.5`}>
         {cards.map((card, i) => (
           <div
             key={i}

@@ -66,6 +66,9 @@ export const variantEnum = pgEnum("variant", [
 ]);
 export type Variant = (typeof variantEnum.enumValues)[number];
 
+export const binderLayoutEnum = pgEnum("binder_layout", ["3x3", "4x3", "2x2"]);
+export type BinderLayout = (typeof binderLayoutEnum.enumValues)[number];
+
 export const languageEnum = pgEnum("language", [
   "en",
   "fr",

@@ -1,6 +1,11 @@
 import { z } from "zod";
 
-import { conditionEnum, languageEnum, variantEnum } from "@/lib/db/enums";
+import {
+  binderLayoutEnum,
+  conditionEnum,
+  languageEnum,
+  variantEnum,
+} from "@/lib/db/enums";
 import {
   cardsTable,
   userCardsTable,
@@ -39,6 +44,7 @@ export const userSetRouter = createTRPCRouter({
         preferredLanguage: z.enum(languageEnum.enumValues).nullish(),
         preferredVariant: z.enum(variantEnum.enumValues).nullish(),
         preferredCondition: z.enum(conditionEnum.enumValues).nullish(),
+        binderLayout: z.enum(binderLayoutEnum.enumValues).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -57,6 +63,7 @@ export const userSetRouter = createTRPCRouter({
           preferred_language: input.preferredLanguage,
           preferred_variant: input.preferredVariant,
           preferred_condition: input.preferredCondition,
+          binder_layout: input.binderLayout ?? "3x3",
           order: 0,
         })
         .returning({
@@ -93,6 +100,7 @@ export const userSetRouter = createTRPCRouter({
           preferredLanguage: userSetsTable.preferred_language,
           preferredVariant: userSetsTable.preferred_variant,
           preferredCondition: userSetsTable.preferred_condition,
+          binderLayout: userSetsTable.binder_layout,
         })
         .from(userSetsTable)
         .where(eq(userSetsTable.id, input.id))
@@ -201,6 +209,7 @@ export const userSetRouter = createTRPCRouter({
         preferredLanguage: z.enum(languageEnum.enumValues).nullish(),
         preferredVariant: z.enum(variantEnum.enumValues).nullish(),
         preferredCondition: z.enum(conditionEnum.enumValues).nullish(),
+        binderLayout: z.enum(binderLayoutEnum.enumValues).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -235,6 +244,7 @@ export const userSetRouter = createTRPCRouter({
           preferred_language: input.preferredLanguage,
           preferred_variant: input.preferredVariant,
           preferred_condition: input.preferredCondition,
+          binder_layout: input.binderLayout,
         })
         .where(
           and(
@@ -455,6 +465,7 @@ export const userSetRouter = createTRPCRouter({
         preferredLanguage: userSetsTable.preferred_language,
         preferredVariant: userSetsTable.preferred_variant,
         preferredCondition: userSetsTable.preferred_condition,
+        binderLayout: userSetsTable.binder_layout,
       })
       .from(userSetsTable)
       .where(eq(userSetsTable.user_id, ctx.session.user.id))
