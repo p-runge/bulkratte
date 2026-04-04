@@ -18,10 +18,7 @@ export default function HeaderContent() {
     <div className="container mx-auto px-4 py-4 flex justify-between items-center">
       {/* Left section */}
       <div className="flex items-center gap-3">
-        <Link
-          href={session ? "/collection" : "/"}
-          className="flex items-center text-2xl font-bold gap-2"
-        >
+        <Link href="/" className="flex items-center text-2xl font-bold gap-2">
           <Image
             src="/bulkratte_head_logo.png"
             alt={intl.formatMessage(commonMessages.logoAlt)}
@@ -30,6 +27,7 @@ export default function HeaderContent() {
             className="-my-4 drop-shadow-[0_0_3px] drop-shadow-primary"
           />
         </Link>
+
         {/* Only show on md+ */}
         <div className="hidden md:flex items-center gap-2">
           <LanguageDropdown />
@@ -47,6 +45,7 @@ export default function HeaderContent() {
             })}
           </Button>
         </Link>
+
         {session && (
           <>
             <Link href="/collection" prefetch={true}>
@@ -67,9 +66,10 @@ export default function HeaderContent() {
             </Link>
           </>
         )}
+
         {session ? (
           <Link href="/auth/signout">
-            <Button variant="default">
+            <Button variant="outline">
               {intl.formatMessage({
                 id: "nav.action.signout",
                 defaultMessage: "Sign Out",

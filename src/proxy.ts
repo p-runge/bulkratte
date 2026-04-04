@@ -3,15 +3,19 @@ import { NextResponse } from "next/server";
 import { DEFAULT_LOCALE } from "./lib/i18n";
 
 export function proxy(req: NextRequest) {
-  // Redirect unauthenticated users away from /collection routes.
+  const sessionToken =
+    req.cookies.get("__Secure-authjs.session-token") ??
+    req.cookies.get("authjs.session-token");
+
+  // Authenticated users visiting "/" go straight to their collection.
+  if (req.nextUrl.pathname === "/" && sessionToken) {
+    return NextResponse.redirect(new URL("/collection", req.url));
+  }
+
+  // Unauthenticated users are kept away from /collection routes.
   // Actual session validity is enforced server-side by tRPC protectedProcedure.
-  if (req.nextUrl.pathname.startsWith("/collection")) {
-    const sessionToken =
-      req.cookies.get("__Secure-authjs.session-token") ??
-      req.cookies.get("authjs.session-token");
-    if (!sessionToken) {
-      return NextResponse.redirect(new URL("/", req.url));
-    }
+  if (req.nextUrl.pathname.startsWith("/collection") && !sessionToken) {
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
   const modifiedHeaders = new Headers(req.headers);

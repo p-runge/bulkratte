@@ -1,16 +1,12 @@
 import { DarkModeToggle } from "@/components/dark-mode-toggle";
 import { LanguageDropdown } from "@/components/language-dropdown";
 import { Button } from "@/components/ui/button";
-import { auth } from "@/lib/auth";
 import { commonMessages } from "@/lib/i18n/common-messages";
 import { getIntl } from "@/lib/i18n/server";
 import Image from "next/image";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 export default async function HomePage() {
-  const session = await auth();
-  if (session) redirect("/collection");
   const intl = await getIntl();
 
   return (
@@ -51,56 +47,39 @@ export default async function HomePage() {
             )}
           </p>
 
-          {!session && (
-            <>
-              <p className="mb-3 text-sm">
-                {intl.formatMessage(
-                  {
-                    id: "page.home.cta.intro",
-                    defaultMessage:
-                      "Not a <i>Bulkratte</i> yet? Create an account and start organizing your collection today – 100% for free!",
-                  },
-                  {
-                    i: (chunks) => (
-                      <i key="home.ctaIntroduction.siteName">{chunks}</i>
-                    ),
-                  },
-                )}
-              </p>
-              <Link href="/auth/signin" passHref>
-                <Button className="cursor-pointer" variant="default" size="lg">
-                  {intl.formatMessage({
-                    id: "page.home.action.signup",
-                    defaultMessage: "Sign Up Now",
-                  })}
-                </Button>
-              </Link>
-            </>
-          )}
+          <p className="mb-3 text-sm">
+            {intl.formatMessage(
+              {
+                id: "page.home.cta.intro",
+                defaultMessage:
+                  "Not a <i>Bulkratte</i> yet? Create an account and start organizing your collection today – 100% for free!",
+              },
+              {
+                i: (chunks) => (
+                  <i key="home.ctaIntroduction.siteName">{chunks}</i>
+                ),
+              },
+            )}
+          </p>
+          <Link href="/auth/signin" passHref>
+            <Button className="cursor-pointer" variant="default" size="lg">
+              {intl.formatMessage({
+                id: "page.home.action.signup",
+                defaultMessage: "Sign Up Now",
+              })}
+            </Button>
+          </Link>
 
           <hr className="my-6" />
 
-          <div className="flex gap-3">
-            <Link href="/sets" passHref className="mb-4">
-              <Button className="cursor-pointer" variant="outline">
-                {intl.formatMessage({
-                  id: "page.home.action.browse_sets",
-                  defaultMessage: "Browse Card Sets",
-                })}
-              </Button>
-            </Link>
-
-            {session && (
-              <Link href="/collection" passHref>
-                <Button className="cursor-pointer">
-                  {intl.formatMessage({
-                    id: "page.home.action.view_collection",
-                    defaultMessage: "My Collection",
-                  })}
-                </Button>
-              </Link>
-            )}
-          </div>
+          <Link href="/sets" passHref className="mb-4">
+            <Button className="cursor-pointer" variant="outline">
+              {intl.formatMessage({
+                id: "page.home.action.browse_sets",
+                defaultMessage: "Browse Card Sets",
+              })}
+            </Button>
+          </Link>
         </div>
       </div>
     </main>
