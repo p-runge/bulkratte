@@ -250,7 +250,6 @@ export function CardSlot({
         className={cn(
           "cursor-pointer aspect-5/7 relative overflow-hidden",
           "transition-all hover:scale-105",
-          borderColor,
         )}
         style={{ borderRadius: CARD_BORDER_RADIUS }}
       >
@@ -258,8 +257,6 @@ export function CardSlot({
           className={cn(
             "w-full h-full focus:outline-none focus:ring-4 focus:ring-ring focus:ring-offset-2",
             !isPlaced && "opacity-40 grayscale",
-            hasUserCard && !isPlaced && "-m-1",
-            borderColor && "-m-1",
           )}
         >
           {coverPhoto && coverCrop ? (
@@ -273,9 +270,16 @@ export function CardSlot({
             <CardImage src={coverPhoto ?? card.imageSmall} alt={card.name} />
           )}
         </div>
+        {/* Colored border rendered as an inset overlay so the image always fills the full slot */}
+        {borderColor && (
+          <div
+            className={cn("absolute inset-0 pointer-events-none", borderColor)}
+            style={{ borderRadius: CARD_BORDER_RADIUS }}
+          />
+        )}
         {/* Show detailed preferences when toggle is enabled */}
         {showCardPreferences && hasCardLevelPreferences && (
-          <div className="absolute top-2 right-2 flex flex-col gap-1 items-end pointer-events-none">
+          <div className="absolute top-2 right-2 flex flex-col gap-1 items-end pointer-events-none z-10">
             {currentCardData?.preferredLanguage &&
               currentCardData.preferredLanguage !== setLevelLanguage && (
                 <Badge className="text-lg bg-black/70 text-white border-none px-1.5 py-0.5">
@@ -310,7 +314,7 @@ export function CardSlot({
       <>
         <div
           className={cn(
-            "w-full h-full aspect-5/7 border border-gray-400 flex items-center justify-center text-xs font-medium relative overflow-hidden",
+            "w-full h-full aspect-5/7 flex items-center justify-center text-xs font-medium relative overflow-hidden",
           )}
           style={{ borderRadius: CARD_BORDER_RADIUS }}
         >
@@ -400,7 +404,7 @@ export function CardSlot({
       }}
       {...attributes}
       className={cn(
-        "group w-full h-full aspect-5/7 border border-gray-400 flex items-center justify-center text-xs font-medium relative overflow-hidden",
+        "group w-full h-full aspect-5/7 flex items-center justify-center text-xs font-medium relative overflow-hidden",
         isDragging && "opacity-50",
         isOver && "ring-2 ring-primary",
       )}
