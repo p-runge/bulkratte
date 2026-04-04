@@ -14,6 +14,7 @@ import SuperJSON from "superjson";
 
 import { type AppRouter } from "./routers/_app";
 import { createQueryClient } from "./query-client";
+import { validateRestoredCache } from "./validate-cache";
 import pkg from "../../../package.json";
 
 // Only persist these queries to localStorage for instant hydration on page reload.
@@ -102,6 +103,11 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
       client={queryClient}
       persistOptions={persistOptions}
       onSuccess={() => {
+        // Validate restored cache entries against their expected shapes.
+        // Any entry that no longer matches its schema is removed so
+        // TanStack Query refetches fresh data rather than using stale structure.
+        validateRestoredCache(queryClient);
+
         // After restoring from localStorage, immediately persist the current
         // cache state. This captures SSR-hydrated data that was added to the
         // cache before the persist subscription was active, ensuring it's

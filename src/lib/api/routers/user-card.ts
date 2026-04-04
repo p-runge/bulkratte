@@ -355,7 +355,7 @@ export async function getWantlistForUser(
       condition: prefs
         ? (prefs.cardPreferredCondition ?? prefs.setPreferredCondition)
         : null,
-      notes: null,
+      notes: null as null,
       card: {
         created_at: card.created_at,
         updated_at: card.updated_at,
@@ -369,19 +369,28 @@ export async function getWantlistForUser(
         price: card.price,
       },
       localizedName: card.localizedName,
+      photos: [] as string[],
+      coverPhoto: null,
+      coverCrop: null,
     };
-  }) as any; // Type will be inferred by tRPC based on the actual query result
+  });
 }
 
-const coverCropSchema = z
-  .object({
-    x: z.number(),
-    y: z.number(),
-    width: z.number(),
-    height: z.number(),
-  })
-  .nullable()
-  .optional();
+import {
+  userCardListSchema,
+  userCardWantlistSchema,
+} from "./user-card.schemas";
+
+export { userCardListSchema, userCardWantlistSchema };
+
+const coverCropObjectSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+  width: z.number(),
+  height: z.number(),
+});
+
+const coverCropSchema = coverCropObjectSchema.nullable().optional();
 
 export const userCardRouter = createTRPCRouter({
   create: protectedProcedure
@@ -455,6 +464,7 @@ export const userCardRouter = createTRPCRouter({
         })
         .optional(),
     )
+    .output(userCardListSchema)
     .query(async ({ ctx, input }) => {
       // Build WHERE conditions
       const conditions = [eq(userCardsTable.user_id, ctx.session.user.id)];
@@ -883,6 +893,7 @@ export const userCardRouter = createTRPCRouter({
         })
         .optional(),
     )
+    .output(userCardWantlistSchema)
     .query(async ({ ctx, input }) => {
       return getWantlistForUser(
         ctx.session.user.id,

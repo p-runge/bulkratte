@@ -24,6 +24,10 @@ import {
 import z from "zod";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
+import { cardFilterOptionsSchema, cardsByIdsSchema } from "./card.schemas";
+
+export { cardFilterOptionsSchema, cardsByIdsSchema };
+
 export const cardRouter = createTRPCRouter({
   getList: publicProcedure
     .input(
@@ -182,6 +186,7 @@ export const cardRouter = createTRPCRouter({
         })
         .optional(),
     )
+    .output(cardFilterOptionsSchema)
     .query(async ({ input }) => {
       // Build WHERE conditions
       const conditions = [];
@@ -249,6 +254,7 @@ export const cardRouter = createTRPCRouter({
         cardIds: z.array(z.string()),
       }),
     )
+    .output(cardsByIdsSchema)
     .query(async ({ input, ctx }) => {
       if (input.cardIds.length === 0) {
         return [];

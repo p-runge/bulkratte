@@ -17,6 +17,14 @@ import { TRPCError } from "@trpc/server";
 import { and, asc, eq, inArray, isNotNull, isNull, ne, sql } from "drizzle-orm";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
+import {
+  placedUserCardIdsSchema,
+  userSetByIdSchema,
+  userSetListSchema,
+} from "./user-set.schemas";
+
+export { placedUserCardIdsSchema, userSetByIdSchema, userSetListSchema };
+
 export const userSetRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
@@ -89,6 +97,7 @@ export const userSetRouter = createTRPCRouter({
 
   getById: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
+    .output(userSetByIdSchema)
     .query(async ({ ctx, input }) => {
       const data = await ctx.db
         .select({
@@ -456,77 +465,81 @@ export const userSetRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  getList: protectedProcedure.query(async ({ ctx }) => {
-    const userSets = await ctx.db
-      .select({
-        id: userSetsTable.id,
-        name: userSetsTable.name,
-        image: userSetsTable.image,
-        preferredLanguage: userSetsTable.preferred_language,
-        preferredVariant: userSetsTable.preferred_variant,
-        preferredCondition: userSetsTable.preferred_condition,
-        binderLayout: userSetsTable.binder_layout,
-      })
-      .from(userSetsTable)
-      .where(eq(userSetsTable.user_id, ctx.session.user.id))
-      .orderBy(asc(userSetsTable.order), asc(userSetsTable.created_at));
+  getList: protectedProcedure
+    .output(userSetListSchema)
+    .query(async ({ ctx }) => {
+      const userSets = await ctx.db
+        .select({
+          id: userSetsTable.id,
+          name: userSetsTable.name,
+          image: userSetsTable.image,
+          preferredLanguage: userSetsTable.preferred_language,
+          preferredVariant: userSetsTable.preferred_variant,
+          preferredCondition: userSetsTable.preferred_condition,
+          binderLayout: userSetsTable.binder_layout,
+        })
+        .from(userSetsTable)
+        .where(eq(userSetsTable.user_id, ctx.session.user.id))
+        .orderBy(asc(userSetsTable.order), asc(userSetsTable.created_at));
 
-    // Get card counts for each user set
-    const userSetsWithCounts = await Promise.all(
-      userSets.map(async (userSet) => {
-        const cards = await ctx.db
-          .select({
-            id: userSetCardsTable.id,
-            userCardId: userSetCardsTable.user_card_id,
-          })
-          .from(userSetCardsTable)
-          .where(eq(userSetCardsTable.user_set_id, userSet.id));
+      // Get card counts for each user set
+      const userSetsWithCounts = await Promise.all(
+        userSets.map(async (userSet) => {
+          const cards = await ctx.db
+            .select({
+              id: userSetCardsTable.id,
+              userCardId: userSetCardsTable.user_card_id,
+            })
+            .from(userSetCardsTable)
+            .where(eq(userSetCardsTable.user_set_id, userSet.id));
 
-        const totalCards = cards.length;
-        const placedCards = cards.filter(
-          (card) => card.userCardId !== null,
-        ).length;
+          const totalCards = cards.length;
+          const placedCards = cards.filter(
+            (card) => card.userCardId !== null,
+          ).length;
 
-        return {
-          ...userSet,
-          totalCards,
-          placedCards,
-        };
-      }),
-    );
-
-    return userSetsWithCounts;
-  }),
-
-  getPlacedUserCardIds: protectedProcedure.query(async ({ ctx }) => {
-    // Get all user_card_ids that are currently placed in any user set
-    const placedCards = await ctx.db
-      .select({
-        userCardId: userSetCardsTable.user_card_id,
-        userSetId: userSetCardsTable.user_set_id,
-        userSetCardId: userSetCardsTable.id,
-        setName: userSetsTable.name,
-      })
-      .from(userSetCardsTable)
-      .innerJoin(
-        userSetsTable,
-        eq(userSetCardsTable.user_set_id, userSetsTable.id),
-      )
-      .where(
-        and(
-          eq(userSetsTable.user_id, ctx.session.user.id),
-          isNotNull(userSetCardsTable.user_card_id),
-        ),
+          return {
+            ...userSet,
+            totalCards,
+            placedCards,
+          };
+        }),
       );
 
-    // Type assertion: we know userCardId and setName are non-null due to WHERE clause and innerJoin
-    return placedCards as Array<{
-      userCardId: string;
-      userSetId: string;
-      userSetCardId: string;
-      setName: string;
-    }>;
-  }),
+      return userSetsWithCounts;
+    }),
+
+  getPlacedUserCardIds: protectedProcedure
+    .output(placedUserCardIdsSchema)
+    .query(async ({ ctx }) => {
+      // Get all user_card_ids that are currently placed in any user set
+      const placedCards = await ctx.db
+        .select({
+          userCardId: userSetCardsTable.user_card_id,
+          userSetId: userSetCardsTable.user_set_id,
+          userSetCardId: userSetCardsTable.id,
+          setName: userSetsTable.name,
+        })
+        .from(userSetCardsTable)
+        .innerJoin(
+          userSetsTable,
+          eq(userSetCardsTable.user_set_id, userSetsTable.id),
+        )
+        .where(
+          and(
+            eq(userSetsTable.user_id, ctx.session.user.id),
+            isNotNull(userSetCardsTable.user_card_id),
+          ),
+        );
+
+      // Type assertion: we know userCardId and setName are non-null due to WHERE clause and innerJoin
+      return placedCards as Array<{
+        userCardId: string;
+        userSetId: string;
+        userSetCardId: string;
+        setName: string;
+      }>;
+    }),
 
   deleteById: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
