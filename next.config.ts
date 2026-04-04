@@ -2,6 +2,13 @@ import type { NextConfig } from "next";
 import "./src/env";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Cache dynamic RSC segments client-side so navigating back within 30s
+    // is instant (no server roundtrip for the layout/page RSC).
+    staleTimes: {
+      dynamic: 30,
+    },
+  },
   images: {
     localPatterns: [
       { pathname: "/**" }, // static files from public/

@@ -9,6 +9,7 @@ import "@total-typescript/ts-reset";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
 import PlausibleProvider from "next-plausible";
+import { SessionProvider } from "next-auth/react";
 import NextTopLoader from "nextjs-toploader";
 import type React from "react";
 import "./globals.css";
@@ -33,23 +34,25 @@ export default async function RootLayout({
       <body>
         <NextTopLoader showSpinner={false} color="#C6A96B" />
         <DeviceSync />
-        <PlausibleProvider domain="bulkratte.de">
-          <TRPCReactProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-            >
-              <I18nProvider serverLocale={serverLocale}>
-                <UiPreferencesProvider>
-                  {children}
-                  <Toaster />
-                </UiPreferencesProvider>
-              </I18nProvider>
-            </ThemeProvider>
-          </TRPCReactProvider>
-        </PlausibleProvider>
+        <SessionProvider>
+          <PlausibleProvider domain="bulkratte.de">
+            <TRPCReactProvider>
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="system"
+                enableSystem
+                disableTransitionOnChange
+              >
+                <I18nProvider serverLocale={serverLocale}>
+                  <UiPreferencesProvider>
+                    {children}
+                    <Toaster />
+                  </UiPreferencesProvider>
+                </I18nProvider>
+              </ThemeProvider>
+            </TRPCReactProvider>
+          </PlausibleProvider>
+        </SessionProvider>
         <SpeedInsights />
       </body>
     </html>

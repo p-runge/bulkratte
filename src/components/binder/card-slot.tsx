@@ -62,7 +62,7 @@ export function CardSlot({
 
   // DnD Kit context will be provided by parent (BinderPage)
 
-  if (card === null) {
+  if (!card) {
     return (
       <EmptyCardSlot
         position={position}

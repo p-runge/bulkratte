@@ -3,7 +3,6 @@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookHeart, Heart, Library } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
 import { useIntl } from "react-intl";
 import MyCardsTab from "./my-cards-tab";
 import MySetsTab from "./my-sets-tab";
@@ -15,19 +14,12 @@ export default function CollectionTabs() {
 
   const searchParams = useSearchParams();
   const m = searchParams.get("m");
-  const defaultTab =
-    m === "my-cards"
-      ? "my-cards"
-      : m === "wantlist"
-        ? "wantlist"
-        : "collections";
-
-  const [activeTab, setActiveTab] = useState(defaultTab);
+  const activeTab =
+    m === "my-cards" ? "my-cards" : m === "wantlist" ? "wantlist" : "my-sets";
 
   function setMQueryParam(tab: string) {
-    setActiveTab(tab);
     const params = new URLSearchParams(searchParams.toString());
-    if (tab === "collection") {
+    if (tab === "my-sets") {
       params.delete("m");
     } else {
       params.set("m", tab);
@@ -54,12 +46,12 @@ export default function CollectionTabs() {
         </div>
       </div>
       <Tabs
-        defaultValue={defaultTab}
+        value={activeTab}
         className="w-full"
         onValueChange={(value) => setMQueryParam(value)}
       >
         <TabsList className="mb-6">
-          <TabsTrigger value="collections">
+          <TabsTrigger value="my-sets">
             <span className="inline-flex items-center gap-2">
               <BookHeart className="w-4 h-4" />
               {intl.formatMessage({
@@ -87,7 +79,7 @@ export default function CollectionTabs() {
             </span>
           </TabsTrigger>
         </TabsList>
-        {activeTab === "collections" && <MySetsTab />}
+        {activeTab === "my-sets" && <MySetsTab />}
         {activeTab === "my-cards" && <MyCardsTab />}
         {activeTab === "wantlist" && <WantlistTab />}
       </Tabs>

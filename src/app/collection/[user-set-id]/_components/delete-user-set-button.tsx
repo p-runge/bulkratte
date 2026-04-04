@@ -1,38 +1,14 @@
 "use client";
 
 import ConfirmButton from "@/components/confirm-button";
-import { api } from "@/lib/api/react";
+import { useCollectionActions } from "@/lib/collection/use-collection-actions";
 import { useIntl } from "react-intl";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 
 export function DeleteUserSetButton({ userSetId }: { userSetId: string }) {
   const intl = useIntl();
   const router = useRouter();
-  const utils = api.useUtils();
-  const deleteUserSet = api.userSet.deleteById.useMutation({
-    onMutate: async ({ id }) => {
-      await utils.userSet.getList.cancel();
-      const previous = utils.userSet.getList.getData();
-      utils.userSet.getList.setData(undefined, (old) =>
-        old?.filter((s) => s.id !== id),
-      );
-      router.push("/collection");
-      return { previous };
-    },
-    onError: (_err, _input, ctx) => {
-      if (ctx?.previous !== undefined) {
-        utils.userSet.getList.setData(undefined, ctx.previous);
-      }
-      toast.error(
-        intl.formatMessage({
-          id: "page.set.action.delete.error",
-          defaultMessage: "Failed to delete set.",
-        }),
-      );
-    },
-    onSettled: () => void utils.userSet.getList.invalidate(),
-  });
+  const { set } = useCollectionActions();
 
   return (
     <ConfirmButton
@@ -48,9 +24,10 @@ export function DeleteUserSetButton({ userSetId }: { userSetId: string }) {
       destructive
       variant="destructive"
       onClick={() => {
-        deleteUserSet.mutate({ id: userSetId });
+        router.push("/collection");
+        set.delete(userSetId);
       }}
-      disabled={deleteUserSet.isPending}
+      disabled={set.isDeleting}
     >
       {intl.formatMessage({
         id: "page.set.action.delete",

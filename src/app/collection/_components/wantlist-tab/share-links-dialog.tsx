@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { api } from "@/lib/api/react";
+import { useCollectionActions } from "@/lib/collection/use-collection-actions";
 import {
   Camera,
   Check,
@@ -87,27 +88,13 @@ export function ShareLinksDialog({ children }: { children: React.ReactNode }) {
   const [form, setForm] = useState<CreateFormState>(defaultForm);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const utils = api.useUtils();
+  const { shareLink } = useCollectionActions();
 
   const { data: links, isLoading: isLoadingLinks } =
     api.wantlistShareLink.list.useQuery(undefined, { enabled: open });
 
   const { data: userSets } = api.userSet.getList.useQuery(undefined, {
     enabled: open && form.scopeMode === "specific",
-  });
-
-  const createMutation = api.wantlistShareLink.create.useMutation({
-    onSuccess: () => {
-      void utils.wantlistShareLink.list.invalidate();
-      setShowForm(false);
-      setForm(defaultForm);
-    },
-  });
-
-  const revokeMutation = api.wantlistShareLink.revoke.useMutation({
-    onSuccess: () => {
-      void utils.wantlistShareLink.list.invalidate();
-    },
   });
 
   async function handleCopy(id: string) {
@@ -118,15 +105,21 @@ export function ShareLinksDialog({ children }: { children: React.ReactNode }) {
   }
 
   function handleCreate() {
-    createMutation.mutate({
-      label: form.label || undefined,
-      userSetIds:
-        form.scopeMode === "specific" && form.selectedSetIds.length > 0
-          ? form.selectedSetIds
-          : undefined,
-      isSnapshot: form.mode === "snapshot",
-      expiresAt: expiryToIso(form.expiry),
-    });
+    shareLink.create(
+      {
+        label: form.label || undefined,
+        userSetIds:
+          form.scopeMode === "specific" && form.selectedSetIds.length > 0
+            ? form.selectedSetIds
+            : undefined,
+        isSnapshot: form.mode === "snapshot",
+        expiresAt: expiryToIso(form.expiry),
+      },
+      () => {
+        setShowForm(false);
+        setForm(defaultForm);
+      },
+    );
   }
 
   function toggleSetId(id: string) {
@@ -260,8 +253,8 @@ export function ShareLinksDialog({ children }: { children: React.ReactNode }) {
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7 text-destructive hover:text-destructive"
-                        onClick={() => revokeMutation.mutate({ id: link.id })}
-                        disabled={revokeMutation.isPending}
+                        onClick={() => shareLink.revoke(link.id)}
+                        disabled={shareLink.isRevoking}
                         title={intl.formatMessage({
                           id: "share-links.revoke",
                           defaultMessage: "Revoke link",
@@ -522,12 +515,12 @@ export function ShareLinksDialog({ children }: { children: React.ReactNode }) {
                   className="w-full"
                   onClick={handleCreate}
                   disabled={
-                    createMutation.isPending ||
+                    shareLink.isCreating ||
                     (form.scopeMode === "specific" &&
                       form.selectedSetIds.length === 0)
                   }
                 >
-                  {createMutation.isPending ? (
+                  {shareLink.isCreating ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   ) : null}
                   <FormattedMessage

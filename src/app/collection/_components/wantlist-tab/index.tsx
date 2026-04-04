@@ -25,7 +25,7 @@ export default function WantlistTab() {
     ...DEFAULT_SORT_STATE,
   });
 
-  const { data: wantlistData, isLoading } = api.userCard.getWantlist.useQuery({
+  const { data: wantlistData, isPending } = api.userCard.getWantlist.useQuery({
     setIds: filters.setIds.length > 0 ? filters.setIds : undefined,
     search: filters.search || undefined,
     rarities: filters.rarities.length > 0 ? filters.rarities : undefined,
@@ -57,7 +57,7 @@ export default function WantlistTab() {
           </ShareLinksDialog>
         </div>
 
-        {isLoading ? (
+        {isPending ? (
           <div className="flex justify-center py-12">
             <Loader />
           </div>
@@ -86,7 +86,7 @@ export default function WantlistTab() {
             onUserCardClick={(userCard) => {
               console.log("Card clicked:", userCard.id);
             }}
-            isLoading={isLoading}
+            isLoading={isPending}
           />
         )}
       </div>

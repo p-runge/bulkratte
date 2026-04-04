@@ -1,18 +1,15 @@
-import { auth } from "@/lib/auth";
 import HeaderContent from "./content";
 import { MobileMenuContent } from "./mobile-menu/content";
 import { MobileMenuProvider } from "./mobile-menu/provider";
 import { MobileMenuWrapper } from "./mobile-menu/wrapper";
 
-export async function Header() {
-  const session = await auth();
-
+export function Header() {
   return (
     <header className="relative shadow-sm border-b">
       <MobileMenuProvider>
-        <HeaderContent session={session} />
+        <HeaderContent />
         <MobileMenuWrapper>
-          <MobileMenuContent session={session} />
+          <MobileMenuContent />
         </MobileMenuWrapper>
       </MobileMenuProvider>
     </header>

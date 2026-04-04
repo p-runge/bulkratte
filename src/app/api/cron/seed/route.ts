@@ -1,6 +1,7 @@
 import { seedAllLocalizations } from "@/lib/db/seed-localizations";
 import { fetchAndStoreSets, fetchAndStoreAllPrices } from "@/lib/db/seed";
 import { env } from "@/env";
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 // Allow up to 5 minutes for this cron function to run (requires Vercel Pro / Fluid compute)
@@ -16,6 +17,7 @@ export async function GET(request: Request) {
     await fetchAndStoreSets();
     await seedAllLocalizations();
     await fetchAndStoreAllPrices();
+    revalidatePath("/sets");
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("[cron/seed] Failed:", error);

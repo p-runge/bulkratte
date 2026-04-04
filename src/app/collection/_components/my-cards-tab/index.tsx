@@ -18,10 +18,10 @@ export default function MyCardsTab() {
   const [isCreateCardDialogOpen, setIsCreateCardDialogOpen] = useState(false);
   const [editingUserCard, setEditingUserCard] = useState<UserCard | null>(null);
 
-  const { data, isLoading } = api.userCard.getList.useQuery();
+  const { data, isPending } = api.userCard.getList.useQuery();
   const userCards = data ?? [];
 
-  if (isLoading) {
+  if (isPending) {
     return (
       <div className="flex justify-center">
         <Loader />

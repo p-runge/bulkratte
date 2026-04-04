@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { TabsContent } from "@/components/ui/tabs";
 import { type RouterOutputs, api } from "@/lib/api/react";
+import { useCollectionActions } from "@/lib/collection/use-collection-actions";
 import {
   DndContext,
   DragEndEvent,
@@ -117,27 +118,8 @@ function SortableSetCard({ userSet }: { userSet: UserSet }) {
 export default function MySetsTab() {
   const intl = useIntl();
 
-  const utils = api.useUtils();
-  const { data, isLoading } = api.userSet.getList.useQuery();
-
-  const reorderMutation = api.userSet.reorder.useMutation({
-    onMutate: async ({ ids }) => {
-      await utils.userSet.getList.cancel();
-      const previous = utils.userSet.getList.getData();
-      utils.userSet.getList.setData(undefined, (old) => {
-        if (!old) return old;
-        const map = new Map(old.map((s) => [s.id, s]));
-        return ids.map((id) => map.get(id)!).filter(Boolean);
-      });
-      return { previous };
-    },
-    onError: (_err, _input, ctx) => {
-      if (ctx?.previous !== undefined) {
-        utils.userSet.getList.setData(undefined, ctx.previous);
-      }
-    },
-    onSettled: () => void utils.userSet.getList.invalidate(),
-  });
+  const { set } = useCollectionActions();
+  const { data, isPending } = api.userSet.getList.useQuery();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -151,10 +133,10 @@ export default function MySetsTab() {
     const oldIndex = currentItems.findIndex((s) => s.id === active.id);
     const newIndex = currentItems.findIndex((s) => s.id === over.id);
     const next = arrayMove(currentItems, oldIndex, newIndex);
-    reorderMutation.mutate({ ids: next.map((s) => s.id) });
+    set.reorder(next.map((s) => s.id));
   }
 
-  if (isLoading) {
+  if (isPending) {
     return (
       <div className="flex justify-center">
         <Loader />
@@ -163,7 +145,7 @@ export default function MySetsTab() {
   }
 
   return (
-    <TabsContent value="collections">
+    <TabsContent value="my-sets">
       <div className="mb-6 flex justify-end">
         <Link href="/collection/new-set">
           <Button>

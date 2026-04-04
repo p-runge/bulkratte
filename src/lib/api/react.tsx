@@ -1,7 +1,10 @@
 "use client";
 
 import { type QueryClient } from "@tanstack/react-query";
-import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import {
+  PersistQueryClientProvider,
+  persistQueryClientSave,
+} from "@tanstack/react-query-persist-client";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { httpBatchStreamLink, loggerLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
@@ -16,8 +19,12 @@ import pkg from "../../../package.json";
 // Only persist these queries to localStorage for instant hydration on page reload.
 const PERSISTED_PATHS = new Set([
   "card.getFilterOptions",
+  "card.getByIds",
   "userSet.getList",
+  "userSet.getById",
+  "userSet.getPlacedUserCardIds",
   "userCard.getList",
+  "userCard.getWantlist",
 ]);
 
 let clientQueryClientSingleton: QueryClient | undefined = undefined;
@@ -78,19 +85,33 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
     }),
   );
 
+  const persistOptions = {
+    persister,
+    buster: pkg.version,
+    dehydrateOptions: {
+      shouldDehydrateQuery: (query: { queryKey: unknown }) => {
+        const [pathParts] = query.queryKey as [string[], ...unknown[]];
+        if (!Array.isArray(pathParts)) return false;
+        return PERSISTED_PATHS.has(pathParts.join("."));
+      },
+    },
+  };
+
   return (
     <PersistQueryClientProvider
       client={queryClient}
-      persistOptions={{
-        persister,
-        buster: pkg.version,
-        dehydrateOptions: {
-          shouldDehydrateQuery: (query) => {
-            const [pathParts] = query.queryKey as [string[], ...unknown[]];
-            if (!Array.isArray(pathParts)) return false;
-            return PERSISTED_PATHS.has(pathParts.join("."));
-          },
-        },
+      persistOptions={persistOptions}
+      onSuccess={() => {
+        // After restoring from localStorage, immediately persist the current
+        // cache state. This captures SSR-hydrated data that was added to the
+        // cache before the persist subscription was active, ensuring it's
+        // available on the next visit without a loading delay.
+        void persistQueryClientSave({
+          queryClient: queryClient as unknown as Parameters<
+            typeof persistQueryClientSave
+          >[0]["queryClient"],
+          ...persistOptions,
+        });
       }}
     >
       <api.Provider client={trpcClient} queryClient={queryClient}>

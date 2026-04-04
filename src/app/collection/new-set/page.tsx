@@ -11,7 +11,7 @@ import { PreferredProperties } from "@/components/preferred-properties";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { api } from "@/lib/api/react";
+import { useCollectionActions } from "@/lib/collection/use-collection-actions";
 import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -66,41 +66,7 @@ function Content() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const apiUtils = api.useUtils();
-  const { mutate: createUserSet } = api.userSet.create.useMutation({
-    onMutate: async (input) => {
-      await apiUtils.userSet.getList.cancel();
-      const previous = apiUtils.userSet.getList.getData();
-      const tempId = `temp-${Date.now()}`;
-      apiUtils.userSet.getList.setData(undefined, (old) => [
-        {
-          id: tempId,
-          name: input.name,
-          image: input.image ?? null,
-          preferredLanguage: input.preferredLanguage ?? null,
-          preferredVariant: input.preferredVariant ?? null,
-          preferredCondition: input.preferredCondition ?? null,
-          binderLayout: input.binderLayout ?? "3x3",
-          totalCards: input.cardData.length,
-          placedCards: 0,
-        },
-        ...(old ?? []),
-      ]);
-      return { previous };
-    },
-    onError: (_err, _input, ctx) => {
-      if (ctx?.previous !== undefined) {
-        apiUtils.userSet.getList.setData(undefined, ctx.previous);
-      }
-      toast.error(
-        intl.formatMessage({
-          id: "page.set.action.create.error",
-          defaultMessage: "Failed to create set.",
-        }),
-      );
-    },
-    onSettled: () => void apiUtils.userSet.getList.invalidate(),
-  });
+  const { set } = useCollectionActions();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const imageValue = form.watch("image");
@@ -120,7 +86,7 @@ function Content() {
     try {
       const imageUrl = await uploadImage();
       router.push("/collection");
-      createUserSet({
+      set.create({
         name: data.name,
         image: imageUrl ?? undefined,
         cardData: data.cardData.map((cd) => ({

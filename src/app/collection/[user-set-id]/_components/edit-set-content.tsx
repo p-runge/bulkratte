@@ -12,7 +12,7 @@ import { PreferredProperties } from "@/components/preferred-properties";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { api } from "@/lib/api/react";
+import { useCollectionActions } from "@/lib/collection/use-collection-actions";
 import { Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FormattedMessage, useIntl } from "react-intl";
@@ -38,44 +38,7 @@ function Content({ userSet }: { userSet: UserSet }) {
 
   const { form } = useBinderContext();
 
-  const apiUtils = api.useUtils();
-  const { mutate: updateUserSet } = api.userSet.update.useMutation({
-    onMutate: async (input) => {
-      await apiUtils.userSet.getList.cancel();
-      const previousList = apiUtils.userSet.getList.getData();
-      apiUtils.userSet.getList.setData(undefined, (old) =>
-        old?.map((s) =>
-          s.id === input.id
-            ? {
-                ...s,
-                name: input.name,
-                image: input.image ?? s.image,
-                preferredLanguage: input.preferredLanguage ?? null,
-                preferredVariant: input.preferredVariant ?? null,
-                preferredCondition: input.preferredCondition ?? null,
-                binderLayout: input.binderLayout ?? s.binderLayout,
-              }
-            : s,
-        ),
-      );
-      return { previousList };
-    },
-    onError: (_err, _input, ctx) => {
-      if (ctx?.previousList !== undefined) {
-        apiUtils.userSet.getList.setData(undefined, ctx.previousList);
-      }
-      toast.error(
-        intl.formatMessage({
-          id: "page.set.action.save.error",
-          defaultMessage: "Failed to save set.",
-        }),
-      );
-    },
-    onSettled: (_data, _err, input) => {
-      void apiUtils.userSet.getList.invalidate();
-      void apiUtils.userSet.getById.invalidate({ id: input.id });
-    },
-  });
+  const { set } = useCollectionActions();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const imageValue = form.watch("image");
@@ -109,7 +72,7 @@ function Content({ userSet }: { userSet: UserSet }) {
       }));
 
       router.push(`/collection/${userSet.set.id}`);
-      updateUserSet({
+      set.update({
         id: userSet.set.id,
         name: data.name,
         image: imageUrl ?? undefined,

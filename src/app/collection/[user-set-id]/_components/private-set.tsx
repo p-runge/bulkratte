@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -6,15 +8,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getIntl } from "@/lib/i18n/server";
 import { ArrowLeft, Lock } from "lucide-react";
 import Link from "next/link";
+import { useIntl } from "react-intl";
 
 /**
  * Error component shown when a user tries to access a private set they don't own
  */
-export async function PrivateSet() {
-  const intl = await getIntl();
+export function PrivateSet() {
+  const intl = useIntl();
 
   return (
     <div className="flex items-center justify-center min-h-[60vh]">

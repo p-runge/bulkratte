@@ -21,6 +21,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api/react";
+import { useCollectionActions } from "@/lib/collection/use-collection-actions";
 import { RHFForm, useRHFForm } from "@/lib/form/utils";
 import { userCardFormSchema } from "@/lib/schemas/user-card";
 import { Info, Trash2 } from "lucide-react";
@@ -54,89 +55,7 @@ export default function UserCardDialog({
     },
   );
 
-  const { mutate: createUserCard } = api.userCard.create.useMutation({
-    onMutate: async (input) => {
-      if (!card) return;
-      await apiUtils.userCard.getList.cancel();
-      const previous = apiUtils.userCard.getList.getData();
-      const tempId = `temp-${Date.now()}`;
-      const now = new Date().toISOString();
-      apiUtils.userCard.getList.setData(undefined, (old) => [
-        {
-          id: tempId,
-          language: input.language ?? null,
-          variant: input.variant ?? null,
-          condition: input.condition ?? null,
-          notes: input.notes ?? null,
-          card: {
-            ...card,
-            created_at: now,
-            updated_at: now,
-            price: undefined,
-          },
-          localizedName: null,
-          photos: input.photos ?? [],
-          coverPhoto: input.coverPhotoUrl ?? null,
-          coverCrop: input.coverCrop ?? null,
-        },
-        ...(old ?? []),
-      ]);
-      return { previous };
-    },
-    onError: (_err, _input, ctx) => {
-      if (ctx?.previous !== undefined) {
-        apiUtils.userCard.getList.setData(undefined, ctx.previous);
-      }
-    },
-    onSettled: () => void apiUtils.userCard.getList.invalidate(),
-  });
-  const { mutate: updateUserCard } = api.userCard.update.useMutation({
-    onMutate: async (input) => {
-      if (!userCard) return;
-      await apiUtils.userCard.getList.cancel();
-      const previous = apiUtils.userCard.getList.getData();
-      apiUtils.userCard.getList.setData(undefined, (old) =>
-        old?.map((c) =>
-          c.id === userCard.id
-            ? {
-                ...c,
-                language: input.language ?? null,
-                variant: input.variant ?? null,
-                condition: input.condition ?? null,
-                notes: input.notes ?? null,
-                photos: input.photos ?? c.photos,
-                coverPhoto: input.coverPhotoUrl ?? null,
-                coverCrop: input.coverCrop ?? null,
-              }
-            : c,
-        ),
-      );
-      return { previous };
-    },
-    onError: (_err, _input, ctx) => {
-      if (ctx?.previous !== undefined) {
-        apiUtils.userCard.getList.setData(undefined, ctx.previous);
-      }
-    },
-    onSettled: () => void apiUtils.userCard.getList.invalidate(),
-  });
-  const { mutate: deleteUserCard } = api.userCard.delete.useMutation({
-    onMutate: async ({ id }) => {
-      await apiUtils.userCard.getList.cancel();
-      const previous = apiUtils.userCard.getList.getData();
-      apiUtils.userCard.getList.setData(undefined, (old) =>
-        old?.filter((c) => c.id !== id),
-      );
-      return { previous };
-    },
-    onError: (_err, _input, ctx) => {
-      if (ctx?.previous !== undefined) {
-        apiUtils.userCard.getList.setData(undefined, ctx.previous);
-      }
-    },
-    onSettled: () => void apiUtils.userCard.getList.invalidate(),
-  });
-  const apiUtils = api.useUtils();
+  const actions = useCollectionActions();
 
   // Get placement status for edit mode
   const { data: placedCards } = api.userSet.getPlacedUserCardIds.useQuery(
@@ -180,18 +99,21 @@ export default function UserCardDialog({
       await photoUpload.uploadPending();
 
     if (mode === "create") {
-      createUserCard({
-        cardId: card.id,
-        language: data.language ?? undefined,
-        variant: data.variant ?? undefined,
-        condition: data.condition ?? undefined,
-        notes: data.notes || undefined,
-        photos: photos.length > 0 ? photos : undefined,
-        coverPhotoUrl: coverPhotoUrl ?? undefined,
-        coverCrop,
-      });
+      actions.card.create(
+        {
+          cardId: card.id,
+          language: data.language ?? undefined,
+          variant: data.variant ?? undefined,
+          condition: data.condition ?? undefined,
+          notes: data.notes || undefined,
+          photos: photos.length > 0 ? photos : undefined,
+          coverPhotoUrl: coverPhotoUrl ?? undefined,
+          coverCrop,
+        },
+        card,
+      );
     } else if (mode === "edit" && userCard) {
-      updateUserCard({
+      actions.card.update({
         id: userCard.id,
         language: data.language,
         variant: data.variant,
@@ -210,7 +132,7 @@ export default function UserCardDialog({
     if (!userCard) return;
 
     onClose();
-    deleteUserCard({ id: userCard.id });
+    actions.card.delete(userCard.id);
   }
 
   return (
