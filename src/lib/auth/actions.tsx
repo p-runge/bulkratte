@@ -8,7 +8,7 @@ export async function handleSignIn(callbackUrl: string | null) {
   "use server";
   // redirect to default sign in page of NextAuth
   await signIn(undefined, {
-    redirectTo: callbackUrl ?? "/",
+    redirectTo: callbackUrl ?? "/collection",
   });
 }
 

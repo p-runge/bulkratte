@@ -19,7 +19,7 @@ export default async function HeaderContent({
     <div className="container mx-auto px-4 py-4 flex justify-between items-center">
       {/* Left section */}
       <div className="flex items-center gap-3">
-        <Link href="/" className="flex items-center text-2xl font-bold gap-2">
+        <Link href={session ? "/collection" : "/"} className="flex items-center text-2xl font-bold gap-2">
           <Image
             src="/bulkratte_head_logo.png"
             alt={intl.formatMessage(commonMessages.logoAlt)}
@@ -37,14 +37,6 @@ export default async function HeaderContent({
 
       {/* Desktop navigation */}
       <div className="hidden md:flex items-center gap-4">
-        <Link href="/">
-          <Button variant="ghost">
-            {intl.formatMessage({
-              id: "nav.link.home",
-              defaultMessage: "Home",
-            })}
-          </Button>
-        </Link>
         <Link href="/sets">
           <Button variant="ghost">
             {intl.formatMessage({

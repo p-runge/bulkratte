@@ -13,14 +13,6 @@ export async function MobileMenuContent({
   return (
     <div className="absolute z-10 w-full flex flex-col md:hidden bg-background border-t border-border px-4 py-2 space-y-2">
       <Link
-        href="/"
-        // onClick={() => setIsOpen(false)}
-      >
-        <Button variant="ghost" className="w-full text-left">
-          {intl.formatMessage({ id: "nav.link.home", defaultMessage: "Home" })}
-        </Button>
-      </Link>
-      <Link
         href="/sets"
         // onClick(() => setIsOpen(false)}
       >

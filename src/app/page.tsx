@@ -6,9 +6,11 @@ import { commonMessages } from "@/lib/i18n/common-messages";
 import { getIntl } from "@/lib/i18n/server";
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 export default async function HomePage() {
   const session = await auth();
+  if (session) redirect("/collection");
   const intl = await getIntl();
 
   return (
