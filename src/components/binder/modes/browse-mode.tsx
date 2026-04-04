@@ -9,7 +9,7 @@ import {
 } from "@dnd-kit/core";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 import { Button } from "../../ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../ui/tooltip";
@@ -39,6 +39,36 @@ export function BrowseMode() {
 
   // Calculate the visible double-page spread
   const maxSpread = Math.max(0, Math.ceil(pages.length / 2));
+
+  // Keep stable refs so the prefetch effect doesn't need to depend on pages
+  // (which is a new array reference on every render).
+  const pagesRef = useRef(pages);
+  pagesRef.current = pages;
+  const maxSpreadRef = useRef(maxSpread);
+  maxSpreadRef.current = maxSpread;
+
+  // Prefetch card images 1 double-page ahead in each direction so that
+  // navigating at a normal pace never shows a skeleton.
+  useEffect(() => {
+    function getCardsForSpread(spread: number) {
+      const p = pagesRef.current;
+      const ms = maxSpreadRef.current;
+      if (spread < 0 || spread > ms) return [];
+      if (spread === 0) return p[0] ?? [];
+      if (spread === ms) return p[p.length - 1] ?? [];
+      const leftIdx = spread * 2 - 1;
+      return [...(p[leftIdx] ?? []), ...(p[leftIdx + 1] ?? [])];
+    }
+
+    [currentSpread - 1, currentSpread + 1]
+      .flatMap(getCardsForSpread)
+      .forEach((card) => {
+        if (!card?.imageSmall) return;
+        const img = new window.Image();
+        img.src = card.imageSmall;
+      });
+  }, [currentSpread]);
+
   let visiblePages: ((typeof pages)[number] | null)[] = [];
   if (currentSpread === 0) {
     // First spread: left is blank, right is first page

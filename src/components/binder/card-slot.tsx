@@ -3,10 +3,11 @@ import { cn } from "@/lib/utils";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { Plus, Settings, X } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ConditionBadge } from "../condition-badge";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
+import { Skeleton } from "../ui/skeleton";
 import { useBinderContext } from "./binder-context";
 import { CardPreferencesDialog } from "./card-preferences-dialog";
 import { CroppedCardImage } from "./cropped-card-image";
@@ -269,14 +270,7 @@ export function CardSlot({
               className="w-full h-full"
             />
           ) : (
-            <Image
-              src={coverPhoto ?? card.imageSmall}
-              alt={card.name}
-              width={CARD_IMAGE_WIDTH}
-              height={CARD_IMAGE_HEIGHT}
-              unoptimized
-              className="w-full h-full object-cover"
-            />
+            <CardImage src={coverPhoto ?? card.imageSmall} alt={card.name} />
           )}
         </div>
         {/* Show detailed preferences when toggle is enabled */}
@@ -321,14 +315,7 @@ export function CardSlot({
           style={{ borderRadius: CARD_BORDER_RADIUS }}
         >
           {card ? (
-            <Image
-              src={card.imageSmall}
-              alt={card.name}
-              width={CARD_IMAGE_WIDTH}
-              height={CARD_IMAGE_HEIGHT}
-              unoptimized
-              className="w-full h-full object-cover"
-            />
+            <CardImage src={card.imageSmall} alt={card.name} />
           ) : (
             <div className="w-full h-full bg-gray-200 animate-pulse" />
           )}
@@ -423,14 +410,7 @@ export function CardSlot({
     >
       {card ? (
         <div {...listeners} className="w-full h-full">
-          <Image
-            src={card.imageSmall}
-            alt={card.name}
-            width={CARD_IMAGE_WIDTH}
-            height={CARD_IMAGE_HEIGHT}
-            unoptimized
-            className="w-full h-full object-cover"
-          />
+          <CardImage src={card.imageSmall} alt={card.name} />
         </div>
       ) : (
         <div className="w-full h-full bg-gray-200 animate-pulse" />
@@ -576,5 +556,36 @@ function EmptyCardSlot({
     >
       <Plus className="h-6 w-6 opacity-20 group-hover:opacity-100 transition-opacity" />
     </Button>
+  );
+}
+
+/**
+ * Renders a card image with a skeleton shown while the browser fetches the
+ * image. Uses the ref-based state-on-prop-change pattern (no useEffect) so
+ * the skeleton appears in the same render frame as the src change, preventing
+ * any stale-image flash.
+ */
+function CardImage({ src, alt }: { src: string; alt: string }) {
+  const [loaded, setLoaded] = useState(false);
+  const prevSrcRef = useRef(src);
+
+  if (prevSrcRef.current !== src) {
+    prevSrcRef.current = src;
+    setLoaded(false);
+  }
+
+  return (
+    <div className="relative w-full h-full">
+      {!loaded && <Skeleton className="absolute inset-0 rounded-none" />}
+      <Image
+        src={src}
+        alt={alt}
+        width={CARD_IMAGE_WIDTH}
+        height={CARD_IMAGE_HEIGHT}
+        unoptimized
+        onLoad={() => setLoaded(true)}
+        className={cn("w-full h-full object-cover", !loaded && "invisible")}
+      />
+    </div>
   );
 }
