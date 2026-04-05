@@ -1,10 +1,6 @@
-import type { Metadata } from "next";
+import { contact } from "../../_content/contact";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy – Bulkratte",
-};
-
-export default function PrivacyPage() {
+export function PrivacyPolicyEn() {
   return (
     <div className="space-y-8 text-sm leading-relaxed">
       <div className="space-y-2">
@@ -17,18 +13,20 @@ export default function PrivacyPage() {
         <p>
           Bulkratte is operated by:
           <br />
-          <span className="font-medium">Progani GmbH</span>
+          <span className="font-medium">{contact.companyName}</span>
           <br />
-          Osterstr. 8
+          {contact.street}
           <br />
-          20259 Hamburg, Germany
+          {contact.postalCode}
+          <br />
+          {contact.country.en}
           <br />
           Contact:{" "}
           <a
-            href="mailto:kontakt@progani.com"
+            href={contact.emailHref}
             className="text-primary underline-offset-4 hover:underline"
           >
-            kontakt@progani.com
+            {contact.email}
           </a>
         </p>
       </section>
@@ -65,7 +63,7 @@ export default function PrivacyPage() {
         <div className="space-y-2">
           <p>
             <span className="font-medium">
-              Authentication & account management
+              Authentication &amp; account management
             </span>{" "}
             — to verify your identity and maintain a secure session across
             visits. Legal basis: performance of a contract (Art. 6(1)(b) GDPR).
@@ -148,9 +146,9 @@ export default function PrivacyPage() {
         <h2 className="text-xl font-semibold">6. Third-Party Services</h2>
         <div className="space-y-2">
           <p>
-            <span className="font-medium">Discord & Google</span> — used solely
-            for authentication. We do not share your data back with them beyond
-            what is required for the OAuth login flow.
+            <span className="font-medium">Discord &amp; Google</span> — used
+            solely for authentication. We do not share your data back with them
+            beyond what is required for the OAuth login flow.
           </p>
           <p>
             <span className="font-medium">Vercel</span> — our hosting provider.

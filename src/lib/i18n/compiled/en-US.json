@@ -991,6 +991,12 @@
       "value": "Place Card in Binder"
     }
   ],
+  "footer.legalNotice": [
+    {
+      "type": 0,
+      "value": "Legal Notice"
+    }
+  ],
   "footer.privacyPolicy": [
     {
       "type": 0,

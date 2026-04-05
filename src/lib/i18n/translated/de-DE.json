@@ -131,6 +131,7 @@
   "dialog.place_card.section.not_matching_preferences": "Nicht passende Präferenzen",
   "dialog.place_card.title.change": "Platzierte Karte ändern",
   "dialog.place_card.title.place": "Karte im Binder platzieren",
+  "footer.legalNotice": "Impressum",
   "footer.privacyPolicy": "Datenschutzerklärung",
   "form.field.condition.label": "Zustand",
   "form.field.image.label": "Set-Bild (optional)",

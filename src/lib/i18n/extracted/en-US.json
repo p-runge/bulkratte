@@ -131,6 +131,7 @@
   "dialog.place_card.section.not_matching_preferences": "Not Matching Preferences",
   "dialog.place_card.title.change": "Change Placed Card",
   "dialog.place_card.title.place": "Place Card in Binder",
+  "footer.legalNotice": "Legal Notice",
   "footer.privacyPolicy": "Privacy Policy",
   "form.field.condition.label": "Condition",
   "form.field.image.label": "Set Image (optional)",
