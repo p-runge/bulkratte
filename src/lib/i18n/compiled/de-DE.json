@@ -687,12 +687,6 @@
       "value": "Speichern"
     }
   ],
-  "common.button.saving": [
-    {
-      "type": 0,
-      "value": "Speichern..."
-    }
-  ],
   "common.language.de": [
     {
       "type": 0,
@@ -995,6 +989,12 @@
     {
       "type": 0,
       "value": "Karte im Binder platzieren"
+    }
+  ],
+  "footer.privacyPolicy": [
+    {
+      "type": 0,
+      "value": "Datenschutzerklärung"
     }
   ],
   "form.field.condition.label": [
