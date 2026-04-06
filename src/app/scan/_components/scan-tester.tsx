@@ -28,8 +28,12 @@
 
 import { api } from "@/lib/api/react";
 import { CardImageDialog } from "@/components/card-image";
+import { CameraCapture } from "@/components/camera-capture";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useJscanify } from "@/hooks/use-jscanify";
+import { CARD_ASPECT_RATIO } from "@/lib/card-config";
+import { Camera } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { createWorker } from "tesseract.js";
@@ -619,6 +623,18 @@ export function ScanTester() {
     alt: string;
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [hasCameraSupport, setHasCameraSupport] = useState(false);
+
+  useEffect(() => {
+    // getUserMedia requires a secure context (HTTPS / localhost).
+    // Checking for the function directly is more reliable than checking
+    // for the mediaDevices object, which browsers set to undefined on HTTP.
+    setHasCameraSupport(
+      typeof navigator !== "undefined" &&
+        typeof navigator.mediaDevices?.getUserMedia === "function",
+    );
+  }, []);
 
   // ── Crop debugger state ─────────────────────────────────────────
   const [debugOpen, setDebugOpen] = useState(false);
@@ -686,6 +702,9 @@ export function ScanTester() {
     setDebugOcrText(result.data.text?.trim() || "(nothing detected)");
     setDebugOcrRunning(false);
   }
+
+  // ── jscanify (perspective correction) ────────────────────────────────────
+  const { scanner: jscanifyScanner, ready: jscanifyReady } = useJscanify();
 
   // ── Symbol index pre-fetch ───────────────────────────────────────────
   // Each set symbol image is downloaded, drawn to a 32×32 canvas, and stored
@@ -792,20 +811,58 @@ export function ScanTester() {
     try {
       const img = await loadImage(imageUrl);
 
-      // ── jscanify: card detection & perspective correction (DISABLED) ───────
-      // TODO: re-enable once perspective warp behaviour is verified.
-      // The warp currently degrades more scans than it helps, so we skip it
-      // and always use the original image directly.
+      // ── jscanify: perspective correction ──────────────────────────────────
+      // Try to detect the card outline and warp it to a flat rectangle.
+      // extractPaper() returns null when no clear boundary is found, in which
+      // case we fall back to the original image (sample cards, clean scans, etc.)
 
-      const cardSource: HTMLImageElement | HTMLCanvasElement = img;
-      pushStep({
-        kind: "image",
-        label: "jscanify: disabled (using original image)",
-        dataUrl: cropFull(img).toDataURL(),
-        description:
-          "Perspective correction is temporarily disabled. The original image is used as-is for all subsequent steps.",
-        size: "card",
-      });
+      let cardSource: HTMLImageElement | HTMLCanvasElement = img;
+      const currentScanner = jscanifyScanner.current;
+
+      if (currentScanner) {
+        try {
+          const targetH = img.naturalHeight;
+          const targetW = Math.round(targetH * CARD_ASPECT_RATIO);
+          const corrected = currentScanner.extractPaper(img, targetW, targetH);
+
+          if (corrected) {
+            cardSource = corrected;
+            pushStep({
+              kind: "image",
+              label: "jscanify: perspective corrected",
+              dataUrl: corrected.toDataURL(),
+              description: `Card boundary detected and warped to ${targetW}×${targetH}px. All subsequent crops use this corrected image.`,
+              size: "card",
+            });
+          } else {
+            pushStep({
+              kind: "image",
+              label: "jscanify: no card boundary found",
+              dataUrl: cropFull(img).toDataURL(),
+              description:
+                "No clear card outline detected (clean scan or flat image). Using original image.",
+              size: "card",
+            });
+          }
+        } catch (e) {
+          pushStep({
+            kind: "image",
+            label: "jscanify: error (using original)",
+            dataUrl: cropFull(img).toDataURL(),
+            description: `Perspective correction failed: ${e instanceof Error ? e.message : String(e)}.`,
+            size: "card",
+          });
+        }
+      } else {
+        pushStep({
+          kind: "image",
+          label: "jscanify: OpenCV loading…",
+          dataUrl: cropFull(img).toDataURL(),
+          description:
+            "OpenCV is still loading. Using original image for this scan.",
+          size: "card",
+        });
+      }
 
       // ── Step 1: Number OCR ────────────────────────────────────────────────
       // Most reliable signal. Number + total uniquely identify the set in
@@ -1238,6 +1295,14 @@ export function ScanTester() {
     void runOcr(url);
   }
 
+  function handleCameraCapture(file: File) {
+    const url = URL.createObjectURL(file);
+    setCameraOpen(false);
+    setActiveSample(null);
+    setActiveImage(url);
+    void runOcr(url);
+  }
+
   return (
     <div className="space-y-8">
       {/* Symbol index status */}
@@ -1256,6 +1321,21 @@ export function ScanTester() {
           )}
         </div>
       )}
+
+      {/* jscanify / OpenCV status */}
+      <div className="text-xs text-muted-foreground flex items-center gap-2">
+        {jscanifyReady ? (
+          <>
+            <span className="text-green-500">●</span>
+            Perspective correction ready (jscanify + OpenCV)
+          </>
+        ) : (
+          <>
+            <span className="animate-pulse">●</span>
+            Loading OpenCV for perspective correction…
+          </>
+        )}
+      </div>
 
       {/* Sample grid */}
       <section>
@@ -1305,11 +1385,17 @@ export function ScanTester() {
         </div>
       </section>
 
-      {/* Upload */}
-      <section>
+      {/* Upload / camera */}
+      <section className="flex gap-2 flex-wrap">
         <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
           Upload your own image
         </Button>
+        {hasCameraSupport && (
+          <Button variant="outline" onClick={() => setCameraOpen(true)}>
+            <Camera className="h-4 w-4 mr-2" />
+            Take photo
+          </Button>
+        )}
         <input
           ref={fileInputRef}
           type="file"
@@ -1318,6 +1404,13 @@ export function ScanTester() {
           onChange={handleFileChange}
         />
       </section>
+
+      {cameraOpen && (
+        <CameraCapture
+          onCapture={handleCameraCapture}
+          onClose={() => setCameraOpen(false)}
+        />
+      )}
 
       {/* Crop debugger */}
       {activeImage && (

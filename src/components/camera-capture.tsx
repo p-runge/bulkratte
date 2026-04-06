@@ -1,14 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  CARD_ASPECT_CLASS,
-  CARD_BORDER_RADIUS,
-  CARD_FRAME_INSET,
-} from "@/lib/card-config";
-import { cn } from "@/lib/utils";
+import { useJscanify } from "@/hooks/use-jscanify";
+import { CARD_ASPECT_RATIO, CARD_FRAME_INSET } from "@/lib/card-config";
 import { Camera, Frame, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useIntl } from "react-intl";
 
 type Props = {
@@ -16,15 +12,124 @@ type Props = {
   onClose: () => void;
 };
 
+type Corners = {
+  topLeftCorner: { x: number; y: number };
+  topRightCorner: { x: number; y: number };
+  bottomLeftCorner: { x: number; y: number };
+  bottomRightCorner: { x: number; y: number };
+};
+
+/** Draws either the detected card polygon or the static guide onto the overlay canvas. */
+function drawOverlay(
+  canvas: HTMLCanvasElement,
+  corners: Corners | null,
+  frameInset: number,
+) {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (corners) {
+    const {
+      topLeftCorner: tl,
+      topRightCorner: tr,
+      bottomRightCorner: br,
+      bottomLeftCorner: bl,
+    } = corners;
+
+    // Dark background outside the detected card
+    ctx.fillStyle = "rgba(0,0,0,0.45)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Cut out the card area
+    ctx.globalCompositeOperation = "destination-out";
+    ctx.beginPath();
+    ctx.moveTo(tl.x, tl.y);
+    ctx.lineTo(tr.x, tr.y);
+    ctx.lineTo(br.x, br.y);
+    ctx.lineTo(bl.x, bl.y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.globalCompositeOperation = "source-over";
+
+    // Green border
+    const lw = Math.max(3, canvas.width / 200);
+    ctx.beginPath();
+    ctx.moveTo(tl.x, tl.y);
+    ctx.lineTo(tr.x, tr.y);
+    ctx.lineTo(br.x, br.y);
+    ctx.lineTo(bl.x, bl.y);
+    ctx.closePath();
+    ctx.strokeStyle = "rgba(74,222,128,0.95)";
+    ctx.lineWidth = lw;
+    ctx.stroke();
+
+    // Corner dots
+    const dotR = Math.max(6, canvas.width / 110);
+    for (const pt of [tl, tr, br, bl]) {
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, dotR, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(74,222,128,1)";
+      ctx.fill();
+    }
+  } else {
+    // Static card-shape guide
+    const inset = frameInset / 100;
+    const padX = canvas.width * inset;
+    const padY = canvas.height * inset;
+    const areaW = canvas.width - 2 * padX;
+    const areaH = canvas.height - 2 * padY;
+
+    // Fit a card rectangle (5:7) inside the inset area
+    let cW: number, cH: number;
+    if (areaW / areaH <= CARD_ASPECT_RATIO) {
+      cW = areaW;
+      cH = areaW / CARD_ASPECT_RATIO;
+    } else {
+      cH = areaH;
+      cW = areaH * CARD_ASPECT_RATIO;
+    }
+    const cX = (canvas.width - cW) / 2;
+    const cY = (canvas.height - cH) / 2;
+    const r = cW * 0.031;
+
+    // Dark background outside the card guide
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.globalCompositeOperation = "destination-out";
+    ctx.beginPath();
+    ctx.roundRect(cX, cY, cW, cH, r);
+    ctx.fill();
+    ctx.globalCompositeOperation = "source-over";
+
+    // White guide border
+    ctx.beginPath();
+    ctx.roundRect(cX, cY, cW, cH, r);
+    ctx.strokeStyle = "rgba(255,255,255,0.8)";
+    ctx.lineWidth = Math.max(2, canvas.width / 300);
+    ctx.stroke();
+  }
+}
+
 export function CameraCapture({ onCapture, onClose }: Props) {
   const intl = useIntl();
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const captureCanvasRef = useRef<HTMLCanvasElement>(null);
+  const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const offscreenRef = useRef<HTMLCanvasElement | null>(null);
+  const detectedCornersRef = useRef<Corners | null>(null);
+
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [showOverlay, setShowOverlay] = useState(true);
+  const [cardDetected, setCardDetected] = useState(false);
+  const [videoDims, setVideoDims] = useState<{ w: number; h: number } | null>(
+    null,
+  );
 
+  const { scanner, ready: jscanifyReady } = useJscanify();
+
+  // ── Camera stream ──────────────────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
 
@@ -59,9 +164,84 @@ export function CameraCapture({ onCapture, onClose }: Props) {
     };
   }, [intl]);
 
+  // ── Redraw overlay whenever corners or showOverlay changes ─────────────────
+  const redrawOverlay = useCallback(() => {
+    const canvas = overlayCanvasRef.current;
+    if (!canvas) return;
+    if (!showOverlay) {
+      canvas.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
+      return;
+    }
+    drawOverlay(canvas, detectedCornersRef.current, CARD_FRAME_INSET);
+  }, [showOverlay]);
+
+  // ── Live card-detection loop ───────────────────────────────────────────────
+  useEffect(() => {
+    if (!jscanifyReady || !ready) {
+      // Draw static guide while jscanify loads
+      redrawOverlay();
+      return;
+    }
+
+    const intervalId = setInterval(() => {
+      const video = videoRef.current;
+      if (!video || video.videoWidth === 0 || video.paused) return;
+
+      if (!offscreenRef.current) {
+        offscreenRef.current = document.createElement("canvas");
+      }
+      const offscreen = offscreenRef.current;
+      offscreen.width = video.videoWidth;
+      offscreen.height = video.videoHeight;
+      const ctx = offscreen.getContext("2d");
+      if (!ctx) return;
+      ctx.drawImage(video, 0, 0);
+
+      let found = false;
+      try {
+        const cv = (
+          window as unknown as {
+            cv: { imread: (c: HTMLCanvasElement) => unknown };
+          }
+        ).cv;
+        const src = cv.imread(offscreen);
+        const contour = scanner.current?.findPaperContour(src);
+        (src as { delete(): void }).delete();
+
+        if (contour) {
+          const corners = scanner.current?.getCornerPoints(contour);
+          if (
+            corners?.topLeftCorner &&
+            corners?.topRightCorner &&
+            corners?.bottomLeftCorner &&
+            corners?.bottomRightCorner
+          ) {
+            detectedCornersRef.current = corners as Corners;
+            found = true;
+          }
+        }
+      } catch {
+        // OpenCV error — skip frame
+      }
+
+      if (!found) detectedCornersRef.current = null;
+
+      setCardDetected(found);
+      redrawOverlay();
+    }, 200);
+
+    return () => clearInterval(intervalId);
+  }, [jscanifyReady, ready, scanner, redrawOverlay]);
+
+  // Redraw when showOverlay toggles
+  useEffect(() => {
+    redrawOverlay();
+  }, [redrawOverlay]);
+
+  // ── Capture ────────────────────────────────────────────────────────────────
   const capture = () => {
     const video = videoRef.current;
-    const canvas = canvasRef.current;
+    const canvas = captureCanvasRef.current;
     if (!video || !canvas) return;
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -82,36 +262,58 @@ export function CameraCapture({ onCapture, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black flex flex-col">
-      <div className="flex-1 flex items-center justify-center">
-        <div className="relative flex items-center justify-center m-auto overflow-hidden">
+      <div className="flex-1 flex items-center justify-center overflow-hidden">
+        {/*
+          The inner div sizes itself to the video's displayed dimensions.
+          The overlay canvas sits absolutely on top with the same CSS size,
+          so canvas pixel coordinates (in natural video space) map 1-to-1 to
+          the displayed video pixels.
+        */}
+        <div className="relative">
           <video
             ref={videoRef}
             autoPlay
             playsInline
             muted
-            onCanPlay={() => setReady(true)}
-            className="object-contain"
+            onCanPlay={() => {
+              const v = videoRef.current;
+              if (!v) return;
+              setVideoDims({ w: v.videoWidth, h: v.videoHeight });
+              setReady(true);
+            }}
+            style={{
+              display: "block",
+              maxWidth: "100vw",
+              maxHeight: "calc(100vh - 100px)",
+              ...(videoDims ? { width: videoDims.w, height: videoDims.h } : {}),
+            }}
           />
-          {/* Card guide — centered, "contain" sizing with CARD_FRAME_INSET padding on every side */}
-          {ready && showOverlay && (
-            <div
-              className="absolute flex items-center justify-center pointer-events-none"
+
+          {/* Canvas overlay — same natural size as the video, scaled identically by CSS */}
+          {videoDims && (
+            <canvas
+              ref={overlayCanvasRef}
+              width={videoDims.w}
+              height={videoDims.h}
+              className="absolute inset-0 pointer-events-none"
               style={{
-                inset: `${CARD_FRAME_INSET}%`,
+                maxWidth: "100vw",
+                maxHeight: "calc(100vh - 100px)",
+                width: videoDims.w,
+                height: videoDims.h,
               }}
-            >
-              <div
-                className={cn(
-                  "h-full object-contain border-2 border-white/80",
-                  CARD_ASPECT_CLASS,
-                )}
-                style={{
-                  borderRadius: CARD_BORDER_RADIUS,
-                  boxShadow: "0 0 0 9999px rgba(0,0,0,0.5)",
-                }}
-              />
+            />
+          )}
+
+          {/* "Card detected" badge */}
+          {ready && showOverlay && cardDetected && (
+            <div className="absolute bottom-3 left-0 right-0 flex justify-center pointer-events-none">
+              <span className="bg-green-500/85 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                Card detected
+              </span>
             </div>
           )}
+
           {error && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/70">
               <p className="text-white text-sm px-8 text-center">{error}</p>
@@ -164,7 +366,7 @@ export function CameraCapture({ onCapture, onClose }: Props) {
         </Button>
       </div>
 
-      <canvas ref={canvasRef} className="hidden" />
+      <canvas ref={captureCanvasRef} className="hidden" />
     </div>
   );
 }
