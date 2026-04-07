@@ -236,6 +236,57 @@ const LIVE_NUMBER_PATTERNS: typeof NUMBER_PATTERNS = [
   },
 ];
 
+/** Expansion levels tried in order when a group region yields no match. */
+const LIVE_EXPANSIONS = [0, 20, 50, 100] as const;
+type LiveExpansion = (typeof LIVE_EXPANSIONS)[number];
+
+/**
+ * Expands a normalised region by `pct` percent outward on all sides.
+ * Clamps to [0, 1] so the resulting crop never exceeds the image bounds.
+ */
+function expandRegion(
+  r: { x: number; y: number; w: number; h: number },
+  pct: number,
+): { x: number; y: number; w: number; h: number } {
+  const dW = r.w * (pct / 100);
+  const dH = r.h * (pct / 100);
+  const x = Math.max(0, r.x - dW / 2);
+  const y = Math.max(0, r.y - dH / 2);
+  const w = Math.min(1 - x, r.w + dW);
+  const h = Math.min(1 - y, r.h + dH);
+  return { x, y, w, h };
+}
+
+/**
+ * Builds a single canvas by stacking every group's expanded crop strip
+ * vertically.  OCR-ing this one image is equivalent to scanning all era
+ * groups in a single Tesseract call.
+ */
+function buildCombinedStrip(
+  source: HTMLCanvasElement,
+  expansion: number,
+  scale: number,
+): HTMLCanvasElement {
+  const crops = NUMBER_POSITION_GROUPS.map((g) => {
+    const r = expandRegion(g.region, expansion);
+    return applyProcessing(cropImage(source, r.x, r.y, r.w, r.h), scale);
+  });
+  const totalH = crops.reduce((sum, c) => sum + c.height, 0);
+  const maxW = Math.max(...crops.map((c) => c.width));
+  const canvas = document.createElement("canvas");
+  canvas.width = maxW;
+  canvas.height = totalH;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "white";
+  ctx.fillRect(0, 0, maxW, totalH);
+  let y = 0;
+  for (const crop of crops) {
+    ctx.drawImage(crop, 0, y);
+    y += crop.height;
+  }
+  return canvas;
+}
+
 export function ScanTester() {
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
@@ -259,6 +310,11 @@ export function ScanTester() {
   // Debounce: require the same result 2× before showing; clear after 3 consecutive misses
   const liveCandidateRef = useRef<{ num: string; hits: number } | null>(null);
   const liveMissCountRef = useRef(0);
+  // Expansion cycling: index into LIVE_EXPANSIONS, advances on each miss
+  const liveExpansionIdxRef = useRef(0);
+  const [liveTolerance, setLiveTolerance] = useState<LiveExpansion | null>(null);
+  // Currently scanned region (for overlay highlight)
+  const [liveScanRegion, setLiveScanRegion] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
 
   useEffect(() => {
     // getUserMedia requires a secure context (HTTPS / localhost).
@@ -350,13 +406,18 @@ export function ScanTester() {
       liveVideoRef.current = null;
       liveCandidateRef.current = null;
       liveMissCountRef.current = 0;
+      liveExpansionIdxRef.current = 0;
       setLiveCardNumber(null);
+      setLiveTolerance(null);
+      setLiveScanRegion(null);
       setLiveStatus("off");
       return;
     }
     setLiveStatus("loading");
 
     let cancelled = false;
+    let terminated = false; // set synchronously in cleanup; checked before/after every await
+
     void (async () => {
       // PSM 11 = sparse text — finds isolated numbers anywhere in the crop.
       // Set once and never switch mid-run (switching PSM between frames is unreliable).
@@ -378,9 +439,8 @@ export function ScanTester() {
         liveAnalyzingRef.current = true;
         void (async () => {
           try {
-            // Capture a local reference — the ref may be nulled by cleanup mid-flight
-            const worker = liveWorkerRef.current;
-            if (!worker) return;
+            // Guard against cleanup having run before this tick started
+            if (terminated || !worker) return;
 
             // Capture current frame
             const frameCanvas = document.createElement("canvas");
@@ -388,7 +448,7 @@ export function ScanTester() {
             frameCanvas.height = video.videoHeight;
             frameCanvas.getContext("2d")!.drawImage(video, 0, 0);
 
-            // Attempt perspective correction — if successful, crop the exact number strip
+            // Attempt perspective correction so group regions map correctly
             let cardCanvas: HTMLCanvasElement | null = null;
             try {
               const targetH = frameCanvas.height;
@@ -403,39 +463,54 @@ export function ScanTester() {
               // OpenCV not loaded or no card outline detected — fall through
             }
 
-            // With correction: tight bottom strip where the number always lives.
-            // Without: scan the full frame — card could be anywhere and the number
-            // strip is only ~2% of the card height so cropping blind wastes it.
-            const crop = cardCanvas
-              ? cropImage(cardCanvas, 0.03, 0.905, 0.94, 0.09)
-              : frameCanvas;
-            const processed = applyProcessing(crop, cardCanvas ? 3 : 1);
-            const result = await worker.recognize(processed);
-            // If the worker was terminated while we were awaiting, discard result
-            if (liveWorkerRef.current !== worker) return;
+            // ── Pick the expansion level for this tick ──────────────────────
+            const expansionIdx = liveExpansionIdxRef.current;
+            const expansion = LIVE_EXPANSIONS[expansionIdx] ?? 0;
 
-            // Prefer confidence-filtered words (≥60%) to reduce noise
-            type TWord = { text: string; confidence: number };
-            type TLine = { words: TWord[] };
-            type TData = { lines: TLine[] };
-            const words: TWord[] =
-              (result.data as unknown as TData).lines?.flatMap((l) => l.words) ?? [];
-            const confText = words
-              .filter((w) => w.confidence >= 60)
-              .map((w) => w.text)
-              .join(" ");
-            const text = confText || (result.data.text?.trim() ?? "");
+            // Focus on wotc (Base Set) group for now
+            const wotcGroup = NUMBER_POSITION_GROUPS.find((g) => g.id === "wotc")!;
+            const expandedRegion = expandRegion(wotcGroup.region, expansion);
+            setLiveScanRegion(expandedRegion);
+
+            let text = "";
+            if (cardCanvas) {
+              // Crop the exact (possibly expanded) number region from the corrected card
+              const crop = cropImage(
+                cardCanvas,
+                expandedRegion.x,
+                expandedRegion.y,
+                expandedRegion.w,
+                expandedRegion.h,
+              );
+              const processed = applyProcessing(crop, 3);
+              const result = await worker.recognize(processed);
+              if (terminated) return;
+              text = result.data.text?.trim() ?? "";
+            } else {
+              // No correction: scan the full raw frame (card position unknown)
+              const result = await worker.recognize(frameCanvas);
+              if (terminated) return;
+              text = result.data.text?.trim() ?? "";
+            }
 
             let found: string | null = null;
             for (const pattern of LIVE_NUMBER_PATTERNS) {
               const m = text.match(pattern.re);
               if (m) {
                 const e = pattern.extract(m);
-                // Extra guard: standard pattern total must be realistic
-                if (e.total !== null && e.total < 10) break;
+                if (e.total !== null && e.total < 10) continue;
                 found = e.total !== null ? `${e.number}/${e.total}` : e.number;
                 break;
               }
+            }
+
+            // Advance or reset the expansion cycling
+            if (found) {
+              liveExpansionIdxRef.current = 0; // reset to tight crop for next frame
+            } else {
+              // Cycle to next expansion level; wraps back to 0 after the last
+              liveExpansionIdxRef.current =
+                (expansionIdx + 1) % LIVE_EXPANSIONS.length;
             }
 
             // Debounce: only surface a result after 2 consecutive identical hits;
@@ -444,7 +519,10 @@ export function ScanTester() {
               liveMissCountRef.current = 0;
               if (liveCandidateRef.current?.num === found) {
                 liveCandidateRef.current.hits++;
-                if (liveCandidateRef.current.hits >= 2) setLiveCardNumber(found);
+                if (liveCandidateRef.current.hits >= 2) {
+                  setLiveCardNumber(found);
+                  setLiveTolerance(expansion as LiveExpansion);
+                }
               } else {
                 liveCandidateRef.current = { num: found, hits: 1 };
               }
@@ -453,6 +531,7 @@ export function ScanTester() {
               if (liveMissCountRef.current >= 3) {
                 liveCandidateRef.current = null;
                 setLiveCardNumber(null);
+                setLiveTolerance(null);
               }
             }
           } catch {
@@ -465,6 +544,7 @@ export function ScanTester() {
     })();
 
     return () => {
+      terminated = true; // stops any in-flight recognize() from proceeding after await
       cancelled = true;
       if (liveIntervalRef.current) {
         clearInterval(liveIntervalRef.current);
@@ -476,7 +556,10 @@ export function ScanTester() {
       liveVideoRef.current = null;
       liveCandidateRef.current = null;
       liveMissCountRef.current = 0;
+      liveExpansionIdxRef.current = 0;
       setLiveCardNumber(null);
+      setLiveTolerance(null);
+      setLiveScanRegion(null);
       setLiveStatus("off");
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -711,10 +794,16 @@ export function ScanTester() {
           onVideoReady={(v) => {
             liveVideoRef.current = v;
           }}
+          scanRegion={liveScanRegion ?? undefined}
           overlayContent={
             liveCardNumber ? (
               <span className="bg-black/80 text-white text-sm font-mono font-bold px-4 py-2 rounded-full border border-green-400/60 shadow-lg">
                 {liveCardNumber}
+                {liveTolerance !== null && liveTolerance > 0 && (
+                  <span className="ml-2 text-[10px] font-normal opacity-60">
+                    +{liveTolerance}%
+                  </span>
+                )}
               </span>
             ) : liveStatus === "loading" ? (
               <span className="bg-black/60 text-white/70 text-xs px-3 py-1.5 rounded-full animate-pulse">

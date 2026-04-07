@@ -12,6 +12,8 @@ type Props = {
   onClose: () => void;
   onVideoReady?: (video: HTMLVideoElement) => void;
   overlayContent?: React.ReactNode;
+  /** Normalised region [0-1] on the corrected card to highlight as the scan target. */
+  scanRegion?: { x: number; y: number; w: number; h: number };
 };
 
 type Corners = {
@@ -21,11 +23,13 @@ type Corners = {
   bottomRightCorner: { x: number; y: number };
 };
 
-/** Draws either the detected card polygon or the static guide onto the overlay canvas. */
+/** Draws either the detected card polygon or the static guide onto the overlay canvas.
+ *  If scanRegion is provided, also draws a red highlight over that normalised region. */
 function drawOverlay(
   canvas: HTMLCanvasElement,
   corners: Corners | null,
   frameInset: number,
+  scanRegion?: { x: number; y: number; w: number; h: number },
 ) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
@@ -73,6 +77,28 @@ function drawOverlay(
       ctx.fillStyle = "rgba(74,222,128,1)";
       ctx.fill();
     }
+
+    // Red scan-region highlight — bilinear-mapped onto the detected card quad
+    if (scanRegion) {
+      const { x: rx, y: ry, w: rw, h: rh } = scanRegion;
+      const bilerp = (u: number, v: number) => ({
+        x: (1-u)*(1-v)*tl.x + u*(1-v)*tr.x + u*v*br.x + (1-u)*v*bl.x,
+        y: (1-u)*(1-v)*tl.y + u*(1-v)*tr.y + u*v*br.y + (1-u)*v*bl.y,
+      });
+      const pts = [
+        bilerp(rx,      ry),
+        bilerp(rx + rw, ry),
+        bilerp(rx + rw, ry + rh),
+        bilerp(rx,      ry + rh),
+      ];
+      ctx.beginPath();
+      ctx.moveTo(pts[0]!.x, pts[0]!.y);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i]!.x, pts[i]!.y);
+      ctx.closePath();
+      ctx.strokeStyle = "rgba(255,50,50,0.95)";
+      ctx.lineWidth = Math.max(2, canvas.width / 250);
+      ctx.stroke();
+    }
   } else {
     // Static card-shape guide
     const inset = frameInset / 100;
@@ -109,10 +135,22 @@ function drawOverlay(
     ctx.strokeStyle = "rgba(255,255,255,0.8)";
     ctx.lineWidth = Math.max(2, canvas.width / 300);
     ctx.stroke();
+
+    // Red scan-region highlight mapped onto the static guide rect
+    if (scanRegion) {
+      ctx.strokeStyle = "rgba(255,50,50,0.95)";
+      ctx.lineWidth = Math.max(2, canvas.width / 250);
+      ctx.strokeRect(
+        cX + scanRegion.x * cW,
+        cY + scanRegion.y * cH,
+        scanRegion.w * cW,
+        scanRegion.h * cH,
+      );
+    }
   }
 }
 
-export function CameraCapture({ onCapture, onClose, onVideoReady, overlayContent }: Props) {
+export function CameraCapture({ onCapture, onClose, onVideoReady, overlayContent, scanRegion }: Props) {
   const intl = useIntl();
   const videoRef = useRef<HTMLVideoElement>(null);
   const captureCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -120,6 +158,9 @@ export function CameraCapture({ onCapture, onClose, onVideoReady, overlayContent
   const streamRef = useRef<MediaStream | null>(null);
   const offscreenRef = useRef<HTMLCanvasElement | null>(null);
   const detectedCornersRef = useRef<Corners | null>(null);
+  // Keep a ref so redrawOverlay always reads the latest value without becoming a dependency
+  const scanRegionRef = useRef(scanRegion);
+  useEffect(() => { scanRegionRef.current = scanRegion; }, [scanRegion]);
 
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -174,7 +215,7 @@ export function CameraCapture({ onCapture, onClose, onVideoReady, overlayContent
       canvas.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
       return;
     }
-    drawOverlay(canvas, detectedCornersRef.current, CARD_FRAME_INSET);
+    drawOverlay(canvas, detectedCornersRef.current, CARD_FRAME_INSET, scanRegionRef.current);
   }, [showOverlay]);
 
   // ── Live card-detection loop ───────────────────────────────────────────────
@@ -288,7 +329,6 @@ export function CameraCapture({ onCapture, onClose, onVideoReady, overlayContent
               display: "block",
               maxWidth: "100vw",
               maxHeight: "calc(100vh - 100px)",
-              ...(videoDims ? { width: videoDims.w, height: videoDims.h } : {}),
             }}
           />
 
@@ -298,13 +338,7 @@ export function CameraCapture({ onCapture, onClose, onVideoReady, overlayContent
               ref={overlayCanvasRef}
               width={videoDims.w}
               height={videoDims.h}
-              className="absolute inset-0 pointer-events-none"
-              style={{
-                maxWidth: "100vw",
-                maxHeight: "calc(100vh - 100px)",
-                width: videoDims.w,
-                height: videoDims.h,
-              }}
+              className="absolute inset-0 w-full h-full pointer-events-none"
             />
           )}
 
