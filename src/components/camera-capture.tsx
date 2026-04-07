@@ -10,6 +10,8 @@ import { useIntl } from "react-intl";
 type Props = {
   onCapture: (file: File) => void;
   onClose: () => void;
+  onVideoReady?: (video: HTMLVideoElement) => void;
+  overlayContent?: React.ReactNode;
 };
 
 type Corners = {
@@ -110,7 +112,7 @@ function drawOverlay(
   }
 }
 
-export function CameraCapture({ onCapture, onClose }: Props) {
+export function CameraCapture({ onCapture, onClose, onVideoReady, overlayContent }: Props) {
   const intl = useIntl();
   const videoRef = useRef<HTMLVideoElement>(null);
   const captureCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -280,6 +282,7 @@ export function CameraCapture({ onCapture, onClose }: Props) {
               if (!v) return;
               setVideoDims({ w: v.videoWidth, h: v.videoHeight });
               setReady(true);
+              onVideoReady?.(v);
             }}
             style={{
               display: "block",
@@ -303,6 +306,13 @@ export function CameraCapture({ onCapture, onClose }: Props) {
                 height: videoDims.h,
               }}
             />
+          )}
+
+          {/* Live OCR card number */}
+          {overlayContent && (
+            <div className="absolute bottom-10 left-0 right-0 flex justify-center pointer-events-none">
+              {overlayContent}
+            </div>
           )}
 
           {/* "Card detected" badge */}

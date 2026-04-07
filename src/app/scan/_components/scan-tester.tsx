@@ -206,6 +206,36 @@ const NUMBER_PATTERNS: {
   },
 ];
 
+/**
+ * Stricter subset of NUMBER_PATTERNS for live camera scanning.
+ * - No standalone pattern (any single digit would match — too noisy).
+ * - Standard pattern requires ≥2 digits on each side.
+ * - Promo prefix requires ≥3 digit suffix to avoid short noise hits.
+ * Total < 10 is rejected in the scan loop.
+ */
+const LIVE_NUMBER_PATTERNS: typeof NUMBER_PATTERNS = [
+  {
+    label: "Trainer Gallery (TG01/TG30)",
+    re: /TG\s*(\d{2})\s*[\/\\|]\s*TG\s*(\d{2})/i,
+    extract: (m) => ({ number: `TG${m[1]}`, total: parseInt(m[2]!, 10) }),
+  },
+  {
+    label: "Alternate Art (GG01/GG70)",
+    re: /GG\s*(\d{2})\s*[\/\\|]\s*GG\s*(\d{2})/i,
+    extract: (m) => ({ number: `GG${m[1]}`, total: parseInt(m[2]!, 10) }),
+  },
+  {
+    label: "Modern Promo (SWSH001, SV001 …)",
+    re: /\b(SWSH|BW|XY|SM|SV|SVP)\s*-?\s*(\d{3,4})\b/i,
+    extract: (m) => ({ number: `${m[1]!.toUpperCase()}${m[2]}`, total: null }),
+  },
+  {
+    label: "Standard (025/165)",
+    re: /\b(\d{2,4})\s*[\/\\|]\s*(\d{2,4})\b/,
+    extract: (m) => ({ number: m[1]!, total: parseInt(m[2]!, 10) }),
+  },
+];
+
 export function ScanTester() {
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
@@ -217,6 +247,18 @@ export function ScanTester() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [hasCameraSupport, setHasCameraSupport] = useState(false);
+
+  // ── Live OCR state ────────────────────────────────────────────────────────
+  type TesseractWorker = Awaited<ReturnType<typeof createWorker>>;
+  const [liveCardNumber, setLiveCardNumber] = useState<string | null>(null);
+  const [liveStatus, setLiveStatus] = useState<"loading" | "scanning" | "off">("off");
+  const liveVideoRef = useRef<HTMLVideoElement | null>(null);
+  const liveWorkerRef = useRef<TesseractWorker | null>(null);
+  const liveAnalyzingRef = useRef(false);
+  const liveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Debounce: require the same result 2× before showing; clear after 3 consecutive misses
+  const liveCandidateRef = useRef<{ num: string; hits: number } | null>(null);
+  const liveMissCountRef = useRef(0);
 
   useEffect(() => {
     // getUserMedia requires a secure context (HTTPS / localhost).
@@ -294,6 +336,151 @@ export function ScanTester() {
     setDebugOcrText(result.data.text?.trim() || "(nothing detected)");
     setDebugOcrRunning(false);
   }
+
+  // ── Live OCR loop (runs while camera is open) ────────────────────────────
+  useEffect(() => {
+    if (!cameraOpen) {
+      if (liveIntervalRef.current) {
+        clearInterval(liveIntervalRef.current);
+        liveIntervalRef.current = null;
+      }
+      void liveWorkerRef.current?.terminate();
+      liveWorkerRef.current = null;
+      liveAnalyzingRef.current = false;
+      liveVideoRef.current = null;
+      liveCandidateRef.current = null;
+      liveMissCountRef.current = 0;
+      setLiveCardNumber(null);
+      setLiveStatus("off");
+      return;
+    }
+    setLiveStatus("loading");
+
+    let cancelled = false;
+    void (async () => {
+      // PSM 11 = sparse text — finds isolated numbers anywhere in the crop.
+      // Set once and never switch mid-run (switching PSM between frames is unreliable).
+      const worker = await createWorker("eng");
+      await worker.setParameters({
+        tessedit_pageseg_mode: "11" as never,
+        tessedit_char_whitelist: "0123456789/TGHSWBXYMVP" as never,
+      });
+      if (cancelled) {
+        await worker.terminate();
+        return;
+      }
+      liveWorkerRef.current = worker;
+      setLiveStatus("scanning");
+
+      liveIntervalRef.current = setInterval(() => {
+        const video = liveVideoRef.current;
+        if (!video || video.videoWidth === 0 || liveAnalyzingRef.current) return;
+        liveAnalyzingRef.current = true;
+        void (async () => {
+          try {
+            // Capture a local reference — the ref may be nulled by cleanup mid-flight
+            const worker = liveWorkerRef.current;
+            if (!worker) return;
+
+            // Capture current frame
+            const frameCanvas = document.createElement("canvas");
+            frameCanvas.width = video.videoWidth;
+            frameCanvas.height = video.videoHeight;
+            frameCanvas.getContext("2d")!.drawImage(video, 0, 0);
+
+            // Attempt perspective correction — if successful, crop the exact number strip
+            let cardCanvas: HTMLCanvasElement | null = null;
+            try {
+              const targetH = frameCanvas.height;
+              const targetW = Math.round(targetH * CARD_ASPECT_RATIO);
+              const extracted = jscanifyScanner.current?.extractPaper(
+                frameCanvas,
+                targetW,
+                targetH,
+              );
+              if (extracted) cardCanvas = extracted;
+            } catch {
+              // OpenCV not loaded or no card outline detected — fall through
+            }
+
+            // With correction: tight bottom strip where the number always lives.
+            // Without: scan the full frame — card could be anywhere and the number
+            // strip is only ~2% of the card height so cropping blind wastes it.
+            const crop = cardCanvas
+              ? cropImage(cardCanvas, 0.03, 0.905, 0.94, 0.09)
+              : frameCanvas;
+            const processed = applyProcessing(crop, cardCanvas ? 3 : 1);
+            const result = await worker.recognize(processed);
+            // If the worker was terminated while we were awaiting, discard result
+            if (liveWorkerRef.current !== worker) return;
+
+            // Prefer confidence-filtered words (≥60%) to reduce noise
+            type TWord = { text: string; confidence: number };
+            type TLine = { words: TWord[] };
+            type TData = { lines: TLine[] };
+            const words: TWord[] =
+              (result.data as unknown as TData).lines?.flatMap((l) => l.words) ?? [];
+            const confText = words
+              .filter((w) => w.confidence >= 60)
+              .map((w) => w.text)
+              .join(" ");
+            const text = confText || (result.data.text?.trim() ?? "");
+
+            let found: string | null = null;
+            for (const pattern of LIVE_NUMBER_PATTERNS) {
+              const m = text.match(pattern.re);
+              if (m) {
+                const e = pattern.extract(m);
+                // Extra guard: standard pattern total must be realistic
+                if (e.total !== null && e.total < 10) break;
+                found = e.total !== null ? `${e.number}/${e.total}` : e.number;
+                break;
+              }
+            }
+
+            // Debounce: only surface a result after 2 consecutive identical hits;
+            // only clear the display after 3 consecutive misses (avoids flicker).
+            if (found) {
+              liveMissCountRef.current = 0;
+              if (liveCandidateRef.current?.num === found) {
+                liveCandidateRef.current.hits++;
+                if (liveCandidateRef.current.hits >= 2) setLiveCardNumber(found);
+              } else {
+                liveCandidateRef.current = { num: found, hits: 1 };
+              }
+            } else {
+              liveMissCountRef.current++;
+              if (liveMissCountRef.current >= 3) {
+                liveCandidateRef.current = null;
+                setLiveCardNumber(null);
+              }
+            }
+          } catch {
+            // Swallow errors (e.g. worker terminated mid-recognition)
+          } finally {
+            liveAnalyzingRef.current = false;
+          }
+        })();
+      }, 600);
+    })();
+
+    return () => {
+      cancelled = true;
+      if (liveIntervalRef.current) {
+        clearInterval(liveIntervalRef.current);
+        liveIntervalRef.current = null;
+      }
+      void liveWorkerRef.current?.terminate();
+      liveWorkerRef.current = null;
+      liveAnalyzingRef.current = false;
+      liveVideoRef.current = null;
+      liveCandidateRef.current = null;
+      liveMissCountRef.current = 0;
+      setLiveCardNumber(null);
+      setLiveStatus("off");
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cameraOpen]);
 
   // ── jscanify (perspective correction) ────────────────────────────────────
   const { scanner: jscanifyScanner } = useJscanify();
@@ -521,6 +708,24 @@ export function ScanTester() {
         <CameraCapture
           onCapture={handleCameraCapture}
           onClose={() => setCameraOpen(false)}
+          onVideoReady={(v) => {
+            liveVideoRef.current = v;
+          }}
+          overlayContent={
+            liveCardNumber ? (
+              <span className="bg-black/80 text-white text-sm font-mono font-bold px-4 py-2 rounded-full border border-green-400/60 shadow-lg">
+                {liveCardNumber}
+              </span>
+            ) : liveStatus === "loading" ? (
+              <span className="bg-black/60 text-white/70 text-xs px-3 py-1.5 rounded-full animate-pulse">
+                Initializing scanner…
+              </span>
+            ) : liveStatus === "scanning" ? (
+              <span className="bg-black/60 text-white/70 text-xs px-3 py-1.5 rounded-full animate-pulse">
+                Scanning for ID…
+              </span>
+            ) : null
+          }
         />
       )}
 
