@@ -302,7 +302,9 @@ export function ScanTester() {
   // ── Live OCR state ────────────────────────────────────────────────────────
   type TesseractWorker = Awaited<ReturnType<typeof createWorker>>;
   const [liveCardNumber, setLiveCardNumber] = useState<string | null>(null);
-  const [liveStatus, setLiveStatus] = useState<"loading" | "scanning" | "off">("off");
+  const [liveStatus, setLiveStatus] = useState<"loading" | "scanning" | "off">(
+    "off",
+  );
   const liveVideoRef = useRef<HTMLVideoElement | null>(null);
   const liveWorkerRef = useRef<TesseractWorker | null>(null);
   const liveAnalyzingRef = useRef(false);
@@ -312,9 +314,16 @@ export function ScanTester() {
   const liveMissCountRef = useRef(0);
   // Expansion cycling: index into LIVE_EXPANSIONS, advances on each miss
   const liveExpansionIdxRef = useRef(0);
-  const [liveTolerance, setLiveTolerance] = useState<LiveExpansion | null>(null);
+  const [liveTolerance, setLiveTolerance] = useState<LiveExpansion | null>(
+    null,
+  );
   // Currently scanned region (for overlay highlight)
-  const [liveScanRegion, setLiveScanRegion] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const [liveScanRegion, setLiveScanRegion] = useState<{
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  } | null>(null);
 
   useEffect(() => {
     // getUserMedia requires a secure context (HTTPS / localhost).
@@ -435,7 +444,8 @@ export function ScanTester() {
 
       liveIntervalRef.current = setInterval(() => {
         const video = liveVideoRef.current;
-        if (!video || video.videoWidth === 0 || liveAnalyzingRef.current) return;
+        if (!video || video.videoWidth === 0 || liveAnalyzingRef.current)
+          return;
         liveAnalyzingRef.current = true;
         void (async () => {
           try {
@@ -468,7 +478,9 @@ export function ScanTester() {
             const expansion = LIVE_EXPANSIONS[expansionIdx] ?? 0;
 
             // Focus on wotc (Base Set) group for now
-            const wotcGroup = NUMBER_POSITION_GROUPS.find((g) => g.id === "wotc")!;
+            const wotcGroup = NUMBER_POSITION_GROUPS.find(
+              (g) => g.id === "wotc",
+            )!;
             const expandedRegion = expandRegion(wotcGroup.region, expansion);
             setLiveScanRegion(expandedRegion);
 

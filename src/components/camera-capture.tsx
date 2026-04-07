@@ -82,14 +82,22 @@ function drawOverlay(
     if (scanRegion) {
       const { x: rx, y: ry, w: rw, h: rh } = scanRegion;
       const bilerp = (u: number, v: number) => ({
-        x: (1-u)*(1-v)*tl.x + u*(1-v)*tr.x + u*v*br.x + (1-u)*v*bl.x,
-        y: (1-u)*(1-v)*tl.y + u*(1-v)*tr.y + u*v*br.y + (1-u)*v*bl.y,
+        x:
+          (1 - u) * (1 - v) * tl.x +
+          u * (1 - v) * tr.x +
+          u * v * br.x +
+          (1 - u) * v * bl.x,
+        y:
+          (1 - u) * (1 - v) * tl.y +
+          u * (1 - v) * tr.y +
+          u * v * br.y +
+          (1 - u) * v * bl.y,
       });
       const pts = [
-        bilerp(rx,      ry),
+        bilerp(rx, ry),
         bilerp(rx + rw, ry),
         bilerp(rx + rw, ry + rh),
-        bilerp(rx,      ry + rh),
+        bilerp(rx, ry + rh),
       ];
       ctx.beginPath();
       ctx.moveTo(pts[0]!.x, pts[0]!.y);
@@ -150,7 +158,13 @@ function drawOverlay(
   }
 }
 
-export function CameraCapture({ onCapture, onClose, onVideoReady, overlayContent, scanRegion }: Props) {
+export function CameraCapture({
+  onCapture,
+  onClose,
+  onVideoReady,
+  overlayContent,
+  scanRegion,
+}: Props) {
   const intl = useIntl();
   const videoRef = useRef<HTMLVideoElement>(null);
   const captureCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -160,7 +174,9 @@ export function CameraCapture({ onCapture, onClose, onVideoReady, overlayContent
   const detectedCornersRef = useRef<Corners | null>(null);
   // Keep a ref so redrawOverlay always reads the latest value without becoming a dependency
   const scanRegionRef = useRef(scanRegion);
-  useEffect(() => { scanRegionRef.current = scanRegion; }, [scanRegion]);
+  useEffect(() => {
+    scanRegionRef.current = scanRegion;
+  }, [scanRegion]);
 
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -169,6 +185,7 @@ export function CameraCapture({ onCapture, onClose, onVideoReady, overlayContent
   const [videoDims, setVideoDims] = useState<{ w: number; h: number } | null>(
     null,
   );
+  const zoomCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const { scanner, ready: jscanifyReady } = useJscanify();
 
@@ -215,7 +232,12 @@ export function CameraCapture({ onCapture, onClose, onVideoReady, overlayContent
       canvas.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
       return;
     }
-    drawOverlay(canvas, detectedCornersRef.current, CARD_FRAME_INSET, scanRegionRef.current);
+    drawOverlay(
+      canvas,
+      detectedCornersRef.current,
+      CARD_FRAME_INSET,
+      scanRegionRef.current,
+    );
   }, [showOverlay]);
 
   // ── Live card-detection loop ───────────────────────────────────────────────
@@ -261,13 +283,56 @@ export function CameraCapture({ onCapture, onClose, onVideoReady, overlayContent
           ) {
             detectedCornersRef.current = corners as Corners;
             found = true;
+
+            // ── Zoom canvas: extract scan region from the raw video frame ──
+            const sr = scanRegionRef.current;
+            const zoomCanvas = zoomCanvasRef.current;
+            if (sr && zoomCanvas) {
+              const { topLeftCorner: tl, topRightCorner: tr,
+                      bottomRightCorner: br, bottomLeftCorner: bl } =
+                corners as Corners;
+              const bilerp = (u: number, v: number) => ({
+                x: (1-u)*(1-v)*tl.x + u*(1-v)*tr.x + u*v*br.x + (1-u)*v*bl.x,
+                y: (1-u)*(1-v)*tl.y + u*(1-v)*tr.y + u*v*br.y + (1-u)*v*bl.y,
+              });
+              const pts = [
+                bilerp(sr.x,        sr.y),
+                bilerp(sr.x + sr.w, sr.y),
+                bilerp(sr.x + sr.w, sr.y + sr.h),
+                bilerp(sr.x,        sr.y + sr.h),
+              ];
+              const minX = Math.max(0, Math.floor(Math.min(...pts.map(p => p.x))));
+              const minY = Math.max(0, Math.floor(Math.min(...pts.map(p => p.y))));
+              const maxX = Math.min(offscreen.width,  Math.ceil(Math.max(...pts.map(p => p.x))));
+              const maxY = Math.min(offscreen.height, Math.ceil(Math.max(...pts.map(p => p.y))));
+              const srcW = maxX - minX;
+              const srcH = maxY - minY;
+              if (srcW > 4 && srcH > 4) {
+                // Render at 2× the source pixel width for sharpness, max 720px
+                const ZOOM_W = Math.min(720, srcW * 2);
+                const ZOOM_H = Math.round(ZOOM_W * srcH / srcW);
+                // Only resize if dimensions actually changed — avoids flicker
+                if (zoomCanvas.width !== ZOOM_W || zoomCanvas.height !== ZOOM_H) {
+                  zoomCanvas.width  = ZOOM_W;
+                  zoomCanvas.height = ZOOM_H;
+                }
+                const zCtx = zoomCanvas.getContext("2d")!;
+                zCtx.clearRect(0, 0, ZOOM_W, ZOOM_H);
+                zCtx.drawImage(offscreen, minX, minY, srcW, srcH, 0, 0, ZOOM_W, ZOOM_H);
+              }
+            }
           }
         }
       } catch {
         // OpenCV error — skip frame
       }
 
-      if (!found) detectedCornersRef.current = null;
+      if (!found) {
+        detectedCornersRef.current = null;
+        // Clear zoom when card is lost
+        const zCtx = zoomCanvasRef.current?.getContext("2d");
+        if (zCtx) zCtx.clearRect(0, 0, zoomCanvasRef.current!.width, zoomCanvasRef.current!.height);
+      }
 
       setCardDetected(found);
       redrawOverlay();
@@ -339,6 +404,15 @@ export function CameraCapture({ onCapture, onClose, onVideoReady, overlayContent
               width={videoDims.w}
               height={videoDims.h}
               className="absolute inset-0 w-full h-full pointer-events-none"
+            />
+          )}
+
+          {/* Scan-region zoom loupe */}
+          {scanRegion && (
+            <canvas
+              ref={zoomCanvasRef}
+              className="absolute top-3 right-3 border-2 border-red-500 rounded shadow-lg"
+              style={{ imageRendering: "auto", maxWidth: "40%", filter: "contrast(1.2) brightness(1.05)" }}
             />
           )}
 
