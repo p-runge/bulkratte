@@ -108,16 +108,17 @@ const NUMBER_POSITION_GROUPS = [
 ] as const;
 
 /**
- * Number patterns for live camera scanning.
- * - No standalone pattern (any single digit would match — too noisy).
- * - Standard pattern requires ≥2 digits on each side.
- * - Promo prefix requires ≥3 digit suffix to avoid short noise hits.
- * Total < 10 is rejected in the scan loop.
+ * Valid card ID formats:
+ * - TG/GG prefix + 2-digit number:  TG01, GG56
+ * - Promo prefix + 3-digit number:  SWSH001, BW999, SVP042
+ * - Bare number (no leading zero):  1, 42, 102
+ * - x/y format — x may have leading zeros, y may not: 10/102, 002/102, 110/102
  */
 const CardIdSchema = z
   .string()
+  .trim()
   .regex(
-    /^TG\d{2}\/TG\d{2}$|^GG\d{2}\/GG\d{2}$|^(SWSH|BW|XY|SM|SV|SVP)-?\d{3}$|^\d{1,3}\/\d{1,3}$/,
+    /^(?:(TG|GG)\d{2}|(SWSH|BW|XY|SM|SVP|SV)\d{3}|[1-9]\d{0,1}|\d{1,3}\/[1-9]\d{0,2})$/,
   );
 
 /** Expansion levels tried in order when a group region yields no match. */
@@ -212,9 +213,10 @@ export function ScanTester() {
     let terminated = false; // set synchronously in cleanup; checked before/after every await
 
     void (async () => {
-      // PSM 11 = sparse text — finds isolated numbers anywhere in the crop.
       // Set once and never switch mid-run (switching PSM between frames is unreliable).
-      const worker = await createWorker("eng");
+      const worker = await createWorker("eng", Tesseract.OEM.DEFAULT, {
+        // logger: (m) => console.log("[Tesseract]", m),
+      });
       await worker.setParameters({
         tessedit_pageseg_mode: Tesseract.PSM.SINGLE_WORD,
         tessedit_char_whitelist: "0123456789/",
