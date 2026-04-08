@@ -120,6 +120,7 @@ const CardIdSchema = z
   .trim()
   .regex(
     /^(?:(TG|GG)\d{2}|(SWSH|BW|XY|SM|SVP|SV)\d{3}|[1-9]\d{0,1}|\d{1,3}\/[1-9]\d{0,2})$/,
+    // /^(\d{1,3}\/[1-9]\d{0,2})$/,
   );
 
 /** Expansion levels tried in order when a group region yields no match. */
@@ -288,7 +289,7 @@ export function ScanTester() {
               processedCanvas = new ImagePipeline(crop)
                 .scale(3)
                 .greyscale()
-                .contrast(0.5)
+                .contrast(1)
                 .toCanvas();
               const result = await worker.recognize(processedCanvas);
               if (terminated) return;
