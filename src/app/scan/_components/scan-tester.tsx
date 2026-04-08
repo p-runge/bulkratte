@@ -6,7 +6,8 @@ import { useJscanify } from "@/hooks/use-jscanify";
 import { CARD_ASPECT_RATIO } from "@/lib/card-config";
 import { Camera } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { createWorker } from "tesseract.js";
+import Tesseract, { createWorker } from "tesseract.js";
+import z from "zod";
 
 // ── Number position groups ────────────────────────────────────────────────
 /**
@@ -113,32 +114,11 @@ const NUMBER_POSITION_GROUPS = [
  * - Promo prefix requires ≥3 digit suffix to avoid short noise hits.
  * Total < 10 is rejected in the scan loop.
  */
-const LIVE_NUMBER_PATTERNS: {
-  label: string;
-  re: RegExp;
-  extract: (m: RegExpMatchArray) => { number: string; total: number | null };
-}[] = [
-  {
-    label: "Trainer Gallery (TG01/TG30)",
-    re: /TG\s*(\d{2})\s*[\/\\|]\s*TG\s*(\d{2})/i,
-    extract: (m) => ({ number: `TG${m[1]}`, total: parseInt(m[2]!, 10) }),
-  },
-  {
-    label: "Alternate Art (GG01/GG70)",
-    re: /GG\s*(\d{2})\s*[\/\\|]\s*GG\s*(\d{2})/i,
-    extract: (m) => ({ number: `GG${m[1]}`, total: parseInt(m[2]!, 10) }),
-  },
-  {
-    label: "Modern Promo (SWSH001, SV001 …)",
-    re: /\b(SWSH|BW|XY|SM|SV|SVP)\s*-?\s*(\d{3,4})\b/i,
-    extract: (m) => ({ number: `${m[1]!.toUpperCase()}${m[2]}`, total: null }),
-  },
-  {
-    label: "Standard (025/165)",
-    re: /\b(\d{2,4})\s*[\/\\|]\s*(\d{2,4})\b/,
-    extract: (m) => ({ number: m[1]!, total: parseInt(m[2]!, 10) }),
-  },
-];
+const CardIdSchema = z
+  .string()
+  .regex(
+    /^TG\d{2}\/TG\d{2}$|^GG\d{2}\/GG\d{2}$|^(SWSH|BW|XY|SM|SV|SVP)-?\d{3}$|^\d{1,3}\/\d{1,3}$/,
+  );
 
 /** Expansion levels tried in order when a group region yields no match. */
 const LIVE_EXPANSIONS = [0] as const;
@@ -176,9 +156,6 @@ export function ScanTester() {
   const liveWorkerRef = useRef<TesseractWorker | null>(null);
   const liveAnalyzingRef = useRef(false);
   const liveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  // Debounce: require the same result 2× before showing; clear after 3 consecutive misses
-  const liveCandidateRef = useRef<{ num: string; hits: number } | null>(null);
-  const liveMissCountRef = useRef(0);
   // Expansion cycling: index into LIVE_EXPANSIONS, advances on each miss
   const liveExpansionIdxRef = useRef(0);
   const [liveTolerance, setLiveTolerance] = useState<LiveExpansion | null>(
@@ -192,11 +169,13 @@ export function ScanTester() {
     h: number;
   } | null>(null);
 
-  // ── Zoom / confirmed state ────────────────────────────────────────────────
-  const liveZoomUrlRef = useRef<string | null>(null);
-  const [liveZoomDisplayUrl, setLiveZoomDisplayUrl] = useState<string | null>(
+  // ── Single-hit canvas cache + confirmed state ─────────────────────────────
+  /** Data URL of the perspective-corrected card canvas (set on first hit). */
+  const [liveCardCanvasUrl, setLiveCardCanvasUrl] = useState<string | null>(
     null,
   );
+  /** Data URL of the processed OCR crop (set on first hit). */
+  const [liveProcessedUrl, setLiveProcessedUrl] = useState<string | null>(null);
   const [confirmedId, setConfirmedId] = useState<string | null>(null);
   const [confirmedCropUrl, setConfirmedCropUrl] = useState<string | null>(null);
 
@@ -206,15 +185,6 @@ export function ScanTester() {
         typeof navigator.mediaDevices?.getUserMedia === "function",
     );
   }, []);
-
-  // Capture the zoom snapshot the moment an ID is first confirmed
-  useEffect(() => {
-    if (liveCardNumber) {
-      setLiveZoomDisplayUrl(liveZoomUrlRef.current);
-    } else {
-      setLiveZoomDisplayUrl(null);
-    }
-  }, [liveCardNumber]);
 
   // ── Live OCR loop (runs while camera is open) ────────────────────────────
   useEffect(() => {
@@ -227,12 +197,12 @@ export function ScanTester() {
       liveWorkerRef.current = null;
       liveAnalyzingRef.current = false;
       liveVideoRef.current = null;
-      liveCandidateRef.current = null;
-      liveMissCountRef.current = 0;
       liveExpansionIdxRef.current = 0;
       setLiveCardNumber(null);
       setLiveTolerance(null);
       setLiveScanRegion(null);
+      setLiveCardCanvasUrl(null);
+      setLiveProcessedUrl(null);
       setLiveStatus("off");
       return;
     }
@@ -246,8 +216,10 @@ export function ScanTester() {
       // Set once and never switch mid-run (switching PSM between frames is unreliable).
       const worker = await createWorker("eng");
       await worker.setParameters({
-        tessedit_pageseg_mode: "11" as never,
-        tessedit_char_whitelist: "0123456789/TGHSWBXYMVP" as never,
+        tessedit_pageseg_mode: Tesseract.PSM.SINGLE_WORD,
+        tessedit_char_whitelist: "0123456789/",
+        // TODO: only use numbers for now, add promo letter prefixes back in later on
+        // tessedit_char_whitelist: "0123456789/TGHSWBXYMVP",
       });
       if (cancelled) {
         await worker.terminate();
@@ -292,6 +264,7 @@ export function ScanTester() {
             const expansion = LIVE_EXPANSIONS[expansionIdx] ?? 0;
 
             // Focus on wotc (Base Set) group for now
+            // TODO: remove before publishing
             const wotcGroup = NUMBER_POSITION_GROUPS.find(
               (g) => g.id === "wotc",
             )!;
@@ -299,6 +272,7 @@ export function ScanTester() {
             setLiveScanRegion(expandedRegion);
 
             let text = "";
+            let processedCanvas: HTMLCanvasElement | null = null;
             if (cardCanvas) {
               // Crop the exact (possibly expanded) number region from the corrected card
               const crop = cropImage(
@@ -308,58 +282,40 @@ export function ScanTester() {
                 expandedRegion.w,
                 expandedRegion.h,
               );
-              const processed = applyProcessing(crop, 3);
-              const result = await worker.recognize(processed);
+              processedCanvas = applyProcessing(crop, 3);
+              const result = await worker.recognize(processedCanvas);
               if (terminated) return;
               text = result.data.text?.trim() ?? "";
-            } else {
-              // No correction: scan the full raw frame (card position unknown)
-              const result = await worker.recognize(frameCanvas);
-              if (terminated) return;
-              text = result.data.text?.trim() ?? "";
+              // } else {
+              //   // No correction: scan the full raw frame (card position unknown)
+              //   const result = await worker.recognize(frameCanvas);
+              //   if (terminated) return;
+              //   text = result.data.text?.trim() ?? "";
             }
 
             let found: string | null = null;
-            for (const pattern of LIVE_NUMBER_PATTERNS) {
-              const m = text.match(pattern.re);
-              if (m) {
-                const e = pattern.extract(m);
-                if (e.total !== null && e.total < 10) continue;
-                found = e.total !== null ? `${e.number}/${e.total}` : e.number;
-                break;
-              }
+            try {
+              found = CardIdSchema.parse(text);
+              console.log("Found valid card ID:", found, { text, expansion });
+            } catch {
+              // No valid number found in this frame
+              console.log("Found text does not match expected patterns:", {
+                text,
+              });
             }
 
-            // Advance or reset the expansion cycling
+            // Single-hit: surface immediately and cache canvases; misses don't clear.
             if (found) {
-              liveExpansionIdxRef.current = 0; // reset to tight crop for next frame
+              if (cardCanvas) setLiveCardCanvasUrl(cardCanvas.toDataURL());
+              if (processedCanvas)
+                setLiveProcessedUrl(processedCanvas.toDataURL());
+              setLiveCardNumber(found);
+              setLiveTolerance(expansion as LiveExpansion);
+              liveExpansionIdxRef.current = 0;
             } else {
               // Cycle to next expansion level; wraps back to 0 after the last
               liveExpansionIdxRef.current =
                 (expansionIdx + 1) % LIVE_EXPANSIONS.length;
-            }
-
-            // Debounce: only surface a result after 2 consecutive identical hits;
-            // only clear the display after 3 consecutive misses (avoids flicker).
-            if (found) {
-              liveMissCountRef.current = 0;
-              if (liveCandidateRef.current?.num === found) {
-                liveCandidateRef.current.hits++;
-                if (liveCandidateRef.current.hits >= 2) {
-                  setLiveCardNumber(found);
-                  setLiveTolerance(expansion as LiveExpansion);
-                }
-              } else {
-                liveCandidateRef.current = { num: found, hits: 1 };
-              }
-            } else {
-              liveMissCountRef.current++;
-              if (liveMissCountRef.current >= 3) {
-                // Reset the candidate so a new ID can start accumulating,
-                // but keep the currently displayed ID visible until a new one
-                // is confirmed or the user presses "Use this ID".
-                liveCandidateRef.current = null;
-              }
             }
           } catch {
             // Swallow errors (e.g. worker terminated mid-recognition)
@@ -367,7 +323,7 @@ export function ScanTester() {
             liveAnalyzingRef.current = false;
           }
         })();
-      }, 600);
+      }, 200);
     })();
 
     return () => {
@@ -381,12 +337,12 @@ export function ScanTester() {
       liveWorkerRef.current = null;
       liveAnalyzingRef.current = false;
       liveVideoRef.current = null;
-      liveCandidateRef.current = null;
-      liveMissCountRef.current = 0;
       liveExpansionIdxRef.current = 0;
       setLiveCardNumber(null);
       setLiveTolerance(null);
       setLiveScanRegion(null);
+      setLiveCardCanvasUrl(null);
+      setLiveProcessedUrl(null);
       setLiveStatus("off");
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -429,20 +385,27 @@ export function ScanTester() {
           }}
           scanRegion={liveScanRegion ?? undefined}
           hideCaptureButton
-          onZoomUpdate={(dataUrl) => {
-            liveZoomUrlRef.current = dataUrl;
-          }}
           overlayContent={
             liveCardNumber ? (
               <div className="flex flex-col items-center gap-3">
-                {liveZoomDisplayUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={liveZoomDisplayUrl}
-                    alt="Scan crop"
-                    className="max-h-20 rounded border-2 border-red-500 shadow-lg pointer-events-none"
-                  />
-                )}
+                <div className="flex items-center gap-2">
+                  {liveCardCanvasUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={liveCardCanvasUrl}
+                      alt="Corrected card"
+                      className="max-h-32 rounded border-2 border-green-400 shadow-lg pointer-events-none"
+                    />
+                  )}
+                  {liveProcessedUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={liveProcessedUrl}
+                      alt="OCR crop"
+                      className="max-h-32 rounded border-2 border-red-500 shadow-lg pointer-events-none"
+                    />
+                  )}
+                </div>
                 <div className="flex items-center gap-3">
                   <span className="bg-black/80 text-white text-sm font-mono font-bold px-4 py-2 rounded-full border border-green-400/60 shadow-lg">
                     {liveCardNumber}
@@ -457,7 +420,7 @@ export function ScanTester() {
                     className="pointer-events-auto"
                     onClick={() => {
                       setConfirmedId(liveCardNumber);
-                      setConfirmedCropUrl(liveZoomUrlRef.current);
+                      setConfirmedCropUrl(liveCardCanvasUrl);
                       setCameraOpen(false);
                     }}
                   >
