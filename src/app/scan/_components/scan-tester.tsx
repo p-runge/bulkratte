@@ -4,6 +4,7 @@ import { CameraCapture } from "@/components/camera-capture";
 import { Button } from "@/components/ui/button";
 import { useJscanify } from "@/hooks/use-jscanify";
 import { CARD_ASPECT_RATIO } from "@/lib/card-config";
+import { ImagePipeline } from "@/lib/image-pipeline";
 import { Camera } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import Tesseract, { createWorker } from "tesseract.js";
@@ -284,7 +285,11 @@ export function ScanTester() {
                 expandedRegion.w,
                 expandedRegion.h,
               );
-              processedCanvas = applyProcessing(crop, 3);
+              processedCanvas = new ImagePipeline(crop)
+                .scale(3)
+                .greyscale()
+                .contrast(0.5)
+                .toCanvas();
               const result = await worker.recognize(processedCanvas);
               if (terminated) return;
               text = result.data.text?.trim() ?? "";
@@ -483,35 +488,5 @@ function cropImage(
   canvas.width = cw;
   canvas.height = ch;
   canvas.getContext("2d")!.drawImage(source, sx, sy, cw, ch, 0, 0, cw, ch);
-  return canvas;
-}
-
-/**
- * Upscales a canvas by `scale`, converts to grayscale and boosts contrast
- * so Tesseract can read small text reliably.
- */
-function applyProcessing(
-  source: HTMLCanvasElement,
-  scale = 3,
-): HTMLCanvasElement {
-  const canvas = document.createElement("canvas");
-  canvas.width = source.width * scale;
-  canvas.height = source.height * scale;
-  const ctx = canvas.getContext("2d")!;
-
-  ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
-
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const d = imageData.data;
-  for (let i = 0; i < d.length; i += 4) {
-    // Grayscale
-    const gray =
-      0.299 * (d[i] ?? 0) + 0.587 * (d[i + 1] ?? 0) + 0.114 * (d[i + 2] ?? 0);
-    // Contrast stretch: push toward black/white
-    const contrasted = Math.min(255, Math.max(0, (gray - 128) * 1.8 + 128));
-    d[i] = d[i + 1] = d[i + 2] = contrasted;
-  }
-  ctx.putImageData(imageData, 0, 0);
-
   return canvas;
 }
