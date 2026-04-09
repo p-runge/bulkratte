@@ -6,7 +6,35 @@
 
 Bulkratte is a web application designed to help users manage and organize their Pokémon card collections efficiently. With Bulkratte, users can easily catalog their cards, track their values, and share their collections with friends.
 
-## Dev Setup
+## Features
+
+### Wiki
+
+- **Searching Cards in TCG**: Search through all cards, sets and series the TCG has to offer.
+- **Multi-Language Support for Core Data**: Access card data like names and even images in multiple languages (EN and DE for now, more coming soon).
+- **Check Sets for Chase Cards**: Quickly check what cards of a set have the highest market price.
+
+### Collection Management
+
+- **User Accounts and Authentication**: Easily create an account with 2 clicks using Discord or Google and log in to access your collection on any device.
+- **Add Cards to Collection**: Add individual, physical cards to your personal collection, including condition, language, and variant details.
+- **Custom Binder Creation**: Define custom binders you want to complete and fill them over time by adding cards from your collection.
+- **Dynamic Wantlists**: Maintain dynamic wantlists that update in real-time as your collection changes.
+- **Shareable Wantlists**: Share your wantlists with potential trade partners via a link with optional expiry dates for temporary contacts.
+- **Trade Partners**: Connect with close friends to share your full collection and wantlist details with each other for seamless trading.
+
+## Coming "Soon ™️"
+
+- **Card Scanning**: Use your device's camera to scan cards and automatically add them to your collection or check their market value.
+- **Cardmarket Export of Wantlists**: Export your wantlists in a format compatible with Cardmarket for easy purchasing.
+- **Better Mobile Experience**: Mobile UX is a bit rough at the moment. Improved mobile layouts for managing your collection on the go.
+- **Progressive Web App (PWA)**: Access Bulkratte on any device with offline capabilities.
+- **Value Tracking**: Keep track of the market value of your collection.
+- **Magic the Gathering Support**: Manage your Magic the Gathering card collection alongside your Pokémon cards.
+
+## Development
+
+### Dev Setup
 
 Run the following command to start the development environment:
 
@@ -22,26 +50,7 @@ If you want to set up a tunnel to your local development environment e.g. for te
 pnpm dev:tunnel
 ```
 
-## Features
-
-- **Searching Cards in TCG**: Search through all cards, sets and series the TCG has to offer.
-- **Custom Set Creation**: Organize cards into personalized sets for tracking collection progress, building themed decks, or mastering official TCG sets.
-- **User Accounts and Authentication**: Easily create an account with 2 clicks using Discord and log in to access your collection on any device.
-
-### Coming "Soon ™️"
-
-- **Collection Management**: Add individual, physical cards in your personal collection.
-- **Custom Set Progress Tracking**: Monitor your collection's progress by adding cards from your collection to your custom sets.
-- **Binder View**: Visualize your collection in a binder-style layout.
-- **Shareable Wishlists**: Create wishlists and send them to potential trade partners to let them know which cards you want.
-- **Value Tracking**: Keep track of the market value of your collection.
-- **Trade Proposals**: Propose trades with friends directly through the platform.
-- **Progressive Web App (PWA)**: Access Bulkratte on any device with offline capabilities.
-- **Multi-language Support for Core Data**: Access card data in multiple languages.
-
-## Development
-
-### Environment variables
+### Environment Variables
 
 | Variable            | Required | Description                                                                                   |
 | ------------------- | -------- | --------------------------------------------------------------------------------------------- |
@@ -56,7 +65,7 @@ Local default (created automatically by Docker init script):
 DATABASE_URL_CORE=postgres://core_importer:core_importer_pw@localhost:5469/mydatabase
 ```
 
-### Production setup (Neon — one-time SQL)
+### Production Setup (Neon — One-Time SQL)
 
 Run the following as your Neon project owner to create the restricted role:
 
