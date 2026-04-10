@@ -41,13 +41,9 @@ export default function WantlistTab() {
   return (
     <TabsContent value="wantlist">
       <div className="space-y-6">
-        <div className="flex justify-between items-start gap-4">
-          <CardFilters
-            onFilterChange={setFilters}
-            filterOptions={filterOptions}
-          />
+        <div className="flex justify-end">
           <ShareLinksDialog>
-            <Button size="default" className="shrink-0">
+            <Button size="default">
               <Share2 className="h-4 w-4 mr-2" />
               {intl.formatMessage({
                 id: "page.collection.wantlist.share",
@@ -56,6 +52,10 @@ export default function WantlistTab() {
             </Button>
           </ShareLinksDialog>
         </div>
+        <CardFilters
+          onFilterChange={setFilters}
+          filterOptions={filterOptions}
+        />
 
         {isPending ? (
           <div className="flex justify-center py-12">
