@@ -14,10 +14,8 @@ type Props = {
   overlayContent?: React.ReactNode;
   /** Normalised region [0-1] on the corrected card to highlight as the scan target. */
   scanRegion?: { x: number; y: number; w: number; h: number };
-  /** When true, the circular capture button is hidden. */
+  /** Hide the shutter button (e.g. when live-scan handles capture automatically). */
   hideCaptureButton?: boolean;
-  /** Called whenever the scan-region zoom canvas is updated with the new dataURL, or null when the card is lost. */
-  onZoomUpdate?: (dataUrl: string | null) => void;
 };
 
 type Corners = {
@@ -169,7 +167,6 @@ export function CameraCapture({
   overlayContent,
   scanRegion,
   hideCaptureButton,
-  onZoomUpdate,
 }: Props) {
   const intl = useIntl();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -191,7 +188,6 @@ export function CameraCapture({
   const [videoDims, setVideoDims] = useState<{ w: number; h: number } | null>(
     null,
   );
-  const zoomCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const { scanner, ready: jscanifyReady } = useJscanify();
 
@@ -262,8 +258,12 @@ export function CameraCapture({
         offscreenRef.current = document.createElement("canvas");
       }
       const offscreen = offscreenRef.current;
-      offscreen.width = video.videoWidth;
-      offscreen.height = video.videoHeight;
+      // Only resize when dimensions actually change — setting .width always resets
+      // the canvas (even to the same value) which causes a layout flush and flicker.
+      if (offscreen.width !== video.videoWidth || offscreen.height !== video.videoHeight) {
+        offscreen.width = video.videoWidth;
+        offscreen.height = video.videoHeight;
+      }
       const ctx = offscreen.getContext("2d");
       if (!ctx) return;
       ctx.drawImage(video, 0, 0);
@@ -289,102 +289,16 @@ export function CameraCapture({
           ) {
             detectedCornersRef.current = corners as Corners;
             found = true;
-
-            // ── Zoom canvas: extract scan region from the raw video frame ──
-            const sr = scanRegionRef.current;
-            const zoomCanvas = zoomCanvasRef.current;
-            if (sr && zoomCanvas) {
-              const {
-                topLeftCorner: tl,
-                topRightCorner: tr,
-                bottomRightCorner: br,
-                bottomLeftCorner: bl,
-              } = corners as Corners;
-              const bilerp = (u: number, v: number) => ({
-                x:
-                  (1 - u) * (1 - v) * tl.x +
-                  u * (1 - v) * tr.x +
-                  u * v * br.x +
-                  (1 - u) * v * bl.x,
-                y:
-                  (1 - u) * (1 - v) * tl.y +
-                  u * (1 - v) * tr.y +
-                  u * v * br.y +
-                  (1 - u) * v * bl.y,
-              });
-              const pts = [
-                bilerp(sr.x, sr.y),
-                bilerp(sr.x + sr.w, sr.y),
-                bilerp(sr.x + sr.w, sr.y + sr.h),
-                bilerp(sr.x, sr.y + sr.h),
-              ];
-              const minX = Math.max(
-                0,
-                Math.floor(Math.min(...pts.map((p) => p.x))),
-              );
-              const minY = Math.max(
-                0,
-                Math.floor(Math.min(...pts.map((p) => p.y))),
-              );
-              const maxX = Math.min(
-                offscreen.width,
-                Math.ceil(Math.max(...pts.map((p) => p.x))),
-              );
-              const maxY = Math.min(
-                offscreen.height,
-                Math.ceil(Math.max(...pts.map((p) => p.y))),
-              );
-              const srcW = maxX - minX;
-              const srcH = maxY - minY;
-              if (srcW > 4 && srcH > 4) {
-                // Render at 2× the source pixel width for sharpness, max 720px
-                const ZOOM_W = Math.min(720, srcW * 2);
-                const ZOOM_H = Math.round((ZOOM_W * srcH) / srcW);
-                // Only resize if dimensions actually changed — avoids flicker
-                if (
-                  zoomCanvas.width !== ZOOM_W ||
-                  zoomCanvas.height !== ZOOM_H
-                ) {
-                  zoomCanvas.width = ZOOM_W;
-                  zoomCanvas.height = ZOOM_H;
-                }
-                const zCtx = zoomCanvas.getContext("2d")!;
-                zCtx.clearRect(0, 0, ZOOM_W, ZOOM_H);
-                zCtx.drawImage(
-                  offscreen,
-                  minX,
-                  minY,
-                  srcW,
-                  srcH,
-                  0,
-                  0,
-                  ZOOM_W,
-                  ZOOM_H,
-                );
-                onZoomUpdate?.(zoomCanvas.toDataURL());
-              }
-            }
           }
         }
       } catch {
         // OpenCV error — skip frame
       }
 
-      if (!found) {
-        detectedCornersRef.current = null;
-        // Clear zoom when card is lost
-        const zCtx = zoomCanvasRef.current?.getContext("2d");
-        if (zCtx)
-          zCtx.clearRect(
-            0,
-            0,
-            zoomCanvasRef.current!.width,
-            zoomCanvasRef.current!.height,
-          );
-        onZoomUpdate?.(null);
-      }
+      if (!found) detectedCornersRef.current = null;
 
-      setCardDetected(found);
+      // Functional update avoids a React re-render when the value hasn't changed
+      setCardDetected((prev) => (prev !== found ? found : prev));
       redrawOverlay();
     }, 200);
 
@@ -457,19 +371,6 @@ export function CameraCapture({
             />
           )}
 
-          {/* Scan-region zoom loupe */}
-          {scanRegion && (
-            <canvas
-              ref={zoomCanvasRef}
-              className="absolute top-3 right-3 border-2 border-red-500 rounded shadow-lg"
-              style={{
-                imageRendering: "auto",
-                maxWidth: "40%",
-                filter: "contrast(1.2) brightness(1.05)",
-              }}
-            />
-          )}
-
           {/* Live OCR card number */}
           {overlayContent && (
             <div className="absolute bottom-10 left-0 right-0 flex justify-center pointer-events-none">
@@ -510,9 +411,7 @@ export function CameraCapture({
           <X className="h-6 w-6" />
         </Button>
 
-        {hideCaptureButton ? (
-          <div className="h-16 w-16" />
-        ) : (
+        {!hideCaptureButton && (
           <button
             type="button"
             onClick={capture}
@@ -526,6 +425,7 @@ export function CameraCapture({
             <Camera className="h-7 w-7 text-black" />
           </button>
         )}
+        {hideCaptureButton && <div className="h-16 w-16" />}
 
         <Button
           type="button"

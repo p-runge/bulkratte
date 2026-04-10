@@ -104,7 +104,7 @@ const NUMBER_POSITION_GROUPS = [
     id: "wotc",
     label: "Legendary Collection – Base Set",
     // Empirical: Base x1=0.043 y1=0.935; Gym x1=0.043 y1=0.927; Neo x1=0.046 y1=0.935; LC x1=0.050 y1=0.932
-    region: { x: 0.845, y: 0.939, w: 0.083, h: 0.017 },
+    region: { x: 0.845, y: 0.943, w: 0.083, h: 0.017 },
   },
 ] as const;
 
@@ -148,6 +148,44 @@ function expandRegion(
 export function ScanTester() {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [hasCameraSupport, setHasCameraSupport] = useState(false);
+
+  // [DEV-ONLY: delete before publishing] ─────────────────────────────────────
+  // Target ID the scanner must match before auto-confirming.
+  // Leave empty to confirm any valid hit (original behaviour).
+  const [devTargetId, setDevTargetId] = useState("");
+  // How long (in seconds) the last scan took to confirm.
+  const [devScanSeconds, setDevScanSeconds] = useState<number | null>(null);
+  // Timestamp (ms) recorded when the camera opens.
+  const scanStartRef = useRef<number | null>(null);
+
+  // History of confirmed scans — persisted to localStorage across reloads.
+  // cropUrl is kept in memory only (data URLs are too large to store).
+  type DevHistoryEntry = {
+    id: string;
+    times: number[]; // every confirmed scan time in seconds
+    cropUrl: string | null; // in-memory only, cleared on reload
+  };
+  const DEV_HISTORY_KEY = "dev-scan-history";
+  const [devScanHistory, setDevScanHistory] = useState<DevHistoryEntry[]>(() => {
+    try {
+      const raw = localStorage.getItem(DEV_HISTORY_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw) as { id: string; times: number[] }[];
+      return parsed.map((e) => ({ ...e, cropUrl: null }));
+    } catch {
+      return [];
+    }
+  });
+  // Persist whenever history changes (store without cropUrl)
+  useEffect(() => {
+    try {
+      const toStore = devScanHistory.map(({ id, times }) => ({ id, times }));
+      localStorage.setItem(DEV_HISTORY_KEY, JSON.stringify(toStore));
+    } catch {
+      // Quota exceeded or SSR — ignore
+    }
+  }, [devScanHistory]);
+  // ──────────────────────────────────────────────────────────────────────────
 
   // ── Live OCR state ────────────────────────────────────────────────────────
   type TesseractWorker = Awaited<ReturnType<typeof createWorker>>;
@@ -210,6 +248,7 @@ export function ScanTester() {
       return;
     }
     setLiveStatus("loading");
+    scanStartRef.current = Date.now(); // [DEV-ONLY: delete before publishing]
 
     let cancelled = false;
     let terminated = false; // set synchronously in cleanup; checked before/after every await
@@ -289,7 +328,9 @@ export function ScanTester() {
               processedCanvas = new ImagePipeline(crop)
                 .scale(3)
                 .greyscale()
-                .contrast(1)
+                .blur(1)
+                .sharpen(1.5)
+                .contrast(0.62)
                 .toCanvas();
               const result = await worker.recognize(processedCanvas);
               if (terminated) return;
@@ -320,6 +361,36 @@ export function ScanTester() {
               setLiveCardNumber(found);
               setLiveTolerance(expansion as LiveExpansion);
               liveExpansionIdxRef.current = 0;
+
+              // [DEV-ONLY: delete before publishing] ─────────────────────────
+              // If a target ID is set, auto-confirm only when we hit it exactly.
+              const target = devTargetIdRef.current.trim().toUpperCase();
+              const normalised = found.trim().toUpperCase();
+              if (target && normalised === target) {
+                const elapsed = scanStartRef.current
+                  ? (Date.now() - scanStartRef.current) / 1000
+                  : null;
+                const cropUrl = cardCanvas ? cardCanvas.toDataURL() : null;
+                setDevScanSeconds(elapsed);
+                setDevTargetId(""); // clear input after match
+                setDevScanHistory((prev) => {
+                  const existing = prev.find((h) => h.id === found);
+                  const newTimes =
+                    elapsed !== null
+                      ? [...(existing?.times ?? []), elapsed]
+                      : (existing?.times ?? []);
+                  const updated: typeof prev[number] = {
+                    id: found,
+                    times: newTimes,
+                    cropUrl,
+                  };
+                  return [updated, ...prev.filter((h) => h.id !== found)];
+                });
+                setConfirmedId(found);
+                setConfirmedCropUrl(cropUrl);
+                setCameraOpen(false);
+              }
+              // ──────────────────────────────────────────────────────────────
             } else {
               // Cycle to next expansion level; wraps back to 0 after the last
               liveExpansionIdxRef.current =
@@ -356,11 +427,80 @@ export function ScanTester() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cameraOpen]);
 
+  // [DEV-ONLY: delete before publishing] ─────────────────────────────────────
+  // Ref so the interval callback always reads the latest devTargetId without
+  // needing to be recreated (avoids restarting the OCR loop on every keystroke).
+  const devTargetIdRef = useRef(devTargetId);
+  useEffect(() => {
+    devTargetIdRef.current = devTargetId;
+  }, [devTargetId]);
+  // ──────────────────────────────────────────────────────────────────────────
+
   // ── jscanify (perspective correction) ────────────────────────────────────
   const { scanner: jscanifyScanner } = useJscanify();
 
   return (
     <div className="space-y-6">
+      {/* [DEV-ONLY: delete before publishing] ──────────────────────────────── */}
+      <section className="border border-dashed border-yellow-400/60 rounded-lg p-4 space-y-3 bg-yellow-400/5">
+        <p className="text-xs font-semibold text-yellow-500 uppercase tracking-wide">
+          Dev tools — remove before publishing
+        </p>
+        <div className="flex items-center gap-3">
+          <label htmlFor="dev-target-id" className="text-xs text-muted-foreground whitespace-nowrap">
+            Target ID (auto-confirm on match):
+          </label>
+          <input
+            id="dev-target-id"
+            type="text"
+            value={devTargetId}
+            onChange={(e) => setDevTargetId(e.target.value)}
+            placeholder="e.g. 4/102"
+            className="font-mono text-sm px-2 py-1 rounded border border-border bg-background w-32"
+          />
+          {devTargetId && (
+            <button
+              type="button"
+              onClick={() => setDevTargetId("")}
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+        {/* [DEV-ONLY] Scan history — click a pill to re-use that ID as the target */}
+        {devScanHistory.length > 0 && (
+          <div className="space-y-1">
+            <p className="text-xs text-muted-foreground">Past scans (click to set as target):</p>
+            <div className="flex flex-wrap gap-2">
+              {devScanHistory.map((h) => {
+                const avg =
+                  h.times.length > 0
+                    ? h.times.reduce((a, b) => a + b, 0) / h.times.length
+                    : null;
+                return (
+                <button
+                  key={h.id}
+                  type="button"
+                  onClick={() => setDevTargetId(h.id)}
+                  className="flex items-center gap-1.5 font-mono text-xs px-2.5 py-1 rounded-full border border-border bg-background hover:bg-accent transition-colors"
+                >
+                  <span>{h.id}</span>
+                  {avg !== null && (
+                    <span className="text-muted-foreground">
+                      avg {avg.toFixed(1)}s
+                      {h.times.length > 1 && ` ×${h.times.length}`}
+                    </span>
+                  )}
+                </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </section>
+      {/* ─────────────────────────────────────────────────────────────────── */}
+
       {hasCameraSupport && (
         <Button onClick={() => setCameraOpen(true)}>
           <Camera className="h-4 w-4 mr-2" />
@@ -373,6 +513,12 @@ export function ScanTester() {
           <p className="text-sm font-mono">
             Detected ID: <strong>{confirmedId}</strong>
           </p>
+          {/* [DEV-ONLY: delete before publishing] */}
+          {devScanSeconds !== null && (
+            <p className="text-xs text-muted-foreground font-mono">
+              Time to confirm: <strong>{devScanSeconds.toFixed(1)}s</strong>
+            </p>
+          )}
           {confirmedCropUrl && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
