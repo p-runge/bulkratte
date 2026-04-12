@@ -12,10 +12,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { TabsContent } from "@/components/ui/tabs";
 import { api } from "@/lib/api/react";
 import { Share2 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useIntl } from "react-intl";
 import { ShareLinksDialog } from "./share-links-dialog";
 import { Button } from "@/components/ui/button";
+import { filterAndSortCards } from "./filter-sort-client";
+
+const CLIENT_SIDE_THRESHOLD = 500;
 
 export default function WantlistTab() {
   const intl = useIntl();
@@ -25,18 +28,46 @@ export default function WantlistTab() {
     ...DEFAULT_SORT_STATE,
   });
 
-  const { data: wantlistData, isPending } = api.userCard.getWantlist.useQuery({
-    setIds: filters.setIds.length > 0 ? filters.setIds : undefined,
-    search: filters.search || undefined,
-    rarities: filters.rarities.length > 0 ? filters.rarities : undefined,
-    releaseDateFrom: filters.releaseDateFrom || undefined,
-    releaseDateTo: filters.releaseDateTo || undefined,
-    sortBy: filters.sortBy as "set-and-number" | "name" | "rarity" | "price",
-    sortOrder: filters.sortOrder,
-  });
-  const wantlistCards = wantlistData ?? [];
+  // Initial unfiltered fetch — limit to threshold+1 to detect large lists
+  const { data: allData, isPending: isInitialPending } =
+    api.userCard.getWantlist.useQuery({
+      limit: CLIENT_SIDE_THRESHOLD + 1,
+    });
+
+  const isClientMode =
+    allData !== undefined && allData.length <= CLIENT_SIDE_THRESHOLD;
+
+  // Server-mode query — only active when list exceeds threshold
+  const { data: serverFilteredData, isPending: isServerFilterPending } =
+    api.userCard.getWantlist.useQuery(
+      {
+        setIds: filters.setIds.length > 0 ? filters.setIds : undefined,
+        search: filters.search || undefined,
+        rarities: filters.rarities.length > 0 ? filters.rarities : undefined,
+        releaseDateFrom: filters.releaseDateFrom || undefined,
+        releaseDateTo: filters.releaseDateTo || undefined,
+        sortBy: filters.sortBy as
+          | "set-and-number"
+          | "name"
+          | "rarity"
+          | "price",
+        sortOrder: filters.sortOrder,
+      },
+      { enabled: !isClientMode && allData !== undefined },
+    );
 
   const { data: filterOptions } = api.card.getFilterOptions.useQuery();
+
+  const displayCards = useMemo(() => {
+    if (isClientMode && allData) {
+      return filterAndSortCards(allData, filters);
+    }
+    return serverFilteredData ?? [];
+  }, [isClientMode, allData, serverFilteredData, filters]);
+
+  const isPending =
+    isInitialPending ||
+    (!isClientMode && isServerFilterPending && allData !== undefined);
 
   return (
     <TabsContent value="wantlist">
@@ -61,7 +92,7 @@ export default function WantlistTab() {
           <div className="flex justify-center py-12">
             <Loader />
           </div>
-        ) : wantlistCards.length === 0 ? (
+        ) : displayCards.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
               <h3 className="text-lg font-semibold mb-2">
@@ -80,7 +111,7 @@ export default function WantlistTab() {
           </Card>
         ) : (
           <UserCardGrid
-            userCards={wantlistCards}
+            userCards={displayCards}
             selectionMode="single"
             selectedUserCardIds={new Set()}
             onUserCardClick={(userCard) => {

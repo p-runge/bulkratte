@@ -25,6 +25,7 @@ const cachedCardSchema = z.object({
   imageLarge: z.string(),
   setId: z.string(),
   price: z.number().optional(),
+  setReleaseDate: z.string().nullable().optional(),
 });
 
 const language = z.enum(languageEnum.enumValues).nullable();

@@ -52,7 +52,7 @@ export async function getWantlistForUser(
   filters: WantlistFilters,
   locale: Locale,
   db: typeof database,
-  options?: { userSetIds?: string[] },
+  options?: { userSetIds?: string[]; limit?: number },
 ) {
   // Build WHERE conditions for filtering cards
   const conditions = [];
@@ -263,49 +263,55 @@ export async function getWantlistForUser(
     cardConditions.length > 0 ? and(...cardConditions) : undefined;
 
   // Get full card data for wantlist cards
-  const wantlistCards = (
-    await db
-      .select({
-        id: cardsTable.id,
-        name: cardsTable.name,
-        number: cardsTable.number,
-        rarity: cardsTable.rarity,
-        imageSmall: cardsTable.imageSmall,
-        imageLarge: cardsTable.imageLarge,
-        setId: cardsTable.setId,
-        created_at: cardsTable.created_at,
-        updated_at: cardsTable.updated_at,
-        price: cardPricesTable.price,
-        localizedName: localizationsTable.value,
-      })
-      .from(cardsTable)
-      .leftJoin(setsTable, eq(cardsTable.setId, setsTable.id))
-      .leftJoin(cardPricesTable, eq(cardsTable.id, cardPricesTable.card_id))
-      .leftJoin(
-        localizationsTable,
-        and(
-          eq(localizationsTable.table_name, "cards"),
-          eq(localizationsTable.column_name, "name"),
-          eq(localizationsTable.record_id, cardsTable.id),
-          eq(localizationsTable.language, langCode),
-        ),
-      )
-      .where(
-        filters.search
-          ? and(
-              whereClause!,
-              or(
-                ilike(cardsTable.name, `%${filters.search}%`),
-                ilike(cardsTable.number, `%${filters.search}%`),
-                ilike(localizationsTable.value, `%${filters.search}%`),
-              ),
-            )
-          : whereClause,
-      )
-      .orderBy(
-        ...(Array.isArray(orderByClause) ? orderByClause : [orderByClause]),
-      )
-  ).map((card) => ({
+  const baseQuery = db
+    .select({
+      id: cardsTable.id,
+      name: cardsTable.name,
+      number: cardsTable.number,
+      rarity: cardsTable.rarity,
+      imageSmall: cardsTable.imageSmall,
+      imageLarge: cardsTable.imageLarge,
+      setId: cardsTable.setId,
+      setReleaseDate: setsTable.releaseDate,
+      created_at: cardsTable.created_at,
+      updated_at: cardsTable.updated_at,
+      price: cardPricesTable.price,
+      localizedName: localizationsTable.value,
+    })
+    .from(cardsTable)
+    .leftJoin(setsTable, eq(cardsTable.setId, setsTable.id))
+    .leftJoin(cardPricesTable, eq(cardsTable.id, cardPricesTable.card_id))
+    .leftJoin(
+      localizationsTable,
+      and(
+        eq(localizationsTable.table_name, "cards"),
+        eq(localizationsTable.column_name, "name"),
+        eq(localizationsTable.record_id, cardsTable.id),
+        eq(localizationsTable.language, langCode),
+      ),
+    )
+    .where(
+      filters.search
+        ? and(
+            whereClause!,
+            or(
+              ilike(cardsTable.name, `%${filters.search}%`),
+              ilike(cardsTable.number, `%${filters.search}%`),
+              ilike(localizationsTable.value, `%${filters.search}%`),
+            ),
+          )
+        : whereClause,
+    )
+    .orderBy(
+      ...(Array.isArray(orderByClause) ? orderByClause : [orderByClause]),
+    )
+    .$dynamic();
+
+  const rawRows = await (options?.limit !== undefined
+    ? baseQuery.limit(options.limit)
+    : baseQuery);
+
+  const wantlistCards = rawRows.map((card) => ({
     ...card,
     price: card.price ?? undefined,
   }));
@@ -357,17 +363,18 @@ export async function getWantlistForUser(
         : null,
       notes: null as null,
       card: {
-        created_at: card.created_at,
-        updated_at: card.updated_at,
-        id: card.id,
-        name: card.name,
-        number: card.number,
-        rarity: card.rarity,
-        imageSmall: card.imageSmall,
-        imageLarge: card.imageLarge,
-        setId: card.setId,
-        price: card.price,
-      },
+          created_at: card.created_at,
+          updated_at: card.updated_at,
+          id: card.id,
+          name: card.name,
+          number: card.number,
+          rarity: card.rarity,
+          imageSmall: card.imageSmall,
+          imageLarge: card.imageLarge,
+          setId: card.setId,
+          price: card.price,
+          setReleaseDate: card.setReleaseDate,
+        },
       localizedName: card.localizedName,
       photos: [] as string[],
       coverPhoto: null,
@@ -890,16 +897,19 @@ export const userCardRouter = createTRPCRouter({
             .optional()
             .default("set-and-number"),
           sortOrder: z.enum(["asc", "desc"]).optional().default("asc"),
+          limit: z.number().int().positive().optional(),
         })
         .optional(),
     )
     .output(userCardWantlistSchema)
     .query(async ({ ctx, input }) => {
+      const { limit, ...filters } = input ?? {};
       return getWantlistForUser(
         ctx.session.user.id,
-        input ?? {},
+        filters,
         ctx.language,
         ctx.db,
+        { limit },
       );
     }),
 
