@@ -1,0 +1,6 @@
+allowBuilds:
+  canvas: false
+  esbuild: false
+  sharp: false
+  tesseract.js: false
+  unrs-resolver: false

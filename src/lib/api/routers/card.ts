@@ -17,7 +17,9 @@ import {
   gte,
   ilike,
   inArray,
+  isNotNull,
   lte,
+  not,
   or,
   sql,
 } from "drizzle-orm";
@@ -271,5 +273,254 @@ export const cardRouter = createTRPCRouter({
         ["name", "imageSmall", "imageLarge"],
         ctx.language,
       );
+    }),
+
+  findByOcr: publicProcedure
+    .input(
+      z.object({
+        /** When provided (from symbol matching), used as the primary set filter.
+         *  This replaces fuzzy name / total matching entirely. */
+        setId: z.string().optional(),
+        number: z.string().optional(),
+        setTotal: z.number().int().optional(),
+      }),
+    )
+    .query(async ({ input, ctx }) => {
+      const conditions = [];
+
+      if (input.setId) {
+        // Exact set match from symbol recognition — most precise signal.
+        conditions.push(eq(cardsTable.setId, input.setId));
+      } else {
+        // Fallback: set total when symbol matching didn't find a set.
+        if (input.setTotal !== undefined) {
+          conditions.push(eq(setsTable.total, input.setTotal));
+        }
+      }
+
+      // Card number always narrows the results regardless of how we identified the set.
+      if (input.number) {
+        const normalized = input.number.replace(/^0+/, "") || "0";
+        conditions.push(
+          or(
+            ilike(cardsTable.number, input.number.trim()),
+            sql`CAST(NULLIF(regexp_replace(${cardsTable.number}, '^0+', ''), '') AS TEXT) = ${normalized}`,
+          ),
+        );
+      }
+
+      if (conditions.length === 0) return [];
+
+      const results = await db
+        .select({ card: cardsTable, set: setsTable })
+        .from(cardsTable)
+        .innerJoin(setsTable, eq(cardsTable.setId, setsTable.id))
+        .where(and(...conditions))
+        .limit(10);
+
+      const cards = results.map(({ card, set }) => ({ ...card, set }));
+
+      // Always use English for scanner lookups. The card number and set total
+      // are language-neutral, and all scan position analysis was done on
+      // English card images. Returning English ensures the displayed image
+      // matches what the scanner was calibrated against.
+      return localizeRecords(
+        cards,
+        "cards",
+        ["name", "imageSmall", "imageLarge"],
+        "en-US",
+      );
+    }),
+
+  /**
+   * Returns 10 random sample cards for the scan tester.
+   * When groupId is provided, only cards from the matching era series are returned.
+   */
+  getScanSamples: publicProcedure
+    .input(
+      z
+        .enum([
+          "all",
+          "sv",
+          "swsh",
+          "sm-late",
+          "sm-early",
+          "evolutions",
+          "xy-bw",
+          "kalos",
+          "hgss",
+          "platinum",
+          "ex-dp",
+          "ex-early",
+          "ex-border",
+          "ecard",
+          "wotc",
+        ])
+        .optional(),
+    )
+    .query(async ({ input }) => {
+      type GroupFilter =
+        | { mode: "series"; values: string[] }
+        | { mode: "sets"; values: string[] };
+
+      const FILTER: Record<string, GroupFilter> = {
+        sv: {
+          mode: "series",
+          values: ["Scarlet & Violet", "Mega Evolution"],
+        },
+        swsh: { mode: "series", values: ["Sword & Shield"] },
+        "sm-late": {
+          mode: "sets",
+          values: ["sm10", "sm11", "sm115", "sm12", "det1"],
+        },
+        "sm-early": {
+          mode: "sets",
+          values: [
+            "sm1",
+            "sm2",
+            "sm3",
+            "sm35",
+            "sm4",
+            "sm5",
+            "sm6",
+            "sm7",
+            "sm8",
+            "sm9",
+            "smp",
+          ],
+        },
+        evolutions: { mode: "sets", values: ["xy12"] },
+        "xy-bw": {
+          mode: "sets",
+          values: [
+            "xy1",
+            "xy2",
+            "xy3",
+            "xy4",
+            "xy5",
+            "xy6",
+            "xy7",
+            "xy8",
+            "xy9",
+            "xy10",
+            "xy11",
+            "bw1",
+            "bw2",
+            "bw3",
+            "bw4",
+            "bw5",
+            "bw6",
+            "bw7",
+            "bw8",
+            "bw9",
+            "bw10",
+            "bw11",
+            "dv1",
+            "rc",
+          ],
+        },
+        kalos: { mode: "sets", values: ["xy0"] },
+        hgss: {
+          mode: "series",
+          values: ["HeartGold & SoulSilver", "Call of Legends"],
+        },
+        platinum: { mode: "sets", values: ["pl1", "pl2", "pl3", "pl4", "ru1"] },
+        "ex-dp": {
+          mode: "sets",
+          values: [
+            "pop1",
+            "pop2",
+            "pop3",
+            "pop4",
+            "pop5",
+            "pop6",
+            "pop7",
+            "pop8",
+            "pop9",
+            "ex4",
+            "ex5",
+            "ex6",
+            "ex7",
+            "ex8",
+            "ex9",
+            "ex10",
+            "ex11",
+            "ex12",
+            "ex13",
+            "ex14",
+            "ex15",
+            "ex16",
+            "dpp",
+            "dp1",
+            "dp2",
+            "dp3",
+            "dp4",
+            "dp5",
+            "dp6",
+            "dp7",
+          ],
+        },
+        "ex-early": {
+          mode: "sets",
+          values: ["ex1", "ex2", "ex3"],
+        },
+        "ex-border": {
+          mode: "sets",
+          values: ["ex1", "ex2", "ex3"],
+        },
+        ecard: {
+          mode: "sets",
+          values: ["ecard1", "ecard2", "ecard3"],
+        },
+        wotc: {
+          mode: "sets",
+          values: [
+            "base1",
+            "base2",
+            "base3",
+            "base4",
+            "base5",
+            "gym1",
+            "gym2",
+            "neo1",
+            "neo2",
+            "neo3",
+            "neo4",
+            "si1",
+            "lc",
+            "np",
+          ],
+        },
+      };
+
+      const groupFilter = input && input !== "all" ? FILTER[input] : null;
+
+      const conditions = [
+        isNotNull(cardsTable.imageLarge),
+        not(eq(setsTable.series, "Pokémon TCG Pocket")),
+      ];
+      if (groupFilter) {
+        if (groupFilter.mode === "series") {
+          conditions.push(inArray(setsTable.series, groupFilter.values));
+        } else {
+          conditions.push(inArray(setsTable.id, groupFilter.values));
+        }
+      }
+
+      return db
+        .select({
+          id: cardsTable.id,
+          name: cardsTable.name,
+          number: cardsTable.number,
+          imageLarge: cardsTable.imageLarge,
+          setName: setsTable.name,
+          setTotal: setsTable.total,
+          setSeries: setsTable.series,
+        })
+        .from(cardsTable)
+        .innerJoin(setsTable, eq(cardsTable.setId, setsTable.id))
+        .where(and(...conditions))
+        .orderBy(sql`RANDOM()`)
+        .limit(10);
     }),
 });
