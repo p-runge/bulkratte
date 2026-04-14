@@ -19,6 +19,7 @@ import {
 } from "@/lib/db/enums";
 import { localizeRecords } from "@/lib/db/localization";
 import { getLanguageFromLocale, Locale } from "@/lib/i18n";
+import { cardImageUrl } from "@/lib/core-image";
 import { deleteR2Objects } from "@/lib/r2";
 import { TRPCError } from "@trpc/server";
 import {
@@ -348,6 +349,8 @@ export async function getWantlistForUser(
 
   return localizedCards.map((card) => {
     const prefs = cardPrefsMap.get(card.id);
+    const effectiveLang =
+      prefs?.cardPreferredLanguage ?? prefs?.setPreferredLanguage ?? null;
     return {
       id: `wantlist-${card.id}`, // Virtual ID for the wantlist item
       cardId: card.id,
@@ -368,7 +371,9 @@ export async function getWantlistForUser(
         name: card.name,
         number: card.number,
         rarity: card.rarity,
-        image: card.image,
+        image: effectiveLang
+          ? cardImageUrl(card.id, effectiveLang)
+          : card.image,
         setId: card.setId,
         price: card.price,
         setReleaseDate: card.setReleaseDate,
