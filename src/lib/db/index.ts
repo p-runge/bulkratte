@@ -63,7 +63,7 @@ export const cardsTable = pgTable("cards", {
   name: varchar("name", { length: 128 }).notNull(),
   number: varchar("number", { length: 32 }).notNull(),
   rarity: rarityEnum(),
-  image: text("image"),
+  image: text("image").notNull(),
   setId: varchar("set_id", { length: 16 })
     .notNull()
     .references(() => setsTable.id),
