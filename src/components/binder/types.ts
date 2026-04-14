@@ -14,7 +14,7 @@ export type PlacedUserCardIds = Awaited<
 
 export type BinderCard = Pick<
   Card,
-  "id" | "name" | "imageSmall" | "number" | "rarity" | "imageLarge" | "setId"
+  "id" | "name" | "image" | "number" | "rarity" | "image" | "setId"
 >;
 export type BinderCardData = {
   // the card prop is potentially undefined during the loading state of the getByIds query

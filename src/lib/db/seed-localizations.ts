@@ -3,6 +3,7 @@ import pokemonAPI from "@/lib/pokemon-api";
 import { DEFAULT_LOCALE, LOCALES, type Locale } from "@/lib/i18n";
 import { upsertLocalization } from "@/lib/db/localization";
 import { db, localizationsTable } from "@/lib/db";
+import { cardImageUrl } from "@/lib/core-image";
 import TCGdex, { SupportedLanguages } from "@tcgdex/sdk";
 import { eq } from "drizzle-orm";
 
@@ -116,23 +117,14 @@ async function seedLocalizationsForLanguage(locale: Locale) {
         }
 
         if (rawSet && imagesAreLocalized) {
-          // Upsert card images if missing
-          if (!hasLocalization("cards", "image_small", card.id)) {
+          // Upsert localized card image (R2 URL, one per language)
+          if (!hasLocalization("cards", "image", card.id)) {
             await upsertLocalization(
               "cards",
-              "image_small",
+              "image",
               card.id,
               locale,
-              `https://assets.tcgdex.net/${languageCode}/${rawSet.serie.id}/${setId}/${card.number}/low.webp`,
-            );
-          }
-          if (!hasLocalization("cards", "image_large", card.id)) {
-            await upsertLocalization(
-              "cards",
-              "image_large",
-              card.id,
-              locale,
-              `https://assets.tcgdex.net/${languageCode}/${rawSet.serie.id}/${setId}/${card.number}/high.webp`,
+              cardImageUrl(card.id, languageCode),
             );
           }
           cardCount++;

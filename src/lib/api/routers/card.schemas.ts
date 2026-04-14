@@ -15,8 +15,7 @@ export const cardsByIdsSchema = z.array(
     name: z.string(),
     number: z.string(),
     rarity: z.enum(rarityEnum.enumValues).nullable(),
-    imageSmall: z.string(),
-    imageLarge: z.string(),
+    image: z.string(),
     setId: z.string(),
   }),
 );

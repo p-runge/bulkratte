@@ -54,8 +54,7 @@ export const userSetByIdSchema = z.object({
           name: z.string(),
           number: z.string(),
           rarity,
-          imageSmall: z.string(),
-          imageLarge: z.string(),
+          image: z.string(),
           setId: z.string(),
         })
         .nullable(),

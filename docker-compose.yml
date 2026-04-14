@@ -33,6 +33,7 @@ services:
       /bin/sh -c "
       until /usr/bin/mc alias set local http://minio:9000 minioadmin minioadmin; do sleep 1; done;
       /usr/bin/mc mb --ignore-existing local/bulkratte-dev;
+      /usr/bin/mc mb --ignore-existing local/bulkratte-core-dev;
       exit 0;
       "
 

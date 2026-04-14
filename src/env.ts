@@ -17,7 +17,7 @@ export const env = createEnv({
       .enum(["development", "test", "production"])
       .default("development"),
 
-    DATABASE_URL: z.string().url(),
+    DATABASE_URL: z.url(),
     AUTH_DISCORD_CLIENT_ID: z.string(),
     AUTH_DISCORD_CLIENT_SECRET: z.string(),
     AUTH_GOOGLE_CLIENT_ID: z.string(),
@@ -27,7 +27,10 @@ export const env = createEnv({
     R2_ACCESS_KEY_ID: z.string(),
     R2_SECRET_ACCESS_KEY: z.string(),
     R2_BUCKET_NAME: z.string(),
-    R2_ENDPOINT: z.string().url().optional(),
+    R2_ENDPOINT: z.url().optional(),
+    // Core bucket — card images, set logos/symbols (served via /images/[...path])
+    R2_CORE_BUCKET_NAME: z.string(),
+    R2_CORE_ENDPOINT: z.url().optional(),
   },
   client: {
     NEXT_PUBLIC_RHF_SHOW_DEVTOOLS: z.string().optional(),

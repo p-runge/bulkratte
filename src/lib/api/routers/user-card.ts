@@ -269,8 +269,7 @@ export async function getWantlistForUser(
       name: cardsTable.name,
       number: cardsTable.number,
       rarity: cardsTable.rarity,
-      imageSmall: cardsTable.imageSmall,
-      imageLarge: cardsTable.imageLarge,
+      image: cardsTable.image,
       setId: cardsTable.setId,
       setReleaseDate: setsTable.releaseDate,
       created_at: cardsTable.created_at,
@@ -320,7 +319,7 @@ export async function getWantlistForUser(
   const localizedCards = await localizeRecords(
     wantlistCards,
     "cards",
-    ["name", "imageSmall", "imageLarge"],
+    ["name", "image"],
     locale,
   );
 
@@ -369,8 +368,7 @@ export async function getWantlistForUser(
         name: card.name,
         number: card.number,
         rarity: card.rarity,
-        imageSmall: card.imageSmall,
-        imageLarge: card.imageLarge,
+        image: card.image,
         setId: card.setId,
         price: card.price,
         setReleaseDate: card.setReleaseDate,
@@ -594,8 +592,7 @@ export const userCardRouter = createTRPCRouter({
               name: cardsTable.name,
               number: cardsTable.number,
               rarity: cardsTable.rarity,
-              imageSmall: cardsTable.imageSmall,
-              imageLarge: cardsTable.imageLarge,
+              image: cardsTable.image,
               setId: cardsTable.setId,
               price: cardPricesTable.price,
             },
@@ -698,7 +695,7 @@ export const userCardRouter = createTRPCRouter({
       const localizedUserCards = await localizeRecords(
         userCards.map((uc) => uc.card),
         "cards",
-        ["name", "imageSmall", "imageLarge"],
+        ["name", "image"],
         ctx.language,
       );
 

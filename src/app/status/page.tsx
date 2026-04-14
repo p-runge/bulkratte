@@ -83,7 +83,7 @@ async function fetchStatusData(): Promise<{
     .where(
       and(
         eq(localizationsTable.table_name, "cards"),
-        eq(localizationsTable.column_name, "image_small"),
+        eq(localizationsTable.column_name, "image"),
       ),
     )
     .groupBy(cardsTable.setId, localizationsTable.language);
@@ -197,7 +197,7 @@ export default async function StatusPage() {
         <StatusTable rows={rows} languages={languages} />
 
         <p className="mt-4 text-zinc-700 text-xs">
-          Coverage based on <code className="text-zinc-500">image_small</code>{" "}
+          Coverage based on <code className="text-zinc-500">image</code>{" "}
           localizations · English is always complete (native language)
         </p>
       </div>

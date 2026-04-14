@@ -14,6 +14,19 @@ export const r2 = new S3Client({
   },
 });
 
+/** S3 client for the public core bucket (card images, set logos/symbols). */
+export const r2Core = new S3Client({
+  region: "auto",
+  endpoint:
+    env.R2_CORE_ENDPOINT ??
+    `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  forcePathStyle: !!env.R2_CORE_ENDPOINT,
+  credentials: {
+    accessKeyId: env.R2_ACCESS_KEY_ID,
+    secretAccessKey: env.R2_SECRET_ACCESS_KEY,
+  },
+});
+
 /** Extract the R2 key from a stored proxy URL like `/api/images/user-card-photos/...` */
 export function r2KeyFromUrl(url: string): string {
   return url.replace(/^\/api\/images\//, "");

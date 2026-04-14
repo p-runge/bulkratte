@@ -116,7 +116,7 @@ export function CardPreferencesDialog({
           <div className="space-y-4">
             <div className="flex items-center gap-4">
               <Image
-                src={card.imageSmall}
+                src={card.image}
                 alt={card.name}
                 width={80}
                 height={110}

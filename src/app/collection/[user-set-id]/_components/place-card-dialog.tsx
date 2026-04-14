@@ -321,8 +321,7 @@ export function PlaceCardDialog({
               name: card.name,
               number: card.number,
               rarity: card.rarity ?? null,
-              imageSmall: card.imageSmall,
-              imageLarge: card.imageLarge,
+              image: card.image,
               setId: card.setId,
               price: undefined,
             },
@@ -631,7 +630,7 @@ export function PlaceCardDialog({
                       onRemovePhoto={photoUpload.handleRemovePhoto}
                       onSetCover={photoUpload.handleSetCover}
                       onSetCoverCrop={photoUpload.handleSetCoverCrop}
-                      fallbackSrc={card.imageSmall}
+                      fallbackSrc={card.image}
                       fallbackAlt={card.name}
                     />
                   }
@@ -746,7 +745,7 @@ function PlacableCardRow({
     >
       <div className="flex items-center gap-3">
         <Image
-          src={userCard.card.imageSmall ?? ""}
+          src={userCard.card.image ?? ""}
           alt={userCard.card.name ?? ""}
           width={64}
           height={89}
@@ -886,7 +885,7 @@ function CurrentlyPlacedCardPanel({
       </div>
       <div className="flex items-center gap-3">
         <Image
-          src={userCard.card.imageSmall ?? ""}
+          src={userCard.card.image ?? ""}
           alt={userCard.card.name ?? ""}
           width={64}
           height={89}

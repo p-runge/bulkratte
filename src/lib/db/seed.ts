@@ -1,6 +1,7 @@
 // Shared seeding logic — used by scripts/db/seed.ts and src/app/api/cron/seed/route.ts
 import { cardPricesTable, cardsTable, db, setsTable } from "@/lib/db";
 import { Rarity } from "@/lib/db/enums";
+import { cardImageUrl } from "@/lib/core-image";
 import pokemonAPI from "@/lib/pokemon-api";
 import TCGdex from "@tcgdex/sdk";
 import { eq } from "drizzle-orm";
@@ -99,8 +100,7 @@ export async function fetchAndStoreCards(setId: string) {
           name: card.name,
           number: card.number,
           rarity: card.rarity as Rarity,
-          imageSmall: card.images.small,
-          imageLarge: card.images.large,
+          image: cardImageUrl(card.id),
           setId: card.set.id,
         })
         .onConflictDoUpdate({
@@ -109,8 +109,7 @@ export async function fetchAndStoreCards(setId: string) {
             name: card.name,
             number: card.number,
             rarity: card.rarity as Rarity,
-            imageSmall: card.images.small,
-            imageLarge: card.images.large,
+            image: cardImageUrl(card.id),
             setId: card.set.id,
           },
         });

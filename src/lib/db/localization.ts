@@ -18,7 +18,7 @@ function toSnakeCase(str: string): string {
  * proxy endpoint. Returns a root-relative URL (e.g. "/api/image?...").
  */
 function applyImageProxy(url: string, columnName: string): string {
-  if (columnName !== "image_small" && columnName !== "image_large") {
+  if (columnName !== "image") {
     return url;
   }
 

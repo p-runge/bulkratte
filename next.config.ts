@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-import "./src/env";
 
 const nextConfig: NextConfig = {
   experimental: {
@@ -12,17 +11,8 @@ const nextConfig: NextConfig = {
   images: {
     localPatterns: [
       { pathname: "/**" }, // static files from public/
-      { pathname: "/api/image", search: "url=**" }, // image proxy route
-    ],
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "images.pokemontcg.io",
-      },
-      {
-        protocol: "https",
-        hostname: "assets.tcgdex.net",
-      },
+      { pathname: "/api/image", search: "url=**" }, // hotlink proxy
+      { pathname: "/images/**" }, // core card/set images via R2 proxy
     ],
     minimumCacheTTL: 60 * 60 * 24 * 365, // 1 year
   },

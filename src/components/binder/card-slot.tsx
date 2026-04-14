@@ -267,7 +267,7 @@ export function CardSlot({
               className="w-full h-full"
             />
           ) : (
-            <CardImage src={coverPhoto ?? card.imageSmall} alt={card.name} />
+            <CardImage src={coverPhoto ?? card.image} alt={card.name} />
           )}
         </div>
         {/* Colored border rendered as an inset overlay so the image always fills the full slot */}
@@ -319,7 +319,7 @@ export function CardSlot({
           style={{ borderRadius: CARD_BORDER_RADIUS }}
         >
           {card ? (
-            <CardImage src={card.imageSmall} alt={card.name} />
+            <CardImage src={card.image} alt={card.name} />
           ) : (
             <div className="w-full h-full bg-gray-200 animate-pulse" />
           )}
@@ -414,7 +414,7 @@ export function CardSlot({
     >
       {card ? (
         <div {...listeners} className="w-full h-full">
-          <CardImage src={card.imageSmall} alt={card.name} />
+          <CardImage src={card.image} alt={card.name} />
         </div>
       ) : (
         <div className="w-full h-full bg-gray-200 animate-pulse" />

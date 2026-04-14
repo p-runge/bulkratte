@@ -306,9 +306,9 @@ function MiniPage({
             className={`${CARD_ASPECT_CLASS} bg-muted overflow-hidden flex items-center justify-center`}
             style={{ borderRadius: CARD_BORDER_RADIUS }}
           >
-            {card?.imageSmall ? (
+            {card?.image ? (
               <Image
-                src={card.imageSmall}
+                src={card.image}
                 alt={card.name}
                 width={21}
                 height={28}
