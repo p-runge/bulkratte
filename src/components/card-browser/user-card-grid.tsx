@@ -127,7 +127,7 @@ export function UserCardGrid({
                 key={userCard.id}
                 onClick={() => onUserCardClick(userCard)}
                 className={cn(
-                  "group relative overflow-hidden transition-all hover:scale-105",
+                  "cursor-pointer group relative overflow-hidden transition-all hover:scale-105",
                   "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background",
                   isSelected && "ring-2 ring-primary",
                   "w-full",
