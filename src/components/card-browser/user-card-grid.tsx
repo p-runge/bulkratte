@@ -221,7 +221,7 @@ export function UserCardGrid({
                 key={userCard.id}
                 onClick={() => onUserCardClick(userCard)}
                 className={cn(
-                  "flex items-center gap-3 py-2 px-1 text-left transition-colors hover:bg-muted/50 rounded-sm",
+                  "cursor-pointer flex items-center gap-3 py-2 px-1 text-left transition-colors hover:bg-muted/50 rounded-sm",
                   "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset",
                   isSelected && "bg-primary/10",
                 )}
