@@ -3,16 +3,7 @@
 import { api } from "@/lib/api/react";
 import { useUiPreferences } from "@/providers/ui-preferences-provider";
 import { useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { FormattedMessage } from "react-intl";
+import { PaginationBar } from "./pagination-bar";
 import {
   CardFilters,
   DEFAULT_SORT_STATE,
@@ -88,7 +79,9 @@ function applyClientFilters(
 
 export function CardBrowser(props: CardBrowserProps) {
   const isStatic = !!props.staticCards;
-  const showPagination = !isStatic && !props.setId;
+  // Show pagination for static (client-side) mode OR server mode without a fixed setId.
+  // When setId is set without staticCards, the server returns all cards for that single set.
+  const showPagination = isStatic || !props.setId;
   const PAGE_SIZE = 120;
 
   const {
@@ -137,12 +130,9 @@ export function CardBrowser(props: CardBrowserProps) {
       releaseDateFrom: queryInput.releaseDateFrom,
       releaseDateTo: queryInput.releaseDateTo,
     },
-    { enabled: showPagination },
+    // Only fetch server count for non-static, non-setId cases
+    { enabled: !isStatic && !props.setId },
   );
-
-  const totalPages = countData
-    ? Math.max(1, Math.ceil(countData.total / PAGE_SIZE))
-    : null;
 
   const { data: fetchedFilterOptions } = api.card.getFilterOptions.useQuery(
     { setId: props.setId || undefined },
@@ -158,7 +148,24 @@ export function CardBrowser(props: CardBrowserProps) {
     [props.staticCards, filters],
   );
 
-  const cards = filteredStaticCards ?? serverCards;
+  // For static mode paginate client-side; for server mode use server data (already paged)
+  const pagedStaticCards = useMemo(
+    () =>
+      filteredStaticCards
+        ? filteredStaticCards.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+        : null,
+    [filteredStaticCards, page],
+  );
+
+  const cards = pagedStaticCards ?? serverCards;
+
+  const staticTotal = filteredStaticCards?.length ?? 0;
+  const totalPages = isStatic
+    ? Math.max(1, Math.ceil(staticTotal / PAGE_SIZE))
+    : countData
+      ? Math.max(1, Math.ceil(countData.total / PAGE_SIZE))
+      : null;
+  const total = isStatic ? staticTotal : (countData?.total ?? 0);
 
   const handleFiltersChange = (newFilters: CardQuery) => {
     setFilters(newFilters);
@@ -169,7 +176,9 @@ export function CardBrowser(props: CardBrowserProps) {
     if (props.selectionMode !== "multi" || !props.onSelectAll) return;
 
     if (selectAll) {
-      props.onSelectAll(cards.map((card) => card.id));
+      // For static mode use all filtered cards (across pages); for server mode use current page
+      const allCards = filteredStaticCards ?? cards;
+      props.onSelectAll(allCards.map((card) => card.id));
     } else {
       props.onSelectAll([]);
     }
@@ -188,8 +197,14 @@ export function CardBrowser(props: CardBrowserProps) {
         initialSort={cardBrowserSort}
       />
 
-      {showPagination && totalPages !== null && (
-        <PaginationBar page={page} totalPages={totalPages} onPageChange={setPage} />
+      {showPagination && totalPages !== null && totalPages > 1 && (
+        <PaginationBar
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          pageSize={PAGE_SIZE}
+          onPageChange={setPage}
+        />
       )}
 
       <div className="relative">
@@ -212,10 +227,12 @@ export function CardBrowser(props: CardBrowserProps) {
         />
       </div>
 
-      {showPagination && totalPages !== null && (
+      {showPagination && totalPages !== null && totalPages > 1 && (
         <PaginationBar
           page={page}
           totalPages={totalPages}
+          total={total}
+          pageSize={PAGE_SIZE}
           onPageChange={(p) => {
             setPage(p);
             window.scrollTo({ top: 0, behavior: "smooth" });
@@ -226,56 +243,4 @@ export function CardBrowser(props: CardBrowserProps) {
   );
 }
 
-function PaginationBar({
-  page,
-  totalPages,
-  onPageChange,
-}: {
-  page: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-}) {
-  const pageOptions = Array.from({ length: totalPages }, (_, i) => i);
 
-  return (
-    <div className="flex items-center justify-center gap-3">
-      <Button
-        variant="outline"
-        size="icon"
-        disabled={page === 0}
-        onClick={() => onPageChange(page - 1)}
-      >
-        <ChevronLeft className="h-4 w-4" />
-      </Button>
-
-      <Select
-        value={String(page)}
-        onValueChange={(v) => onPageChange(Number(v))}
-      >
-        <SelectTrigger size="sm" className="w-32">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {pageOptions.map((p) => (
-            <SelectItem key={p} value={String(p)}>
-              <FormattedMessage
-                id="card.browser.pagination.page_x_of_y"
-                defaultMessage="Page {current} / {total}"
-                values={{ current: p + 1, total: totalPages }}
-              />
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      <Button
-        variant="outline"
-        size="icon"
-        disabled={page >= totalPages - 1}
-        onClick={() => onPageChange(page + 1)}
-      >
-        <ChevronRight className="h-4 w-4" />
-      </Button>
-    </div>
-  );
-}

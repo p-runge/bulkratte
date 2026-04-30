@@ -156,6 +156,7 @@
   "nav.link.trade": "Trade",
   "page.cards.title": "All Cards",
   "card.browser.pagination.page_x_of_y": "Page {current} / {total}",
+  "card.browser.pagination.range": "{from}–{to} of {total} cards",
   "page.collection.action.add_card": "Add New Card",
   "page.collection.action.add_first_card": "Add Your First Card",
   "page.collection.action.add_first_set": "Add Your First Set",

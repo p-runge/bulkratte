@@ -157,6 +157,7 @@
   "nav.link.trade": "Tauschen",
   "page.cards.title": "Alle Karten",
   "card.browser.pagination.page_x_of_y": "Seite {current} / {total}",
+  "card.browser.pagination.range": "{from}–{to} von {total} Karten",
   "page.collection.action.add_card": "Neue Karte hinzufügen",
   "page.collection.action.add_first_card": "Füge deine erste Karte hinzu",
   "page.collection.action.add_first_set": "Füge dein erstes Set hinzu",

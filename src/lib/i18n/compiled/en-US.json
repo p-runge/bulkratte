@@ -1153,6 +1153,32 @@
       "value": "total"
     }
   ],
+  "card.browser.pagination.range": [
+    {
+      "type": 1,
+      "value": "from"
+    },
+    {
+      "type": 0,
+      "value": "–"
+    },
+    {
+      "type": 1,
+      "value": "to"
+    },
+    {
+      "type": 0,
+      "value": " of "
+    },
+    {
+      "type": 1,
+      "value": "total"
+    },
+    {
+      "type": 0,
+      "value": " cards"
+    }
+  ],
   "page.collection.action.add_card": [
     {
       "type": 0,
