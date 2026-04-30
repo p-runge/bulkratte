@@ -146,7 +146,8 @@ export const userSetRouter = createTRPCRouter({
             name: cardsTable.name,
             number: cardsTable.number,
             rarity: cardsTable.rarity,
-            image: cardsTable.image,
+            imageSmall: cardsTable.imageSmall,
+            imageLarge: cardsTable.imageLarge,
             setId: cardsTable.setId,
           },
         })
@@ -164,7 +165,7 @@ export const userSetRouter = createTRPCRouter({
       const localizedCards = await localizeRecords(
         cardsToLocalize,
         "cards",
-        ["name", "image"],
+        ["name", "imageSmall", "imageLarge"],
         ctx.language,
       );
 

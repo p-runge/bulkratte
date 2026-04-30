@@ -308,7 +308,7 @@ function MiniPage({
           >
             {card?.image ? (
               <Image
-                src={card.image}
+                src={card.imageLarge}
                 alt={card.name}
                 width={21}
                 height={28}

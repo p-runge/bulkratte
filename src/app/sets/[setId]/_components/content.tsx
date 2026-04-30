@@ -77,7 +77,7 @@ export default function Content({ set, initialCards }: Props) {
 
       {selectedCard && (
         <CardImageDialog
-          large={selectedCard.image}
+          large={selectedCard.imageLarge}
           alt={`${selectedCard.name} card image`}
           open={!!selectedCard}
           onOpenChange={(open) => !open && setSelectedCard(null)}

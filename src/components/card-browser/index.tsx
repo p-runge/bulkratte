@@ -3,6 +3,16 @@
 import { api } from "@/lib/api/react";
 import { useUiPreferences } from "@/providers/ui-preferences-provider";
 import { useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { FormattedMessage } from "react-intl";
 import {
   CardFilters,
   DEFAULT_SORT_STATE,
@@ -78,6 +88,9 @@ function applyClientFilters(
 
 export function CardBrowser(props: CardBrowserProps) {
   const isStatic = !!props.staticCards;
+  const showPagination = !isStatic && !props.setId;
+  const PAGE_SIZE = 120;
+
   const {
     cardBrowserSort,
     setCardBrowserSort,
@@ -90,30 +103,46 @@ export function CardBrowser(props: CardBrowserProps) {
     sortBy: cardBrowserSort.sortBy,
     sortOrder: cardBrowserSort.sortOrder,
   });
+  const [page, setPage] = useState(0);
+
+  const queryInput = {
+    setIds: props.setId
+      ? [props.setId]
+      : filters.setIds.length > 0
+        ? filters.setIds
+        : undefined,
+    search: filters.search || undefined,
+    rarities: filters.rarities.length > 0 ? filters.rarities : undefined,
+    releaseDateFrom: filters.releaseDateFrom || undefined,
+    releaseDateTo: filters.releaseDateTo || undefined,
+    sortBy: filters.sortBy,
+    sortOrder: filters.sortOrder,
+    page,
+  };
 
   const {
     data: cardListData,
     isLoading,
     isFetching,
-  } = api.card.getList.useQuery(
+  } = api.card.getList.useQuery(queryInput, {
+    enabled: !isStatic,
+    placeholderData: (previousData) => previousData,
+  });
+
+  const { data: countData } = api.card.getCount.useQuery(
     {
-      setIds: props.setId
-        ? [props.setId]
-        : filters.setIds.length > 0
-          ? filters.setIds
-          : undefined,
-      search: filters.search || undefined,
-      rarities: filters.rarities.length > 0 ? filters.rarities : undefined,
-      releaseDateFrom: filters.releaseDateFrom || undefined,
-      releaseDateTo: filters.releaseDateTo || undefined,
-      sortBy: filters.sortBy,
-      sortOrder: filters.sortOrder,
+      setIds: queryInput.setIds,
+      search: queryInput.search,
+      rarities: queryInput.rarities,
+      releaseDateFrom: queryInput.releaseDateFrom,
+      releaseDateTo: queryInput.releaseDateTo,
     },
-    {
-      enabled: !isStatic,
-      placeholderData: (previousData) => previousData,
-    },
+    { enabled: showPagination },
   );
+
+  const totalPages = countData
+    ? Math.max(1, Math.ceil(countData.total / PAGE_SIZE))
+    : null;
 
   const { data: fetchedFilterOptions } = api.card.getFilterOptions.useQuery(
     { setId: props.setId || undefined },
@@ -131,6 +160,11 @@ export function CardBrowser(props: CardBrowserProps) {
 
   const cards = filteredStaticCards ?? serverCards;
 
+  const handleFiltersChange = (newFilters: CardQuery) => {
+    setFilters(newFilters);
+    setPage(0);
+  };
+
   const handleSelectAll = (selectAll: boolean) => {
     if (props.selectionMode !== "multi" || !props.onSelectAll) return;
 
@@ -144,7 +178,7 @@ export function CardBrowser(props: CardBrowserProps) {
   return (
     <div className="space-y-6">
       <CardFilters
-        onFilterChange={setFilters}
+        onFilterChange={handleFiltersChange}
         onSortChange={setCardBrowserSort}
         view={cardBrowserView}
         onViewChange={setCardBrowserView}
@@ -153,6 +187,10 @@ export function CardBrowser(props: CardBrowserProps) {
         filterOptions={filterOptions}
         initialSort={cardBrowserSort}
       />
+
+      {showPagination && totalPages !== null && (
+        <PaginationBar page={page} totalPages={totalPages} onPageChange={setPage} />
+      )}
 
       <div className="relative">
         {isFetching && !isStatic && (
@@ -173,6 +211,71 @@ export function CardBrowser(props: CardBrowserProps) {
           view={cardBrowserView}
         />
       </div>
+
+      {showPagination && totalPages !== null && (
+        <PaginationBar
+          page={page}
+          totalPages={totalPages}
+          onPageChange={(p) => {
+            setPage(p);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function PaginationBar({
+  page,
+  totalPages,
+  onPageChange,
+}: {
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  const pageOptions = Array.from({ length: totalPages }, (_, i) => i);
+
+  return (
+    <div className="flex items-center justify-center gap-3">
+      <Button
+        variant="outline"
+        size="icon"
+        disabled={page === 0}
+        onClick={() => onPageChange(page - 1)}
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </Button>
+
+      <Select
+        value={String(page)}
+        onValueChange={(v) => onPageChange(Number(v))}
+      >
+        <SelectTrigger size="sm" className="w-32">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {pageOptions.map((p) => (
+            <SelectItem key={p} value={String(p)}>
+              <FormattedMessage
+                id="card.browser.pagination.page_x_of_y"
+                defaultMessage="Page {current} / {total}"
+                values={{ current: p + 1, total: totalPages }}
+              />
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Button
+        variant="outline"
+        size="icon"
+        disabled={page >= totalPages - 1}
+        onClick={() => onPageChange(page + 1)}
+      >
+        <ChevronRight className="h-4 w-4" />
+      </Button>
     </div>
   );
 }

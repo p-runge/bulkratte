@@ -63,9 +63,9 @@ export function BrowseMode() {
     [currentSpread - 1, currentSpread + 1]
       .flatMap(getCardsForSpread)
       .forEach((card) => {
-        if (!card?.image) return;
+        if (!card?.imageLarge) return;
         const img = new window.Image();
-        img.src = card.image;
+        img.src = card.imageLarge;
       });
   }, [currentSpread]);
 
@@ -209,9 +209,9 @@ export function BrowseMode() {
           <DragOverlay>
             {draggingCard ? (
               <div className="flex items-center justify-center">
-                {draggingCard.image ? (
+                {draggingCard.imageLarge ? (
                   <Image
-                    src={draggingCard.image}
+                    src={draggingCard.imageLarge}
                     alt={draggingCard.name}
                     width={CARD_IMAGE_WIDTH}
                     height={CARD_IMAGE_HEIGHT}

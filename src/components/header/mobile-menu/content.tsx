@@ -16,6 +16,14 @@ export function MobileMenuContent() {
           {intl.formatMessage({ id: "nav.link.sets", defaultMessage: "Sets" })}
         </Button>
       </Link>
+      <Link href="/cards">
+        <Button variant="ghost" className="w-full text-left">
+          {intl.formatMessage({
+            id: "nav.link.cards",
+            defaultMessage: "Cards",
+          })}
+        </Button>
+      </Link>
       {session && (
         <>
           <Link href="/collection" prefetch={true}>

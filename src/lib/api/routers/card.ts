@@ -43,6 +43,7 @@ export const cardRouter = createTRPCRouter({
             .optional()
             .default("set-and-number"),
           sortOrder: z.enum(["asc", "desc"]).optional().default("asc"),
+          page: z.number().int().min(0).optional().default(0),
         })
         .optional(),
     )
@@ -132,7 +133,6 @@ export const cardRouter = createTRPCRouter({
             eq(localizationsTable.table_name, "cards"),
             eq(localizationsTable.column_name, "name"),
             eq(localizationsTable.record_id, cardsTable.id),
-            eq(localizationsTable.language, langCode),
           ),
         )
         .where(
@@ -149,10 +149,16 @@ export const cardRouter = createTRPCRouter({
               ? and(...conditions)
               : undefined,
         )
-        .orderBy(...orderByClauses)
-        .limit(input?.setIds?.length === 1 ? -1 : 100);
+        .orderBy(...orderByClauses);
 
-      const results = await query;
+      const isSingleSet = input?.setIds?.length === 1;
+      const page = input?.page ?? 0;
+      const LIMIT = 120;
+      const pagedQuery = isSingleSet
+        ? query
+        : query.limit(LIMIT).offset(page * LIMIT);
+
+      const results = await pagedQuery;
 
       const cardsWithPrices = results.map(({ card, price: existingPrice }) => ({
         ...card,
@@ -163,7 +169,7 @@ export const cardRouter = createTRPCRouter({
       const localizedCards = await localizeRecords(
         cardsWithPrices,
         "cards",
-        ["name", "image"],
+        ["name", "imageSmall", "imageLarge"],
         ctx.language,
       );
 
@@ -176,6 +182,60 @@ export const cardRouter = createTRPCRouter({
       }
 
       return localizedCards;
+    }),
+
+  getCount: publicProcedure
+    .input(
+      z
+        .object({
+          setIds: z.array(z.string()).optional(),
+          search: z.string().optional(),
+          rarities: z.array(z.string()).optional(),
+          releaseDateFrom: z.string().optional(),
+          releaseDateTo: z.string().optional(),
+        })
+        .optional(),
+    )
+    .query(async ({ input }) => {
+      const conditions = [];
+
+      if (input?.setIds?.length) {
+        conditions.push(inArray(cardsTable.setId, input.setIds));
+      }
+      if (input?.rarities?.length) {
+        conditions.push(inArray(cardsTable.rarity, input.rarities as Rarity[]));
+      }
+      if (input?.releaseDateFrom || input?.releaseDateTo) {
+        const dateConditions = [];
+        if (input.releaseDateFrom)
+          dateConditions.push(
+            gte(setsTable.releaseDate, input.releaseDateFrom),
+          );
+        if (input.releaseDateTo)
+          dateConditions.push(lte(setsTable.releaseDate, input.releaseDateTo));
+        const dateCond = and(...dateConditions);
+        if (dateCond) conditions.push(dateCond);
+      }
+
+      const whereClause = input?.search
+        ? and(
+            ...(conditions.length > 0 ? conditions : [sql`1=1`]),
+            or(
+              ilike(cardsTable.name, `%${input.search}%`),
+              ilike(cardsTable.number, `%${input.search}%`),
+            ),
+          )
+        : conditions.length > 0
+          ? and(...conditions)
+          : undefined;
+
+      const [{ count }] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(cardsTable)
+        .innerJoin(setsTable, eq(cardsTable.setId, setsTable.id))
+        .where(whereClause);
+
+      return { total: count };
     }),
 
   getFilterOptions: publicProcedure
@@ -240,7 +300,12 @@ export const cardRouter = createTRPCRouter({
         });
       }
 
-      return localizeRecord(card, "cards", ["name", "image"], ctx.language);
+      return localizeRecord(
+        card,
+        "cards",
+        ["name", "imageSmall", "imageLarge"],
+        ctx.language,
+      );
     }),
 
   getByIds: publicProcedure
@@ -260,6 +325,11 @@ export const cardRouter = createTRPCRouter({
         .from(cardsTable)
         .where(inArray(cardsTable.id, input.cardIds));
 
-      return localizeRecords(cards, "cards", ["name", "image"], ctx.language);
+      return localizeRecords(
+        cards,
+        "cards",
+        ["name", "imageSmall", "imageLarge"],
+        ctx.language,
+      );
     }),
 });

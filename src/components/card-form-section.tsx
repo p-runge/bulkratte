@@ -48,7 +48,7 @@ export function CardFormSection({
       <div className="w-full sm:w-auto sm:max-w-60 sm:flex-shrink-0 mx-auto sm:mx-0">
         {mediaSlot ?? (
           <Image
-            src={card.image}
+            src={card.imageLarge}
             alt={card.name}
             width={CARD_IMAGE_WIDTH}
             height={CARD_IMAGE_HEIGHT}
