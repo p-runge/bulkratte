@@ -466,6 +466,7 @@ export const userCardRouter = createTRPCRouter({
           releaseDateFrom: z.string().optional(),
           releaseDateTo: z.string().optional(),
           excludeInSets: z.boolean().optional(),
+          page: z.number().int().min(0).optional().default(0),
           sortBy: z
             .enum(["set-and-number", "name", "rarity", "price"])
             .optional()
@@ -629,6 +630,8 @@ export const userCardRouter = createTRPCRouter({
               : and(...conditions),
           )
           .orderBy(...orderByClauses)
+          .limit(120)
+          .offset((input?.page ?? 0) * 120)
       ).map((row) => ({
         ...row,
         card: {
@@ -747,6 +750,106 @@ export const userCardRouter = createTRPCRouter({
       }
 
       return result;
+    }),
+
+  getCount: protectedProcedure
+    .input(
+      z
+        .object({
+          setIds: z.array(z.string()).optional(),
+          search: z.string().optional(),
+          rarities: z.array(z.string()).optional(),
+          languages: z.array(z.string()).optional(),
+          variants: z.array(z.string()).optional(),
+          conditions: z.array(z.string()).optional(),
+          releaseDateFrom: z.string().optional(),
+          releaseDateTo: z.string().optional(),
+        })
+        .optional(),
+    )
+    .output(z.object({ total: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const conditions = [eq(userCardsTable.user_id, ctx.session.user.id)];
+
+      if (input?.setIds?.length) {
+        conditions.push(inArray(cardsTable.setId, input.setIds));
+      }
+      if (input?.rarities?.length) {
+        conditions.push(inArray(cardsTable.rarity, input.rarities as Rarity[]));
+      }
+      if (input?.languages?.length) {
+        const actual = input.languages.filter(
+          (l) => l !== UNSET_FILTER_VALUE,
+        ) as (typeof languageEnum.enumValues)[number][];
+        const includeUnset = input.languages.includes(UNSET_FILTER_VALUE);
+        const parts = [
+          ...(actual.length ? [inArray(userCardsTable.language, actual)] : []),
+          ...(includeUnset ? [isNull(userCardsTable.language)] : []),
+        ];
+        if (parts.length === 1) conditions.push(parts[0]!);
+        else if (parts.length > 1) conditions.push(or(...parts)!);
+      }
+      if (input?.variants?.length) {
+        const actual = input.variants.filter(
+          (v) => v !== UNSET_FILTER_VALUE,
+        ) as (typeof variantEnum.enumValues)[number][];
+        const includeUnset = input.variants.includes(UNSET_FILTER_VALUE);
+        const parts = [
+          ...(actual.length ? [inArray(userCardsTable.variant, actual)] : []),
+          ...(includeUnset ? [isNull(userCardsTable.variant)] : []),
+        ];
+        if (parts.length === 1) conditions.push(parts[0]!);
+        else if (parts.length > 1) conditions.push(or(...parts)!);
+      }
+      if (input?.conditions?.length) {
+        const actual = input.conditions.filter(
+          (c) => c !== UNSET_FILTER_VALUE,
+        ) as (typeof conditionEnum.enumValues)[number][];
+        const includeUnset = input.conditions.includes(UNSET_FILTER_VALUE);
+        const parts = [
+          ...(actual.length ? [inArray(userCardsTable.condition, actual)] : []),
+          ...(includeUnset ? [isNull(userCardsTable.condition)] : []),
+        ];
+        if (parts.length === 1) conditions.push(parts[0]!);
+        else if (parts.length > 1) conditions.push(or(...parts)!);
+      }
+      if (input?.releaseDateFrom || input?.releaseDateTo) {
+        if (input.releaseDateFrom)
+          conditions.push(gte(setsTable.releaseDate, input.releaseDateFrom));
+        if (input.releaseDateTo)
+          conditions.push(lte(setsTable.releaseDate, input.releaseDateTo));
+      }
+
+      const langCode = getLanguageFromLocale(ctx.language);
+
+      const [row] = await ctx.db
+        .select({ total: sql<number>`COUNT(*)::int` })
+        .from(userCardsTable)
+        .innerJoin(cardsTable, eq(userCardsTable.card_id, cardsTable.id))
+        .leftJoin(setsTable, eq(cardsTable.setId, setsTable.id))
+        .leftJoin(
+          localizationsTable,
+          and(
+            eq(localizationsTable.table_name, "cards"),
+            eq(localizationsTable.column_name, "name"),
+            eq(localizationsTable.record_id, cardsTable.id),
+            eq(localizationsTable.language, langCode),
+          ),
+        )
+        .where(
+          input?.search
+            ? and(
+                ...conditions,
+                or(
+                  ilike(cardsTable.name, `%${input.search}%`),
+                  ilike(cardsTable.number, `%${input.search}%`),
+                  ilike(localizationsTable.value, `%${input.search}%`),
+                ),
+              )
+            : and(...conditions),
+        );
+
+      return { total: row?.total ?? 0 };
     }),
 
   delete: protectedProcedure

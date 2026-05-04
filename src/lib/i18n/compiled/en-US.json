@@ -1105,6 +1105,12 @@
       "value": "Sign Out"
     }
   ],
+  "nav.link.cards": [
+    {
+      "type": 0,
+      "value": "Cards"
+    }
+  ],
   "nav.link.collection": [
     {
       "type": 0,
@@ -1121,6 +1127,56 @@
     {
       "type": 0,
       "value": "Trade"
+    }
+  ],
+  "page.cards.title": [
+    {
+      "type": 0,
+      "value": "All Cards"
+    }
+  ],
+  "card.browser.pagination.page_x_of_y": [
+    {
+      "type": 0,
+      "value": "Page "
+    },
+    {
+      "type": 1,
+      "value": "current"
+    },
+    {
+      "type": 0,
+      "value": " / "
+    },
+    {
+      "type": 1,
+      "value": "total"
+    }
+  ],
+  "card.browser.pagination.range": [
+    {
+      "type": 1,
+      "value": "from"
+    },
+    {
+      "type": 0,
+      "value": "–"
+    },
+    {
+      "type": 1,
+      "value": "to"
+    },
+    {
+      "type": 0,
+      "value": " of "
+    },
+    {
+      "type": 1,
+      "value": "total"
+    },
+    {
+      "type": 0,
+      "value": " cards"
     }
   ],
   "page.collection.action.add_card": [

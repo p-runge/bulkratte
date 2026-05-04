@@ -46,6 +46,15 @@ export default function HeaderContent() {
           </Button>
         </Link>
 
+        <Link href="/cards">
+          <Button variant="ghost">
+            {intl.formatMessage({
+              id: "nav.link.cards",
+              defaultMessage: "Cards",
+            })}
+          </Button>
+        </Link>
+
         {session && (
           <>
             <Link href="/collection" prefetch={true}>

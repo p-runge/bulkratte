@@ -1,6 +1,7 @@
 import { env } from "@/env";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import {
   boolean,
   date,
@@ -23,7 +24,23 @@ import {
   variantEnum,
 } from "./enums";
 
-export const db = drizzle(env.DATABASE_URL);
+// Use a global singleton for the pg Pool so that Next.js hot-module-reload
+// does not create a new pool (and thus fresh prepared-statement caches) on
+// every file change, which would cause Drizzle's queryWithCache to conflict
+// with statements already registered on the reused pg connections.
+const globalForDb = global as unknown as {
+  pool: Pool;
+  db: ReturnType<typeof drizzle>;
+};
+const pool =
+  globalForDb.pool ?? new Pool({ connectionString: env.DATABASE_URL });
+const db = globalForDb.db ?? drizzle(pool);
+if (process.env.NODE_ENV !== "production") {
+  globalForDb.pool = pool;
+  globalForDb.db = db;
+}
+
+export { db };
 
 /**
  * --------------------------------
