@@ -267,7 +267,7 @@ export function CardSlot({
               className="w-full h-full"
             />
           ) : (
-            <CardImage src={coverPhoto ?? card.imageLarge} alt={card.name} />
+            <CardImage src={coverPhoto ?? card.image} alt={card.name} />
           )}
         </div>
         {/* Colored border rendered as an inset overlay so the image always fills the full slot */}
@@ -319,11 +319,11 @@ export function CardSlot({
           style={{ borderRadius: CARD_BORDER_RADIUS }}
         >
           {card ? (
-            <CardImage src={card.imageLarge} alt={card.name} />
+            <CardImage src={card.image} alt={card.name} />
           ) : (
             <div className="w-full h-full bg-gray-200 animate-pulse" />
           )}
-          {/* Action buttons, always visible, arranged vertically */}}
+          {/* Action buttons, always visible, arranged vertically */}
           <div className="absolute inset-0 flex flex-col justify-center items-center gap-2 pointer-events-none">
             <Button
               variant="secondary"

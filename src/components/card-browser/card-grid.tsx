@@ -133,7 +133,7 @@ export function CardGrid({
               >
                 <div className={`${CARD_ASPECT_CLASS} relative`}>
                   <Image
-                    src={card.imageLarge || "/placeholder.svg"}
+                    src={card.image || "/placeholder.svg"}
                     width={CARD_IMAGE_WIDTH}
                     height={CARD_IMAGE_HEIGHT}
                     unoptimized
@@ -206,7 +206,7 @@ export function CardGrid({
                   style={{ borderRadius: CARD_BORDER_RADIUS }}
                 >
                   <Image
-                    src={card.imageLarge || "/placeholder.svg"}
+                    src={card.image || "/placeholder.svg"}
                     width="36"
                     height="50"
                     unoptimized

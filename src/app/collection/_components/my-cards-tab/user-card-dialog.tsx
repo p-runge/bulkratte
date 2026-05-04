@@ -197,7 +197,7 @@ export default function UserCardDialog({
                     onRemovePhoto={photoUpload.handleRemovePhoto}
                     onSetCover={photoUpload.handleSetCover}
                     onSetCoverCrop={photoUpload.handleSetCoverCrop}
-                    fallbackSrc={card.imageLarge}
+                    fallbackSrc={card.image}
                     fallbackAlt={card.name}
                   />
                 }

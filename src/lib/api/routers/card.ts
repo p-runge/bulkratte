@@ -169,7 +169,7 @@ export const cardRouter = createTRPCRouter({
       const localizedCards = await localizeRecords(
         cardsWithPrices,
         "cards",
-        ["name", "imageSmall", "imageLarge"],
+        ["name", "image"],
         ctx.language,
       );
 
@@ -229,13 +229,13 @@ export const cardRouter = createTRPCRouter({
           ? and(...conditions)
           : undefined;
 
-      const [{ count }] = await db
+      const result = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(cardsTable)
         .innerJoin(setsTable, eq(cardsTable.setId, setsTable.id))
         .where(whereClause);
 
-      return { total: count };
+      return { total: result[0]!.count };
     }),
 
   getFilterOptions: publicProcedure
@@ -300,12 +300,7 @@ export const cardRouter = createTRPCRouter({
         });
       }
 
-      return localizeRecord(
-        card,
-        "cards",
-        ["name", "imageSmall", "imageLarge"],
-        ctx.language,
-      );
+      return localizeRecord(card, "cards", ["name", "image"], ctx.language);
     }),
 
   getByIds: publicProcedure
@@ -325,11 +320,6 @@ export const cardRouter = createTRPCRouter({
         .from(cardsTable)
         .where(inArray(cardsTable.id, input.cardIds));
 
-      return localizeRecords(
-        cards,
-        "cards",
-        ["name", "imageSmall", "imageLarge"],
-        ctx.language,
-      );
+      return localizeRecords(cards, "cards", ["name", "image"], ctx.language);
     }),
 });
